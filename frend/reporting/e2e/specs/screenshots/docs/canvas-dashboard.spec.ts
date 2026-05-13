@@ -41,10 +41,10 @@
 
 import { test, expect, Browser, Page } from '@playwright/test';
 
-import { electronBeforeAfterAllTest } from '../../utils/common-setup';
-import { Constants } from '../../utils/constants';
-import { FluentTester } from '../../helpers/fluent-tester';
-import { SelfServicePortalsTestHelper } from '../../helpers/areas/self-service-portals-test-helper';
+import { electronBeforeAfterAllTest } from '../../../utils/common-setup';
+import { Constants } from '../../../utils/constants';
+import { FluentTester } from '../../../helpers/fluent-tester';
+import { SelfServicePortalsTestHelper } from '../../../helpers/areas/self-service-portals-test-helper';
 import {
   createFreshCanvas,
   addCubeToCanvas,
@@ -55,9 +55,9 @@ import {
   runGroovyScript,
   WEB_COMPONENT,
   type WidgetType,
-} from '../../helpers/explore-data-test-helper';
-import { getCanvasComponentIds } from '../../helpers/dashboard-test-helper';
-import { captureDocsScreenshot } from '../../utils/docs-screenshot-helper';
+} from '../../../helpers/explore-data-test-helper';
+import { getCanvasComponentIds } from '../../../helpers/dashboard-test-helper';
+import { captureDocsScreenshot } from '../../../utils/docs-screenshot-helper';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 

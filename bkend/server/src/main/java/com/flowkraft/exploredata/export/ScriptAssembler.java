@@ -1,7 +1,5 @@
 package com.flowkraft.exploredata.export;
 
-import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
-import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -66,23 +64,29 @@ public class ScriptAssembler {
      */
     public record AssembledScript(String text, Map<Integer, String> lineToWidgetId) {}
 
-    /** One line of user SQL, with {@code ${param}} tokens replaced by JDBC {@code ?}. */
-    private record SqlLine(String text, List<String> params) {}
+    /** One line of user SQL, with {@code ${param}} tokens replaced by JDBC {@code ?}.
+     *  When {@code inListParam} is non-null, the line was originally
+     *  {@code ... IN (${param})} and {@code text} carries an SQL prefix (everything
+     *  before the IN clause) to be passed to the runtime {@code __bindInList} helper. */
+    private record SqlLine(String text, List<String> params, String inListParam) {
+        SqlLine(String text, List<String> params) { this(text, params, null); }
+    }
 
     // ── Public entry point ────────────────────────────────────────────────────
 
     /**
      * Assembles and compile-checks the dispatcher script.
      *
-     * @param allWidgets all canvas widgets (non-data widgets are ignored)
-     * @param filterDsl  the FilterBar DSL string (may be blank)
+     * @param allWidgets   all canvas widgets (non-data widgets are ignored)
+     * @param parametersList canonical Map list of dashboard parameter definitions
+     *                       (from {@code parametersConfig.parameters}); may be empty
      * @return assembled script + blame map
      * @throws CanvasExportException if the assembled script fails to compile;
      *         {@link CanvasExportException#widgetId} names the responsible widget
      *         when the error line can be traced back to one
      */
     public static AssembledScript assemble(List<Map<String, Object>> allWidgets,
-                                           String filterDsl) throws CanvasExportException {
+                                           List<Map<String, Object>> parametersList) throws CanvasExportException {
 
         // 1. Filter to data widgets and sort canonically: (y, x, id)
         List<Map<String, Object>> widgets = allWidgets.stream()
@@ -101,8 +105,14 @@ public class ScriptAssembler {
             }
         }
 
-        // 3. Parse filter parameter names
-        List<String> paramNames = parseParamNames(filterDsl);
+        // 3. Read parameter IDs straight from the canonical Map — no DSL parse needed.
+        List<String> paramNames = (parametersList == null ? List.<Map<String, Object>>of() : parametersList).stream()
+                .map(p -> {
+                    Object id = p.get("id");
+                    return id instanceof String s ? s : null;
+                })
+                .filter(s -> s != null && !s.isBlank())
+                .toList();
 
         // 4. Build script text + line-to-widget blame map
         StringBuilder sb          = new StringBuilder();
@@ -120,6 +130,26 @@ public class ScriptAssembler {
         sb.append("def componentId = ctx.variables?.get('componentId')\n");
         sb.append("def userVars    = ctx.variables.getUserVariables(ctx.token ?: '')\n");
         sb.append("\n");
+
+        // ── IN-list expansion helper ──────────────────────────────────────────
+        // At runtime, splits a CSV param value (\"1, 5, 10\") into a real SQL list.
+        // Without this, IN (${p}) emits IN (?) and binds the entire CSV string as
+        // one VARCHAR — Postgres rejects integer = varchar. Long → Double → String
+        // coercion mirrors QueriesService so numeric columns get integer binds.
+        // Wildcard '*' returns false so the caller skips the IN clause entirely
+        // → query runs without that filter → user sees rows for every value.
+        sb.append("def __bindInList = { sb, params, csv, sqlPrefix ->\n");
+        sb.append("    if (!csv) return false\n");
+        sb.append("    if (csv.toString().trim() == '*') return false\n");
+        sb.append("    def vals = csv.toString().split(',').collect { it.trim() }.findAll { it }\n");
+        sb.append("    if (vals.isEmpty()) return false\n");
+        sb.append("    sb.append(sqlPrefix + ' (' + vals.collect { '?' }.join(', ') + ')\\n')\n");
+        sb.append("    vals.each { v ->\n");
+        sb.append("        try { params << Long.parseLong(v) }\n");
+        sb.append("        catch (e) { try { params << Double.parseDouble(v) } catch (e2) { params << v } }\n");
+        sb.append("    }\n");
+        sb.append("    return true\n");
+        sb.append("}\n\n");
 
         // ── Canvas parameters ─────────────────────────────────────────────────
         for (String paramName : paramNames) {
@@ -166,7 +196,8 @@ public class ScriptAssembler {
                 } else {
                     String vp = varPrefix(compId);
                     List<SqlLine> sqlLines = analyzeSqlLines(sql, paramNames);
-                    boolean hasCond = sqlLines.stream().anyMatch(l -> !l.params().isEmpty());
+                    boolean hasCond = sqlLines.stream().anyMatch(
+                        l -> !l.params().isEmpty() || l.inListParam() != null);
 
                     sb.append("// ─── Widget: ").append(compId)
                       .append(" (type=").append(wtype)
@@ -178,7 +209,14 @@ public class ScriptAssembler {
                     }
                     for (SqlLine sl : sqlLines) {
                         String esc = escapeForGroovySingleQuoted(sl.text());
-                        if (sl.params().isEmpty()) {
+                        if (sl.inListParam() != null) {
+                            // IN-list: runtime expansion via __bindInList helper.
+                            String p = sl.inListParam();
+                            sb.append("    if (has").append(capitalize(p)).append(") { ")
+                              .append("__bindInList(").append(vp).append("_sb, ")
+                              .append(vp).append("_params, ").append(p).append(", '")
+                              .append(esc).append("') }\n");
+                        } else if (sl.params().isEmpty()) {
                             sb.append("    ").append(vp).append("_sb.append('").append(esc).append("\\n')\n");
                         } else {
                             StringBuilder cond = new StringBuilder();
@@ -361,7 +399,30 @@ public class ScriptAssembler {
     private static List<SqlLine> analyzeSqlLines(String sql, List<String> paramNames) {
         List<SqlLine> result = new ArrayList<>();
         for (String rawLine : sql.stripTrailing().split("\n", -1)) {
+            // Detect IN-list pattern first: anything ending with `IN (${p})` or
+            // `NOT IN (${p})`. The prefix (operator + column, e.g. `WHERE "id"`)
+            // is carried as the line's text; the runtime __bindInList helper appends
+            // ` IN (?, ?, ...)` and binds each value with type coercion.
+            String inListParam = null;
             String processed = rawLine;
+            for (String p : paramNames) {
+                Pattern inListP = Pattern.compile(
+                    "^(.*?)\\s+(IN|NOT\\s+IN)\\s*\\(\\s*\\$\\{" + Pattern.quote(p) + "\\}\\s*\\)\\s*;?\\s*$",
+                    Pattern.CASE_INSENSITIVE);
+                Matcher m = inListP.matcher(rawLine);
+                if (m.matches()) {
+                    String prefix = m.group(1).trim();
+                    String op = m.group(2).toUpperCase().replaceAll("\\s+", " ");
+                    processed = prefix + " " + op; // e.g. `WHERE "id" IN` — helper appends ` (?, ?, ...)`
+                    inListParam = p;
+                    break;
+                }
+            }
+            if (inListParam != null) {
+                result.add(new SqlLine(processed, Collections.emptyList(), inListParam));
+                continue;
+            }
+            // Scalar param substitution (existing behavior).
             List<String> lineParams = new ArrayList<>();
             for (String p : paramNames) {
                 String token = "${" + p + "}";
@@ -400,20 +461,7 @@ public class ScriptAssembler {
         return imports;
     }
 
-    private static List<String> parseParamNames(String filterDsl) {
-        if (filterDsl == null || filterDsl.isBlank()) return List.of();
-        try {
-            List<ReportParameter> params = ReportParametersHelper.parseGroovyParametersDslCode(filterDsl);
-            return params.stream()
-                    .map(p -> p.id)
-                    .filter(id -> id != null && !id.isBlank())
-                    .toList();
-        } catch (Exception ignored) {
-            return List.of();
-        }
-    }
-
-    /** Returns 1-based line count of the current StringBuilder content. */
+/** Returns 1-based line count of the current StringBuilder content. */
     private static int lineCount(StringBuilder sb) {
         int count = 1;
         for (int i = 0; i < sb.length(); i++) {

@@ -57,7 +57,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     });
     try {
       await updateCanvas(state.id, {
-        state: JSON.stringify({ widgets: patchedWidgets, filterDsl: state.filterDsl }),
+        state: JSON.stringify({ widgets: patchedWidgets, parametersConfig: state.parametersConfig }),
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

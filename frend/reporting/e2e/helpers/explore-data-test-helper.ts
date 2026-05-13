@@ -60,11 +60,11 @@ export async function createFreshCanvas(
   name?: string,
 ): Promise<void> {
   await page.goto(canvasUrl);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.locator('#btnNewCanvas').waitFor({ state: 'visible', timeout: 15_000 });
   await page.locator('#btnNewCanvas').click();
   await page.waitForURL(/\/explore-data\/[^/]+$/, { timeout: 15_000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.locator('#selectConnection').waitFor({ state: 'visible', timeout: 10_000 });
   if (name) {
     await page.locator('#btnCanvasName').click();
@@ -100,7 +100,7 @@ export async function addTableToCanvas(page: Page, tableName: string): Promise<v
   // 3. `visible` with a 30s budget then verifies layout/CSS settled — wide
   //    enough to cover worst-case load amplification we've measured here.
   await page.locator('#visualizeAsSection').waitFor({ state: 'attached', timeout: 15_000 });
-  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.locator('#visualizeAsSection').waitFor({ state: 'visible', timeout: 30_000 });
   // Adding a table auto-fires an implicit `SELECT * FROM <table> LIMIT 500`
   // query in the widget. If the test switches to the Finetune tab and clicks
@@ -121,7 +121,7 @@ export async function addCubeToCanvas(page: Page, cubeId: string): Promise<void>
   await page.locator(`[id="btnConfirmAddCube-${cubeId}"]`).click();
   // Staged wait — see addTableToCanvas for rationale.
   await page.locator('#visualizeAsSection').waitFor({ state: 'attached', timeout: 15_000 });
-  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.locator('#visualizeAsSection').waitFor({ state: 'visible', timeout: 30_000 });
   // Wait for the rb-cube-renderer to load and parse the cube DSL.
   await page.locator('rb-cube-renderer').first().waitFor({ state: 'visible', timeout: 15_000 });
@@ -466,6 +466,107 @@ export async function bindVisualFilterToParam(
   await page.waitForTimeout(300);
 }
 
+/** Set the row Limit on the Visual query builder. Default is 500; tests that
+ *  want top-N tables (e.g. Top 5 Winners) override it here. The input is in
+ *  VisualQueryBuilder.tsx — `<input type="number" id="inputLimit" min={1} max={10000}>`. */
+export async function setVisualLimit(page: Page, n: number): Promise<void> {
+  const input = page.locator('#inputLimit');
+  await input.waitFor({ state: 'visible', timeout: 5_000 });
+  await input.click();
+  await input.fill(String(n));
+  await page.waitForTimeout(300);
+}
+
+/** Hide the named columns in the current Tabulator widget. Drives the
+ *  Display tab's column-toggle UI:
+ *   - opens the Display tab (`#btnDisplayTab`)
+ *   - clicks `#btnToggleCol-${col}` for each column in `colsToHide`,
+ *     skipping if `data-hidden="true"` already (idempotent)
+ *   - returns to the Data tab (`#btnDataTab`)
+ *
+ *  Each toggle button has id `btnToggleCol-${columnName}` and a
+ *  `data-hidden="true|false"` attribute per TabulatorConfig.tsx. */
+export async function hideTabulatorColumns(
+  page: Page,
+  colsToHide: string[],
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  // Dispatch native DOM clicks via page.evaluate, bypassing Playwright's
+  // actionability checks. ConfigPanel re-renders on every toggle break the
+  // "stable" check and stall .click() for minutes; force:true only fixes part
+  // of that (it still does a visibility lookup). A direct .click() on the DOM
+  // node fires the React synthetic event regardless of viewport/scroll/stability.
+  const domClick = async (elId: string): Promise<boolean> =>
+    page.evaluate((id) => {
+      const el = document.getElementById(id) as HTMLElement | null;
+      if (!el) return false;
+      el.click();
+      return true;
+    }, elId);
+
+  // Playwright .click() works fine for the tab switch (~870ms in prior traces) —
+  // ConfigPanel's tab buttons aren't subject to the stability-thrash that breaks
+  // column-toggle clicks. Use force:true so any pending re-render can't intercept.
+  await page.locator('#btnDisplayTab').click({ force: true, timeout: 5_000 });
+  await page.waitForTimeout(300);
+  // selectedWidget.columns is populated async (separate from rb-tabulator
+  // appearing in DOM), so even after activeTab flips to "display",
+  // TabulatorConfig may still render the empty-columns placeholder for a moment.
+  // Wait for the first column toggle button to actually appear before clicking.
+  if (colsToHide.length > 0) {
+    try {
+      await page.waitForFunction(
+        (firstCol) => !!document.getElementById(`btnToggleCol-${firstCol}`),
+        colsToHide[0],
+        { timeout: 15_000 },
+      );
+    } catch (e) {
+      const snapshot = await page.evaluate(() => {
+        const btnDataTab = document.getElementById('btnDataTab');
+        const btnDisplayTab = document.getElementById('btnDisplayTab');
+        const widgetEl = document.querySelector('[id^="widget-"][class*="ring-2"]');
+        const widgetId = widgetEl?.id ?? null;
+        const rbTab = document.querySelector('rb-tabulator');
+        const allToggleBtns = Array.from(document.querySelectorAll('[id^="btnToggleCol-"]')).map((b) => b.id);
+        const visualizeAs = document.getElementById('visualizeAsSection');
+        const allBtnDataTab = btnDataTab?.outerHTML?.slice(0, 200);
+        const allBtnDisplayTab = btnDisplayTab?.outerHTML?.slice(0, 200);
+        return {
+          hasBtnDataTab: !!btnDataTab,
+          hasBtnDisplayTab: !!btnDisplayTab,
+          btnDataTabHTML: allBtnDataTab,
+          btnDisplayTabHTML: allBtnDisplayTab,
+          selectedWidgetId: widgetId,
+          hasRbTabulator: !!rbTab,
+          toggleBtnIds: allToggleBtns,
+          hasVisualizeAsSection: !!visualizeAs,
+          configPanelText: document.querySelector('#visualizeAsSection')?.parentElement?.textContent?.slice(0, 400),
+        };
+      });
+      throw new Error(
+        `hideTabulatorColumns: #btnToggleCol-${colsToHide[0]} never appeared. Diagnostic:\n${JSON.stringify(snapshot, null, 2)}`,
+      );
+    }
+  }
+
+  for (const col of colsToHide) {
+    const id = `btnToggleCol-${col}`;
+    const alreadyHidden = await page.evaluate(
+      (elId) => document.getElementById(elId)?.getAttribute('data-hidden') === 'true',
+      id,
+    );
+    if (alreadyHidden) continue;
+    if (!(await domClick(id))) {
+      throw new Error(`hideTabulatorColumns: #${id} not in DOM`);
+    }
+    await page.waitForTimeout(80);
+  }
+
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click({ force: true, timeout: 5_000 });
+  await page.waitForTimeout(300);
+}
+
 // ── Layout helpers ────────────────────────────────────────────────────────────
 
 /** A grid rectangle on the 12-col react-grid-layout canvas. */
@@ -496,6 +597,12 @@ export async function layoutWidgetsByDrag(
 ): Promise<void> {
   // Let any post-addWidget autosave settle before we start dragging.
   await page.waitForTimeout(1_200);
+
+  // Scroll to top so gridBox.y is stable. Without this, if the page scrolled
+  // to show a newly-added bottom widget, gridBox.y is negative and upward drags
+  // compute target coordinates above the viewport, causing an infinite scroll loop.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(300);
 
   // Grid geometry — mirror the values hard-coded in Canvas.tsx.
   const COLS    = 12;
@@ -556,6 +663,10 @@ export async function layoutWidgetsByDrag(
     }
   }
 
+  // Safety: release mouse and wait for ReactGridLayout drag overlay to clear.
+  await page.mouse.up();
+  await page.locator('.react-grid-placeholder').waitFor({ state: 'detached', timeout: 10_000 }).catch(() => {});
+
   // Wait for the debounced autosave to persist the final layout before publish.
   await page.waitForTimeout(1_500);
 }
@@ -595,6 +706,470 @@ export async function arrangeWidgets(
   // Publish dialog would read stale positions from the store and overwrite
   // what we just PUT.
   await page.reload();
-  await page.waitForLoadState('networkidle');
-  await page.locator('#selectConnection').waitFor({ state: 'visible', timeout: 10_000 });
+  // networkidle can hang up to its full timeout when something keeps the
+  // network busy (multi-select param SQL options refresh, websocket pings,
+  // dashboard data fetches). 5s best-effort drain — the explicit
+  // #selectConnection wait below is what proves the canvas is interactive.
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+  await page.locator('#selectConnection').waitFor({ state: 'visible', timeout: 15_000 });
+}
+
+// ── Filter-bar / parameter helpers ────────────────────────────────────────────
+
+/** Open the Dashboard Filters dialog, switch to DSL mode, paste the
+ *  reportParameters {...} block, save. */
+export async function addFilterBarParam(
+  page: Page,
+  dslCode: string,
+  captureBeforeDone?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnConfigureFilters').click();
+  await page.locator('#btnDslToggle').waitFor({ state: 'visible', timeout: 5_000 });
+  await page.locator('#btnDslToggle').click();
+  const dslEditor = page.locator('#filterDslEditorContainer .cm-content');
+  await dslEditor.waitFor({ state: 'visible', timeout: 5_000 });
+  await dslEditor.click();
+  await page.keyboard.press('Control+a');
+  await enterTextIntoEditor(page, dslCode);
+  // Optional capture point — modal is open, DSL is pasted, Done has not been
+  // clicked yet. Docs/blog specs use this to screenshot the dialog with its
+  // editor contents visible, so readers can see the syntax to paste.
+  if (captureBeforeDone) {
+    await page.waitForTimeout(300);
+    await captureBeforeDone();
+  }
+  await page.locator('#btnDoneFilters').click();
+  await page.waitForTimeout(1_500);
+  await page.locator('rb-parameters').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.waitForTimeout(500);
+}
+
+// ── Per-widget configuration helpers ──────────────────────────────────────────
+
+/** Click the most recently added widget's header to bind the right panel to it.
+ *  4s settle so VisualQueryBuilder and ConfigPanel fully re-mount. */
+export async function selectLastWidget(page: Page): Promise<void> {
+  await page.locator('.react-grid-placeholder').waitFor({ state: 'detached', timeout: 10_000 }).catch(() => {});
+  await page.locator('[id^="widgetHeader-"]').last().click();
+  await page.waitForTimeout(4_000);
+}
+
+/** Read the most recently added widget's id suffix from the DOM. */
+export async function getLastWidgetId(page: Page): Promise<string> {
+  const headerId = await page.locator('[id^="widgetHeader-"]').last().getAttribute('id');
+  if (!headerId) throw new Error('No widget header found in DOM');
+  return headerId.replace(/^widgetHeader-/, '');
+}
+
+/** Poll until the widget body contains an rb-* visualisation component. */
+export async function waitForWidgetData(
+  page: Page,
+  widgetId: string,
+  timeoutMs = 30_000,
+): Promise<void> {
+  const start = Date.now();
+  while (true) {
+    const state = await page.evaluate((id) => {
+      const widget = document.getElementById(`widget-${id}`);
+      if (!widget) return { phase: 'no-widget' as const };
+      const errorEl = widget.querySelector('.text-destructive');
+      if (errorEl) return { phase: 'error' as const, message: (errorEl.textContent || '').trim().slice(0, 300) };
+      const viz = widget.querySelector(
+        'rb-value, rb-trend, rb-chart, rb-tabulator, rb-pivot-table, rb-map, rb-gauge',
+      );
+      if (viz) return { phase: 'rendered' as const };
+      if (widget.querySelector('.animate-spin')) return { phase: 'loading' as const };
+      return { phase: 'unknown' as const };
+    }, widgetId);
+    if (state.phase === 'rendered') return;
+    if (state.phase === 'error') throw new Error(`Widget ${widgetId} errored: ${(state as { message?: string }).message}`);
+    if (Date.now() - start > timeoutMs) throw new Error(`Widget ${widgetId} data never arrived after ${timeoutMs}ms`);
+    await page.waitForTimeout(300);
+  }
+}
+
+/** After switchToWidget('chart'), open Display tab and pick the chart subtype.
+ *  Optional `captureBeforeReturn` runs after the value is set, while the panel
+ *  is naturally on Display — used by docs/blog specs to capture the configured
+ *  Display tab without forcing an extra tab click. */
+export async function setChartType(
+  page: Page,
+  type: string,
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  await page.locator(`#btnChartType-${type}`).waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator(`#btnChartType-${type}`).click();
+  await page.waitForTimeout(500);
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/** Open Display tab, click the legend choice button (show / hide / auto), close.
+ *  ChartConfig.tsx renders the buttons as `#btnChartLegend-${choice}`. */
+export async function setChartLegend(
+  page: Page,
+  choice: 'show' | 'hide' | 'auto',
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  await page.locator(`#btnChartLegend-${choice}`).waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator(`#btnChartLegend-${choice}`).click();
+  await page.waitForTimeout(400);
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(300);
+}
+
+/** Open Display tab, fill the Chart title input, close. Persisted by
+ *  ChartConfig into `options.plugins.title.text` of the chart DSL — Chart.js
+ *  then renders it as the chart's centred title at the top of the canvas. */
+export async function setChartTitle(
+  page: Page,
+  title: string,
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  const input = page.locator('#inputChartTitle');
+  await input.waitFor({ state: 'visible', timeout: 10_000 });
+  await input.click();
+  await input.fill(title);
+  // Blur so the onChange commits. fill() already triggers React onChange via
+  // synthetic input event, but a tiny settle lets the DSL writeback propagate
+  // to the canvas-store before the next step's rerender races it.
+  await page.waitForTimeout(300);
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(300);
+}
+
+/** Open Display tab, pick the X-axis dimension and/or Y-axis measure for a
+ *  Chart widget. Drives the first X/Y axis slots (`#selectChartXAxis-0`,
+ *  `#selectChartYAxis-0`) — sufficient for single-series charts (bar, line,
+ *  area, donut). For multi-series, set additional slots manually.
+ *
+ *  The dropdown lists both Dimensions and Measures grouped under <optgroup>;
+ *  `selectOption(value)` matches by `<option value="...">` which is the
+ *  column name, so pass the column name directly. */
+export async function setChartAxes(
+  page: Page,
+  opts: { x?: string; y?: string },
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  if (opts.x !== undefined) {
+    // Auto-promote can pre-fill xFields[0..1] (X axis + series-split) when the
+    // SQL returns >=2 dims. selectOption only overwrites slot 0, so any extra
+    // slot 1 would silently linger in the persisted dslConfig. Peel slot 1 off
+    // until only slot 0 remains, then set the requested value.
+    for (let i = 0; i < 4; i++) {
+      const extra = page.locator('#btnRemoveChartXAxis-1');
+      if (!(await extra.isVisible().catch(() => false))) break;
+      await extra.click();
+      await page.waitForTimeout(150);
+    }
+    const xSel = page.locator('#selectChartXAxis-0');
+    await xSel.waitFor({ state: 'visible', timeout: 10_000 });
+    await xSel.selectOption(opts.x);
+    await page.waitForTimeout(300);
+  }
+  if (opts.y !== undefined) {
+    // Same hazard as X: auto-promote sets yFields to ALL measures, so if the
+    // SQL returns multiple non-ID numeric columns, slot 0 gets overwritten and
+    // every other slot leaks into the published chart as a duplicate dataset.
+    for (let i = 0; i < 8; i++) {
+      const extra = page.locator('#btnRemoveChartYAxis-1');
+      if (!(await extra.isVisible().catch(() => false))) break;
+      await extra.click();
+      await page.waitForTimeout(150);
+    }
+    const ySel = page.locator('#selectChartYAxis-0');
+    await ySel.waitFor({ state: 'visible', timeout: 10_000 });
+    await ySel.selectOption(opts.y);
+    await page.waitForTimeout(300);
+  }
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/** Open the Chart widget's DSL editor (shared `DslCustomizer` component, ids
+ *  `#btnDslToggle` + `#dslEditorContainer`), paste a Groovy `chart { ... }`
+ *  DSL block, save. Mirrors the structure of `addFilterBarParam` but scoped
+ *  to the right-panel chart config (no `#btnConfigureFilters` modal). */
+export async function setChartDsl(page: Page, dslCode: string): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  await page.locator('#btnDslToggle').waitFor({ state: 'visible', timeout: 5_000 });
+  await page.locator('#btnDslToggle').click();
+  const dslEditor = page.locator('#dslEditorContainer .cm-content');
+  await dslEditor.waitFor({ state: 'visible', timeout: 5_000 });
+  await dslEditor.click();
+  await page.keyboard.press('Control+a');
+  await enterTextIntoEditor(page, dslCode);
+  await page.waitForTimeout(500);
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/** Open Display tab, set the Number widget label, return to Data tab. */
+export async function setNumberLabel(
+  page: Page,
+  label: string,
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  const input = page.locator('#inputNumberLabel');
+  await input.waitFor({ state: 'visible', timeout: 10_000 });
+  await input.click();
+  await input.fill(label);
+  await page.waitForTimeout(500);
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/** Open Display tab, set the Number widget format, return to Data tab. */
+export async function setNumberFormat(
+  page: Page,
+  format: string,
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  const select = page.locator('#selectNumberFormat');
+  await select.waitFor({ state: 'visible', timeout: 10_000 });
+  await select.selectOption(format);
+  await page.waitForTimeout(500);
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/** Open Display tab, configure the Gauge widget. `higherIsWorse` flips the
+ *  band-color order so high values render red — for risk metrics (exposure,
+ *  leverage). Storage key in widget config is `gaugeBandsReverse`. */
+export async function setGaugeConfig(
+  page: Page,
+  opts: {
+    label?: string;
+    min?: number;
+    max?: number;
+    format?: string;
+    higherIsWorse?: boolean;
+    /** Three thresholds for the gauge bands (low→mid→high). Array length must
+     *  be 3 — matches the fixed 3-band UI in GaugeConfig.tsx. */
+    bands?: [number, number, number];
+  },
+  captureBeforeReturn?: () => Promise<void>,
+): Promise<void> {
+  await page.locator('#btnDisplayTab').click();
+  if (opts.label !== undefined) {
+    const input = page.locator('#inputGaugeLabel');
+    await input.waitFor({ state: 'visible', timeout: 10_000 });
+    await input.click();
+    await input.fill(opts.label);
+    await page.waitForTimeout(300);
+  }
+  if (opts.min !== undefined) {
+    const input = page.locator('#inputGaugeMin');
+    await input.waitFor({ state: 'visible', timeout: 10_000 });
+    await input.click();
+    await input.fill(String(opts.min));
+    await page.waitForTimeout(300);
+  }
+  if (opts.max !== undefined) {
+    const input = page.locator('#inputGaugeMax');
+    await input.waitFor({ state: 'visible', timeout: 10_000 });
+    await input.click();
+    await input.fill(String(opts.max));
+    await page.waitForTimeout(300);
+  }
+  if (opts.format !== undefined) {
+    const select = page.locator('#selectGaugeFormat');
+    await select.waitFor({ state: 'visible', timeout: 10_000 });
+    await select.selectOption(opts.format);
+    await page.waitForTimeout(300);
+  }
+  if (opts.bands !== undefined) {
+    for (let i = 0; i < opts.bands.length; i++) {
+      const input = page.locator(`#inputGaugeBand-${i}`);
+      await input.waitFor({ state: 'visible', timeout: 10_000 });
+      await input.click();
+      await input.fill(String(opts.bands[i]));
+      await page.waitForTimeout(200);
+    }
+  }
+  if (opts.higherIsWorse !== undefined) {
+    const cb = page.locator('#cbGaugeHigherIsWorse');
+    await cb.waitFor({ state: 'visible', timeout: 10_000 });
+    const isChecked = await cb.isChecked();
+    if (isChecked !== opts.higherIsWorse) {
+      await cb.click();
+      await page.waitForTimeout(200);
+    }
+  }
+  if (captureBeforeReturn) await captureBeforeReturn();
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+// ── Per-step layout / publish helpers ─────────────────────────────────────────
+
+/** Apply the partial layout for all widgets-so-far (via `arrangeWidgets`),
+ *  re-select the just-added widget (right panel rebinds to its config),
+ *  paint a blue ring around it for the docs reader, return a `dispose()`
+ *  callback that clears the ring.
+ *
+ *  Resilient post-reload click: waits for the header to be attached, scrolls
+ *  it into view (defends against manual scrolling during the test), clicks
+ *  with a 5s timeout, and falls back to `dispatchEvent('click')` if a
+ *  transient overlay intercepts. The follow-up `scrollIntoView({block:'center'})`
+ *  on the highlighted widget compensates for any scroll the user did while
+ *  the test was running. */
+export async function arrangeAndHighlight(
+  page: Page,
+  canvasId: string,
+  layoutSlice: GridPos[],
+  currentWidgetId: string,
+): Promise<() => Promise<void>> {
+  await arrangeWidgets(page, canvasId, layoutSlice);
+
+  const header = page.locator(`#widgetHeader-${currentWidgetId}`);
+  await header.waitFor({ state: 'attached', timeout: 30_000 });
+  await header.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
+  try {
+    await header.click({ timeout: 5_000 });
+  } catch {
+    await header.dispatchEvent('click');
+  }
+  await page.waitForTimeout(2_000);
+
+  await page.evaluate((id) => {
+    const el = document.getElementById(`widget-${id}`) as HTMLElement | null;
+    if (!el) return;
+    el.dataset.docscreenPrevShadow = el.style.boxShadow ?? '';
+    el.style.transition = 'none';
+    el.style.boxShadow = '0 0 0 4px #2563eb, 0 0 24px rgba(37, 99, 235, 0.45)';
+    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+  }, currentWidgetId);
+  await page.waitForTimeout(200);
+
+  return async () => {
+    await page.evaluate((id) => {
+      const el = document.getElementById(`widget-${id}`) as HTMLElement | null;
+      if (!el) return;
+      el.style.boxShadow = el.dataset.docscreenPrevShadow ?? '';
+      delete el.dataset.docscreenPrevShadow;
+    }, currentWidgetId);
+  };
+}
+
+/** Click Publish Dashboard, wait for the export POST, click Close.
+ *  Returns the backend-generated reportId + dashboardUrl. */
+/**
+ * Temporarily position `selector` as a `position: fixed` 100vw × 100vh element,
+ * run `fn`, then restore the original inline styles. Use for screenshots that
+ * want the widest possible rendering of a single element — Chart.js / table
+ * widgets re-render at the new container size, so the captured pixels are at
+ * full viewport scale instead of being squeezed by sibling panels.
+ *
+ * ReactGridLayout positions grid items with CSS `transform: translate(...)`. A
+ * transformed ancestor creates a containing block for `position: fixed`
+ * descendants — so a naive position:fixed on the widget would be anchored to
+ * the grid item, not the viewport, and clip badly. We walk up the ancestor
+ * chain, snapshot any non-`none` transforms, set them to 'none' so the
+ * containing block is the viewport, then restore on the way out.
+ *
+ * Inline styles (`position`, inset, dimensions, z-index, background) on the
+ * target node + any transformed ancestors are all snapshot+restored. The 800
+ * ms wait gives ResizeObserver-driven re-renders (Chart.js, tabulator) time
+ * to settle before the screenshot is taken.
+ */
+export async function withElementFullscreen(
+  page: Page,
+  selector: string,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const el = page.locator(selector);
+  await el.waitFor({ state: 'visible', timeout: 10_000 });
+  const prev = await el.evaluate((node: HTMLElement) => {
+    // Walk up the DOM and neutralise any transform that would create a
+    // containing block for our position:fixed. Save originals to restore.
+    const savedAncestors: Array<{ idx: number; transform: string }> = [];
+    const ancestors: HTMLElement[] = [];
+    let p: HTMLElement | null = node.parentElement;
+    while (p && p !== document.body) {
+      ancestors.push(p);
+      const cs = getComputedStyle(p);
+      if ((cs.transform && cs.transform !== 'none') || (cs.filter && cs.filter !== 'none') || (cs.perspective && cs.perspective !== 'none')) {
+        savedAncestors.push({ idx: ancestors.length - 1, transform: p.style.transform ?? '' });
+        p.style.transform = 'none';
+      }
+      p = p.parentElement;
+    }
+    // Tag the node with the ancestor list so the restore step can find them.
+    const w = window as unknown as { __rbFullscreenState?: { ancestors: HTMLElement[]; savedAncestors: typeof savedAncestors } };
+    w.__rbFullscreenState = { ancestors, savedAncestors };
+
+    const saved = {
+      position: node.style.position ?? '',
+      top: node.style.top ?? '',
+      left: node.style.left ?? '',
+      right: node.style.right ?? '',
+      bottom: node.style.bottom ?? '',
+      width: node.style.width ?? '',
+      height: node.style.height ?? '',
+      zIndex: node.style.zIndex ?? '',
+      background: node.style.background ?? '',
+    };
+    Object.assign(node.style, {
+      position: 'fixed',
+      top: '0', left: '0', right: '0', bottom: '0',
+      width: '100vw', height: '100vh',
+      zIndex: '9999',
+      background: '#ffffff',
+    });
+    return saved;
+  });
+  await page.waitForTimeout(800);
+  try {
+    await fn();
+  } finally {
+    await el.evaluate(
+      (node: HTMLElement, saved: Record<string, string>) => {
+        Object.assign(node.style, saved);
+        const w = window as unknown as { __rbFullscreenState?: { ancestors: HTMLElement[]; savedAncestors: Array<{ idx: number; transform: string }> } };
+        const state = w.__rbFullscreenState;
+        if (state) {
+          for (const { idx, transform } of state.savedAncestors) {
+            const el2 = state.ancestors[idx];
+            if (el2) el2.style.transform = transform;
+          }
+          delete w.__rbFullscreenState;
+        }
+      },
+      prev,
+    ).catch(() => { /* element may have been re-rendered/removed — ignore */ });
+  }
+}
+
+export async function publishDashboard(
+  page: Page,
+): Promise<{ reportId: string; dashboardUrl: string }> {
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+  await page.locator('#btnPublishDashboard').click();
+  const confirmBtn = page.locator('#btnPublishConfirm');
+  await confirmBtn.waitFor({ state: 'visible', timeout: 5_000 });
+
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      r => /\/explore-data\/[^/]+\/export$/.test(r.url()) && r.request().method() === 'POST',
+      { timeout: 90_000 },
+    ),
+    confirmBtn.click(),
+  ]);
+  const body = await response.json();
+
+  await page.locator('#publishSuccess').waitFor({ state: 'visible', timeout: 30_000 });
+  await page.locator('#btnPublishClose').click();
+
+  return { reportId: body.reportId, dashboardUrl: body.dashboardUrl };
 }

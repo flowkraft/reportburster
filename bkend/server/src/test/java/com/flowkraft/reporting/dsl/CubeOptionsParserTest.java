@@ -38,8 +38,18 @@ import com.flowkraft.reporting.dsl.cube.CubeOptionsParser;
  *     #11  Multi-Department Dashboard    — two named cubes in one config
  *     #12  Sales Pipeline Full Model     — every feature combined
  *     #13  Empty Config Fallback         — graceful defaults
+ *
+ * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
+ * Every test fixture uses canonical block form. Adding a test that uses the
+ * legacy parens/list-of-maps form silently weakens the contract — refuse it
+ * in review. See
+ * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the full principles.
  */
 public class CubeOptionsParserTest {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
 
 	// ═════════════════════════════════════════════════════════════════════════════
 	// GETTING STARTED — First cubes a new user would create

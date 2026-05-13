@@ -126,6 +126,8 @@ function vendorToPackId(vendor: string): string {
       return 'db-northwind-clickhouse';
     case 'supabase':
       return 'db-northwind-supabase';
+    case 'timescaledb':
+      return 'db-timeseries-timescaledb';
     default:
       return `db-northwind-${v}`;
   }
@@ -158,6 +160,8 @@ export class ConnectionsTestHelper {
         return { host: 'localhost', port: '8123', db: 'northwind', user: 'default', pass: 'clickhouse' };
       case 'supabase':
         return { host: 'localhost', port: '5435', db: 'Northwind', user: 'supabase_admin', pass: 'postgres' };
+      case 'timescaledb':
+        return { host: 'localhost', port: '5433', db: 'timeseries', user: 'timescale', pass: 'timescale' };
       default:
         return { host: 'localhost', port: '5432', db: 'Northwind', user: 'postgres', pass: 'postgres' };
     }
@@ -1241,10 +1245,11 @@ export class ConnectionsTestHelper {
   static seedAndWipeInvoicesViaConnectionDetails(
     ft: FluentTester,
     connectionCode: string,
+    dbVendor: string,
     invoiceCount: number = 100,
     fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
   ): FluentTester {
-    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, fullTimeout);
+    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, dbVendor, fullTimeout);
 
     // SEED via Invoice Seeder template (creates seed_inv_* tables)
     ft = ConnectionsTestHelper.loadExampleAndPasteIntoMyScript(ft, 'invoice-seeder', 'seed_inv_');
@@ -1278,9 +1283,10 @@ export class ConnectionsTestHelper {
   static seedAndWipeUsingExampleDefaultViaConnectionDetails(
     ft: FluentTester,
     connectionCode: string,
+    dbVendor: string,
     fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
   ): FluentTester {
-    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, fullTimeout);
+    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, dbVendor, fullTimeout);
 
     // SEED via Example (default) — `__EXAMPLE_DEFAULT__` is already loaded on first open;
     // pass null for templateId so the helper skips the dropdown pick + confirm.
@@ -1319,9 +1325,11 @@ export class ConnectionsTestHelper {
   private static openSeedDataTabAndTestConnection(
     ft: FluentTester,
     connectionCode: string,
+    dbVendor: string,
     fullTimeout: number,
   ): FluentTester {
     const connFileSel = `#${connectionCode}\\.xml`;
+    const isFileBased = dbVendor === 'sqlite' || dbVendor === 'duckdb';
 
     ft = ft
       .gotoConnections()
@@ -1341,11 +1349,37 @@ export class ConnectionsTestHelper {
       .click('#btnTestDbConnectionSeedData')
       .waitOnElementToBecomeVisible('#btnTestDbConnection')
       .waitOnElementToBecomeEnabled('#btnTestDbConnection')
-      .click('#btnTestDbConnection')
+      .click('#btnTestDbConnection');
+
+    if (!isFileBased) {
+      ft = ft
+        .infoDialogShouldBeVisible()
+        .clickYesDoThis()
+        .click('#btnClearLogsDbConnection')
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
+        .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .click('#btnTestDbConnection');
+    }
+
+    ft = ft
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
-      .waitOnElementToBecomeEnabled('#btnTestDbConnection', fullTimeout)
-      .consoleLog('[SeedWipe] Connection tested');
+      .waitOnElementToBecomeDisabled('#btnTestDbConnection')
+      .waitOnElementToHaveClass('#btnTestDbConnectionIcon', 'fa-spin')
+      .consoleLog('[SeedWipe] Connection test running');
+
+    ft = ft
+      .click('#databaseSchemaTab-link')
+      .waitOnElementToBecomeInvisible(
+        'span:has-text("To load the schema, please ensure your connection details are configured")',
+      );
+    ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer');
+    ft = ft
+      .waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+      .consoleLog('[SeedWipe] Schema loaded — switching back to Seed Data');
 
     return ft
       .click('#seedDataTab-link')

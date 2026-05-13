@@ -7,7 +7,7 @@ import { useRbElementReady } from "./useRbElementReady";
 import { Loader2 } from "lucide-react";
 import { pickTrendFields } from "@/lib/explore-data/smart-defaults";
 import { pickColumnFormat } from "@/lib/explore-data/type-formatters";
-import type { ColumnSchema } from "@/lib/explore-data/types";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
 
 interface TrendWidgetProps {
   widgetId: string;
@@ -29,25 +29,23 @@ export function TrendWidget({ widgetId }: TrendWidgetProps) {
   const configValue = (displayConfig.valueField as string) || "";
   const configFormat = (displayConfig.format as string) || "";
 
-  const inferredColumns: ColumnSchema[] = useMemo(() => {
-    const row0 = result?.data?.[0];
-    if (!row0) return [];
-    return Object.entries(row0).map(([name, v]) => {
-      let typeName = "VARCHAR";
-      if (typeof v === "number") typeName = "DOUBLE";
-      else if (typeof v === "string" && v !== "" && !isNaN(Date.parse(v))) typeName = "DATE";
-      return { columnName: name, typeName, isNullable: true };
-    });
-  }, [result]);
+  // SINGLE TRUTH for column inference + saved-field validation lives in
+  // useEffectiveField. See lib/hooks/use-effective-field.ts.
+  // Note: routing through inferColumnsFromRow loses value-based DATE detection
+  // (`!isNaN(Date.parse(v))`). pickTrendFields still finds temporal columns by
+  // name via classification.isTemporalLike (TEMPORAL_NAME_PATTERN), and via
+  // tableSchema when present. Any regression should be addressed in
+  // classification.isTemporalLike (single source), not by re-adding date-shape
+  // inference here.
+  const { inferredColumns, keys, validateField } = useEffectiveField(result);
 
   const auto = useMemo(
     () => pickTrendFields(inferredColumns, tableSchema),
     [inferredColumns, tableSchema],
   );
 
-  const firstKey = inferredColumns[0]?.columnName ?? "";
-  const effectiveDate = configDate || auto.dateField || firstKey;
-  const effectiveValue = configValue || auto.valueField || inferredColumns[1]?.columnName || "";
+  const effectiveDate = validateField(configDate) || auto.dateField || keys[0] || "";
+  const effectiveValue = validateField(configValue) || auto.valueField || keys[1] || "";
 
   // Format inference — same source as NumberWidget uses.
   const effectiveFormat = useMemo<"number" | "currency" | "percent" | "raw">(() => {

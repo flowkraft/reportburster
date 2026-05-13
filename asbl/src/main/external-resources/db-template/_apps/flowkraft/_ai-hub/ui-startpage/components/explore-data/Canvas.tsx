@@ -54,6 +54,7 @@ export function Canvas() {
 
   return (
     <div
+      id="canvasGridArea"
       ref={containerRef}
       className="flex-1 overflow-auto bg-background p-4"
       onClick={() => selectWidget(null)}

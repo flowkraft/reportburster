@@ -10,9 +10,10 @@
 // classifier-side.
 
 import type { DataSource, VisualQuery, WidgetDisplayConfig, WidgetType } from "@/lib/stores/canvas-store";
-import type { ColumnSchema, QueryResult } from "./types";
+import type { ColumnSchema, QueryResult, TableSchema } from "./types";
 import {
-  autoPickMeasure, pickGaugeField, pickProgressField, pickTrendFields,
+  autoFilterPaneField, autoPickMeasure, autoPivotLayout,
+  pickGaugeField, pickProgressField, pickTrendFields,
   pickSankeyFields, pickDetailDefaults, pickMapDefaults, splitDimsAndMeasures,
   rankChartSubtypes, shapeFromResult, pickDefaultAxes, type CardinalityMap,
 } from "./smart-defaults";
@@ -168,38 +169,56 @@ export function seedDisplayConfigForType(
 
   switch (type) {
     case "chart": {
-      // When shape is available, use it to partition columns — avoids re-classifying
-      // inferColumnsFromRow output where numeric GROUP BY columns appear as DOUBLE.
+      // Seed into the canonical DSL Map at displayConfig.dslConfig (Principle 4).
       const { dims, measures } = shape
         ? {
             dims: columns.filter((c) => shape.dims.some((d) => d.name === c.columnName)),
             measures: columns.filter((c) => shape.measures.some((m) => m.name === c.columnName)),
           }
         : splitDimsAndMeasures(columns);
-      if (!currentConfig.chartType) {
+      const existing = (currentConfig.dslConfig ?? {}) as Record<string, unknown>;
+      const existingData = (existing.data ?? {}) as { labelField?: string; seriesField?: string; datasets?: { field: string; label?: string }[] };
+      // Carry forward only chart-canonical keys (type / data / options) from
+      // any existing dslConfig. A blanket `{ ...existing }` would leak fields
+      // from a prior widget-type era — e.g. tabulator's `layout`/`autoColumns`
+      // or pivot's `rows`/`cols`/`vals` — into the chart DSL output. Aligns
+      // chart with how pivot/tabulator/filter-pane cases below already behave
+      // (wholesale-replace) per DSLPrinciplesReadme Principle 4.
+      const dslPatch: Record<string, unknown> = {};
+      if (existing.type !== undefined) dslPatch.type = existing.type;
+      if (existing.data !== undefined) dslPatch.data = existing.data;
+      if (existing.options !== undefined) dslPatch.options = existing.options;
+      let dslChanged = false;
+      if (!existing.type) {
         const subtype = rankChartSubtypes(dims, measures, {
           cardinality: hints.cardinality,
           extractions: hints.extractions,
         })[0];
         if (subtype) {
-          next.chartType = subtype;
-          next._auto_chartType = true;
-          changed = true;
+          dslPatch.type = subtype;
+          dslChanged = true;
         }
       }
-      if (!currentConfig.xFields || (currentConfig.xFields as string[]).length === 0) {
-        const chartType = (next.chartType ?? currentConfig.chartType ?? "bar") as string;
+      const hasLabelField = typeof existingData.labelField === "string" && existingData.labelField;
+      const hasDatasets = Array.isArray(existingData.datasets) && existingData.datasets.length > 0;
+      if (!hasLabelField && !hasDatasets) {
+        const chartType = (dslPatch.type ?? existing.type ?? "bar") as string;
         const axes = pickDefaultAxes(dims, measures, chartType);
+        const newData: { labelField?: string; seriesField?: string; datasets?: { field: string; label?: string }[] } = { ...existingData };
         if (axes.xFields.length > 0) {
-          next.xFields = axes.xFields;
-          next._auto_xFields = true;
-          changed = true;
+          newData.labelField = axes.xFields[0];
+          if (axes.xFields.length > 1) newData.seriesField = axes.xFields[1];
+          dslChanged = true;
         }
         if (axes.yFields.length > 0) {
-          next.yFields = axes.yFields;
-          next._auto_yFields = true;
-          changed = true;
+          newData.datasets = axes.yFields.map((f) => ({ field: f, label: f }));
+          dslChanged = true;
         }
+        if (dslChanged) dslPatch.data = newData;
+      }
+      if (dslChanged) {
+        next.dslConfig = dslPatch;
+        changed = true;
       }
       break;
     }
@@ -260,7 +279,96 @@ export function seedDisplayConfigForType(
       seed("metric",    picks.metric);
       break;
     }
-    // tabulator / pivot / filter-pane / text / divider / iframe —
+    case "pivot": {
+      // Seed canonical pivot DSL Map at displayConfig.dslConfig (Principle 4
+      // in DSLPrinciplesReadme). Required because the chart case writes
+      // `dslConfig = { type, data: { labelField, datasets, seriesField } }`
+      // before the user may switch the widget to a pivot via the Visualize-as
+      // palette; without a pivot-shape seed here, that stale chart-shape
+      // survives into publish and the strict pivot parser crashes with
+      // MissingMethodException on `.type('bar')` inside `pivotTable(...)`.
+      const existing = (currentConfig.dslConfig ?? {}) as Record<string, unknown>;
+      const hasCanonicalPivot =
+        Array.isArray(existing.rows) || Array.isArray(existing.cols) || Array.isArray(existing.vals);
+      if (!hasCanonicalPivot) {
+        const stubTable: TableSchema = {
+          tableName: "",
+          tableType: "TABLE",
+          columns,
+          primaryKeyColumns: [],
+        };
+        const layout = autoPivotLayout(stubTable, hints.cardinality);
+        // Wholesale replace — any prior chart-shape `dslConfig` (`type`,
+        // `data`) is illegal in the pivot DSL surface and must not be
+        // preserved across a type switch.
+        next.dslConfig = {
+          rows: layout.rows,
+          cols: layout.cols,
+          vals: layout.vals,
+          aggregatorName: layout.aggregator,
+          rendererName: "Table",
+        };
+        changed = true;
+      }
+      break;
+    }
+    case "tabulator": {
+      // Seed canonical tabulator DSL Map at displayConfig.dslConfig (Principle 4
+      // in DSLPrinciplesReadme). Same root cause as the pivot case above: the
+      // chart case writes a chart-shape `dslConfig` that survives a switch to
+      // tabulator via the Visualize-as palette; the publisher then emits
+      // `tabulator('id') { type 'bar'; data([labelField:..., datasets:[...]]) }`
+      // and the tabulator parser rejects the alien `type`/`data` methods.
+      // Mirrors the Java emitter's empty-fallback at DashboardFileGenerator.java
+      // line 357-358 — `{ layout: 'fitColumns', autoColumns: true }`.
+      const existing = (currentConfig.dslConfig ?? {}) as Record<string, unknown>;
+      const hasCanonicalTabulator =
+        typeof existing.layout === "string" || Array.isArray(existing.columns);
+      if (!hasCanonicalTabulator) {
+        next.dslConfig = {
+          layout: "fitColumns",
+          autoColumns: true,
+        };
+        changed = true;
+      }
+      break;
+    }
+    case "filter-pane": {
+      // Seed canonical filterPane DSL Map at displayConfig.dslConfig (Principle 4).
+      // Same drift class as pivot/tabulator. The strict filterPane parser
+      // (no methodMissing) would crash on `type 'bar'`; the publisher pre-empts
+      // that by emitting `// filterPane('id') — no field configured` whenever
+      // dslConfig lacks a `field` — so the filter SILENTLY VANISHES from the
+      // published dashboard. Seed a sensible field via the existing
+      // autoFilterPaneField helper.
+      const existing = (currentConfig.dslConfig ?? {}) as Record<string, unknown>;
+      const hasCanonicalField = typeof existing.field === "string" && (existing.field as string).length > 0;
+      if (!hasCanonicalField) {
+        const stubTable: TableSchema = {
+          tableName: "",
+          tableType: "TABLE",
+          columns,
+          primaryKeyColumns: [],
+        };
+        const field = autoFilterPaneField(stubTable, hints.cardinality);
+        if (field) {
+          // Wholesale replace — chart-shape `type`/`data` are illegal in the
+          // filterPane DSL surface and must not be preserved across a type
+          // switch.
+          next.dslConfig = {
+            field,
+            label: field,
+            sort: "asc",
+            maxValues: 500,
+            showSearch: true,
+            multiSelect: true,
+          };
+          changed = true;
+        }
+      }
+      break;
+    }
+    // text / divider / iframe —
     // no deterministic "first column to pre-select" default worth writing.
   }
   return changed ? next : null;

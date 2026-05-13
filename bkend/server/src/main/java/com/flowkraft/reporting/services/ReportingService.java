@@ -198,6 +198,9 @@ public class ReportingService {
 				if (opts.getLabelField() != null) {
 					config.chartOptions.put("labelField", opts.getLabelField());
 				}
+				if (opts.getSeriesField() != null) {
+					config.chartOptions.put("seriesField", opts.getSeriesField());
+				}
 				if (opts.getOptions() != null && !opts.getOptions().isEmpty()) {
 					config.chartOptions.put("options", opts.getOptions());
 				}
@@ -218,6 +221,7 @@ public class ReportingService {
 						com.flowkraft.reporting.dsl.chart.ChartOptions co = entry.getValue();
 						if (co.getType() != null) m.put("type", co.getType());
 						if (co.getLabelField() != null) m.put("labelField", co.getLabelField());
+						if (co.getSeriesField() != null) m.put("seriesField", co.getSeriesField());
 						if (co.getOptions() != null && !co.getOptions().isEmpty()) m.put("options", co.getOptions());
 						if (co.getLabels() != null && !co.getLabels().isEmpty()) m.put("labels", co.getLabels());
 						if (co.getDatasets() != null && !co.getDatasets().isEmpty()) m.put("datasets", co.getDatasets());
@@ -723,13 +727,25 @@ public class ReportingService {
 						SqlExecutor sqlExec = new SqlExecutor(dbManager);
 						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
 
-						List<String> optionValues = new ArrayList<>();
+						// 1-col SQL → flat List<String> (back-compat for single-value selects).
+						// 2+-col SQL → List<Object[]> where each entry is [value, label] —
+						// the shape `<rb-parameters>` and `FilterBar.tsx` both consume to render
+						// `name` while binding `id` to the IN-list. Same convention used by the
+						// canvas-side resolver in FilterBar.tsx.
+						List<Object> resolved = new ArrayList<>();
 						for (Map<String, Object> row : rows) {
-							Object val = row.values().iterator().next();
-							if (val != null) optionValues.add(String.valueOf(val));
+							java.util.Iterator<Object> it = row.values().iterator();
+							Object first = it.hasNext() ? it.next() : null;
+							if (first == null) continue;
+							if (it.hasNext()) {
+								Object second = it.next();
+								resolved.add(new Object[] { String.valueOf(first), String.valueOf(second) });
+							} else {
+								resolved.add(String.valueOf(first));
+							}
 						}
-						param.uiHints.put("options", optionValues);
-						log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
+						param.uiHints.put("options", resolved);
+						log.debug("Resolved SQL options for param '" + param.id + "': " + resolved.size() + " values");
 					}
 				}
 			}

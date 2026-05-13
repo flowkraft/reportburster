@@ -15,6 +15,7 @@ import java.util.Map;
 public class ChartOptions {
 	private String type;
 	private String labelField; // Which column to use for X-axis labels
+	private String seriesField; // Optional pivot column — frontend splits rows into one dataset per distinct value
 	private Map<String, Object> options = new LinkedHashMap<>();
 	private List<String> labels = new ArrayList<>(); // Explicit labels override
 	private List<Map<String,Object>> datasets = new ArrayList<>(); // Series/dataset configurations
@@ -26,6 +27,9 @@ public class ChartOptions {
 
 	public String getLabelField() { return labelField; }
 	public void setLabelField(String labelField) { this.labelField = labelField; }
+
+	public String getSeriesField() { return seriesField; }
+	public void setSeriesField(String seriesField) { this.seriesField = seriesField; }
 
 	public Map<String, Object> getOptions() { return options; }
 	public void setOptions(Map<String, Object> options) { this.options = options; }

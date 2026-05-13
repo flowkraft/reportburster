@@ -66,11 +66,11 @@ export function AINavbar() {
   const navLinks = [
     { href: "/explore-data", label: "Explore Data" },
     { href: "/chat2db", label: "Chat2DB" },
-    { href: "/agents", label: "Data Geeks (AI Crew)" },
+    { href: "/agents", label: "Data Greeks (AI Crew)" },
   ]
 
   const isDataCanvas = pathname?.startsWith("/explore-data")
-  const brandLabel = isDataCanvas ? "DataPallas" : "Data Geeks"
+  const brandLabel = isDataCanvas ? "DataPallas" : "Data Greeks"
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-foreground/[0.06]">

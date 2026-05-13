@@ -17,8 +17,8 @@ export function usePublishDirty(enabled: boolean): void {
     if (!enabled) return;
 
     const snapshot = () => {
-      const { widgets, filterDsl, name, connectionId } = useCanvasStore.getState();
-      return JSON.stringify({ widgets, filterDsl, name, connectionId });
+      const { widgets, parametersConfig, name, connectionId } = useCanvasStore.getState();
+      return JSON.stringify({ widgets, parametersConfig, name, connectionId });
     };
     lastSnapshotRef.current = snapshot();
 

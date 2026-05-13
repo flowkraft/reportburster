@@ -2,6 +2,7 @@
 ## DocumentBurster
 #################
 dependency-tree.txt
+plans/
 asbl/**/*.zip
 asbl/dist
 asbl/src/uat/resources/__pycache__

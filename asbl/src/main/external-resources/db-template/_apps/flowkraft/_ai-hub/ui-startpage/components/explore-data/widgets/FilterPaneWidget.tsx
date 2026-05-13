@@ -5,24 +5,27 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { executeQuery, exploreAssociations, fetchSchema } from "@/lib/explore-data/rb-api";
 import { autoFilterPaneField, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
 import { useRbElementReady } from "./useRbElementReady";
+import { useDslConfig } from "@/lib/hooks/use-dsl-config";
+import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pane-mapping";
 import { Loader2, Sparkles } from "lucide-react";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: this widget renders FROM the DSL Map produced by
+ * useDslConfig (the canonical configuration). Same Map flows to <rb-filter-pane>
+ * here AND to the published page after DSL→parse round-trip.
+ * ============================================================================
+ */
 
 interface FilterPaneWidgetProps {
   widgetId: string;
 }
 
-/**
- * Filter Pane widget — renders via the <rb-filter-pane> Svelte web component.
- * Uses the component's "Mode 1 — Data Push" branch by setting `data` (an
- * array of rows) imperatively via a ref. The component extracts distinct
- * values from the chosen `field` itself.
- *
- * Associative exploration: the component dispatches `filterPaneSelect`
- * events on click. We forward to the existing canvas-store action
- * `toggleExploreSelection`, then push the resulting selectedValues /
- * associatedValues / excludedValues back to the element so it updates
- * the visual state of each value.
- */
 export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const connectionId = useCanvasStore((s) => s.connectionId);
@@ -33,7 +36,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const setExploreFieldStates = useCanvasStore((s) => s.setExploreFieldStates);
   const widgets = useCanvasStore((s) => s.widgets);
 
-  const updateWidgetDisplayConfig = useCanvasStore((s) => s.updateWidgetDisplayConfig);
+  const { config: dslMap, updateConfig } = useDslConfig(widgetId, "filterpane");
 
   const ref = useRef<HTMLElement>(null);
   const ready = useRbElementReady("rb-filter-pane");
@@ -42,7 +45,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoErr, setAutoErr] = useState<string | null>(null);
 
-  const field = (widget?.displayConfig.filterField as string) || "";
+  const field = (dslMap.field as string | undefined) ?? "";
   const table = (widget?.dataSource?.visualQuery?.table as string) || "";
 
   const handleAutoPickField = async () => {
@@ -56,7 +59,6 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
         setAutoErr(`Table ${table} not found.`);
         return;
       }
-      // Probe cardinality so we skip 200-value fields (unusable in a filter pane).
       const stringCols = tbl.columns
         .filter((c) => classifyColumn(c, tbl) === "category-low")
         .map((c) => c.columnName);
@@ -66,11 +68,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
         setAutoErr("No suitable filter field found in this table.");
         return;
       }
-      updateWidgetDisplayConfig(widget.id, {
-        ...(widget.displayConfig || {}),
-        filterField: picked,
-        _autoPicked: ["filterField"],
-      });
+      updateConfig({ ...dslMap, field: picked } as FilterPaneDslOptions);
     } catch (e) {
       setAutoErr(e instanceof Error ? e.message : "Auto-pick failed");
     } finally {
@@ -78,7 +76,6 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     }
   };
 
-  // Load distinct values for the filter pane (same as old React widget)
   useEffect(() => {
     if (!connectionId || !field || !table) { setRows([]); return; }
     setLoading(true);
@@ -91,13 +88,15 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       .finally(() => setLoading(false));
   }, [connectionId, field, table]);
 
-  // Recompute associative-exploration field states when selections change
+  // Recompute associative-exploration field states. Reads filter-pane fields
+  // from each widget's dslConfig.field (canonical Map), not legacy filterField.
   useEffect(() => {
     if (!connectionId || !table || exploreSelections.length === 0) return;
 
     const filterPaneFields = widgets
-      .filter((w) => w.type === "filter-pane" && w.displayConfig.filterField)
-      .map((w) => w.displayConfig.filterField as string);
+      .filter((w) => w.type === "filter-pane")
+      .map((w) => (w.displayConfig?.dslConfig as FilterPaneDslOptions | undefined)?.field)
+      .filter((f): f is string => typeof f === "string" && f.length > 0);
 
     if (filterPaneFields.length === 0) return;
 
@@ -106,18 +105,14 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       .catch((err) => console.warn("Explore failed:", err));
   }, [connectionId, table, exploreVersion]);
 
-  // Push data + field + DSL config + visual-state arrays into the custom element
   useEffect(() => {
     if (!ready || !ref.current || !field) return;
 
     const fieldStates = exploreFieldStates[field];
     const selectedSet = exploreSelections.filter((s) => s.field === field).map((s) => s.value);
 
-    // Value-kind-aware sort pick: names (strings) → alpha asc (easier to scan);
-    // numerics → count desc (the biggest bucket is usually most interesting).
-    // Reads the first non-null value of the chosen field to decide. Honors
-    // a user-set `filterPaneSort` displayConfig override when present.
-    const configSort = (widget?.displayConfig.filterPaneSort as string | undefined);
+    // Sort pick: explicit dslMap.sort wins; else infer from value type.
+    const configSort = dslMap.sort as string | undefined;
     let pickedSort: "asc" | "count_desc" | "desc" | "none" = "asc";
     if (configSort === "asc" || configSort === "desc" || configSort === "count_desc" || configSort === "none") {
       pickedSort = configSort;
@@ -144,17 +139,17 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       excludedValues?: string[] | null;
     };
 
-    const dc = widget?.displayConfig ?? {};
-    const cfgLabel       = (dc.filterPaneLabel       as string)  || "";
-    const cfgMultiSelect = (dc.filterPaneMultiSelect as boolean | undefined) ?? true;
-    const cfgShowSearch  = (dc.filterPaneShowSearch  as string)  || "auto";
-    const cfgShowCount   = (dc.filterPaneShowCount   as boolean | undefined) ?? false;
-    const cfgMaxValues   = (dc.filterPaneMaxValues   as number | undefined)  ?? 1000;
-    const cfgHeightMode  = (dc.filterPaneHeightMode  as string)  || "auto";
-    const cfgHeightPx    = (dc.filterPaneHeightPx    as number | undefined)  ?? 240;
+    const cfgLabel       = (dslMap.label as string | undefined) ?? "";
+    const cfgMultiSelect = (dslMap.multiSelect as boolean | undefined) ?? true;
+    const cfgShowSearchRaw = dslMap.showSearch;  // boolean | undefined
+    const cfgShowCount   = (dslMap.showCount as boolean | undefined) ?? false;
+    const cfgMaxValues   = (dslMap.maxValues as number | undefined) ?? 1000;
+    const cfgHeight      = (dslMap.height as string | undefined) ?? "auto";
 
     const searchProp: boolean | "auto" =
-      cfgShowSearch === "on" ? true : cfgShowSearch === "off" ? false : "auto";
+      cfgShowSearchRaw === true ? true
+      : cfgShowSearchRaw === false ? false
+      : "auto";
 
     el.field = field;
     el.label = cfgLabel || field;
@@ -163,15 +158,13 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     el.showSearch = searchProp;
     el.showCount = cfgShowCount;
     el.multiSelect = cfgMultiSelect;
-    el.height = cfgHeightMode === "fixed" ? `${cfgHeightPx}px` : "auto";
+    el.height = cfgHeight;
     el.data = rows;
     el.selectedValues = selectedSet;
     el.associatedValues = fieldStates ? fieldStates.associated : null;
     el.excludedValues = fieldStates ? fieldStates.excluded : null;
-  }, [ready, rows, field, exploreSelections, exploreFieldStates, widget?.displayConfig]);
+  }, [ready, rows, field, exploreSelections, exploreFieldStates, dslMap]);
 
-  // Listen for filterPaneSelect events from the Svelte component
-  // and forward to the canvas-store toggle action.
   useEffect(() => {
     if (!ready || !ref.current) return;
     const el = ref.current;
@@ -188,8 +181,6 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   }, [ready, toggleExploreSelection]);
 
   if (!field) {
-    // Empty state: if a table is picked, offer one-click auto-pick of the first
-    // low-cardinality dimension. If no table, user needs to configure via Data tab.
     if (!table) {
       return (
         <div className="flex items-center justify-center h-full text-xs text-muted-foreground p-2 text-center">

@@ -89,7 +89,7 @@ public class ExploreDataController {
     /**
      * POST /api/explore-data/{id}/export — export the canvas to a DataPallas
      * dashboard report.  No request body required: all canvas data (name,
-     * connectionId, widgets, filterDsl) is read from SQLite.  The dashboard
+     * connectionId, widgets, parametersConfig) is read from SQLite. The dashboard
      * slug is derived server-side from {@code exportedReportCode} (re-export)
      * or by slugifying the canvas name (first export).
      */

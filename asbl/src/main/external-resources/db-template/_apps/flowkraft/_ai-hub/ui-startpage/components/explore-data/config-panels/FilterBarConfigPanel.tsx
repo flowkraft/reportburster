@@ -3,11 +3,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Sparkles, Trash2, X } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useCanvasStore } from "@/lib/stores/canvas-store";
-import type { ParamMeta } from "@/components/explore-data/FilterBar";
+import { useCanvasStore, type ParamMeta } from "@/lib/stores/canvas-store";
 import { fetchDslExample } from "@/lib/explore-data/ai-prompt-builder";
 import { DslHelpDialog } from "./DslHelpDialog";
 import { DslExampleDialog } from "./DslExampleDialog";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: this panel mutates the canonical Map at
+ * `CanvasState.parametersConfig` directly — no parallel local params state,
+ * no debounced bidirectional sync. The DSL editor pane is a derived view:
+ * /api/dsl/reportparameters/serialize on open, /parse on save → setParametersConfig.
+ * ============================================================================
+ */
 
 const CodeMirror = dynamic(
   () => import("@uiw/react-codemirror").then((m) => m.default),
@@ -19,12 +32,16 @@ const RB_BASE = process.env.NEXT_PUBLIC_RB_API_URL || "http://localhost:9090/api
 const PARAM_TYPES = ["String", "Integer", "Double", "Boolean", "Date"];
 const UI_WIDGETS  = ["text", "select", "multiselect", "datepicker", "checkbox", "radio"];
 
-/** Slugify a label into a valid parameter ID: "Start Date" → "start-date" */
+/** Slugify a label into a valid parameter ID: "Start Date" → "start_date".
+ *  Uses underscores (not hyphens) because the param ID flows through:
+ *    - extractParamIds regex /\bid:\s*['"](\w+)['"]/ — needs \w
+ *    - backend convertToJdbiParameters → JDBI :name parser — needs [a-zA-Z_]\w*
+ *  Hyphens break all three. Underscores are \w-safe end to end. */
 function slugifyId(text: string): string {
   const slug = text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
     .slice(0, 40);
   return slug || "param";
 }
@@ -52,31 +69,28 @@ interface FilterBarConfigPanelProps {
 /**
  * Modal dialog for configuring dashboard filter bar parameters.
  *
- * Bidirectional sync:
- *   Form changes  → POST /api/dsl/reportparameters/serialize → setFilterDsl
- *   filterDsl changes (external) → POST /api/dsl/reportparameters/parse  → update form
- *
- * The `originRef` guard prevents the parse effect from re-firing when we
- * ourselves wrote filterDsl from a form serialization.
+ * The Map at `CanvasState.parametersConfig` is canonical. Form mutations call
+ * `setParametersConfig` directly (synchronous, no debouncing). The "Customize
+ * with DSL" pane is a derived view — opens via /serialize, saves via /parse →
+ * `setParametersConfig`. There is NO local params state to keep in sync.
  */
 export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProps) {
-  const filterDsl    = useCanvasStore((s) => s.filterDsl);
-  const setFilterDsl = useCanvasStore((s) => s.setFilterDsl);
+  const parametersConfig    = useCanvasStore((s) => s.parametersConfig);
+  const setParametersConfig = useCanvasStore((s) => s.setParametersConfig);
 
-  const [params,     setParams]     = useState<ParamMeta[]>([]);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("synced");
-  const [syncError,  setSyncError]  = useState<string | null>(null);
-  const [dslOpen,    setDslOpen]    = useState(false);
-  const [aiOpen,     setAiOpen]     = useState(false);
-  const [exampleOpen, setExampleOpen] = useState(false);
-  const [example, setExample] = useState<string | null>(null);
+  const params = parametersConfig?.parameters ?? [];
+
+  const [dslOpen,        setDslOpen]        = useState(false);
+  const [dslText,        setDslText]        = useState<string>("");
+  const [dslStatus,      setDslStatus]      = useState<SyncStatus>("synced");
+  const [dslError,       setDslError]       = useState<string | null>(null);
+  const [aiOpen,         setAiOpen]         = useState(false);
+  const [exampleOpen,    setExampleOpen]    = useState(false);
+  const [example,        setExample]        = useState<string | null>(null);
   const [loadingExample, setLoadingExample] = useState(false);
 
   const handleShowExample = useCallback(async () => {
-    if (example !== null) {
-      setExampleOpen(true);
-      return;
-    }
+    if (example !== null) { setExampleOpen(true); return; }
     setLoadingExample(true);
     try {
       const text = await fetchDslExample("filter-bar");
@@ -89,9 +103,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
     }
   }, [example]);
 
-  const originRef      = useRef<"form" | "dsl" | null>(null);
-  const serializeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const parseTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const parseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -101,93 +113,86 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  // ── filterDsl → parse → params ─────────────────────────────────────────
+  // When the DSL editor pane is opened — derive text by serializing the
+  // canonical Map. Re-derives whenever params change while pane is open
+  // (so external form edits flow into the visible text).
   useEffect(() => {
-    if (originRef.current === "form") return;
-    const dsl = filterDsl?.trim() ?? "";
-    if (!dsl) { setParams([]); setSyncError(null); setSyncStatus("synced"); return; }
-
-    if (parseTimer.current) clearTimeout(parseTimer.current);
-    parseTimer.current = setTimeout(async () => {
-      setSyncStatus("syncing");
-      try {
-        const res = await fetch(`${RB_BASE}/dsl/reportparameters/parse`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dslCode: dsl }),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json() as { parameters?: ParamMeta[]; error?: string };
-        if (data.error) throw new Error(data.error);
-        setParams(data.parameters ?? []);
-        setSyncStatus("synced");
-        setSyncError(null);
-      } catch (e) {
-        setSyncStatus("error");
-        setSyncError(e instanceof Error ? e.message : String(e));
-      }
-    }, 300);
-    return () => { if (parseTimer.current) clearTimeout(parseTimer.current); };
-  }, [filterDsl]);
-
-  // ── params → serialize → setFilterDsl ──────────────────────────────────
-  const syncFromForm = useCallback((nextParams: ParamMeta[]) => {
-    setSyncStatus("syncing");
-    if (serializeTimer.current) clearTimeout(serializeTimer.current);
-    serializeTimer.current = setTimeout(async () => {
+    if (!dslOpen) return;
+    let cancelled = false;
+    setDslStatus("syncing");
+    (async () => {
       try {
         const res = await fetch(`${RB_BASE}/dsl/reportparameters/serialize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ options: { parameters: nextParams } }),
+          body: JSON.stringify({ options: { parameters: params } }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json() as { dslCode: string };
-        originRef.current = "form";
-        setFilterDsl(data.dslCode);
-        setSyncStatus("synced");
-        setSyncError(null);
-        setTimeout(() => { originRef.current = null; }, 50);
+        if (!cancelled) {
+          setDslText(data.dslCode);
+          setDslStatus("synced");
+          setDslError(null);
+        }
       } catch (e) {
-        setSyncStatus("error");
-        setSyncError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) {
+          setDslStatus("error");
+          setDslError(e instanceof Error ? e.message : String(e));
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dslOpen, JSON.stringify(params)]);
+
+  // User edited DSL text → debounced parse → setParametersConfig.
+  const handleDslChange = (text: string) => {
+    setDslText(text);
+    setDslStatus("syncing");
+    if (parseTimer.current) clearTimeout(parseTimer.current);
+    parseTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${RB_BASE}/dsl/reportparameters/parse`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dslCode: text }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json() as { parameters?: ParamMeta[]; options?: { parameters?: ParamMeta[] }; error?: string };
+        if (data.error) throw new Error(data.error);
+        const parsed = data.parameters ?? data.options?.parameters ?? [];
+        setParametersConfig({ parameters: parsed });
+        setDslStatus("synced");
+        setDslError(null);
+      } catch (e) {
+        setDslStatus("error");
+        setDslError(e instanceof Error ? e.message : String(e));
       }
     }, 500);
-  }, [setFilterDsl]);
+  };
 
   const updateParam = (idx: number, updated: ParamMeta) => {
     const next = params.map((p, i) => i === idx ? updated : p);
-    setParams(next);
-    if (updated.id.trim()) syncFromForm(next);
+    setParametersConfig({ parameters: next });
   };
 
   const addParam = () => {
     const n = params.length + 1;
-    const next = [...params, emptyParam(n)];
-    setParams(next);
-    syncFromForm(next);
+    setParametersConfig({ parameters: [...params, emptyParam(n)] });
   };
 
   const removeParam = (idx: number) => {
-    const next = params.filter((_, i) => i !== idx);
-    setParams(next);
-    syncFromForm(next);
-  };
-
-  const handleDslChange = (text: string) => {
-    originRef.current = "dsl";
-    setFilterDsl(text);
-    setTimeout(() => { originRef.current = null; }, 0);
+    setParametersConfig({ parameters: params.filter((_, i) => i !== idx) });
   };
 
   if (!open) return null;
 
-  // Status indicator — only show error (users don't care about synced/syncing)
+  // Status indicator — only show DSL parse errors (form mutations are sync now).
   const statusEl =
-    syncStatus === "error" ? (
-      <span className="flex items-center gap-1 text-[10px] text-destructive" title={syncError ?? "error"}>
+    dslStatus === "error" ? (
+      <span className="flex items-center gap-1 text-[10px] text-destructive" title={dslError ?? "error"}>
         <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-        {syncError ? syncError.slice(0, 60) : "DSL error"}
+        {dslError ? dslError.slice(0, 60) : "DSL error"}
       </span>
     ) : params.length > 0 ? (
       <span className="text-[10px] text-muted-foreground">
@@ -257,7 +262,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
                     ? <ChevronDown className="w-3.5 h-3.5" />
                     : <ChevronRight className="w-3.5 h-3.5" />}
                   Customize with DSL (Parameters)
-                  {syncStatus === "error" && (
+                  {dslStatus === "error" && (
                     <span className="flex items-center gap-1 text-[10px] text-destructive">
                       <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
                       DSL error
@@ -280,7 +285,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
                 <>
                   <div id="filterDslEditorContainer" className="border border-border rounded-md overflow-hidden">
                     <CodeMirror
-                      value={filterDsl}
+                      value={dslText}
                       onChange={handleDslChange}
                       height="180px"
                       theme="dark"
@@ -319,7 +324,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
         open={aiOpen}
         onClose={() => setAiOpen(false)}
         componentType="filter-bar"
-        currentDsl={filterDsl}
+        currentDsl={dslText}
         columns={[]}
         sampleData={[]}
       />

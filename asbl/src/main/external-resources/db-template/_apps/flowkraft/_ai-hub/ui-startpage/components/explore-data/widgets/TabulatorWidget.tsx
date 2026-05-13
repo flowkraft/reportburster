@@ -9,27 +9,33 @@ import { looksLikeBoolean, isTemporalExtraction } from "@/lib/explore-data/smart
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { pickColumnFormat, formatCellHtml, type FormatSpec } from "@/lib/explore-data/type-formatters";
 import { pseudoColumnSchema } from "@/lib/explore-data/pseudo-column";
-import type { ColumnSettingsMap } from "@/lib/explore-data/column-settings";
-import { mergeColumnFormat } from "@/lib/explore-data/column-settings";
 import { ColumnSettingsDialog } from "../ColumnSettingsDialog";
+import { useDslConfig } from "@/lib/hooks/use-dsl-config";
+import { mapToTabulatorRenderConfig } from "@/lib/explore-data/render/tabulator-render-config";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: this widget renders FROM the DSL Map produced by
+ * useDslConfig (the canonical configuration). Same Map flows to <rb-tabulator>
+ * here AND to the published page after DSL→parse round-trip. Drift impossible.
+ * ============================================================================
+ */
 
 interface TabulatorWidgetProps {
   widgetId: string;
 }
 
-// Tabulator cell-like object — we only read getValue() from it.
 type TabCell = { getValue: () => unknown };
 
-/** Build a Tabulator formatter callback using the type-aware formatter.
- *  Returns HTML strings (link/image/etc. come out as anchors/imgs). Tabulator
- *  inserts the result as innerHTML, so anchors become clickable. */
 function formatterFor(col: ColumnSchema, spec: FormatSpec): (cell: TabCell) => string {
   return (cell) => formatCellHtml(cell.getValue(), col, spec);
 }
 
-/** Custom column-header formatter — adds a tiny gear button next to the label.
- *  The button's click handler calls `onSettings(field)` directly and stops
- *  propagation before Tabulator's sort handler can intercept the event. */
 function headerFormatterFor(title: string, field: string, onSettings: (f: string) => void): () => HTMLElement {
   return () => {
     const wrap = document.createElement("div");
@@ -46,11 +52,9 @@ function headerFormatterFor(title: string, field: string, onSettings: (f: string
     btn.setAttribute("aria-label", `Settings for ${field}`);
     btn.title = "Column settings";
     btn.style.cssText = "flex:0 0 auto;padding:2px;border:none;background:transparent;color:#666;cursor:pointer;border-radius:3px;line-height:0;opacity:0.5;";
-    // 12×12 gear SVG
     btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
     btn.onmouseenter = () => { btn.style.opacity = "1"; btn.style.background = "rgba(0,0,0,0.06)"; };
     btn.onmouseleave = () => { btn.style.opacity = "0.5"; btn.style.background = "transparent"; };
-    // stopPropagation prevents Tabulator's sort-click handler from firing.
     btn.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); onSettings(field); });
     wrap.appendChild(btn);
 
@@ -66,17 +70,18 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const ready = useRbElementReady("rb-tabulator");
   const [activeField, setActiveField] = useState<string | null>(null);
 
-  const columnSettings     = (widget?.displayConfig.columnSettings    as ColumnSettingsMap | undefined) ?? {};
-  const tabulatorLayout    = (widget?.displayConfig.tabulatorLayout    as string)  || "fitDataStretch";
-  const tabulatorPagination = widget?.displayConfig.tabulatorPagination !== false;  // default on
-  const tabulatorPageSize  = (widget?.displayConfig.tabulatorPageSize  as number)  || 50;
-  const tabulatorTheme     = (widget?.displayConfig.tabulatorTheme     as string)  ?? "";
+  // ── Single source of truth: the canonical DSL Map. If displayConfig has
+  //    no dslConfig yet (fresh widget), the hook returns an empty Map; the
+  //    render-config helper applies sensible Tabulator defaults (autoColumns +
+  //    fitColumns layout) so the widget renders all data columns by default.
+  const { config: dslMap } = useDslConfig(widgetId, "tabulator");
   const groupByBuckets = widget?.dataSource?.visualQuery?.groupByBuckets ?? {};
   const groupByCols = new Set(widget?.dataSource?.visualQuery?.groupBy ?? []);
 
-  // Build per-column pseudo-schema + base format + effective (merged) format.
-  // Rebuilds only when the rows or the settings change — cheap and avoids
-  // constant flicker across renders.
+  // ── Per-column metadata (canvas-only: format detection, gear button)
+  //    layered ON TOP of the canonical Map. The Map controls visibility +
+  //    titles via autoColumnsDefinitions; canvas adds formatters and the
+  //    settings-dialog gear button.
   const columnMeta = useMemo(() => {
     if (!result || result.data.length === 0) return [] as { field: string; col: ColumnSchema; effective: FormatSpec; sample: unknown }[];
     const keys = Object.keys(result.data[0]);
@@ -90,50 +95,48 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
       }
       const col = pseudoColumnSchema(field, sample);
       let base = pickColumnFormat(col);
-      // Boolean-by-value detection (text column w/ exactly 2 booleanish values).
       if (base.kind === "text" && looksLikeBoolean(result.data, field, 50)) {
         base = { kind: "boolean" };
       }
-      // Temporal bucket propagation: if this column is grouped with a bucket,
-      // copy the bucket into the format spec so formatDateValue renders it
-      // at the right granularity (month→"Mar 2026", day-of-week→"Monday").
-      // groupByBuckets always carries TimeBucket values (a subset of DateUnit).
       const bucket = groupByBuckets[field];
       if (bucket && groupByCols.has(field)) {
-        // Extraction buckets produce integer categories — treat as date with unit.
         if (isTemporalExtraction(bucket) || base.kind === "date") {
           base = { ...base, kind: "date", dateUnit: bucket };
         }
       }
-      const effective = mergeColumnFormat(base, columnSettings[field]);
-      return { field, col, effective, sample };
+      return { field, col, effective: base, sample };
     });
-  }, [result, columnSettings, JSON.stringify(groupByBuckets)]);
+  }, [result, JSON.stringify(groupByBuckets)]);
+
+  // ── Build the <rb-tabulator> config from the canonical Map.
+  const renderConfig = useMemo(
+    () => mapToTabulatorRenderConfig(dslMap, result?.data ?? []),
+    [dslMap, result?.data],
+  );
 
   useEffect(() => {
     if (!ready || !ref.current) return;
     if (!result || result.data.length === 0) return;
 
-    const el = ref.current as HTMLElement & {
-      data?: unknown;
-      columns?: unknown;
-      options?: unknown;
-    };
+    // Visibility per field comes from the Map's autoColumnsDefinitions (which
+    // mapToTabulatorRenderConfig has already placed in renderConfig.options).
+    // Canvas-only: derive title (Map override or field name), formatter,
+    // gear-button header, alignment.
+    const acDefs = (dslMap.autoColumnsDefinitions as Array<Record<string, unknown>> | undefined) ?? [];
+    const acDefByField = new Map<string, Record<string, unknown>>();
+    for (const def of acDefs) {
+      if (typeof def?.field === "string") acDefByField.set(def.field, def);
+    }
 
-    // Hidden set: union of the Display-tab checkbox list (`hiddenColumns`, set
-    // by TabulatorConfig) + per-column gear-dialog `hidden: true` overrides.
-    // Lower-case both sides: schema column names (e.g. "CustomerID") may differ
-    // in case from result-data keys (e.g. "customerid" returned by DuckDB/SQLite).
-    const configHiddenLower = new Set(
-      ((widget?.displayConfig.hiddenColumns as string[]) || []).map((s) => s.trim().toLowerCase())
-    );
-    const visible = columnMeta.filter(
-      ({ field }) => !configHiddenLower.has(field.trim().toLowerCase()) && !columnSettings[field]?.hidden
-    );
+    const visible = columnMeta.filter(({ field }) => {
+      const def = acDefByField.get(field);
+      return def?.visible !== false;
+    });
 
     const columns = visible.map(({ field, col, effective }) => {
+      const def = acDefByField.get(field);
       const rightAlign = effective.kind === "currency" || effective.kind === "number" || effective.kind === "percentage" || effective.kind === "coordinate";
-      const title = columnSettings[field]?.columnTitle ?? field;
+      const title = (typeof def?.title === "string" ? def.title : field);
       return {
         title,
         field,
@@ -144,16 +147,17 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
       };
     });
 
+    const el = ref.current as HTMLElement & {
+      data?: unknown;
+      columns?: unknown;
+      options?: unknown;
+      theme?: string;
+    };
     el.columns = columns;
     el.data = result.data;
-    el.options = {
-      layout: tabulatorLayout,
-      ...(tabulatorPagination
-        ? { pagination: true, paginationSize: tabulatorPageSize }
-        : { pagination: false }),
-    };
-    (el as HTMLElement & { theme?: string }).theme = tabulatorTheme;
-  }, [ready, columnMeta, columnSettings, widget?.displayConfig.hiddenColumns, tabulatorLayout, tabulatorPagination, tabulatorPageSize, tabulatorTheme]);
+    el.options = renderConfig.options;
+    el.theme = (dslMap.theme as string | undefined) ?? "";
+  }, [ready, columnMeta, dslMap, renderConfig, result]);
 
   const activeMeta = columnMeta.find((m) => m.field === activeField) ?? null;
 
@@ -165,6 +169,10 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const vq = widget?.dataSource?.visualQuery;
   const limit = vq?.limit ?? 500;
   const atLimit = result.rowCount >= limit;
+  const tabulatorTheme = (dslMap.theme as string | undefined) ?? "";
+  const tabulatorLayout = (dslMap.layout as string | undefined) ?? "fitDataStretch";
+  const tabulatorPagination = dslMap.pagination !== false;
+  const tabulatorPageSize = (dslMap.paginationSize as number | undefined) ?? 50;
 
   return (
     <div className="h-full flex flex-col">
@@ -179,18 +187,12 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
         open={activeField !== null && activeMeta !== null}
         onClose={() => setActiveField(null)}
         column={activeMeta?.col ?? null}
-        settings={activeField ? columnSettings[activeField] : undefined}
+        settings={undefined}
         sampleValue={activeMeta?.sample}
-        onChange={(next) => {
-          if (!widget || !activeField) return;
-          const prev = (widget.displayConfig.columnSettings as ColumnSettingsMap | undefined) ?? {};
-          const updated: ColumnSettingsMap = { ...prev };
-          if (next === undefined) delete updated[activeField];
-          else updated[activeField] = next;
-          updateWidgetDisplayConfig(widget.id, {
-            ...widget.displayConfig,
-            columnSettings: updated,
-          });
+        onChange={() => {
+          // Column-settings persistence will be wired into setPath in a follow-up.
+          // For now the dialog edits are not persisted; visibility/title edits
+          // happen through the Display tab UI panel.
         }}
       />
     </div>

@@ -5,7 +5,20 @@ import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
 import { isSensibleChartSubtype, rankChartSubtypes, type ChartRankingHints } from "@/lib/explore-data/smart-defaults";
-import { AutoBadge, isAutoField, clearAutoFlag } from "./AutoBadge";
+import type { ChartDslOptions, ChartDataBlock } from "@/lib/explore-data/dsl-sync/chart-mapping";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: every UI gesture in this Display tab panel mutates
+ * the canonical DSL Map at displayConfig.dslConfig — never the old structured
+ * fields (chartType, xFields, yFields, chartTitle, etc., now removed).
+ * ============================================================================
+ */
 
 const PALETTES = [
   { id: "default", label: "Default", colors: ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f"] },
@@ -34,23 +47,103 @@ interface ChartConfigProps {
   config: WidgetDisplayConfig;
   columns: ColumnSchema[];
   onChange: (config: WidgetDisplayConfig) => void;
-  /** Optional hints for the subtype ranker — cardinality map (pie demote/promote)
-   *  and extraction-bucket set (line demote for day-of-week et al.). Supplied by
-   *  ConfigPanel; passing them through lets the RB-extension rules fire. */
   rankingHints?: ChartRankingHints;
 }
 
+function readDslMap(config: WidgetDisplayConfig): ChartDslOptions {
+  return (config.dslConfig as ChartDslOptions) ?? {};
+}
+
+function setDslMap(
+  config: WidgetDisplayConfig,
+  next: ChartDslOptions,
+  onChange: (c: WidgetDisplayConfig) => void,
+): void {
+  onChange({ ...config, dslConfig: next });
+}
+
+/** Read x-axis fields from the canonical Map: [labelField, seriesField] (filter empties). */
+function readXFields(map: ChartDslOptions): string[] {
+  const data = (map.data as ChartDataBlock | undefined) ?? {};
+  const out: string[] = [];
+  if (typeof data.labelField === "string" && data.labelField) out.push(data.labelField);
+  if (typeof data.seriesField === "string" && data.seriesField) out.push(data.seriesField);
+  return out;
+}
+
+/** Read y-axis fields from the canonical Map: datasets[].field. */
+function readYFields(map: ChartDslOptions): string[] {
+  const data = (map.data as ChartDataBlock | undefined) ?? {};
+  return (data.datasets ?? []).map((d) => d.field).filter((f): f is string => Boolean(f));
+}
+
+/** Replace the data block's labelField + seriesField from the new xFields[]. */
+function writeXFields(map: ChartDslOptions, xFields: string[]): ChartDslOptions {
+  const data: ChartDataBlock = { ...((map.data as ChartDataBlock | undefined) ?? {}) };
+  if (xFields[0]) data.labelField = xFields[0]; else delete data.labelField;
+  if (xFields[1]) data.seriesField = xFields[1]; else delete data.seriesField;
+  const next: ChartDslOptions = { ...map };
+  if (data.labelField || data.seriesField || (data.datasets && data.datasets.length > 0)) next.data = data;
+  else delete next.data;
+  return next;
+}
+
+/** Replace the data block's datasets from the new yFields[]. */
+function writeYFields(map: ChartDslOptions, yFields: string[]): ChartDslOptions {
+  const data: ChartDataBlock = { ...((map.data as ChartDataBlock | undefined) ?? {}) };
+  if (yFields.length > 0) data.datasets = yFields.map((f) => ({ field: f, label: f }));
+  else delete data.datasets;
+  const next: ChartDslOptions = { ...map };
+  if (data.labelField || data.seriesField || (data.datasets && data.datasets.length > 0)) next.data = data;
+  else delete next.data;
+  return next;
+}
+
+/** Read the chart title (`options.plugins.title.text`). */
+function readTitle(map: ChartDslOptions): string {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const plugins = opts?.plugins as Record<string, unknown> | undefined;
+  const title = plugins?.title as Record<string, unknown> | undefined;
+  return typeof title?.text === "string" ? title.text : "";
+}
+
+/** Read legend setting: "show" | "hide" | "auto" (auto = key absent). */
+function readLegend(map: ChartDslOptions): "auto" | "show" | "hide" {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const plugins = opts?.plugins as Record<string, unknown> | undefined;
+  const legend = plugins?.legend as Record<string, unknown> | undefined;
+  if (legend === undefined) return "auto";
+  if (typeof legend.display === "boolean") return legend.display ? "show" : "hide";
+  return "auto";
+}
+
+/** Update options.plugins.* immutably. */
+function setPluginOption(map: ChartDslOptions, key: "title" | "legend", value: unknown): ChartDslOptions {
+  const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
+  const plugins = { ...((opts.plugins as Record<string, unknown> | undefined) ?? {}) };
+  if (value === undefined) delete plugins[key];
+  else plugins[key] = value;
+  if (Object.keys(plugins).length > 0) opts.plugins = plugins;
+  else delete opts.plugins;
+  const next: ChartDslOptions = { ...map };
+  if (Object.keys(opts).length > 0) next.options = opts;
+  else delete next.options;
+  return next;
+}
+
 export function ChartConfig({ config, columns, onChange, rankingHints }: ChartConfigProps) {
-  const chartType = (config.chartType as string) || "bar";
-  // Array-shaped axes: xFields[0]=X, xFields[1]=series-split; yFields=metrics[].
-  const xFields = (config.xFields as string[] | undefined) ?? [];
-  const yFields = (config.yFields as string[] | undefined) ?? [];
-  const bubbleSizeField = (config.bubbleSizeField as string) || "";
+  const map = readDslMap(config);
+
+  const chartType = (map.type as string | undefined) ?? "bar";
+  const xFields = readXFields(map);
+  const yFields = readYFields(map);
+  const bubbleSizeField = (map.bubbleSizeField as string | undefined) ?? "";
+  const chartTitle = readTitle(map);
+  const legend = readLegend(map);
+  const palette = (map.palette as string | undefined) ?? "default";
 
   const hasSeriesSplit = xFields.length >= 2;
 
-  // Replace one slot in an array (used by chip edit dropdowns). Empty value
-  // removes the slot entirely.
   const replaceAt = (arr: string[], idx: number, value: string): string[] => {
     if (!value) return arr.filter((_, i) => i !== idx);
     const next = arr.slice();
@@ -58,23 +151,49 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
     return next;
   };
 
-  const setXFields = (next: string[]) => onChange(clearAutoFlag({ ...config, xFields: next }, "xFields"));
-  const setYFields = (next: string[]) => onChange(clearAutoFlag({ ...config, yFields: next }, "yFields"));
+  const setXFields = (next: string[]) => setDslMap(config, writeXFields(map, next), onChange);
+  const setYFields = (next: string[]) => setDslMap(config, writeYFields(map, next), onChange);
 
   const addXSlot = (value: string) => setXFields([...xFields, value]);
   const addYSlot = (value: string) => setYFields([...yFields, value]);
   const removeXSlot = (idx: number) => setXFields(xFields.filter((_, i) => i !== idx));
   const removeYSlot = (idx: number) => setYFields(yFields.filter((_, i) => i !== idx));
 
+  const setChartType = (type: string) => setDslMap(config, { ...map, type }, onChange);
+
+  const setBubbleSizeField = (f: string) => {
+    const next: ChartDslOptions = { ...map };
+    if (f) next.bubbleSizeField = f;
+    else delete next.bubbleSizeField;
+    setDslMap(config, next, onChange);
+  };
+
+  const setChartTitle = (title: string) => {
+    if (title) {
+      setDslMap(config, setPluginOption(map, "title", { display: true, text: title }), onChange);
+    } else {
+      setDslMap(config, setPluginOption(map, "title", undefined), onChange);
+    }
+  };
+
+  const setLegend = (v: "auto" | "show" | "hide") => {
+    if (v === "auto") {
+      setDslMap(config, setPluginOption(map, "legend", undefined), onChange);
+    } else {
+      setDslMap(config, setPluginOption(map, "legend", { display: v === "show" }), onChange);
+    }
+  };
+
+  const setPalette = (id: string) => {
+    const next: ChartDslOptions = { ...map };
+    if (id && id !== "default") next.palette = id;
+    else delete next.palette;
+    setDslMap(config, next, onChange);
+  };
+
   const dimensions = columns.filter((c) => getFieldKind(c) === "dimension");
   const measures = columns.filter((c) => getFieldKind(c) === "measure");
 
-  // Per-subtype sensibility + ranking. Two layers:
-  //   1. isSensibleChartSubtype → hard filter (can this viz render at all?).
-  //   2. rankChartSubtypes      → soft ordering inside the sensible set
-  //      (temporal→line-led, categorical→bar-led, extraction→categorical,
-  //      high-card demotes pie, etc.).
-  // UX: never disable a pick — dim nonsensible and surface a tooltip reason.
   const rankedOrder = rankChartSubtypes(dimensions, measures, rankingHints);
   const rankOf = (t: string) => {
     const i = rankedOrder.indexOf(t);
@@ -84,7 +203,6 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
     ? [...CHART_TYPES]
         .map((ct) => ({ ...ct, ...isSensibleChartSubtype(ct.type, dimensions, measures) }))
         .sort((a, b) => {
-          // Sensible first; inside each bucket sort by rank position.
           if (a.sensible !== b.sensible) return Number(b.sensible) - Number(a.sensible);
           return rankOf(a.type) - rankOf(b.type);
         })
@@ -92,13 +210,8 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
 
   return (
     <div id="configPanel-chart" className="space-y-3">
-      {/* Chart type picker — 12 icons in a 4-col grid. Sensible-first sort;
-          nonsensible buttons are dimmed but still clickable. */}
       <div>
-        <span className="text-xs text-muted-foreground">
-          Chart type
-          {isAutoField(config, "chartType") && <AutoBadge reason="Picked from data shape (1 date + 1 measure → line; 1 category + 1 measure → bar; etc.)" />}
-        </span>
+        <span className="text-xs text-muted-foreground">Chart type</span>
         <div className="grid grid-cols-4 gap-1 mt-1">
           {subtypeOrdered.map(({ type, icon: Icon, label, sensible, reason }) => {
             const isSelected = chartType === type;
@@ -112,7 +225,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
                 key={type}
                 id={`btnChartType-${type}`}
                 aria-pressed={isSelected}
-                onClick={() => onChange(clearAutoFlag({ ...config, chartType: type }, "chartType"))}
+                onClick={() => setChartType(type)}
                 title={!sensible ? `${label} — ${reason}. Pick anyway if you know what you're doing.` : label}
                 aria-label={!sensible ? `${label} (not ideal: ${reason})` : label}
                 className={`${baseClass} ${stateClass} ${dimClass}`}
@@ -130,7 +243,6 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         )}
       </div>
 
-      {/* Bubble size field — only when bubble */}
       {chartType === "bubble" && (
         <div>
           <span className="text-xs text-muted-foreground">
@@ -138,7 +250,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
           </span>
           <select
             value={bubbleSizeField}
-            onChange={(e) => onChange({ ...config, bubbleSizeField: e.target.value })}
+            onChange={(e) => setBubbleSizeField(e.target.value)}
             className="w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
           >
             <option value="">Constant size</option>
@@ -152,24 +264,21 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </div>
       )}
 
-      {/* BoxPlot needs raw rows — warn the user not to pre-aggregate */}
       {chartType === "boxplot" && (
         <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
           Box Plot expects un-aggregated rows. In the Data tab, leave Summarize empty so the component can compute quartiles per category.
         </div>
       )}
 
-      {/* X axis — chips. First chip = X; second chip (if set) = series-split dim.
-          Max 2 chips — beyond two, the chart can't stay readable. */}
       <div>
         <span className="text-xs text-muted-foreground">
           X axis <span className="text-blue-500">(dimension)</span>
-          {isAutoField(config, "xFields") && <AutoBadge reason="First group-by column; if you have 2 breakouts, the lower-cardinality one goes on X and the other becomes series-split." />}
         </span>
         <div className="mt-1 space-y-1">
           {xFields.map((field, idx) => (
             <div key={`x-${idx}`} className="flex items-center gap-1">
               <select
+                id={`selectChartXAxis-${idx}`}
                 value={field}
                 onChange={(e) => setXFields(replaceAt(xFields, idx, e.target.value))}
                 className="flex-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
@@ -193,6 +302,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
                 {idx === 0 ? "X axis" : "series by"}
               </span>
               <button
+                id={`btnRemoveChartXAxis-${idx}`}
                 type="button"
                 onClick={() => removeXSlot(idx)}
                 className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
@@ -219,18 +329,15 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </div>
       </div>
 
-      {/* Y axis — chips, one per metric. Uncapped by default, but when
-          series-split is active (2 X chips) we force exactly 1 metric to
-          avoid an N×M series explosion — hide "Add metric" in that case. */}
       <div>
         <span className="text-xs text-muted-foreground">
           Y axis <span className="text-emerald-500">(measure)</span>
-          {isAutoField(config, "yFields") && <AutoBadge reason="All numeric measures (ID columns excluded). When a series-split is active, only the first metric renders." />}
         </span>
         <div className="mt-1 space-y-1">
           {yFields.map((field, idx) => (
             <div key={`y-${idx}`} className="flex items-center gap-1">
               <select
+                id={`selectChartYAxis-${idx}`}
                 value={field}
                 onChange={(e) => setYFields(replaceAt(yFields, idx, e.target.value))}
                 className="flex-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
@@ -254,6 +361,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
                 {idx === 0 ? "Y axis" : `+ metric`}
               </span>
               <button
+                id={`btnRemoveChartYAxis-${idx}`}
                 type="button"
                 onClick={() => removeYSlot(idx)}
                 className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
@@ -285,28 +393,28 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </div>
       </div>
 
-      {/* ── Chart title ── */}
       <div>
         <span className="text-xs text-muted-foreground">Chart title</span>
         <input
+          id="inputChartTitle"
           type="text"
-          value={(config.chartTitle as string) || ""}
-          onChange={(e) => onChange({ ...config, chartTitle: e.target.value })}
+          value={chartTitle}
+          onChange={(e) => setChartTitle(e.target.value)}
           placeholder="Optional title…"
           className="w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground placeholder:text-muted-foreground/40"
         />
       </div>
 
-      {/* ── Legend ── */}
       <div>
         <span className="text-xs text-muted-foreground">Legend</span>
         <div className="flex mt-1 rounded-md overflow-hidden border border-border text-xs">
           {(["auto", "show", "hide"] as const).map((v) => (
             <button
               key={v}
-              onClick={() => onChange({ ...config, chartShowLegend: v })}
+              id={`btnChartLegend-${v}`}
+              onClick={() => setLegend(v)}
               className={`flex-1 py-1.5 capitalize transition-colors ${
-                ((config.chartShowLegend as string) || "auto") === v
+                legend === v
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted-foreground hover:bg-accent"
               }`}
@@ -317,16 +425,15 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </div>
       </div>
 
-      {/* ── Color palette ── */}
       <div>
         <span className="text-xs text-muted-foreground">Color palette</span>
         <div className="grid grid-cols-5 gap-1 mt-1">
           {PALETTES.map(({ id, label, colors }) => {
-            const selected = ((config.chartPalette as string) || "default") === id;
+            const selected = palette === id;
             return (
               <button
                 key={id}
-                onClick={() => onChange({ ...config, chartPalette: id })}
+                onClick={() => setPalette(id)}
                 title={label}
                 className={`flex flex-col items-center gap-0.5 p-1 rounded border transition-colors ${
                   selected ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"

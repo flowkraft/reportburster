@@ -97,7 +97,59 @@ public class DatabaseHelper {
 		return params.stream().distinct().collect(Collectors.toList());
 	}
 
+	/** Wildcard sentinel for IN-list parameters. When a param's value equals
+	 *  this, the surrounding `<col> [NOT] IN (${name})` clause is rewritten to
+	 *  `1=1` — i.e. the filter is dropped and the widget returns rows for every
+	 *  value of the column. Lets a dashboard user say "show me all runs" via a
+	 *  single-character input instead of typing every id. */
+	public static final String WILDCARD_VALUE = "*";
+
+	/** Wildcard-aware convertToJdbiParameters. When a param's value equals
+	 *  {@link #WILDCARD_VALUE}, the regex below replaces the entire surrounding
+	 *  `<col> [NOT] IN (${name})` clause with `1=1` BEFORE the standard JDBI
+	 *  param transforms run. Net effect: the IN filter disappears from the SQL
+	 *  and the param drops out of the bind set automatically (no `<name>` or
+	 *  `:name` left for the caller's bind loop to match against). */
+	public static String convertToJdbiParameters(String sql, Map<String, Object> params) {
+		if (params != null) {
+			for (Map.Entry<String, Object> e : params.entrySet()) {
+				Object v = e.getValue();
+				if (v == null) continue;
+				if (!WILDCARD_VALUE.equals(v.toString().trim())) continue;
+				// Match `<col> [NOT] IN (${name})` — column captured as
+				// non-whitespace-non-paren so `t.col`, `"col"`, `[col]`,
+				// `\`col\`` all work uniformly across vendors. The `1=1`
+				// replacement is universally valid SQL (Oracle, SQL Server,
+				// Postgres, MySQL, MariaDB, Db2, SQLite, DuckDB, ClickHouse).
+				String escapedName = Pattern.quote(e.getKey());
+				Pattern p = Pattern.compile(
+					"(?i)[^\\s()]+\\s+(?:NOT\\s+)?IN\\s*\\(\\s*[\\$#]\\{" + escapedName + "\\}\\s*\\)"
+				);
+				sql = p.matcher(sql).replaceAll("1=1");
+			}
+		}
+		return convertToJdbiParameters(sql);
+	}
+
 	public static String convertToJdbiParameters(String sql) {
+		// Pass 1: IN (${name}) / NOT IN (${name}) → IN (<name>) — JDBI list-binding syntax.
+		// Lets dashboard params holding a comma-separated value ("1, 5, 10") expand into a
+		// real SQL list via Query.bindList(name, splitCsv(value)). Without this, scalar bind
+		// would emit IN ('1, 5, 10') — one quoted string, zero rows.
+		Pattern inListPattern = Pattern.compile(
+			"(?i)\\b(NOT\\s+IN|IN)\\s*\\(\\s*[\\$#]\\{([^}]+)\\}\\s*\\)"
+		);
+		Matcher inMatcher = inListPattern.matcher(sql);
+		StringBuilder inSb = new StringBuilder();
+		while (inMatcher.find()) {
+			String op = inMatcher.group(1).toUpperCase().replaceAll("\\s+", " ");
+			String varName = inMatcher.group(2);
+			inMatcher.appendReplacement(inSb, op + " (<" + varName + ">)");
+		}
+		inMatcher.appendTail(inSb);
+		sql = inSb.toString();
+
+		// Pass 2: scalar ${name} / #{name} / @name@ → :name
 		Pattern pattern = Pattern.compile("[\\$#]\\{([^}]+)\\}|@(\\w+)@");
 		Matcher matcher = pattern.matcher(sql);
 		StringBuilder sb = new StringBuilder();
@@ -110,6 +162,19 @@ public class DatabaseHelper {
 		}
 		matcher.appendTail(sb);
 		return sb.toString();
+	}
+
+	/**
+	 * Returns the set of parameter names that appear inside JDBI list-binding
+	 * markers `<name>` in the SQL. Callers use this to know which params must be
+	 * bound via Query.bindList(name, list) rather than scalar bindMap.
+	 */
+	public static java.util.Set<String> findListBoundParameters(String sql) {
+		Pattern pattern = Pattern.compile("<(\\w[\\w-]*)>");
+		Matcher matcher = pattern.matcher(sql);
+		java.util.Set<String> names = new java.util.LinkedHashSet<>();
+		while (matcher.find()) names.add(matcher.group(1));
+		return names;
 	}
 
 	public Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {

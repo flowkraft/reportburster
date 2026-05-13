@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 15.2.0 - 2026-05-18
+
+### Added
+
+- **TimescaleDB starter pack** — New starter pack under the "timeseries" category.
+  - **It's PostgreSQL with an extension** — same engine, same SQL, same drivers, same tooling. Anything that talks to Postgres talks to TimescaleDB. The extension adds time-series superpowers on top of vanilla Postgres; it doesn't replace it.
+  - **It's built for time-series workloads** — append-only data, time-range queries, automatic partitioning by time, and built-in rollups (called *continuous aggregates*). 
+
+- **Per-connection Seed Data tab** — Each connection has its own Seed Data tab where you can define and run your own custom schema and data scripts against any database connection. Bundled examples cover invoice seeding and wipe.
+
+### Fixed
+
+- **Various Data Canvas fixes** — Widget rendering, filter handling, auto-save, history/undo, and DSL editor sync.
+
 ## 15.1.0 - 2026-05-04
 
 ### Added

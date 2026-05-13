@@ -6,7 +6,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
 import { Loader2 } from "lucide-react";
 import { pickGaugeField } from "@/lib/explore-data/smart-defaults";
-import type { ColumnSchema } from "@/lib/explore-data/types";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
 
 interface GaugeWidgetProps {
   widgetId: string;
@@ -26,33 +26,32 @@ export function GaugeWidget({ widgetId }: GaugeWidgetProps) {
   const displayConfig = widget?.displayConfig ?? {};
   const configField = (displayConfig.field as string) || "";
 
-  const inferredColumns: ColumnSchema[] = useMemo(() => {
-    const row0 = result?.data?.[0];
-    if (!row0) return [];
-    return Object.entries(row0).map(([name, v]) => ({
-      columnName: name,
-      typeName: typeof v === "number" ? "DOUBLE" : "VARCHAR",
-      isNullable: true,
-    }));
-  }, [result]);
+  // SINGLE TRUTH for column inference + saved-field validation lives in
+  // useEffectiveField. See lib/hooks/use-effective-field.ts.
+  const { inferredColumns, keys, validateField } = useEffectiveField(result);
 
   const auto = useMemo(
     () => pickGaugeField(inferredColumns, tableSchema),
     [inferredColumns, tableSchema],
   );
 
-  const firstKey = inferredColumns[0]?.columnName ?? "";
-  const effectiveField = configField || auto.field || firstKey;
+  const effectiveField = validateField(configField) || auto.field || keys[0] || "";
 
-  const options = useMemo(
-    () => ({
+  const options = useMemo(() => {
+    const rawBands = displayConfig.gaugeBands as { to: number; color: string }[] | undefined;
+    const reverseColors = (displayConfig.gaugeBandsReverse as boolean | undefined) ?? false;
+    // When reversed, swap COLORS while keeping the threshold positions — produces
+    // green-on-left / red-on-right for risk metrics where "more = worse".
+    const bands = (reverseColors && rawBands && rawBands.length > 1)
+      ? rawBands.map((b, i) => ({ to: b.to, color: rawBands[rawBands.length - 1 - i].color }))
+      : rawBands;
+    return {
       ...displayConfig,
       field: effectiveField,
-      bands:  (displayConfig.gaugeBands  as { to: number; color: string }[] | undefined),
-      format: (displayConfig.gaugeFormat as "number" | "currency" | "percent" | "raw" | undefined),
-    }),
-    [displayConfig, effectiveField],
-  );
+      bands,
+      format: displayConfig.gaugeFormat as "number" | "currency" | "percent" | "raw" | undefined,
+    };
+  }, [displayConfig, effectiveField]);
 
   useEffect(() => {
     if (!ready || !ref.current || !result) return;

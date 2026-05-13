@@ -291,7 +291,7 @@ test.describe('Data Canvas Visualizations', () => {
         // No .catch() — a missing web component is a real failure.
         // ══════════════════════════════════════════════════════════════════════
         await test.step('AREA A — Creation & Rendering (all 10 widget types)', async () => {
-          if (process.env.E2E_ONLY === 'EF') { console.log('[FAST-PATH EF] skip AREA A'); return; }
+          if (process.env.E2E_ONLY === 'EF' || process.env.E2E_ONLY === 'E') { console.log(`[FAST-PATH ${process.env.E2E_ONLY}] skip AREA A`); return; }
 
           // A-1: TABULATOR — raw Orders drop (always sensible)
           await test.step('A-1: tabulator', async () => {
@@ -431,7 +431,7 @@ test.describe('Data Canvas Visualizations', () => {
         // Representative widget: chart on Orders (start raw, then aggregate).
         // ══════════════════════════════════════════════════════════════════════
         await test.step('AREA B — Data Tab: Visual Mode (summarize + group-by)', async () => {
-          if (process.env.E2E_ONLY === 'EF') { console.log('[FAST-PATH EF] skip AREA B'); return; }
+          if (process.env.E2E_ONLY === 'EF' || process.env.E2E_ONLY === 'E') { console.log(`[FAST-PATH ${process.env.E2E_ONLY}] skip AREA B`); return; }
 
           // B-1: Raw Orders → add SUM(Freight) aggregation
           await test.step('B-1: chart — add SUM(Freight) aggregation', async () => {
@@ -501,7 +501,7 @@ test.describe('Data Canvas Visualizations', () => {
         //   C-3: Switch back to Visual mode — verify group-by UI reappears.
         // ══════════════════════════════════════════════════════════════════════
         await test.step('AREA C — Data Tab: Finetune SQL/Script', async () => {
-          if (process.env.E2E_ONLY === 'EF') { console.log('[FAST-PATH EF] skip AREA C'); return; }
+          if (process.env.E2E_ONLY === 'EF' || process.env.E2E_ONLY === 'E') { console.log(`[FAST-PATH ${process.env.E2E_ONLY}] skip AREA C`); return; }
 
           await test.step('C-1: SQL mode — scalar query → number widget #1 in palette', async () => {
             console.log('[C-1] START — SQL mode: type scalar query, run it, detect columns, assert palette');
@@ -744,7 +744,7 @@ test.describe('Data Canvas Visualizations', () => {
         //   detail   → #configPanel-detail visible
         // ══════════════════════════════════════════════════════════════════════
         await test.step('AREA D — Display Tab: Widget-Specific Config', async () => {
-          if (process.env.E2E_ONLY === 'EF') { console.log('[FAST-PATH EF] skip AREA D'); return; }
+          if (process.env.E2E_ONLY === 'EF' || process.env.E2E_ONLY === 'E') { console.log(`[FAST-PATH ${process.env.E2E_ONLY}] skip AREA D`); return; }
 
           // ── D-CHART: categorical → bar should be auto-selected ──────────────
           await test.step('D-chart: categorical data → bar is #1, aria-pressed', async () => {
@@ -1024,7 +1024,7 @@ test.describe('Data Canvas Visualizations', () => {
         await test.step('AREA E — DSL Customization', async () => {
 
           await test.step('E-1: chart — DSL content + auto-save persist (navigate away/back)', async () => {
-            console.log('[E-1] START — chart DSL: assert type() key, append marker, navigate away/back, assert marker persists');
+            console.log('[E-1] START — chart DSL: assert canonical type key, flip type bar→line, navigate away/back, assert type persists as line');
             await createFreshCanvas(page, DATA_CANVAS_URL, 'E1 — Chart | DSL persist');
             await selectConnection(page, connectionName, DB_VENDOR);
             await addTableToCanvas(page, 'Orders');
@@ -1038,24 +1038,52 @@ test.describe('Data Canvas Visualizations', () => {
 
             await openDslEditor(page);
 
-            // Chart DSL must contain type() — the primary chart-type declaration
-            const dslBefore = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslBefore).toMatch(/type\s*\(/);
+            // Chart DSL must contain the canonical command-chain type — `type 'bar'`
+            // (no parens). Per DSLPrinciplesReadme, `type('bar')` is the BAD form.
+            //
+            // Read the editor line-by-line and join with newlines. CodeMirror 6 renders
+            // each line as a separate `.cm-line` div; `.cm-content`.textContent joins
+            // them WITHOUT newlines, producing a single-line blob that is invalid
+            // Groovy (adjacent command-chain calls like `type 'bar' data { … }` parse
+            // as `type('bar').data(…)`). The line-by-line read preserves the line
+            // structure, which is what we need for the paste-back round-trip.
+            const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+            const dslBefore = dslBeforeLines.join('\n');
+            expect(dslBefore).toMatch(/type\s+'bar'/);
 
             // AI help button present (chart has AI DSL support)
             await expect(page.locator('#btnAiHelpDsl')).toBeVisible({ timeout: 3_000 });
 
-            // Append a unique marker — proves the exact text round-trips through auto-save
+            // Flip the chart type from 'bar' → 'line' by simulating a real
+            // OS clipboard paste: write the new DSL to the system clipboard,
+            // then dispatch a TRUSTED Ctrl+V keystroke. The browser fires a
+            // real `paste` DOM event with `clipboardData` populated from the
+            // system clipboard — exactly the path a real user takes (verified
+            // by hand). CodeMirror 6's dedicated paste handler reads the
+            // clipboard text and dispatches an atomic transaction → onChange
+            // → saveDslText → /dsl/chart/parse → updateConfig.
+            //
+            // Why not the alternatives:
+            //  - `keyboard.insertText`: synthetic InputEvent, filtered by CM6.
+            //  - synthetic `ClipboardEvent`: untrusted clipboardData, filtered.
+            //  - `view.dispatch` via @uiw/react-codemirror: doesn't expose
+            //     `cmView` on the DOM where vanilla CM6 does (verified diag).
+            //  - `locator.fill`: uses execCommand('insertText'), which CM6's
+            //     MutationObserver reconciler rejects (verified by no-op).
+            const newDsl = dslBefore.replace(/type\s+'bar'/, "type 'line'");
+            await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
             await page.locator('#dslEditorContainer .cm-content').click();
-            await page.keyboard.press('Control+End');
-            await page.keyboard.insertText('\n// e2e-chart-persist-marker');
+            await page.keyboard.press('Control+A');
+            await page.keyboard.press('Control+V');
 
             // Collapse DSL section
             await page.locator('#btnDslToggle').click();
             await page.waitForTimeout(300);
             await expect(page.locator('#dslEditorContainer')).not.toBeVisible();
 
-            // Wait: useDslSync serialize debounce (600ms) + canvas auto-save debounce (1200ms) + margin
+            // Wait for useDslConfig.saveDslText (POST /dsl/chart/parse) to complete
+            // + canvas auto-save to fire. The save chain is fire-and-forget on each
+            // onChange, no debounce, so 3s is generous.
             await page.waitForTimeout(3_000);
 
             // Navigate away to canvas list, then back to the same canvas
@@ -1072,14 +1100,15 @@ test.describe('Data Canvas Visualizations', () => {
             await expect(page.locator('#configPanel-chart')).toBeVisible({ timeout: 5_000 });
             await openDslEditor(page);
 
-            // Marker must survive the round-trip through auto-save + server reload
+            // Semantic edit must survive the round-trip through auto-save + server reload
             const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslAfter).toContain('e2e-chart-persist-marker');
-            console.log('[E-1] DONE — chart DSL persisted through navigation');
+            expect(dslAfter).toMatch(/type\s+'line'/);
+            expect(dslAfter).not.toMatch(/type\s+'bar'/);   // no stale leftover
+            console.log('[E-1] DONE — chart DSL type=line persisted through navigation');
           });
 
           await test.step('E-2: tabulator — DSL content + auto-save persist (navigate away/back)', async () => {
-            console.log('[E-2] START — tabulator DSL: assert layout/columns key, append marker, navigate away/back');
+            console.log('[E-2] START — tabulator DSL: assert layout key, flip fitColumns→fitDataStretch, navigate away/back, assert layout persists');
             await createFreshCanvas(page, DATA_CANVAS_URL, 'E2 — Tabulator | DSL persist');
             await selectConnection(page, connectionName, DB_VENDOR);
             await addTableToCanvas(page, 'Orders');
@@ -1090,16 +1119,27 @@ test.describe('Data Canvas Visualizations', () => {
             await clickDisplayTab(page);
             await openDslEditor(page);
 
-            // Tabulator DSL must start with the tabulator keyword (may be empty-block: "tabulator {}")
-            const dslBefore = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
+            // Tabulator DSL must contain the canonical seeded layout — `layout 'fitColumns'`.
+            // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
+            const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+            const dslBefore = dslBeforeLines.join('\n');
             expect(dslBefore).toMatch(/tabulator/);
+            expect(dslBefore).toMatch(/layout\s+'fitColumns'/);
 
             await expect(page.locator('#btnAiHelpDsl')).toBeVisible({ timeout: 3_000 });
 
-            // Append marker + wait for auto-save
+            // Flip layout to a different valid tabulator.info value. Semantic field that
+            // round-trips cleanly through parse → Map → emit. See E-1 for the rationale
+            // on the clipboard + Ctrl+V approach (real paste, only path that works).
+            const newDsl = dslBefore.replace(/layout\s+'fitColumns'/, "layout 'fitDataStretch'");
+            await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
             await page.locator('#dslEditorContainer .cm-content').click();
-            await page.keyboard.press('Control+End');
-            await page.keyboard.insertText('\n// e2e-tabulator-persist-marker');
+            await page.keyboard.press('Control+A');
+            await page.keyboard.press('Control+V');
+
+            // Collapse + wait for save chain
+            await page.locator('#btnDslToggle').click();
+            await page.waitForTimeout(300);
             await page.waitForTimeout(3_000);
 
             // Navigate away/back
@@ -1115,12 +1155,13 @@ test.describe('Data Canvas Visualizations', () => {
             await openDslEditor(page);
 
             const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslAfter).toContain('e2e-tabulator-persist-marker');
-            console.log('[E-2] DONE — tabulator DSL persisted through navigation');
+            expect(dslAfter).toMatch(/layout\s+'fitDataStretch'/);
+            expect(dslAfter).not.toMatch(/layout\s+'fitColumns'/);
+            console.log('[E-2] DONE — tabulator DSL layout=fitDataStretch persisted through navigation');
           });
 
           await test.step('E-3: pivot — DSL content + auto-save persist (navigate away/back)', async () => {
-            console.log('[E-3] START — pivot DSL: assert rows/aggregatorName key, append marker, navigate away/back');
+            console.log('[E-3] START — pivot DSL: assert aggregatorName key, flip Sum→Count, navigate away/back, assert aggregator persists');
             await createFreshCanvas(page, DATA_CANVAS_URL, 'E3 — Pivot | DSL persist');
             await selectConnection(page, connectionName, DB_VENDOR);
             await addTableToCanvas(page, 'Orders');
@@ -1134,16 +1175,26 @@ test.describe('Data Canvas Visualizations', () => {
             await expect(page.locator('#configPanel-pivot')).toBeVisible({ timeout: 5_000 });
             await openDslEditor(page);
 
-            // Pivot DSL must contain rows, aggregatorName, or pivot block
-            const dslBefore = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslBefore).toMatch(/rows|aggregatorName|pivot/i);
+            // Pivot DSL must contain the canonical seeded aggregator — `aggregatorName 'Sum'`.
+            // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
+            const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+            const dslBefore = dslBeforeLines.join('\n');
+            expect(dslBefore).toMatch(/pivotTable/);
+            expect(dslBefore).toMatch(/aggregatorName\s+'Sum'/);
 
             await expect(page.locator('#btnAiHelpDsl')).toBeVisible({ timeout: 3_000 });
 
-            // Append marker + wait for auto-save
+            // Flip aggregator Sum → Count. Both are valid react-pivottable aggregators
+            // (see PivotTableOptionsScript javadoc). Round-trips through parse → Map → emit.
+            const newDsl = dslBefore.replace(/aggregatorName\s+'Sum'/, "aggregatorName 'Count'");
+            await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
             await page.locator('#dslEditorContainer .cm-content').click();
-            await page.keyboard.press('Control+End');
-            await page.keyboard.insertText('\n// e2e-pivot-persist-marker');
+            await page.keyboard.press('Control+A');
+            await page.keyboard.press('Control+V');
+
+            // Collapse + wait for save chain
+            await page.locator('#btnDslToggle').click();
+            await page.waitForTimeout(300);
             await page.waitForTimeout(3_000);
 
             // Navigate away/back
@@ -1159,12 +1210,13 @@ test.describe('Data Canvas Visualizations', () => {
             await openDslEditor(page);
 
             const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslAfter).toContain('e2e-pivot-persist-marker');
-            console.log('[E-3] DONE — pivot DSL persisted through navigation');
+            expect(dslAfter).toMatch(/aggregatorName\s+'Count'/);
+            expect(dslAfter).not.toMatch(/aggregatorName\s+'Sum'/);
+            console.log('[E-3] DONE — pivot DSL aggregatorName=Count persisted through navigation');
           });
 
           await test.step('E-4: parameters — filter-bar DSL persist (navigate away/back)', async () => {
-            console.log('[E-4] START — filter-bar filterDsl: add param, assert DSL, append marker, navigate away/back');
+            console.log('[E-4] START — filter-bar filterDsl: add param, flip label Param1→E2E_LABEL, navigate away/back, assert label persists');
             // Fresh empty canvas — no widget Display tab open, so no widget #btnDslToggle in DOM
             await createFreshCanvas(page, DATA_CANVAS_URL, 'E4 — Parameters | DSL persist');
 
@@ -1176,7 +1228,8 @@ test.describe('Data Canvas Visualizations', () => {
             await configBtn.click();
             await page.waitForTimeout(300);
 
-            // Add one parameter — triggers serialize → populates filterDsl
+            // Add one parameter — emptyParam() seeds id='param1', label='Param1', type='String'.
+            // This triggers serialize → populates filterDsl with a `parameter(id: 'param1', label: 'Param1', …)` entry.
             await page.locator('#btnAddParameter').waitFor({ state: 'visible', timeout: 3_000 });
             await page.locator('#btnAddParameter').click();
             await page.waitForTimeout(800); // serialize debounce (500ms) + margin
@@ -1184,17 +1237,24 @@ test.describe('Data Canvas Visualizations', () => {
             // Open DSL section in modal (#filterDslEditorContainer added for testability)
             await openDslEditor(page, '#filterDslEditorContainer');
 
-            // Parameters DSL must contain parameters or reportparameters block
-            const dslBefore = await page.locator('#filterDslEditorContainer .cm-content').textContent() ?? '';
+            // Parameters DSL must contain the canonical block + the seeded label.
+            // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
+            const dslBeforeLines = await page.locator('#filterDslEditorContainer .cm-line').allTextContents();
+            const dslBefore = dslBeforeLines.join('\n');
             expect(dslBefore).toMatch(/parameters|reportparameters/i);
+            expect(dslBefore).toMatch(/label:\s*'Param1'/);
 
             // AI help button for filter-bar DSL
             await expect(page.locator('#btnAiHelpFilters')).toBeVisible({ timeout: 3_000 });
 
-            // Append marker
+            // Flip the first parameter's label Param1 → E2E_LABEL. `label` is a canonical
+            // Map field, round-trips cleanly through the parser. See E-1 for the clipboard
+            // + Ctrl+V rationale.
+            const newDsl = dslBefore.replace(/label:\s*'Param1'/, "label: 'E2E_LABEL'");
+            await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
             await page.locator('#filterDslEditorContainer .cm-content').click();
-            await page.keyboard.press('Control+End');
-            await page.keyboard.insertText('\n// e2e-params-persist-marker');
+            await page.keyboard.press('Control+A');
+            await page.keyboard.press('Control+V');
             await page.waitForTimeout(300);
 
             // Close modal, wait for canvas auto-save (filterDsl is included in canvas state)
@@ -1216,11 +1276,12 @@ test.describe('Data Canvas Visualizations', () => {
             await openDslEditor(page, '#filterDslEditorContainer');
 
             const dslAfter = await page.locator('#filterDslEditorContainer .cm-content').textContent() ?? '';
-            expect(dslAfter).toContain('e2e-params-persist-marker');
+            expect(dslAfter).toMatch(/label:\s*'E2E_LABEL'/);
+            expect(dslAfter).not.toMatch(/label:\s*'Param1'/);
 
             // Close modal cleanly
             await page.locator('#btnDoneFilters').click();
-            console.log('[E-4] DONE — filter-bar filterDsl persisted through navigation');
+            console.log('[E-4] DONE — filter-bar filterDsl label=E2E_LABEL persisted through navigation');
           });
         });
 
@@ -1232,6 +1293,7 @@ test.describe('Data Canvas Visualizations', () => {
         // F-3: Move widget — drag from current position to new position.
         // ══════════════════════════════════════════════════════════════════════
         await test.step('AREA F — Widget Interactions (delete, move)', async () => {
+          if (process.env.E2E_ONLY === 'E') { console.log('[FAST-PATH E] skip AREA F'); return; }
 
           await test.step('F-1: delete widget via Delete key', async () => {
             console.log('[F-1] START — delete widget: create tabulator, click Delete key, assert 0 remaining');

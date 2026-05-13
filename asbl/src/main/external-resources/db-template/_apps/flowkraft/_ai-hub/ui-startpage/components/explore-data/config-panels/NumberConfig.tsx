@@ -10,7 +10,7 @@ import { AutoBadge, isAutoField, clearAutoFlag } from "./AutoBadge";
 const FORMATS = [
   { value: "number", label: "Number (1,234)" },
   { value: "currency", label: "Currency ($1,234)" },
-  { value: "percent", label: "Percent (73%)" },
+  { value: "percent", label: "Percent (73.1%)" },
   { value: "raw", label: "Raw value" },
 ];
 
@@ -101,6 +101,7 @@ export function NumberConfig({ config, columns, onChange }: NumberConfigProps) {
       <div>
         <span className="text-xs text-muted-foreground">Label</span>
         <input
+          id="inputNumberLabel"
           value={label}
           onChange={(e) => onChange({ ...config, numberLabel: e.target.value })}
           placeholder="Auto from field name"

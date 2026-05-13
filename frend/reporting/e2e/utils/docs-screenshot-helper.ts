@@ -21,6 +21,7 @@
 import { Page, Locator } from '@playwright/test';
 import * as path from 'path';
 import * as jetpack from 'fs-jetpack';
+import sharp from 'sharp';
 
 /**
  * Absolute path to the docs repo's `public/images/docs/` folder.
@@ -36,12 +37,470 @@ export const DOCS_IMAGES_DIR = path.resolve(
   'public', 'images', 'docs',
 );
 
+/**
+ * Inject a `<style>` tag that hides every toast notification on the page.
+ *
+ * Toasts pop in/out during the test as a side effect of user actions (Saved,
+ * Connection started, etc.) and routinely leak into screenshots taken seconds
+ * after the action. The hiding rule covers the three classes used across the
+ * Angular UI (`#toast-container`, `.toast-container`, `.ngx-toastr`) plus the
+ * generic `.toast`. The injected style stays on the page for the lifetime of
+ * the page — call once early in the test, then every subsequent capture is
+ * toast-free without needing per-shot setup/teardown.
+ *
+ * Idempotent: re-calling doesn't stack multiple style tags (we look up by id).
+ */
+export async function hideToastsForScreenshots(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    if (document.getElementById('__hide_toasts_for_screenshots')) return;
+    const style = document.createElement('style');
+    style.id = '__hide_toasts_for_screenshots';
+    style.textContent =
+      `#toast-container, .toast-container, .ngx-toastr, .toast { display: none !important; }`;
+    document.head.appendChild(style);
+  });
+}
+
 /** Take a viewport screenshot and save it directly into the docs repo. */
-export async function captureDocsScreenshot(page: Page, filename: string): Promise<void> {
-  await jetpack.dirAsync(DOCS_IMAGES_DIR);
-  const fullPath = path.join(DOCS_IMAGES_DIR, filename);
+export async function captureDocsScreenshot(
+  page: Page,
+  filename: string,
+  outDir: string = DOCS_IMAGES_DIR,
+): Promise<void> {
+  await jetpack.dirAsync(outDir);
+  const fullPath = path.join(outDir, filename);
   await page.screenshot({ path: fullPath, fullPage: false });
   console.log(`[screenshot] ${filename} → ${fullPath}`);
+}
+
+/**
+ * Scroll the element matched by `selector` to the vertical center of the
+ * viewport, then take a normal viewport screenshot. Use for per-step captures
+ * where the just-built widget should be visible and visually emphasized.
+ *
+ * `block: 'center'` ensures the element is mid-viewport (not flush at top
+ * or bottom). 300ms settle covers the post-scroll repaint.
+ */
+export async function captureDocsScreenshotCenteredOn(
+  page: Page,
+  filename: string,
+  selector: string,
+  outDir: string = DOCS_IMAGES_DIR,
+): Promise<void> {
+  await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' });
+  }, selector);
+  await page.waitForTimeout(300);
+  await captureDocsScreenshot(page, filename, outDir);
+}
+
+/**
+ * Capture the full scrollable page and downsample it to fit within the
+ * viewport box, preserving aspect ratio. Use for the final "complete
+ * dashboard" screenshot that doesn't fit in a single viewport screenshot
+ * at native size.
+ *
+ * Pipeline: Playwright fullPage capture → sharp resize with Lanczos3 kernel
+ * (sharp's default for downsampling and the gold standard for image-quality
+ * downsizing — minimal aliasing, preserves edge sharpness) → write PNG.
+ *
+ * `fit: 'contain'` letterboxes with white background if the dashboard's
+ * aspect ratio doesn't match the viewport's, so nothing is cropped.
+ */
+export async function captureDocsScreenshotFitToViewport(
+  page: Page,
+  filename: string,
+  outDir: string = DOCS_IMAGES_DIR,
+): Promise<void> {
+  await jetpack.dirAsync(outDir);
+  const fullPath = path.join(outDir, filename);
+  const viewport = page.viewportSize() ?? { width: 1500, height: 900 };
+  const buffer = await page.screenshot({ fullPage: true });
+  await sharp(buffer)
+    .resize({
+      width: viewport.width,
+      height: viewport.height,
+      fit: 'contain',
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+      kernel: 'lanczos3',
+    })
+    .toFile(fullPath);
+  console.log(`[screenshot] ${filename} → ${fullPath} (fit-to-viewport, lanczos3)`);
+}
+
+/**
+ * Capture only a single element's bounding box, then downsample with Lanczos3
+ * to a target width. Use when the "interesting" region is one container
+ * (dashboard grid, single widget, table) and the surrounding chrome (left
+ * tables panel, right config panel, top toolbar) would dilute the message.
+ *
+ * `locator.screenshot()` rasterises just the element. Combined with a 2x DPI
+ * browser context, the raw capture is already crisp; Lanczos3 brings it to
+ * the docs target width with minimal aliasing on thin strokes.
+ */
+export async function captureDocsScreenshotOfElement(
+  page: Page,
+  filename: string,
+  selector: string,
+  opts: {
+    targetWidth?: number;
+    outDir?: string;
+    trimBottomEmpty?: boolean;
+    trimBottomPadding?: number;
+  } = {},
+): Promise<void> {
+  const outDir = opts.outDir ?? DOCS_IMAGES_DIR;
+  await jetpack.dirAsync(outDir);
+  const fullPath = path.join(outDir, filename);
+  const el = page.locator(selector);
+  await el.waitFor({ state: 'visible', timeout: 10_000 });
+  let buffer = await el.screenshot();
+  if (opts.trimBottomEmpty) {
+    buffer = await trimBottomEmptyRows(buffer, opts.trimBottomPadding ?? 24);
+  }
+  const targetWidth = opts.targetWidth ?? (page.viewportSize()?.width ?? 1500);
+  await sharp(buffer)
+    .resize({ width: targetWidth, fit: 'inside', kernel: 'lanczos3', withoutEnlargement: true })
+    .toFile(fullPath);
+  console.log(`[screenshot] ${filename} → ${fullPath} (element-scoped: ${selector}, lanczos3)`);
+}
+
+/**
+ * Like `captureDocsScreenshotOfElement`, but first paints the same outline+
+ * outer-glow ring as `captureDocsScreenshotWithHighlight` around a child
+ * `highlightSelector` inside the element being captured. The ring is
+ * restored after the screenshot so the live page is untouched.
+ *
+ * Use when the screenshot should be panel-scoped (e.g. just `#configPanel`)
+ * but the reader's eye needs to land on a specific control inside the panel —
+ * e.g. the "Hey AI, Help Me…" button next to a SQL editor.
+ */
+export async function captureDocsScreenshotOfElementWithHighlight(
+  page: Page,
+  filename: string,
+  elementSelector: string,
+  highlightSelector: string,
+  opts: { targetWidth?: number; outDir?: string; trimBottomEmpty?: boolean } = {},
+): Promise<void> {
+  const highlight = page.locator(highlightSelector);
+  await highlight.waitFor({ state: 'visible', timeout: 10_000 });
+  await highlight.scrollIntoViewIfNeeded().catch(() => {});
+
+  await highlight.evaluate((el: HTMLElement) => {
+    el.dataset.docscreenPrevShadow = el.style.boxShadow ?? '';
+    el.dataset.docscreenPrevTransition = el.style.transition ?? '';
+    el.dataset.docscreenPrevOutline = el.style.outline ?? '';
+    el.dataset.docscreenPrevOutlineOffset = el.style.outlineOffset ?? '';
+    el.dataset.docscreenPrevPosition = el.style.position ?? '';
+    el.dataset.docscreenPrevZIndex = el.style.zIndex ?? '';
+    el.style.transition = 'none';
+    el.style.outline = '3px solid #2563eb';
+    el.style.outlineOffset = '2px';
+    el.style.boxShadow = '0 0 14px rgba(37, 99, 235, 0.35)';
+    if (!el.style.position || el.style.position === 'static') {
+      el.style.position = 'relative';
+    }
+    el.style.zIndex = '20';
+  });
+  await page.waitForTimeout(150);
+
+  await captureDocsScreenshotOfElement(page, filename, elementSelector, opts);
+
+  await highlight.evaluate((el: HTMLElement) => {
+    el.style.boxShadow = el.dataset.docscreenPrevShadow ?? '';
+    el.style.transition = el.dataset.docscreenPrevTransition ?? '';
+    el.style.outline = el.dataset.docscreenPrevOutline ?? '';
+    el.style.outlineOffset = el.dataset.docscreenPrevOutlineOffset ?? '';
+    el.style.position = el.dataset.docscreenPrevPosition ?? '';
+    el.style.zIndex = el.dataset.docscreenPrevZIndex ?? '';
+    delete el.dataset.docscreenPrevShadow;
+    delete el.dataset.docscreenPrevTransition;
+    delete el.dataset.docscreenPrevOutline;
+    delete el.dataset.docscreenPrevOutlineOffset;
+    delete el.dataset.docscreenPrevPosition;
+    delete el.dataset.docscreenPrevZIndex;
+  });
+}
+
+/**
+ * Detect and crop trailing empty rows from the bottom of an element capture.
+ * Used for tall config panels whose visible content (a handful of fields on
+ * the Display tab) sits in the top third while the rest is uniform panel
+ * background — leaving the screenshot 3x taller than the actual UI and
+ * wasting vertical space when embedded in the blog.
+ *
+ * Cropping runs on the native (pre-resize) buffer so the Lanczos3 downsample
+ * still happens on the cropped region — no quality loss from double-processing.
+ * Background color is sampled from the bottom-left 3x3 region (we assume that
+ * area is empty panel chrome on a tall config panel — if it isn't, the scan
+ * finds content in the very first row scanned and returns the buffer
+ * unchanged).
+ */
+async function trimBottomEmptyRows(buffer: Buffer, padding: number): Promise<Buffer> {
+  const meta = await sharp(buffer).metadata();
+  const width = meta.width;
+  const height = meta.height;
+  if (!width || !height) return buffer;
+
+  const { data, info } = await sharp(buffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+
+  // Sample bottom-left 3x3 to estimate empty panel background. Average to
+  // smooth anti-aliasing on any nearby border.
+  let bgR = 0, bgG = 0, bgB = 0, samples = 0;
+  for (let dy = -2; dy <= 2; dy++) {
+    for (let dx = 0; dx < 8; dx++) {
+      const x = dx + 2;
+      const y = height - 5 + dy;
+      if (y < 0 || y >= height || x < 0 || x >= width) continue;
+      const idx = (y * width + x) * ch;
+      bgR += data[idx];
+      bgG += data[idx + 1];
+      bgB += data[idx + 2];
+      samples++;
+    }
+  }
+  if (samples === 0) return buffer;
+  bgR = Math.round(bgR / samples);
+  bgG = Math.round(bgG / samples);
+  bgB = Math.round(bgB / samples);
+
+  const colorTolerance = 14; // forgives sub-pixel AA + JPEG-ish dust
+  const minNonBgPixelsPerRow = 4; // 4+ deviant pixels = real content row
+
+  // Walk rows from the bottom up until we hit a row with enough non-bg pixels.
+  let contentBottomY = -1;
+  for (let y = height - 1; y >= 0; y--) {
+    let nonBg = 0;
+    for (let x = 0; x < width; x += 2) {
+      const idx = (y * width + x) * ch;
+      if (
+        Math.abs(data[idx] - bgR) > colorTolerance ||
+        Math.abs(data[idx + 1] - bgG) > colorTolerance ||
+        Math.abs(data[idx + 2] - bgB) > colorTolerance
+      ) {
+        nonBg++;
+        if (nonBg >= minNonBgPixelsPerRow) break;
+      }
+    }
+    if (nonBg >= minNonBgPixelsPerRow) {
+      contentBottomY = y;
+      break;
+    }
+  }
+
+  if (contentBottomY < 0) return buffer; // entire image is bg — nothing to crop
+  const cropHeight = Math.min(height, contentBottomY + 1 + padding);
+  if (cropHeight >= height - 4) return buffer; // not enough empty bottom to bother
+
+  return await sharp(buffer)
+    .extract({ left: 0, top: 0, width, height: cropHeight })
+    .toBuffer();
+}
+
+/**
+ * Wait until every `<rb-chart>` on the page has a child `<canvas>` whose pixel
+ * buffer is non-empty. Chart.js renders asynchronously across animation frames
+ * after `new Chart(...)`; capturing a screenshot before that finishes produces
+ * blank charts in the PNG even though the live page looks fine.
+ *
+ * Returns immediately if no `<rb-chart>` elements are on the page.
+ */
+export async function waitForRbChartsRendered(
+  page: Page,
+  opts: { timeout?: number; settleMs?: number } = {},
+): Promise<void> {
+  const timeout = opts.timeout ?? 15_000;
+  const settleMs = opts.settleMs ?? 800;
+  await page.waitForFunction(
+    () => {
+      const charts = Array.from(document.querySelectorAll('rb-chart'));
+      if (charts.length === 0) return true;
+      return charts.every((el) => {
+        const canvas =
+          (el as any).shadowRoot?.querySelector('canvas') ||
+          el.querySelector('canvas');
+        if (!canvas) return false;
+        if (!canvas.width || !canvas.height) return false;
+        try {
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return false;
+          // Scan the whole canvas with a stride — doughnut/pie charts have
+          // a transparent hole in the center, so a center-only sample yields
+          // permanent false negatives. Any non-zero alpha anywhere proves
+          // Chart.js has drawn something.
+          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = img.data;
+          for (let i = 3; i < data.length; i += 16) {
+            if (data[i] !== 0) return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      });
+    },
+    undefined,
+    { timeout, polling: 250 },
+  );
+  await page.waitForTimeout(settleMs);
+}
+
+/**
+ * Capture a screenshot that shows the ENTIRE content of a scrollable container
+ * (a react-grid-layout canvas, a long table, anything with `overflow:auto`) by
+ * temporarily growing the browser viewport to match the container's true
+ * content height, then downsampling to a target output size via Lanczos3.
+ *
+ * Why not just `fullPage: true`?  When a page has a fixed-height container
+ * with `overflow:auto`, `fullPage` captures only what's inside the visible
+ * portion of that container — the rest is "below the fold" inside the scroll
+ * area and never makes it into the screenshot. The canvas builder is exactly
+ * this pattern: its grid sits inside `h-[calc(100vh-4rem)]; overflow-auto`,
+ * so widgets past the viewport simply don't appear.
+ *
+ * The fix: measure the container's `scrollHeight` (the real content size),
+ * resize the viewport to a height that gives the container enough room to
+ * render all of it without scrolling, capture, then resize back. The page
+ * itself does the layout work; we just give it more canvas. Result is a
+ * pixel-perfect capture of every widget, then Lanczos3 (the gold-standard
+ * downsampling kernel for photographic + text content) brings it back to
+ * the docs' target display size with minimal blur.
+ *
+ * @param containerSelector CSS selector for the scrollable container whose
+ *   `scrollHeight` we should size to. For the explore-data canvas use
+ *   `.react-grid-layout`. Defaults to that.
+ * @param chromePadding extra pixels added to the resized viewport to account
+ *   for top nav + canvas toolbar + filter bar above the grid. Defaults to 200.
+ */
+export async function captureDocsScreenshotWholeContent(
+  page: Page,
+  filename: string,
+  outDir: string = DOCS_IMAGES_DIR,
+  options: {
+    containerSelector?: string;
+    chromePadding?: number;
+    /** Optional highlight ring applied to a target element before capture
+     *  and reverted after. Same outline+drop-shadow recipe as
+     *  captureDocsScreenshotWithHighlight — leaves the element interior
+     *  untouched, just rings it on the outside. */
+    highlight?: HighlightSpec;
+  } = {},
+): Promise<void> {
+  const { containerSelector = '.react-grid-layout', chromePadding = 200, highlight } = options;
+
+  // Apply highlight (if requested) BEFORE the viewport resize so the styles
+  // get painted on the first repaint at the new size.
+  //
+  // Highlight is BEST-EFFORT: if the target element isn't on the current page
+  // (e.g. caller passed `#parameterBarContainer` but we're on the published
+  // dashboard where that wrapper id doesn't exist — only the canvas builder
+  // has it), we log a warning and capture WITHOUT the ring instead of
+  // throwing. A missing decoration shouldn't fail a screenshot run.
+  let highlightApplied = false;
+  if (highlight) {
+    try {
+      await highlight.target.waitFor({ state: 'visible', timeout: 5_000 });
+      await highlight.target.evaluate((el: HTMLElement) => {
+        el.dataset.docscreenPrevShadow = el.style.boxShadow ?? '';
+        el.dataset.docscreenPrevOutline = el.style.outline ?? '';
+        el.dataset.docscreenPrevOutlineOffset = el.style.outlineOffset ?? '';
+        el.dataset.docscreenPrevPosition = el.style.position ?? '';
+        el.dataset.docscreenPrevZIndex = el.style.zIndex ?? '';
+        el.style.outline = '3px solid #2563eb';
+        el.style.outlineOffset = '2px';
+        el.style.boxShadow = '0 0 14px rgba(37, 99, 235, 0.35)';
+        // Lift above siblings so the outer ring isn't overpainted by the
+        // adjacent toolbar/body backgrounds that paint after this element.
+        if (!el.style.position || el.style.position === 'static') {
+          el.style.position = 'relative';
+        }
+        el.style.zIndex = '20';
+      });
+      highlightApplied = true;
+    } catch (err) {
+      const msg = (err as Error)?.message ?? String(err);
+      console.log(`[screenshot] highlight target not found, capturing without ring: ${msg.split('\n')[0]}`);
+    }
+  }
+
+  await jetpack.dirAsync(outDir);
+  const fullPath = path.join(outDir, filename);
+
+  const originalViewport = page.viewportSize() ?? { width: 1500, height: 900 };
+
+  // Measure the real content height. scrollHeight gives the height the
+  // container WOULD have if its overflow:auto were lifted — exactly what we
+  // need to size the viewport to.
+  const contentHeight = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    if (!el) return 0;
+    return Math.max(el.scrollHeight, el.getBoundingClientRect().height);
+  }, containerSelector);
+
+  if (contentHeight === 0) {
+    // Container not found / has no content — fall back to the plain
+    // fit-to-viewport behaviour rather than fail loudly.
+    console.log(`[screenshot] containerSelector '${containerSelector}' not found; falling back to fit-to-viewport.`);
+    await captureDocsScreenshotFitToViewport(page, filename, outDir);
+    return;
+  }
+
+  const tallViewport = {
+    width: originalViewport.width,
+    height: Math.max(originalViewport.height, Math.ceil(contentHeight + chromePadding)),
+  };
+
+  await page.setViewportSize(tallViewport);
+  // Let CSS settle: the canvas container is `h-[calc(100vh-4rem)]` so a
+  // viewport resize changes its computed height; react-grid-layout repaints.
+  await page.waitForTimeout(800);
+
+  const buffer = await page.screenshot({ fullPage: true });
+
+  // Restore original viewport so subsequent steps see the world they expect.
+  await page.setViewportSize(originalViewport);
+  await page.waitForTimeout(200);
+
+  // Downsample the tall capture back to the original viewport dimensions
+  // with Lanczos3 — the same kernel used by fit-to-viewport. Lanczos3 is the
+  // de-facto standard for image downscaling: better at preserving thin
+  // strokes (chart axes, gridlines, small text) than bilinear/bicubic, and
+  // it doesn't over-sharpen the way nearest-neighbour would.
+  await sharp(buffer)
+    .resize({
+      width: originalViewport.width,
+      height: originalViewport.height,
+      fit: 'contain',
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+      kernel: 'lanczos3',
+    })
+    .toFile(fullPath);
+
+  // Revert highlight last, after the screenshot is written, so a follow-up
+  // capture starts from a clean visual baseline. Only revert if we actually
+  // applied styles — otherwise we'd be calling evaluate on a target that
+  // wasn't found, throwing on the very thing the best-effort branch was
+  // designed to swallow.
+  if (highlight && highlightApplied) {
+    await highlight.target.evaluate((el: HTMLElement) => {
+      el.style.boxShadow = el.dataset.docscreenPrevShadow ?? '';
+      el.style.outline = el.dataset.docscreenPrevOutline ?? '';
+      el.style.outlineOffset = el.dataset.docscreenPrevOutlineOffset ?? '';
+      el.style.position = el.dataset.docscreenPrevPosition ?? '';
+      el.style.zIndex = el.dataset.docscreenPrevZIndex ?? '';
+      delete el.dataset.docscreenPrevShadow;
+      delete el.dataset.docscreenPrevOutline;
+      delete el.dataset.docscreenPrevOutlineOffset;
+      delete el.dataset.docscreenPrevPosition;
+      delete el.dataset.docscreenPrevZIndex;
+    });
+  }
+
+  console.log(`[screenshot] ${filename} → ${fullPath} (whole-content via ${tallViewport.height}px viewport, lanczos3)`);
 }
 
 export interface OverlaySpec {
@@ -110,18 +569,25 @@ export async function captureDocsScreenshotWithHighlight(
   page: Page,
   filename: string,
   spec: HighlightSpec,
+  outDir: string = DOCS_IMAGES_DIR,
 ): Promise<void> {
   await spec.target.waitFor({ state: 'visible', timeout: 10_000 });
   await spec.target.scrollIntoViewIfNeeded().catch(() => {});
 
-  // Strategy: apply `box-shadow: inset` directly on the element — this draws
-  // the highlight rectangle INSIDE the button's own border box, where it's
-  // part of the element's own paint. It cannot be clipped by any ancestor
-  // overflow:hidden, cannot be covered by sibling backgrounds, and doesn't
-  // depend on z-index / Bootstrap modal stacking contexts (which is why the
-  // previous position:fixed overlay div approach silently failed inside the
-  // cube modal — fixed-positioned children of body weren't rendering above
-  // the modal's stacking context).
+  // Strategy: paint the highlight OUTSIDE the element via `outline` plus a
+  // soft outer drop-shadow. Earlier we used `inset` box-shadow so the ring
+  // could survive inside a cube modal's `overflow:hidden`, but that bleeds
+  // into the element's interior — on small targets (a header button, a
+  // single-line label) the inner glow tints the text background blue and
+  // reads as "the text is selected" instead of "this thing is highlighted."
+  //
+  // `outline` doesn't take up layout space (so the surrounding UI doesn't
+  // shift), `outline-offset` lets the ring sit just outside the element's
+  // border box, and the outer drop-shadow softens the edge. The element's
+  // interior — and its text — is left completely untouched.
+  //
+  // If you ever need the inset variant back (for clipped-by-overflow:hidden
+  // ancestors), add an option to HighlightSpec and branch here.
   //
   // The callout is appended to the same element's nearest .modal-content (or
   // body fallback) so it inherits the same stacking context as the modal.
@@ -132,13 +598,26 @@ export async function captureDocsScreenshotWithHighlight(
     // Save originals so we can restore later.
     el.dataset.docscreenPrevShadow = el.style.boxShadow ?? '';
     el.dataset.docscreenPrevTransition = el.style.transition ?? '';
+    el.dataset.docscreenPrevOutline = el.style.outline ?? '';
+    el.dataset.docscreenPrevOutlineOffset = el.style.outlineOffset ?? '';
+    el.dataset.docscreenPrevPosition = el.style.position ?? '';
+    el.dataset.docscreenPrevZIndex = el.style.zIndex ?? '';
 
-    // box-shadow: inset = drawn INSIDE the element. Multiple shadows stack:
-    //   1. 3px solid blue inner border
-    //   2. soft 8px inner glow
+    // Outer ring (doesn't paint inside the element):
+    //   - `outline` = 3px solid blue, offset 2px from the border box
+    //   - outer drop shadow = soft 14px blue glow
     el.style.transition = 'none';
-    el.style.boxShadow =
-      'inset 0 0 0 3px #2563eb, inset 0 0 0 8px rgba(37, 99, 235, 0.18)';
+    el.style.outline = '3px solid #2563eb';
+    el.style.outlineOffset = '2px';
+    el.style.boxShadow = '0 0 14px rgba(37, 99, 235, 0.35)';
+    // Lift above sibling backgrounds so they don't overpaint the outer ring.
+    // Flex/grid siblings (canvas toolbar above, body below) paint AFTER us
+    // in DOM order and their bg-colors would otherwise cover the 5px-wide
+    // outline + 14px glow that extends outside our border-box.
+    if (!el.style.position || el.style.position === 'static') {
+      el.style.position = 'relative';
+    }
+    el.style.zIndex = '20';
 
     if (calloutText) {
       const rect = el.getBoundingClientRect();
@@ -176,16 +655,24 @@ export async function captureDocsScreenshotWithHighlight(
 
   await page.waitForTimeout(150);
 
-  await jetpack.dirAsync(DOCS_IMAGES_DIR);
-  const fullPath = path.join(DOCS_IMAGES_DIR, filename);
+  await jetpack.dirAsync(outDir);
+  const fullPath = path.join(outDir, filename);
   await page.screenshot({ path: fullPath, fullPage: false });
 
   await spec.target.evaluate((el: HTMLElement) => {
     document.getElementById('__docscreen_highlight_callout')?.remove();
     el.style.boxShadow = el.dataset.docscreenPrevShadow ?? '';
     el.style.transition = el.dataset.docscreenPrevTransition ?? '';
+    el.style.outline = el.dataset.docscreenPrevOutline ?? '';
+    el.style.outlineOffset = el.dataset.docscreenPrevOutlineOffset ?? '';
+    el.style.position = el.dataset.docscreenPrevPosition ?? '';
+    el.style.zIndex = el.dataset.docscreenPrevZIndex ?? '';
     delete el.dataset.docscreenPrevShadow;
     delete el.dataset.docscreenPrevTransition;
+    delete el.dataset.docscreenPrevOutline;
+    delete el.dataset.docscreenPrevOutlineOffset;
+    delete el.dataset.docscreenPrevPosition;
+    delete el.dataset.docscreenPrevZIndex;
   });
 
   console.log(`[screenshot+highlight] ${filename} → ${fullPath}`);

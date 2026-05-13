@@ -22,13 +22,13 @@ export function isParamRef(value: string): boolean {
 }
 
 /**
- * Extracts parameter IDs from a `filterDsl` Groovy string via regex.
- * Used to populate the "bind to parameter" toggle in VisualQueryBuilder's
- * FilterStep without needing a backend round-trip.
+ * Extracts parameter IDs from the canonical `parametersConfig.parameters`
+ * Map. Used to populate the "bind to parameter" toggle in VisualQueryBuilder's
+ * FilterStep — direct read, no parse round-trip needed.
  */
-export function extractParamIds(dsl: string): string[] {
-  if (!dsl?.trim()) return [];
-  return [...dsl.matchAll(/\bid:\s*['"](\w+)['"]/g)].map((m) => m[1]);
+export function extractParamIds(parameters: { id?: string }[] | null | undefined): string[] {
+  if (!parameters) return [];
+  return parameters.map((p) => p.id).filter((id): id is string => typeof id === "string" && id.length > 0);
 }
 
 /**
@@ -179,6 +179,22 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
         case "starts_with":     return `${cmp} LIKE '${esc(f.value)}%'`;
         case "ends_with":       return `${cmp} LIKE '%${esc(f.value)}'`;
         case "between":         return `${cmp} BETWEEN '${esc(f.value)}' AND '${esc(f.valueTo || '')}'`;
+        case "in":
+        case "not_in": {
+          const op = f.operator === "in" ? "IN" : "NOT IN";
+          const rawList = String(f.value ?? "").trim();
+          if (!rawList) return "1=1"; // empty list — harmless no-op, avoids broken WHERE
+          if (isParamRef(rawList)) {
+            // Param-bound IN: emit bare ${name} inside parens. Backend
+            // convertToJdbiParameters detects this and rewrites to <name>;
+            // QueriesService splits the CSV value into a List for bindList.
+            return `${cmp} ${op} (${rawList})`;
+          }
+          const values = rawList.split(",").map((v) => v.trim()).filter(Boolean);
+          if (values.length === 0) return "1=1";
+          const escaped = values.map((v) => `'${esc(v)}'`).join(", ");
+          return `${cmp} ${op} (${escaped})`;
+        }
         case "is_null":         return `${raw} IS NULL`;
         case "is_not_null":     return `${raw} IS NOT NULL`;
         default:                return param ? `${cmp} = ${f.value}`   : `${cmp} = '${esc(f.value)}'`;

@@ -66,28 +66,62 @@
   // reuse ResizeObserver patch from RbTabulator
   function transformChartConfigToChartJS(chartConfig: any, reportData: any[]) {
     if (!reportData || reportData.length === 0) return { labels: [], datasets: [] };
-    
+
     const labelField = chartConfig.labelField || Object.keys(reportData[0]).find((k: string) => typeof reportData[0][k] === 'string') || Object.keys(reportData[0])[0];
+    const seriesField: string | undefined = chartConfig.seriesField || undefined;
 
-    // Extract labels
+    // Coerce raw cell value to numeric (or null) — same rule the non-pivot path uses.
+    const toNum = (val: any): number | null => {
+      if (val == null) return null;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const n = Number(val);
+        return isNaN(n) ? null : n;
+      }
+      return val;
+    };
+
+    // Series-pivot path: when seriesField is set, the row stream looks like
+    //   { ts, strategy_run_id, equity_avg }
+    // and we want N datasets — one per distinct strategy_run_id — each carrying
+    // the equity_avg value at every timestamp. Without this branch the chart
+    // collapses everything into one zig-zag line that jumps between runs.
+    if (seriesField && chartConfig.datasets && chartConfig.datasets.length > 0) {
+      const valueField = chartConfig.datasets[0].field;
+      if (valueField) {
+        // Distinct, ordered labels (preserve first-seen order — matches GROUP BY+ORDER BY).
+        const labelOrder: string[] = [];
+        const labelSet = new Set<string>();
+        for (const row of reportData) {
+          const lab = row[labelField] != null ? String(row[labelField]) : '';
+          if (!labelSet.has(lab)) { labelSet.add(lab); labelOrder.push(lab); }
+        }
+        // Distinct series values + lookup table { seriesValue: { label: numericValue } }
+        const seriesOrder: string[] = [];
+        const seriesSet = new Set<string>();
+        const lookup: Record<string, Record<string, number | null>> = {};
+        for (const row of reportData) {
+          const sv = row[seriesField] != null ? String(row[seriesField]) : '';
+          if (!seriesSet.has(sv)) { seriesSet.add(sv); seriesOrder.push(sv); lookup[sv] = {}; }
+          const lab = row[labelField] != null ? String(row[labelField]) : '';
+          lookup[sv][lab] = toNum(row[valueField]);
+        }
+        const datasets = seriesOrder.map((sv) => ({
+          label: `${valueField} (${sv})`,
+          data: labelOrder.map((lab) => lookup[sv][lab] ?? null),
+        }));
+        return { labels: labelOrder, datasets };
+      }
+    }
+
+    // Default path — one dataset per yField (no series breakout).
     const labels = reportData.map((row: any) => row[labelField] != null ? String(row[labelField]) : '');
-
-    // Transform datasets - extract field values into data arrays
     const datasets = (chartConfig.datasets || []).map((ds: any) => {
       const field = ds.field;
       if (!field) return ds; // Skip if no field specified
-      
-      const dataValues = reportData.map((row: any) => {
-        const val = row[field];
-        if (val == null) return null;
-        if (typeof val === 'number') return val;
-        if (typeof val === 'string') {
-          const num = Number(val);
-          return isNaN(num) ? null : num;
-        }
-        return val;
-      });
-      
+
+      const dataValues = reportData.map((row: any) => toNum(row[field]));
+
       // Build dataset with transformed data
       const result = { ...ds };
       delete result.field; // Remove field property
@@ -96,7 +130,7 @@
 
       return result;
     });
-    
+
     return { labels, datasets };
   }
 

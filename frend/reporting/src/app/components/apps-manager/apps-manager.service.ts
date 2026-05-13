@@ -68,7 +68,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop ai-hub-frend',
         tags: ['bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'dashboards', 'flowkraft-data-canvas', 'explore-data', 'DataPallas\'s App'],
         visible: true,
-        tutorialLink: { label: 'Learn how to build dashboards →', url: 'https://datapallas.com/docs/bi-analytics/dashboards' },
+        tutorialLink: { label: 'See how to (quickly) build dashboards →', url: 'https://datapallas.com/docs/bi-analytics/dashboards' },
       },
       {
         id: 'flowkraft-grails',

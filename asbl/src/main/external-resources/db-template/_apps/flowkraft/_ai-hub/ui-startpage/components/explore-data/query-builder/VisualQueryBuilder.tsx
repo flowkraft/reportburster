@@ -34,8 +34,8 @@ interface VisualQueryBuilderProps {
 export function VisualQueryBuilder({ schema, dataSource, onChange, onRun, executing, connectionId }: VisualQueryBuilderProps) {
   const [showSql, setShowSql] = useState(false);
   const [cubes, setCubes] = useState<CubeInfo[]>([]);
-  const filterDsl = useCanvasStore((s) => s.filterDsl);
-  const availableParams = extractParamIds(filterDsl);
+  const parametersConfig = useCanvasStore((s) => s.parametersConfig);
+  const availableParams = extractParamIds(parametersConfig?.parameters);
 
   // Cube renderer in-panel state
   const cubeRef = useRef<HTMLElement>(null);
@@ -218,6 +218,7 @@ export function VisualQueryBuilder({ schema, dataSource, onChange, onRun, execut
             <Hash className="w-4 h-4 text-muted-foreground shrink-0" />
             <span className="text-xs text-muted-foreground">Limit</span>
             <input
+              id="inputLimit"
               type="number" min={1} max={10000} value={query.limit}
               onChange={(e) => updateQuery({ limit: parseInt(e.target.value) || 500 })}
               className="w-20 text-sm bg-background border border-border rounded-md px-2 py-1 text-foreground"

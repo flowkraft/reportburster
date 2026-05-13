@@ -7,40 +7,55 @@ import { useRbElementReady } from "./useRbElementReady";
 import { Loader2, Sparkles, BarChart3 } from "lucide-react";
 import { fetchSchema } from "@/lib/explore-data/rb-api";
 import { autoPivotLayout, isIdColumn, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
+import { useDslConfig } from "@/lib/hooks/use-dsl-config";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: this widget renders FROM the DSL Map produced by
+ * useDslConfig (the canonical configuration). Same Map flows to <rb-pivot-table>
+ * here AND to the published page after DSL→parse round-trip.
+ * ============================================================================
+ */
 
 interface PivotWidgetProps {
   widgetId: string;
 }
 
-/**
- * Pivot Table widget — renders via <rb-pivot-table>.
- * Auto-picks rows/cols/vals from the table schema when the user hasn't configured them.
- * Suppresses NULL dim values and totals by default.
- */
 export function PivotWidget({ widgetId }: PivotWidgetProps) {
   const { result, loading, error } = useWidgetData(widgetId);
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const connectionId = useCanvasStore((s) => s.connectionId);
-  const updateWidgetDisplayConfig = useCanvasStore((s) => s.updateWidgetDisplayConfig);
   const changeWidgetRenderMode = useCanvasStore((s) => s.changeWidgetRenderMode);
   const ref = useRef<HTMLElement>(null);
   const ready = useRbElementReady("rb-pivot-table");
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoErr, setAutoErr] = useState<string | null>(null);
 
+  // ── Single source of truth: the canonical DSL Map.
+  const { config: dslMap, updateConfig } = useDslConfig(widgetId, "pivot");
+
   const ds = widget?.dataSource;
   const vq = ds?.visualQuery;
-  const displayConfig = widget?.displayConfig || {};
   const isVisualMode = ds?.mode === "visual" || ds?.mode === undefined;
   const hasTablePick = Boolean(vq?.table);
-  const configRows = (displayConfig.pivotRows as string[] | undefined) ?? [];
-  const configCols = (displayConfig.pivotCols as string[] | undefined) ?? [];
-  const configVals = (displayConfig.pivotVals as string[] | undefined) ?? [];
+
+  const savedRows = (dslMap.rows as string[] | undefined) ?? [];
+  const savedCols = (dslMap.cols as string[] | undefined) ?? [];
+  const savedVals = (dslMap.vals as string[] | undefined) ?? [];
+  const { validateFields } = useEffectiveField(result);
+  const configRows = validateFields(savedRows);
+  const configCols = validateFields(savedCols);
+  const configVals = validateFields(savedVals);
   const noLayout = configRows.length === 0 && configCols.length === 0 && configVals.length === 0;
 
   const showAutoLayoutPrompt = isVisualMode && hasTablePick && noLayout;
 
-  // Shape-mismatch nudge: 1 dim total + 1 measure fits a chart better than a pivot.
   const totalDimCount = configRows.length + configCols.length;
   const showChartNudge = !showAutoLayoutPrompt && totalDimCount === 1 && configVals.length === 1;
 
@@ -55,20 +70,17 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
         setAutoErr(`Table ${vq.table} not found.`);
         return;
       }
-      // Probe cardinality so we skip high-card dims for rows/cols.
       const stringCols = tbl.columns
         .filter((c) => classifyColumn(c, tbl) === "category-low")
         .map((c) => c.columnName);
       const cardinality = stringCols.length > 0 ? await probeCardinality(connectionId, tbl.tableName, stringCols) : {};
       const layout = autoPivotLayout(tbl, cardinality);
-      updateWidgetDisplayConfig(widget.id, {
-        ...displayConfig,
-        pivotRows: layout.rows,
-        pivotCols: layout.cols,
-        pivotVals: layout.vals,
-        pivotAggregator: layout.aggregator,
-        // Mark which fields were auto-picked so config panel can show (auto) badges.
-        _autoPicked: ["pivotRows", "pivotCols", "pivotVals", "pivotAggregator"],
+      updateConfig({
+        ...dslMap,
+        rows: layout.rows,
+        cols: layout.cols,
+        vals: layout.vals,
+        aggregatorName: layout.aggregator,
       });
     } catch (e) {
       setAutoErr(e instanceof Error ? e.message : "Auto-layout failed");
@@ -77,9 +89,6 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
     }
   };
 
-  // Auto-fire the layout pick the first time we see an unconfigured pivot with
-  // a table selected. Runs once per widget; after this the prompt still appears
-  // only if the user explicitly clears rows/cols/vals.
   const autoTriggeredRef = useRef<string | null>(null);
   useEffect(() => {
     if (!showAutoLayoutPrompt) return;
@@ -97,20 +106,14 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
 
     const pivotRows = configRows;
     const pivotCols = configCols;
-    // Guardrail: values should never be an ID-shaped column (wrong to aggregate).
     const pivotVals = configVals.filter((v) => !isIdColumn(v));
-    const pivotAggregator = (displayConfig.pivotAggregator as string) || "Count";
+    const pivotAggregator = (dslMap.aggregatorName as string | undefined) ?? "Count";
 
-    // Suppress rows where any dim-column is NULL/undefined/empty — those produce
-    // ugly unlabeled rows/columns that are never what the user wants.
     const dimCols = [...pivotRows, ...pivotCols];
     const filteredData = dimCols.length === 0
       ? result.data
       : result.data.filter((row) => dimCols.every((c) => row[c] !== null && row[c] !== undefined && row[c] !== ""));
 
-    // Hard cap — pivottable.js builds an in-memory cube of row × col distinct
-    // values, then renders a DOM cell per combination. A high-cardinality
-    // rows/cols pair can wedge the browser. Bail before the expensive work.
     const MAX_PIVOT_CELLS = 20000;
     if (dimCols.length > 0) {
       const rowDistinct = pivotRows.reduce(
@@ -131,10 +134,8 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
       }
     }
 
-    // 4.11 — auto-pick Heatmap renderer for small 2-dim + 1-measure grids. The
-    // threshold is distinct-col-values × distinct-row-values ≤ 225 (i.e., fits
-    // a 15×15 cell grid comfortably). Larger grids stay as Table. User can
-    // override via DslCustomizer by setting `pivotRenderer` explicitly.
+    // Auto-pick Heatmap renderer for small 2-dim + 1-measure grids unless user
+    // wrote rendererName explicitly in the DSL.
     const autoHeatmap =
       pivotRows.length === 1 &&
       pivotCols.length === 1 &&
@@ -145,30 +146,11 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
         const colCard = distinct(pivotCols[0]);
         return rowCard > 0 && colCard > 0 && rowCard * colCard <= 225;
       })();
-    const configRenderer = displayConfig.pivotRenderer as string | undefined;
+    const configRenderer = dslMap.rendererName as string | undefined;
     const rendererName = configRenderer ?? (autoHeatmap ? "Heatmap" : "Table");
 
-    // 4.12 — sort pivot rows by total value descending (biggest first). Users
-    // want the interesting rows at the top; alphabetical is rarely useful in
-    // analytical pivots. Configurable via displayConfig.pivotRowOrder.
-    const rowOrder = (displayConfig.pivotRowOrder as string | undefined) ?? "value_z_to_a";
-
-    // Per-column sort map (from the Pivot picker's ↑/↓/— toggles). Build a
-    // `sorters` object keyed by column name that pivottable.js consumes as
-    // `sorters[attr] = (a, b) => …`. Columns absent from the map fall through
-    // to the global `rowOrder` / `colOrder` defaults.
-    const pivotSortOrder = (displayConfig.pivotSortOrder as Record<string, "ascending" | "descending"> | undefined) ?? {};
-    const sorters: Record<string, (a: unknown, b: unknown) => number> = {};
-    for (const [col, order] of Object.entries(pivotSortOrder)) {
-      const sign = order === "descending" ? -1 : 1;
-      sorters[col] = (a, b) => {
-        if (a === b) return 0;
-        if (a == null) return 1;
-        if (b == null) return -1;
-        if (typeof a === "number" && typeof b === "number") return (a - b) * sign;
-        return String(a).localeCompare(String(b)) * sign;
-      };
-    }
+    const rowOrder = (dslMap.rowOrder as string | undefined) ?? "value_z_to_a";
+    const colOrder = dslMap.colOrder as string | undefined;
 
     const el = ref.current as HTMLElement & {
       data?: unknown;
@@ -178,9 +160,9 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
       aggregatorName?: string;
       rendererName?: string;
       rowOrder?: string;
+      colOrder?: string;
       rowTotals?: boolean;
       colTotals?: boolean;
-      sorters?: Record<string, (a: unknown, b: unknown) => number>;
     };
 
     el.data = filteredData;
@@ -190,13 +172,10 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
     el.aggregatorName = pivotAggregator;
     el.rendererName = rendererName;
     el.rowOrder = rowOrder;
-    el.sorters = sorters;
-    // Clean-by-default: no totals unless the user explicitly opts in via DslCustomizer.
-    const optInRowTotals = displayConfig.pivotRowTotals as boolean | undefined;
-    const optInColTotals = displayConfig.pivotColTotals as boolean | undefined;
-    el.rowTotals = optInRowTotals ?? false;
-    el.colTotals = optInColTotals ?? false;
-  }, [ready, result, displayConfig, configRows, configCols, configVals, showAutoLayoutPrompt]);
+    if (colOrder) el.colOrder = colOrder;
+    el.rowTotals = (dslMap.rowTotals as boolean | undefined) ?? false;
+    el.colTotals = (dslMap.colTotals as boolean | undefined) ?? false;
+  }, [ready, result, dslMap, configRows, configCols, configVals, showAutoLayoutPrompt]);
 
   if (showAutoLayoutPrompt) {
     return (

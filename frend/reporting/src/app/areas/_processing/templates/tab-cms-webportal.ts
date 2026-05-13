@@ -67,6 +67,7 @@ export const tabCmsWebPortalTemplate = `<ng-template
               </td>
               <td style="text-align:center;">
                 <a
+                  [id]="'btnViewDashboard_' + r.folderName"
                   href="http://localhost:9090/dashboard/{{ r.folderName }}"
                   target="_blank"
                   class="btn btn-xs btn-default"

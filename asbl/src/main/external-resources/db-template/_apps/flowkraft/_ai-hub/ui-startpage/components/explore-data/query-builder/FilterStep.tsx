@@ -24,6 +24,8 @@ const STRING_OPS: OperatorDef[] = [
   { value: "contains", label: "contains" },
   { value: "starts_with", label: "starts with" },
   { value: "ends_with", label: "ends with" },
+  { value: "in", label: "in" },
+  { value: "not_in", label: "not in" },
   { value: "is_null", label: "is null" },
   { value: "is_not_null", label: "is not null" },
 ];
@@ -36,6 +38,8 @@ const NUMBER_OPS: OperatorDef[] = [
   { value: "less_than", label: "<" },
   { value: "less_or_equal", label: "<=" },
   { value: "between", label: "between" },
+  { value: "in", label: "in" },
+  { value: "not_in", label: "not in" },
   { value: "is_null", label: "is null" },
   { value: "is_not_null", label: "is not null" },
 ];
@@ -62,11 +66,14 @@ const NO_VALUE_OPS = ["is_null", "is_not_null"];
 
 // Operators where a single ${paramName} placeholder makes sense in SQL.
 // LIKE-family and `between` are excluded: LIKE needs the % wrapper (complex),
-// between needs two values.
+// between needs two values. `in` / `not_in` are bindable: the param value
+// (CSV string like "1, 5, 10") is split into a real SQL list at the JDBI layer
+// via bindList — see DatabaseHelper.convertToJdbiParameters / QueriesService.
 const PARAM_BINDABLE_OPS = new Set([
   "equals", "not_equals",
   "greater_than", "greater_or_equal",
   "less_than", "less_or_equal",
+  "in", "not_in",
 ]);
 
 // Type detection from column schema
@@ -228,7 +235,11 @@ export function FilterStep({ columns, filters, onChange, availableParams = [] }:
                     id={`inputFilterValue-${i}`}
                     value={f.value}
                     onChange={(e) => updateFilter(i, { value: e.target.value })}
-                    placeholder="value"
+                    placeholder={
+                      f.operator === "in" || f.operator === "not_in"
+                        ? "comma-separated: 1, 5, 10  or  PAID, PENDING"
+                        : "value"
+                    }
                     className="text-xs bg-background border border-border rounded px-1.5 py-1 text-foreground min-w-0 flex-1"
                   />
                   {/* Param bind toggle — only shown when params exist and operator supports it */}

@@ -41,33 +41,48 @@ public class ChartOptionsParser {
 
 		Map<String, Object> map = script.getOptions();
 		ChartOptions out = new ChartOptions();
-
-		// Simple passthrough - no data transformation here
-		if (map.containsKey("type")) out.setType(String.valueOf(map.get("type")));
-		if (map.containsKey("labelField")) out.setLabelField(String.valueOf(map.get("labelField")));
-		if (map.containsKey("options")) out.setOptions((java.util.Map<String,Object>) map.get("options"));
-		if (map.containsKey("labels")) out.setLabels((java.util.List<String>) map.get("labels"));
-		if (map.containsKey("datasets")) out.setDatasets((java.util.List<java.util.Map<String,Object>>) map.get("datasets"));
-		if (map.containsKey("data")) out.setData((java.util.List<java.util.Map<String,Object>>) map.get("data"));
+		populateChartOptions(out, map);
 
 		// Extract named blocks for aggregator reports
 		Map<String, Map<String, Object>> namedRaw = script.getNamedOptions();
 		if (namedRaw != null && !namedRaw.isEmpty()) {
 			Map<String, ChartOptions> named = new java.util.LinkedHashMap<>();
 			for (Map.Entry<String, Map<String, Object>> entry : namedRaw.entrySet()) {
-				Map<String, Object> m = entry.getValue();
 				ChartOptions co = new ChartOptions();
-				if (m.containsKey("type")) co.setType(String.valueOf(m.get("type")));
-				if (m.containsKey("labelField")) co.setLabelField(String.valueOf(m.get("labelField")));
-				if (m.containsKey("options")) co.setOptions((java.util.Map<String,Object>) m.get("options"));
-				if (m.containsKey("labels")) co.setLabels((java.util.List<String>) m.get("labels"));
-				if (m.containsKey("datasets")) co.setDatasets((java.util.List<java.util.Map<String,Object>>) m.get("datasets"));
-				if (m.containsKey("data")) co.setData((java.util.List<java.util.Map<String,Object>>) m.get("data"));
+				populateChartOptions(co, entry.getValue());
 				named.put(entry.getKey(), co);
 			}
 			out.setNamedOptions(named);
 		}
 
 		return out;
+	}
+
+	/**
+	 * Populate a ChartOptions DTO from the canonical Map shape produced by
+	 * {@link ChartOptionsScript#getOptions()}:
+	 * {@code { type, options, data: { labelField, seriesField, labels, datasets } }}.
+	 *
+	 * <p>{@code labelField}/{@code seriesField}/{@code labels}/{@code datasets}
+	 * live INSIDE the nested {@code data} block (Chart.js shape). The legacy
+	 * inline data-rows override keeps {@code data} as a {@code List<Map>} at
+	 * the top level and is preserved for backwards compatibility.
+	 */
+	@SuppressWarnings("unchecked")
+	private static void populateChartOptions(ChartOptions out, Map<String, Object> map) {
+		if (map.containsKey("type")) out.setType(String.valueOf(map.get("type")));
+		if (map.containsKey("options")) out.setOptions((java.util.Map<String,Object>) map.get("options"));
+
+		Object dataValue = map.get("data");
+		if (dataValue instanceof Map) {
+			Map<String, Object> dataBlock = (Map<String, Object>) dataValue;
+			if (dataBlock.containsKey("labelField")) out.setLabelField(String.valueOf(dataBlock.get("labelField")));
+			if (dataBlock.containsKey("seriesField")) out.setSeriesField(String.valueOf(dataBlock.get("seriesField")));
+			if (dataBlock.containsKey("labels")) out.setLabels((java.util.List<String>) dataBlock.get("labels"));
+			if (dataBlock.containsKey("datasets")) out.setDatasets((java.util.List<java.util.Map<String,Object>>) dataBlock.get("datasets"));
+		} else if (dataValue instanceof java.util.List) {
+			// Legacy inline data-rows override: chart { data([[row1],[row2]]) }
+			out.setData((java.util.List<java.util.Map<String,Object>>) dataValue);
+		}
 	}
 }

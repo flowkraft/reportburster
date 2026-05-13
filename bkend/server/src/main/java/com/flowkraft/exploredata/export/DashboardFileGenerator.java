@@ -1,6 +1,8 @@
 package com.flowkraft.exploredata.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowkraft.reporting.dsl.common.BlockFormEmitter;
+import com.flowkraft.reporting.dsl.common.BlockFormRules;
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
@@ -11,12 +13,23 @@ import java.util.stream.Collectors;
 
 /**
  * Generates all dashboard sidecar files (HTML template, Groovy DSL configs,
- * JSON sidecars) from canvas widget state.  Mirrors the TypeScript
+ * JSON sidecars) from canvas widget state. Mirrors the TypeScript
  * {@code exportGenerator.ts} so that file generation moves fully server-side
  * and the client no longer needs to send generated content over the wire.
+ *
+ * <p>See {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the DSL architecture principles + GOOD/BAD examples. Static init below
+ * compile-pins this class to that readme.
+ *
+ * <p>Every Groovy-DSL output here goes through {@link BlockFormEmitter} —
+ * NEVER hand-rolled {@code sb.append}. Each widget's DSL is built from its
+ * canonical Map at displayConfig.dslConfig (Principle 4 — same Map that flows
+ * to the canvas widget render).
  */
 @SuppressWarnings("unchecked")
 public class DashboardFileGenerator {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -46,23 +59,31 @@ public class DashboardFileGenerator {
 
     public static GeneratedFiles generate(
             List<Map<String, Object>> widgets,
-            String filterDsl,
+            List<Map<String, Object>> parametersList,
             String reportId,
             String apiBaseUrl) throws Exception {
 
-        String safeFilterDsl = filterDsl != null ? filterDsl : "";
+        // Single source of truth (Principle 4): parametersConfig.parameters Map.
+        // Serialize to canonical DSL text for the published spec file.
+        List<Map<String, Object>> safeParams = parametersList != null ? parametersList : List.of();
+        String parametersSpec = "";
+        if (!safeParams.isEmpty()) {
+            Map<String, Object> opts = new LinkedHashMap<>();
+            opts.put("parameters", safeParams);
+            parametersSpec = BlockFormEmitter.emit("reportParameters", opts, BlockFormRules.REPORTPARAMETERS);
+        }
 
         return new GeneratedFiles(
-            generateTemplate(widgets, safeFilterDsl, reportId, apiBaseUrl),
+            generateTemplate(widgets, !safeParams.isEmpty(), reportId, apiBaseUrl),
             generateChartConfig(byType(widgets, "chart")),
             generateTabulatorConfig(byType(widgets, "tabulator")),
             generatePivotConfig(byType(widgets, "pivot")),
             generateFilterPaneConfig(byType(widgets, "filter-pane")),
-            safeFilterDsl,
+            parametersSpec,
             generateValueConfig(byType(widgets, "number")),
             generateMapConfig(byType(widgets, "map")),
             generateJsonSidecar(byType(widgets, "sankey"),   "sourceField", "targetField", "valueField", "nodePadding", "nodeWidth", "palette"),
-            generateJsonSidecar(byType(widgets, "gauge"),    "field", "min", "max", "bands", "label", "format"),
+            generateGaugeConfig(byType(widgets, "gauge")),
             generateJsonSidecar(byType(widgets, "trend"),    "dateField", "valueField", "format", "label"),
             generateJsonSidecar(byType(widgets, "progress"), "field", "goal", "label", "format", "color"),
             generateJsonSidecar(byType(widgets, "detail"),   "hiddenColumns", "rowIndex")
@@ -72,7 +93,7 @@ public class DashboardFileGenerator {
     // ── HTML Template ─────────────────────────────────────────────────────────
 
     private static String generateTemplate(List<Map<String, Object>> widgets,
-                                           String filterDsl, String reportId, String apiBaseUrl) {
+                                           boolean hasParameters, String reportId, String apiBaseUrl) {
         List<Map<String, Object>> sorted = widgets.stream()
             .sorted(Comparator.comparingInt((Map<String, Object> w) -> gridInt(w, "y"))
                               .thenComparingInt(w -> gridInt(w, "x")))
@@ -86,8 +107,8 @@ public class DashboardFileGenerator {
             }
         }
 
-        String paramsHtml = filterDsl.trim().isEmpty() ? "" :
-            String.format("    <div class=\"params-bar\">\n" +
+        String paramsHtml = !hasParameters ? "" :
+            String.format("    <div id=\"parameterBarContainer\" class=\"params-bar\">\n" +
                           "      <rb-parameters report-id=\"%s\" api-base-url=\"%s\" show-reload=\"true\"></rb-parameters>\n" +
                           "    </div>", reportId, apiBaseUrl);
 
@@ -110,7 +131,7 @@ public class DashboardFileGenerator {
                "      display: grid;\n" +
                "      grid-template-columns: repeat(12, 1fr);\n" +
                "      gap: 16px;\n" +
-               "      auto-rows: minmax(80px, auto);\n" +
+               "      grid-auto-rows: minmax(80px, auto);\n" +
                "    }\n" +
                "    .rb-dashboard-root .grid-item {\n" +
                "      background: #ffffff;\n" +
@@ -132,12 +153,21 @@ public class DashboardFileGenerator {
                "      position: relative;\n" +
                "      overflow: hidden;\n" +
                "    }\n" +
-               "    .rb-dashboard-root .number-card::before {\n" +
+               "    .rb-dashboard-root .number-card::before,\n" +
+               "    .rb-dashboard-root .kpi-card::before {\n" +
                "      content: '';\n" +
                "      position: absolute;\n" +
                "      top: 0; left: 0; right: 0;\n" +
                "      height: 3px;\n" +
                "      background: #0f766e;\n" +
+               "    }\n" +
+               "    .rb-dashboard-root .kpi-card {\n" +
+               "      background: #ffffff;\n" +
+               "      border: 1px solid #e2e8f0;\n" +
+               "      border-radius: 10px;\n" +
+               "      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);\n" +
+               "      position: relative;\n" +
+               "      overflow: hidden;\n" +
                "    }\n" +
                "    .rb-dashboard-root .number-label {\n" +
                "      font-size: 11px;\n" +
@@ -207,16 +237,24 @@ public class DashboardFileGenerator {
             "grid-column: %d / span %d; grid-row: %d / span %d;",
             x + 1, col, y + 1, row);
 
+        // Charts (<rb-chart>) have no intrinsic content height — Chart.js sizes
+        // its canvas from the parent, the parent's auto-row sizes to canvas →
+        // circular dependency resolves at Chart.js's ~300px default, far less
+        // than the h spans intended. Emit an explicit min-height proportional
+        // to the row span (80px per row matches grid-auto-rows' minimum) so the
+        // chart fills its allotted vertical real estate.
+        String chartStyle = style + String.format(" min-height: %dpx;", row * 80);
+
         return switch (type) {
             case "chart" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-chart %s></rb-chart>\n    </div>", style, attrs);
+                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-chart %s></rb-chart>\n    </div>", chartStyle, attrs);
             case "tabulator" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-tabulator %s></rb-tabulator>\n    </div>", style, attrs);
             case "pivot" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-pivot-table %s></rb-pivot-table>\n    </div>", style, attrs);
             case "number" -> {
                 Map<String, Object> dc = displayConfig(w);
-                String numberField  = strOr(dc, "numberField",  "");
+                String numberField  = resolveNumberField(w, dc);
                 String numberFormat = strOr(dc, "numberFormat", "");
                 if (numberFormat.isEmpty())
                     numberFormat = isCurrencyFieldName(numberField) ? "currency" : "number";
@@ -233,11 +271,11 @@ public class DashboardFileGenerator {
             case "sankey" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-sankey %s></rb-sankey>\n    </div>", style, attrs);
             case "gauge" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-gauge %s></rb-gauge>\n    </div>", style, attrs);
+                String.format("    <div class=\"grid-item kpi-card\" style=\"%s\">\n      <rb-gauge %s></rb-gauge>\n    </div>", style, attrs);
             case "trend" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-trend %s></rb-trend>\n    </div>", style, attrs);
+                String.format("    <div class=\"grid-item kpi-card\" style=\"%s\">\n      <rb-trend %s></rb-trend>\n    </div>", style, attrs);
             case "progress" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-progress %s></rb-progress>\n    </div>", style, attrs);
+                String.format("    <div class=\"grid-item kpi-card\" style=\"%s\">\n      <rb-progress %s></rb-progress>\n    </div>", style, attrs);
             case "detail" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-detail %s></rb-detail>\n    </div>", style, attrs);
             case "text" -> {
@@ -280,53 +318,18 @@ public class DashboardFileGenerator {
         return charts.stream().map(w -> {
             String id = componentId(w);
             Map<String, Object> cfg = displayConfig(w);
-            Object customDsl = cfg.get("customDsl");
-            if (customDsl instanceof String s && !s.isBlank()) {
-                String dsl = s.trim();
-                // Unnamed `chart { }` → wrap as named so each widget's config is
-                // independently addressable and blocks don't merge/overwrite each other.
-                if (!dsl.startsWith("chart(")) {
-                    dsl = dsl.replaceFirst("^chart\\s*\\{", "chart('" + id + "') {");
-                }
-                return dsl;
+            // Single source of truth: displayConfig.dslConfig (Map). See
+            // Principle 4 in DSLPrinciplesReadme.java.
+            Object dslConfig = cfg.get("dslConfig");
+            if (dslConfig instanceof Map<?, ?> map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> opts = (Map<String, Object>) map;
+                return BlockFormEmitter.emitNamed("chart", id, opts, BlockFormRules.CHART);
             }
-
-            String chartType   = strOr(cfg, "chartType", "bar");
-            String chartTitle  = strOr(cfg, "chartTitle", "");
-            List<String> xFields = listOfStr(cfg, "xFields");
-            List<String> yFields = listOfStr(cfg, "yFields");
-            String xField      = xFields.isEmpty() ? "" : xFields.get(0);
-            String seriesField = xFields.size() > 1 ? xFields.get(1) : "";
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("chart('").append(id).append("') {\n");
-            sb.append("  type '").append(chartType).append("'\n");
-            sb.append("  data {\n");
-            if (!yFields.isEmpty()) {
-                sb.append("    labelField '").append(xField).append("'\n");
-                if (!seriesField.isBlank()) sb.append("    seriesField '").append(seriesField).append("'\n");
-                sb.append("    datasets {\n");
-                for (String yf : yFields) {
-                    sb.append("      dataset {\n");
-                    sb.append("        field '").append(yf).append("'\n");
-                    sb.append("        label '").append(yf).append("'\n");
-                    sb.append("      }\n");
-                }
-                sb.append("    }\n");
-            } else {
-                sb.append("    // Auto-detect fields from data\n");
-            }
-            sb.append("  }\n");
-            if (!chartTitle.isEmpty()) {
-                String escaped = chartTitle.replace("'", "\\'");
-                sb.append("  options {\n")
-                  .append("    plugins {\n")
-                  .append("      title { display true; text '").append(escaped).append("' }\n")
-                  .append("    }\n")
-                  .append("  }\n");
-            }
-            sb.append("}");
-            return sb.toString();
+            // Empty fallback — widget never opened in canvas, so no Map yet.
+            Map<String, Object> opts = new LinkedHashMap<>();
+            opts.put("type", "bar");
+            return BlockFormEmitter.emitNamed("chart", id, opts, BlockFormRules.CHART);
         }).collect(Collectors.joining("\n\n"));
     }
 
@@ -337,14 +340,23 @@ public class DashboardFileGenerator {
         return tabulators.stream().map(w -> {
             String id = componentId(w);
             Map<String, Object> cfg = displayConfig(w);
-            Object customDsl = cfg.get("customDsl");
-            if (customDsl instanceof String s && !s.isBlank()) {
-                String dsl = s.trim();
-                if (!dsl.startsWith("tabulator("))
-                    dsl = dsl.replaceFirst("^tabulator\\s*\\{", "tabulator('" + id + "') {");
-                return dsl;
+            // Single source of truth: displayConfig.dslConfig (Map). See
+            // Principle 4 in DSLPrinciplesReadme.java. The canvas's lazy
+            // migration ensures dslConfig is populated for every widget the
+            // first time it's rendered — by the time the publisher runs,
+            // every widget has a Map here.
+            Object dslConfig = cfg.get("dslConfig");
+            if (dslConfig instanceof Map<?, ?> map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> opts = (Map<String, Object>) map;
+                return BlockFormEmitter.emitNamed("tabulator", id, opts, BlockFormRules.TABULATOR, true);
             }
-            return "tabulator('" + id + "') {\n  layout \"fitColumns\"\n  autoColumns true\n}";
+            // Empty fallback — widget never opened in canvas, so no Map yet.
+            // Render an empty auto-columns table so it at least shows data.
+            Map<String, Object> opts = new LinkedHashMap<>();
+            opts.put("layout", "fitColumns");
+            opts.put("autoColumns", true);
+            return BlockFormEmitter.emitNamed("tabulator", id, opts, BlockFormRules.TABULATOR, true);
         }).collect(Collectors.joining("\n\n"));
     }
 
@@ -355,27 +367,18 @@ public class DashboardFileGenerator {
         return pivots.stream().map(w -> {
             String id = componentId(w);
             Map<String, Object> cfg = displayConfig(w);
-            Object customDsl = cfg.get("customDsl");
-            if (customDsl instanceof String s && !s.isBlank()) {
-                String dsl = s.trim();
-                if (!dsl.startsWith("pivotTable("))
-                    dsl = dsl.replaceFirst("^pivotTable\\s*\\{", "pivotTable('" + id + "') {");
-                return dsl;
+            // Single source of truth: displayConfig.dslConfig (Map). See
+            // Principle 4 in DSLPrinciplesReadme.java.
+            Object dslConfig = cfg.get("dslConfig");
+            if (dslConfig instanceof Map<?, ?> map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> opts = (Map<String, Object>) map;
+                return BlockFormEmitter.emitNamed("pivotTable", id, opts, BlockFormRules.PIVOT, true);
             }
-
-            List<String> rows = listOfStr(cfg, "pivotRows");
-            List<String> cols = listOfStr(cfg, "pivotCols");
-            List<String> vals = listOfStr(cfg, "pivotVals");
-            String aggregator = strOr(cfg, "pivotAggregator", "Sum");
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("pivotTable('").append(id).append("') {\n");
-            rows.forEach(r -> sb.append("  rows '").append(r).append("'\n"));
-            cols.forEach(c -> sb.append("  cols '").append(c).append("'\n"));
-            vals.forEach(v -> sb.append("  vals '").append(v).append("'\n"));
-            sb.append("  aggregatorName '").append(aggregator).append("'\n");
-            sb.append("  rendererName 'Table'\n}");
-            return sb.toString();
+            Map<String, Object> opts = new LinkedHashMap<>();
+            opts.put("aggregatorName", "Count");
+            opts.put("rendererName", "Table");
+            return BlockFormEmitter.emitNamed("pivotTable", id, opts, BlockFormRules.PIVOT, true);
         }).collect(Collectors.joining("\n\n"));
     }
 
@@ -386,30 +389,19 @@ public class DashboardFileGenerator {
         return filterPanes.stream().map(w -> {
             String id = componentId(w);
             Map<String, Object> cfg = displayConfig(w);
-            Object customDsl = cfg.get("customDsl");
-            if (customDsl instanceof String s && !s.isBlank()) {
-                String dsl = s.trim();
-                if (!dsl.startsWith("filterPane("))
-                    dsl = dsl.replaceFirst("^filterPane\\s*\\{", "filterPane('" + id + "') {");
-                return dsl;
+            // Single source of truth: displayConfig.dslConfig (Map). See
+            // Principle 4 in DSLPrinciplesReadme.java.
+            Object dslConfig = cfg.get("dslConfig");
+            if (dslConfig instanceof Map<?, ?> map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> opts = (Map<String, Object>) map;
+                Object field = opts.get("field");
+                if (!(field instanceof String fs) || fs.isBlank()) {
+                    return "// filterPane('" + id + "') — no field configured";
+                }
+                return BlockFormEmitter.emitNamed("filterPane", id, opts, BlockFormRules.FILTERPANE);
             }
-
-            String filterField = strOr(cfg, "filterField", "");
-            if (filterField.isBlank()) return "// filterPane('" + id + "') — no field configured";
-
-            List<String> lines = new ArrayList<>();
-            lines.add("filterPane('" + id + "') {");
-            lines.add("  field '" + filterField + "'");
-            if (cfg.get("filterLabel") instanceof String sl && !sl.isBlank())  lines.add("  label '" + sl + "'");
-            if (cfg.get("filterSort") instanceof String ss && !ss.equals("asc")) lines.add("  sort '" + ss + "'");
-            if (cfg.get("filterMaxValues") instanceof Number n && n.intValue() != 500) lines.add("  maxValues " + n.intValue());
-            if (Boolean.TRUE.equals(cfg.get("filterShowSearch")))  lines.add("  showSearch true");
-            if (Boolean.FALSE.equals(cfg.get("filterShowSearch"))) lines.add("  showSearch false");
-            if (Boolean.TRUE.equals(cfg.get("filterShowCount")))   lines.add("  showCount true");
-            if (Boolean.FALSE.equals(cfg.get("filterMultiSelect"))) lines.add("  multiSelect false");
-            if (cfg.get("filterHeight") instanceof String sh && !sh.equals("auto")) lines.add("  height '" + sh + "'");
-            lines.add("}");
-            return String.join("\n", lines);
+            return "// filterPane('" + id + "') — no field configured";
         }).collect(Collectors.joining("\n\n"));
     }
 
@@ -438,8 +430,11 @@ public class DashboardFileGenerator {
     private static String generateValueConfig(List<Map<String, Object>> numbers) throws Exception {
         if (numbers.isEmpty()) return "";
         Map<String, Object> out = new LinkedHashMap<>();
+        // numberField gets resolved via resolveNumberField (visual-mode SQL alias
+        // derivation) — copying it raw produces stale source-column names like
+        // `equity` / `qty` / `net_pnl` instead of the actual aggregate aliases
+        // `equity_avg` / `qty_count` / `net_pnl_max` the script returns.
         Map<String, String> mapping = new LinkedHashMap<>();
-        mapping.put("numberField",    "field");
         mapping.put("numberFormat",   "format");
         mapping.put("numberLabel",    "label");
         mapping.put("numberPrefix",   "prefix");
@@ -448,10 +443,142 @@ public class DashboardFileGenerator {
         for (Map<String, Object> w : numbers) {
             Map<String, Object> cfg = displayConfig(w);
             Map<String, Object> entry = new LinkedHashMap<>();
+            String resolvedField = resolveNumberField(w, cfg);
+            if (!resolvedField.isEmpty()) entry.put("field", resolvedField);
             for (Map.Entry<String, String> e : mapping.entrySet()) {
                 Object v = cfg.get(e.getKey());
                 if (v != null && !v.toString().isEmpty()) entry.put(e.getValue(), v);
             }
+            out.put(componentId(w), entry);
+        }
+        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+    }
+
+    /**
+     * Resolve the SQL alias for a Number widget's chosen field. The displayConfig's
+     * `numberField` is the source-table column name (e.g. `net_pnl`); the actual
+     * SQL the script generates aliases the aggregate (e.g. `MAX(net_pnl) AS net_pnl_max`).
+     * The published `<rb-value field="...">` must reference the alias, not the source.
+     *
+     * Visual mode: derive from the visualQuery's summarize. Formula matches
+     * sql-builder.ts:154 — `{field}_{aggregation}` (lowercase), or `count` for COUNT(*).
+     * If numberField doesn't match any summarize entry, fall back to first summarize alias.
+     *
+     * SQL mode: returns empty — rb-value falls back to the first result column,
+     * which is the right thing for the typical Number widget (one summary column).
+     */
+    @SuppressWarnings("unchecked")
+    private static String resolveNumberField(Map<String, Object> widget, Map<String, Object> dc) {
+        String numberField = strOr(dc, "numberField", "");
+        Object dsObj = widget.get("dataSource");
+        if (!(dsObj instanceof Map<?, ?> ds)) return numberField;
+        String mode = strOr((Map<String, Object>) ds, "mode", "");
+        if (!"visual".equals(mode) && !mode.isEmpty()) return ""; // SQL/AI-SQL — let rb-value pick first column
+
+        Object vqObj = ((Map<String, Object>) ds).get("visualQuery");
+        if (!(vqObj instanceof Map<?, ?> vq)) return numberField;
+        Object summObj = ((Map<String, Object>) vq).get("summarize");
+        if (!(summObj instanceof List<?> summList) || summList.isEmpty()) return numberField;
+
+        // Build alias from first matching summarize entry (or first entry if no match).
+        String firstAlias = null;
+        for (Object e : summList) {
+            if (!(e instanceof Map<?, ?> agg)) continue;
+            String field = strOr((Map<String, Object>) agg, "field", "");
+            String aggregation = strOr((Map<String, Object>) agg, "aggregation", "").toLowerCase();
+            if (field.isEmpty() || aggregation.isEmpty()) continue;
+            String alias = ("*".equals(field) && "count".equals(aggregation))
+                ? "count"
+                : field + "_" + aggregation;
+            if (firstAlias == null) firstAlias = alias;
+            if (field.equals(numberField)) return alias;
+        }
+        return firstAlias != null ? firstAlias : numberField;
+    }
+
+    /**
+     * Resolve a chart's series-breakout column. The Display tab's `xFields[1]` is
+     * the explicit pick; when missing, fall back to the first non-X column in
+     * `visualQuery.groupBy`. Mirrors ChartWidget.tsx:404 (`userSeriesField ?? groupByCols[1]`)
+     * so the published chart renders the same N-line breakout the live editor shows.
+     */
+    @SuppressWarnings("unchecked")
+    private static String resolveChartSeriesField(Map<String, Object> widget, String xField) {
+        Object dsObj = widget.get("dataSource");
+        if (!(dsObj instanceof Map<?, ?> ds)) return "";
+        Object vqObj = ((Map<String, Object>) ds).get("visualQuery");
+        if (!(vqObj instanceof Map<?, ?> vq)) return "";
+        Object gbObj = ((Map<String, Object>) vq).get("groupBy");
+        if (!(gbObj instanceof List<?> gb)) return "";
+        for (Object col : gb) {
+            if (col instanceof String s && !s.isEmpty() && !s.equals(xField)) return s;
+        }
+        return "";
+    }
+
+    // ── Gauge Config (JSON) ───────────────────────────────────────────────────
+
+    /**
+     * Translate the canvas-side gauge displayConfig (prefixed keys: gaugeFormat,
+     * gaugeBands, gaugeBandsReverse) into the wire shape the rb-gauge web component
+     * consumes (unprefixed: format, bands). Reading gauge config via the generic
+     * sidecar would silently drop these fields because of the prefix mismatch —
+     * see Plan: "Fix canvas-vs-published drift on Gauge + Number + Chart widgets".
+     *
+     * <p>Mirrors the canvas-side resolution in
+     * {@code asbl/.../components/explore-data/widgets/GaugeWidget.tsx}:
+     * <ul>
+     *   <li>{@code gaugeBandsReverse: true} → swap colors (keep thresholds), so
+     *       "Higher = worse" risk metrics render green-on-left / red-on-right.</li>
+     *   <li>{@code gaugeFormat} unset → default to {@code "currency"} when the
+     *       picked field name matches the currency heuristic, else {@code "number"}.
+     *       Mirrors the Number widget's auto-detect at {@link #widgetHtml}.</li>
+     * </ul>
+     */
+    private static String generateGaugeConfig(List<Map<String, Object>> widgets) throws Exception {
+        if (widgets.isEmpty()) return "";
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map<String, Object> w : widgets) {
+            Map<String, Object> cfg = displayConfig(w);
+            Map<String, Object> entry = new LinkedHashMap<>();
+
+            String field = strOr(cfg, "field", "");
+            if (!field.isEmpty()) entry.put("field", field);
+            if (cfg.get("min")   instanceof Number mn) entry.put("min",   mn);
+            if (cfg.get("max")   instanceof Number mx) entry.put("max",   mx);
+            String label = strOr(cfg, "label", "");
+            if (!label.isEmpty()) entry.put("label", label);
+
+            // Format: explicit gaugeFormat wins; else auto-detect currency from field name.
+            String format = strOr(cfg, "gaugeFormat", "");
+            if (format.isEmpty() && !field.isEmpty()) {
+                format = isCurrencyFieldName(field) ? "currency" : "number";
+            }
+            if (!format.isEmpty()) entry.put("format", format);
+
+            // Bands: pass-through, with optional color swap when "Higher = worse" is on.
+            Object bandsObj = cfg.get("gaugeBands");
+            if (bandsObj instanceof List<?> bandsList && !bandsList.isEmpty()) {
+                boolean reverse = Boolean.TRUE.equals(cfg.get("gaugeBandsReverse"));
+                List<Map<String, Object>> bandsOut = new ArrayList<>();
+                int n = bandsList.size();
+                for (int i = 0; i < n; i++) {
+                    Object item = bandsList.get(i);
+                    if (!(item instanceof Map<?, ?> band)) continue;
+                    Object to    = band.get("to");
+                    Object color = band.get("color");
+                    if (reverse && n > 1) {
+                        Object swap = bandsList.get(n - 1 - i);
+                        if (swap instanceof Map<?, ?> sm) color = sm.get("color");
+                    }
+                    Map<String, Object> bandOut = new LinkedHashMap<>();
+                    if (to    != null) bandOut.put("to",    to);
+                    if (color != null) bandOut.put("color", color);
+                    bandsOut.add(bandOut);
+                }
+                if (!bandsOut.isEmpty()) entry.put("bands", bandsOut);
+            }
+
             out.put(componentId(w), entry);
         }
         return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";

@@ -8,6 +8,7 @@ import {
   resolveAutoWidget,
 } from "@/lib/explore-data/widget-defaults";
 import { shapeFromColumns } from "@/lib/explore-data/smart-defaults/widget-picker";
+import { clearWidgetExecCache } from "@/lib/explore-data/widget-exec-cache";
 
 // --- Types ---
 
@@ -111,6 +112,24 @@ export interface WidgetQueryResult {
   loading: boolean;
 }
 
+/** Single parameter definition — matches the rb-parameters web component
+ *  contract. The canonical canvas-level Map is `{ parameters: ParamMeta[] }`
+ *  stored at `CanvasState.parametersConfig`. The Groovy DSL text is derived
+ *  on demand (DSL editor open → /serialize, publisher → /serialize). */
+export interface ParamMeta {
+  id: string;
+  type: string;
+  defaultValue?: unknown;
+  constraints?: Record<string, unknown>;
+  uiHints?: Record<string, unknown>;
+  label?: string;
+  description?: string;
+}
+
+export interface ParametersConfig {
+  parameters: ParamMeta[];
+}
+
 export interface CanvasState {
   id: string;
   name: string;
@@ -119,14 +138,15 @@ export interface CanvasState {
   widgets: Widget[];
   /** Per-widget query-result cache. See WidgetQueryResult. */
   queryResults: Record<string, WidgetQueryResult | undefined>;
-  /** Report-parameters DSL text (the same grammar RB uses in
-   *  `{reportCode}-report-parameters-spec.groovy`). Edited via the FilterBar
-   *  UI panel + its bidirectional DSL editor. Parsed on-demand by
-   *  `<rb-parameters>` (via `/api/dsl/reportparameters/parse`) to produce
-   *  the ParamMeta[] that drives the canvas filter bar. At Phase 6 export
-   *  time this string is written verbatim to disk — canvas state IS the
-   *  exported file. Empty string = no filters declared. */
-  filterDsl: string;
+  /** ============================================================================
+   *  Canonical Map (Principle 4) for the dashboard-level Report-Parameters DSL.
+   *  Replaces the prior `filterDsl: string`. The Map IS the storage; DSL text
+   *  is a derived view (on demand: editor open → /serialize, publisher →
+   *  /serialize). Form gestures in `FilterBarConfigPanel` mutate this Map
+   *  directly. The DSL editor parses text → Map on save. Same Map flows to
+   *  the canvas `<rb-parameters>` AND to the publisher (no drift possible).
+   *  ============================================================================ */
+  parametersConfig: ParametersConfig;
   filterValues: Record<string, string>;
   filterVersion: number;
   selectedWidgetId: string | null;
@@ -150,7 +170,7 @@ const DEFAULT_STATE: CanvasState = {
   connectionId: null,
   widgets: [],
   queryResults: {},
-  filterDsl: "",
+  parametersConfig: { parameters: [] },
   filterValues: {},
   filterVersion: 0,
   selectedWidgetId: null,
@@ -241,7 +261,7 @@ interface CanvasActions {
   selectWidget: (id: string | null) => void;
   setEditMode: (editMode: boolean) => void;
   updateLayout: (layouts: { i: string; x: number; y: number; w: number; h: number }[]) => void;
-  setFilterDsl: (dsl: string) => void;
+  setParametersConfig: (next: ParametersConfig) => void;
   setFilterValue: (paramName: string, value: string) => void;
   /** Update the exportedReportCode after a successful "Save to DataPallas". */
   setExportedReportCode: (code: string | null) => void;
@@ -256,7 +276,15 @@ interface CanvasActions {
 export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => ({
   ...DEFAULT_STATE,
 
-  loadCanvas: (canvas) => set({ ...canvas, queryResults: {}, selectedWidgetId: null, editMode: true }),
+  loadCanvas: (canvas) => {
+    // Clear the cross-mount widget execution dedup cache. Without this, SPA
+    // navigations back to a previously-visited canvas reuse stale LAST_EXEC
+    // entries (same widgetIds, same SQL, same filterSnapshot) → first effect
+    // run after remount matches and SKIPs → no fetch fires → widgets render
+    // blank until a hard refresh wipes module state.
+    clearWidgetExecCache();
+    set({ ...canvas, queryResults: {}, selectedWidgetId: null, editMode: true });
+  },
 
   resetCanvas: () => set({ ...DEFAULT_STATE }),
 
@@ -587,14 +615,20 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     });
   },
 
-  setFilterDsl: (dsl) => {
-    set({ filterDsl: dsl });
+  setParametersConfig: (next) => {
+    set({ parametersConfig: next });
   },
 
   setExportedReportCode: (code) => set({ exportedReportCode: code }),
 
   setFilterValue: (paramName, value) => {
     const state = get();
+    // Idempotent: skip when the value is already what's in the store. Echo
+    // events from <rb-parameters> can re-fire valueChange on init/re-render
+    // with the same value — without this guard each echo would bump
+    // filterVersion, cascade through every useWidgetData, cancel its
+    // in-flight fetch, and strand widgets in a permanent loading state.
+    if (state.filterValues[paramName] === value) return;
     set({
       filterValues: { ...state.filterValues, [paramName]: value },
       filterVersion: state.filterVersion + 1,
@@ -627,7 +661,7 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     // other non-serializable runtime fields.
     const { selectedWidgetId, editMode, filterValues, filterVersion, exploreSelections, exploreFieldStates, exploreVersion, exportedReportCode, queryResults, ...rest } = get();
     // Strip store actions — only keep data properties
-    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setFilterDsl, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
+    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setParametersConfig, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
     return state;
   },
 }));

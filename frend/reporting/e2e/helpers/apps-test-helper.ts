@@ -50,10 +50,12 @@ export class AppsTestHelper {
       .confirmDialogShouldBeVisible()
       .clickYesDoThis();
 
-    ft = ft
-      .waitOnElementToContainText(stateSel, 'stopping', timeout)
-      .consoleLog(`App '${appId}' is stopping...`);
-
+    // No intermediate "stopping" wait. The backend's state polling can miss the
+    // transient "stopping" window entirely when Docker shutdown is fast (~2s) —
+    // the state field updates running → stopped directly. Asserting "stopping"
+    // here then hangs the test for the full `timeout` (5000s) waiting for a
+    // string that never appears. Only the final "stopped" state is observable
+    // reliably and is what actually proves the app stopped.
     ft = ft
       .waitOnElementToContainText(stateSel, 'stopped', timeout)
       .consoleLog(`App '${appId}' is stopped.`);

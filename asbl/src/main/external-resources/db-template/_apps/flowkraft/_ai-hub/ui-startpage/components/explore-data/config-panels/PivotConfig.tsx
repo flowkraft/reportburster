@@ -17,19 +17,28 @@ import { X, ArrowUp, ArrowDown, Minus, GripVertical } from "lucide-react";
 import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
-import { AutoBadge, isAutoField, clearAutoFlag } from "./AutoBadge";
+import type { PivotDslOptions } from "@/lib/explore-data/dsl-sync/pivot-mapping";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: every UI gesture in this Display tab panel mutates
+ * the canonical DSL Map at displayConfig.dslConfig — never the old structured
+ * fields (pivotRows, pivotCols, etc., now removed).
+ * ============================================================================
+ */
 
 const AGGREGATORS = ["Sum", "Count", "Average", "Min", "Max"];
 
-/** Partition slots: Rows + Columns accept dims only; Values accepts measures
- *  only. Drag-drop between zones enforces this via the DIM_ZONES / MEASURE_ZONES
- *  whitelists below. */
-type ZoneId = "pivotRows" | "pivotCols" | "pivotVals" | "available";
-const DIM_ZONES: ZoneId[] = ["pivotRows", "pivotCols", "available"];
-const MEASURE_ZONES: ZoneId[] = ["pivotVals", "available"];
+type ZoneId = "rows" | "cols" | "vals" | "available";
+const DIM_ZONES: ZoneId[] = ["rows", "cols", "available"];
+const MEASURE_ZONES: ZoneId[] = ["vals", "available"];
 
-type SortOrder = "ascending" | "descending";
-type SortOrderMap = Record<string, SortOrder>;
+type AxisOrder = "ascending" | "descending";
 
 interface PivotConfigProps {
   config: WidgetDisplayConfig;
@@ -37,12 +46,35 @@ interface PivotConfigProps {
   onChange: (config: WidgetDisplayConfig) => void;
 }
 
+function readDslMap(config: WidgetDisplayConfig): PivotDslOptions {
+  return (config.dslConfig as PivotDslOptions) ?? {};
+}
+
+function setDslMap(
+  config: WidgetDisplayConfig,
+  next: PivotDslOptions,
+  onChange: (c: WidgetDisplayConfig) => void,
+): void {
+  onChange({ ...config, dslConfig: next });
+}
+
+/** rowOrder/colOrder → "ascending" | "descending" | undefined */
+function axisDir(order: unknown): AxisOrder | undefined {
+  if (typeof order !== "string") return undefined;
+  if (order.includes("z_to_a")) return "descending";
+  if (order.includes("a_to_z")) return "ascending";
+  return undefined;
+}
+
 export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
-  const rows = (config.pivotRows as string[]) || [];
-  const cols = (config.pivotCols as string[]) || [];
-  const vals = (config.pivotVals as string[]) || [];
-  const aggregator = (config.pivotAggregator as string) || "Sum";
-  const sortOrder = (config.pivotSortOrder as SortOrderMap) || {};
+  const map = readDslMap(config);
+
+  const rows = (map.rows as string[] | undefined) ?? [];
+  const cols = (map.cols as string[] | undefined) ?? [];
+  const vals = (map.vals as string[] | undefined) ?? [];
+  const aggregator = (map.aggregatorName as string | undefined) ?? "Sum";
+  const rowOrderDir = axisDir(map.rowOrder);
+  const colOrderDir = axisDir(map.colOrder);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -58,15 +90,13 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
   const assigned = new Set([...rows, ...cols, ...vals]);
   const available = columns.filter((c) => !assigned.has(c.columnName));
 
-  // Zone membership lookup — where does this field live now?
   const zoneOf = (field: string): ZoneId => {
-    if (rows.includes(field)) return "pivotRows";
-    if (cols.includes(field)) return "pivotCols";
-    if (vals.includes(field)) return "pivotVals";
+    if (rows.includes(field)) return "rows";
+    if (cols.includes(field)) return "cols";
+    if (vals.includes(field)) return "vals";
     return "available";
   };
 
-  // Whether a field is allowed in a given target zone (dim/measure gate).
   const isDropAllowed = (field: string, target: ZoneId): boolean => {
     if (target === "available") return true;
     const col = columnByName[field];
@@ -74,43 +104,39 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
     return kind === "measure" ? MEASURE_ZONES.includes(target) : DIM_ZONES.includes(target);
   };
 
-  // Mutate: remove from all zones + add to the target (at end). `available` is
-  // the implicit "unassigned" state — removing from all three lists puts a
-  // field back there. Preserves sort order for fields that stay in rows/cols.
   const moveTo = (field: string, target: ZoneId) => {
-    const next = { ...config };
     const nextRows = rows.filter((f) => f !== field);
     const nextCols = cols.filter((f) => f !== field);
     const nextVals = vals.filter((f) => f !== field);
-    if (target === "pivotRows") nextRows.push(field);
-    else if (target === "pivotCols") nextCols.push(field);
-    else if (target === "pivotVals") nextVals.push(field);
-    next.pivotRows = nextRows;
-    next.pivotCols = nextCols;
-    next.pivotVals = nextVals;
-    // Drop sort order when the column leaves rows/cols — irrelevant in values
-    // and resets cleanly on re-add.
-    if (target !== "pivotRows" && target !== "pivotCols") {
-      const { [field]: _dropped, ...rest } = sortOrder;
-      next.pivotSortOrder = rest;
-    }
-    // Clear auto-flag on the touched zones.
-    let cleaned = next;
-    cleaned = clearAutoFlag(cleaned, "pivotRows");
-    cleaned = clearAutoFlag(cleaned, "pivotCols");
-    cleaned = clearAutoFlag(cleaned, "pivotVals");
-    onChange(cleaned);
+    if (target === "rows") nextRows.push(field);
+    else if (target === "cols") nextCols.push(field);
+    else if (target === "vals") nextVals.push(field);
+
+    const next: PivotDslOptions = { ...map };
+    if (nextRows.length > 0) next.rows = nextRows; else delete next.rows;
+    if (nextCols.length > 0) next.cols = nextCols; else delete next.cols;
+    if (nextVals.length > 0) next.vals = nextVals; else delete next.vals;
+    setDslMap(config, next, onChange);
   };
 
-  const cycleSort = (field: string) => {
-    const current = sortOrder[field];
-    const next = current === "ascending" ? "descending"
-              : current === "descending" ? undefined
-              : "ascending";
-    const map = { ...sortOrder };
-    if (next) map[field] = next;
-    else delete map[field];
-    onChange({ ...config, pivotSortOrder: map });
+  const cycleRowOrder = () => {
+    const next: PivotDslOptions = { ...map };
+    if (rowOrderDir === "ascending") next.rowOrder = "key_z_to_a";
+    else if (rowOrderDir === "descending") delete next.rowOrder;
+    else next.rowOrder = "key_a_to_z";
+    setDslMap(config, next, onChange);
+  };
+
+  const cycleColOrder = () => {
+    const next: PivotDslOptions = { ...map };
+    if (colOrderDir === "ascending") next.colOrder = "key_z_to_a";
+    else if (colOrderDir === "descending") delete next.colOrder;
+    else next.colOrder = "key_a_to_z";
+    setDslMap(config, next, onChange);
+  };
+
+  const setAggregator = (agg: string) => {
+    setDslMap(config, { ...map, aggregatorName: agg }, onChange);
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -132,51 +158,42 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div id="configPanel-pivot" className="space-y-3">
         <FieldZone
-          zoneId="pivotRows"
+          zoneId="rows"
           label="Rows"
           accept="dimension"
           fields={rows}
           columnByName={columnByName}
           onRemove={(f) => moveTo(f, "available")}
-          sortOrder={sortOrder}
-          onCycleSort={cycleSort}
-          autoBadge={isAutoField(config, "pivotRows") && <AutoBadge reason="Dimensions that didn't fit in Columns. Higher-cardinality dims land here because scrolling down is easier than scrolling right." />}
+          axisDir={rowOrderDir}
+          onCycleAxis={cycleRowOrder}
           isDropForbidden={activeKind === "measure"}
         />
         <FieldZone
-          zoneId="pivotCols"
+          zoneId="cols"
           label="Columns"
           accept="dimension"
           fields={cols}
           columnByName={columnByName}
           onRemove={(f) => moveTo(f, "available")}
-          sortOrder={sortOrder}
-          onCycleSort={cycleSort}
-          autoBadge={isAutoField(config, "pivotCols") && <AutoBadge reason="Lowest-cardinality dimension — keeps the grid horizontally compact." />}
+          axisDir={colOrderDir}
+          onCycleAxis={cycleColOrder}
           isDropForbidden={activeKind === "measure"}
         />
         <FieldZone
-          zoneId="pivotVals"
+          zoneId="vals"
           label="Values"
           accept="measure"
           fields={vals}
           columnByName={columnByName}
           onRemove={(f) => moveTo(f, "available")}
-          sortOrder={sortOrder}
-          onCycleSort={cycleSort}
-          autoBadge={isAutoField(config, "pivotVals") && <AutoBadge reason="First numeric measure (IDs excluded — SUM(CustomerID) is never meaningful)." />}
           isDropForbidden={activeKind === "dimension"}
         />
 
-        {/* Aggregator — global (applies to every value column) */}
         <div>
-          <span className="text-xs text-muted-foreground">
-            Aggregation
-            {isAutoField(config, "pivotAggregator") && <AutoBadge reason="Sum when a measure is present, else Count." />}
-          </span>
+          <span className="text-xs text-muted-foreground">Aggregation</span>
           <select
             value={aggregator}
-            onChange={(e) => onChange(clearAutoFlag({ ...config, pivotAggregator: e.target.value }, "pivotAggregator"))}
+            onChange={(e) => setAggregator(e.target.value)}
             className="w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
           >
             {AGGREGATORS.map((a) => (
@@ -185,29 +202,17 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
           </select>
         </div>
 
-        {/* Available fields — source zone. Drag FROM here into Rows/Cols/Values. */}
         <AvailableZone fields={available} />
       </div>
 
-      {/* Drag overlay — the chip that follows the pointer during a drag */}
       <DragOverlay dropAnimation={null}>
         {activeField && columnByName[activeField] ? (
-          <FieldChip
-            field={activeField}
-            columnByName={columnByName}
-            sortOrder={sortOrder}
-            showSort={false}
-            dragging
-          />
+          <FieldChip field={activeField} columnByName={columnByName} />
         ) : null}
       </DragOverlay>
     </DndContext>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Zones — droppable containers
-// ─────────────────────────────────────────────────────────────────────────────
 
 function FieldZone({
   zoneId,
@@ -216,32 +221,33 @@ function FieldZone({
   fields,
   columnByName,
   onRemove,
-  sortOrder,
-  onCycleSort,
-  autoBadge,
+  axisDir,
+  onCycleAxis,
   isDropForbidden,
 }: {
-  zoneId: "pivotRows" | "pivotCols" | "pivotVals";
+  zoneId: "rows" | "cols" | "vals";
   label: string;
   accept: "dimension" | "measure";
   fields: string[];
   columnByName: Record<string, ColumnSchema>;
   onRemove: (f: string) => void;
-  sortOrder: SortOrderMap;
-  onCycleSort: (f: string) => void;
-  autoBadge?: React.ReactNode;
-  /** Active drag is of the wrong kind → show "not allowed" affordance. */
+  axisDir?: AxisOrder;
+  onCycleAxis?: () => void;
   isDropForbidden?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: zoneId });
-  const showSort = zoneId === "pivotRows" || zoneId === "pivotCols";
+  const showSort = zoneId === "rows" || zoneId === "cols";
   return (
     <div>
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        {label}
-        <span className="text-[9px] text-muted-foreground/60">({accept}s)</span>
-        {autoBadge}
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          {label}
+          <span className="text-[9px] text-muted-foreground/60">({accept}s)</span>
+        </span>
+        {showSort && fields.length > 0 && onCycleAxis && (
+          <AxisSortToggle order={axisDir} onClick={onCycleAxis} />
+        )}
+      </div>
       <div
         ref={setNodeRef}
         className={[
@@ -260,9 +266,7 @@ function FieldZone({
             key={f}
             field={f}
             columnByName={columnByName}
-            sortOrder={sortOrder}
             onRemove={() => onRemove(f)}
-            onCycleSort={showSort ? () => onCycleSort(f) : undefined}
           />
         ))}
       </div>
@@ -295,22 +299,14 @@ function AvailableZone({ fields }: { fields: ColumnSchema[] }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Chips — draggable items
-// ─────────────────────────────────────────────────────────────────────────────
-
 function DraggableChip({
   field,
   columnByName,
-  sortOrder,
   onRemove,
-  onCycleSort,
 }: {
   field: string;
   columnByName: Record<string, ColumnSchema>;
-  sortOrder: SortOrderMap;
   onRemove: () => void;
-  onCycleSort?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: field });
   return (
@@ -328,7 +324,6 @@ function DraggableChip({
         <GripVertical className="w-2.5 h-2.5" />
       </button>
       <span className="font-mono text-[10px]">{field}</span>
-      {onCycleSort && <SortToggle order={sortOrder[field]} onClick={onCycleSort} />}
       <button id={`btnRemovePivotField-${field}`} onClick={onRemove} className="hover:text-destructive text-muted-foreground" aria-label={`Remove ${field}`}>
         <X className="w-2.5 h-2.5" />
       </button>
@@ -353,16 +348,12 @@ function DraggableSourceChip({ col }: { col: ColumnSchema }) {
   );
 }
 
-/** Static chip used by the DragOverlay (follows pointer during drag). */
 function FieldChip({
   field,
   columnByName,
 }: {
   field: string;
   columnByName: Record<string, ColumnSchema>;
-  sortOrder: SortOrderMap;
-  showSort: boolean;
-  dragging: boolean;
 }) {
   return (
     <span className={`${chipClass(columnByName[field])} shadow-lg ring-1 ring-primary/40`}>
@@ -372,32 +363,25 @@ function FieldChip({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sort toggle — cycles none → asc → desc → none
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SortToggle({ order, onClick }: { order?: SortOrder; onClick: () => void }) {
+function AxisSortToggle({ order, onClick }: { order?: AxisOrder; onClick: () => void }) {
   const Icon = order === "ascending" ? ArrowUp : order === "descending" ? ArrowDown : Minus;
-  const label = order === "ascending" ? "Sort ascending"
-              : order === "descending" ? "Sort descending"
-              : "Default order (click to sort asc)";
+  const label = order === "ascending" ? "Sort A→Z"
+              : order === "descending" ? "Sort Z→A"
+              : "Default order (click to sort A→Z)";
   return (
     <button
       onClick={onClick}
-      className={`flex items-center text-[10px] transition-colors ${
+      className={`flex items-center gap-0.5 text-[10px] px-1 py-0.5 transition-colors ${
         order ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
       }`}
       title={label}
       aria-label={label}
     >
       <Icon className="w-2.5 h-2.5" />
+      <span>{order === "ascending" ? "A→Z" : order === "descending" ? "Z→A" : "—"}</span>
     </button>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Style helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 function chipClass(col?: ColumnSchema): string {
   const kind = col ? getFieldKind(col) : "dimension";

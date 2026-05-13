@@ -23,24 +23,44 @@ import java.util.*;
  *
  * Usage: tabulator { layout "fitColumns"; height 400; pagination true; columns { column { title "Name"; field "name" } } }
  */
+/**
+ * <h2>TabulatorOptionsScript — tabulator DSL parser, block form only.</h2>
+ *
+ * <p>See {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for full DSL principles + tabulator-specific GOOD/BAD examples. Static init
+ * below compile-pins this class to that readme.
+ *
+ * <p><b>Note:</b> {@code methodMissing} on {@code ColumnDelegate} is intentional
+ * openness (tabulator.info has ~80 column properties: sorter, formatter,
+ * hozAlign, ...) — NOT drift.
+ */
 public abstract class TabulatorOptionsScript extends Script {
-	private final Map<String, Object> tableOptions = new LinkedHashMap<>();
-	private final List<Map<String, Object>> columns = new ArrayList<>();
-	private final List<Map<String, Object>> dataRows = new ArrayList<>();
 
-	// Named blocks: id → options map
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
+	// ── Single source of truth for parsing tabulator DSL ──
+	// Both the unnamed `tabulator { ... }` and named `tabulator('id') { ... }` forms
+	// dispatch their closure body to a NamedTabulatorDelegate — the ONE class that
+	// owns tableOptions, columns, dataRows, column()/data() overloads, and methodMissing.
+	// Per DSLPrinciplesReadme Principle 2 (DRY): no parallel parser surfaces.
+
+	/** Captures the unnamed default {@code tabulator { ... }} block, if present. */
+	private NamedTabulatorDelegate unnamedDelegate;
+
+	/** Named blocks: id → options map (populated by {@link #tabulator(String, Closure)}). */
 	private final Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
 
 	// DSL root — unnamed (default)
 	public void tabulator(Closure<?> body) {
-		body.setDelegate(this);
+		NamedTabulatorDelegate delegate = new NamedTabulatorDelegate();
+		body.setDelegate(delegate);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
+		this.unnamedDelegate = delegate;
 	}
 
 	// DSL root — named block for aggregator reports
 	public void tabulator(String id, Closure<?> body) {
-		// Use a temporary script-like delegate to capture this block's options independently
 		NamedTabulatorDelegate delegate = new NamedTabulatorDelegate();
 		body.setDelegate(delegate);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
@@ -48,58 +68,24 @@ public abstract class TabulatorOptionsScript extends Script {
 		namedOptions.put(id, delegate.getOptions());
 	}
 
-	// columns block
-	public void columns(Closure<?> body) {
-		body.setDelegate(this);
-		body.setResolveStrategy(Closure.DELEGATE_FIRST);
-		body.call();
-	}
-
-	// column overloads
-	public void column(Map<String, Object> args) { column(args, null); }
-	public void column(Closure<?> body) { column(new LinkedHashMap<>(), body); }
-	public void column(Map<String,Object> args, Closure<?> body) {
-		Map<String, Object> c = new LinkedHashMap<>(args);
-		this.columns.add(c);
-		if (body != null) {
-			ColumnDelegate d = new ColumnDelegate(c);
-			body.setDelegate(d);
-			body.setResolveStrategy(Closure.DELEGATE_FIRST);
-			body.call();
-		}
-	}
-
-	// data rows
-	public void data(List<Map<String, Object>> rows) {
-		if (rows != null) {
-			for (Map<String,Object> r : rows) {
-				this.dataRows.add(new LinkedHashMap<>(r));
-			}
-		}
-	}
-
-	// Catch-all for any Tabulator table-level option (layout, height, pagination, paginationSize, etc.)
-	public Object methodMissing(String name, Object args) {
-		if (args instanceof Object[] && ((Object[]) args).length > 0) {
-			tableOptions.put(name, ((Object[]) args)[0]);
-		} else {
-			tableOptions.put(name, args);
-		}
-		return null;
-	}
-
-	/** Return final options map — flat structure matching tabulator.info API */
+	/** Return final options map for the unnamed form (empty if none was declared). */
 	public Map<String, Object> getOptions() {
-		Map<String, Object> out = new LinkedHashMap<>(tableOptions);
-		if (!columns.isEmpty()) out.put("columns", new ArrayList<>(columns));
-		if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
-		return out;
+		return unnamedDelegate != null ? unnamedDelegate.getOptions() : new LinkedHashMap<>();
 	}
 
 	/** Return named options map (id → options) for aggregator reports */
 	public Map<String, Map<String, Object>> getNamedOptions() {
 		return namedOptions;
 	}
+
+	@Override
+	public Object run() {
+		return null;
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// Inner classes
+	// ═══════════════════════════════════════════════════════════════════════════
 
 	// Column delegate to capture column-level methods
 	// Aligned with Tabulator.info column definition API
@@ -118,8 +104,8 @@ public abstract class TabulatorOptionsScript extends Script {
 	}
 
 	/**
-	 * Delegate for named tabulator blocks — captures options independently
-	 * so multiple named blocks don't interfere with each other or the unnamed default.
+	 * Delegate for tabulator blocks (both unnamed and named) — single
+	 * parse-state owner per DSLPrinciplesReadme Principle 2 (DRY).
 	 */
 	private static class NamedTabulatorDelegate {
 		private final Map<String, Object> tableOptions = new LinkedHashMap<>();
@@ -153,6 +139,7 @@ public abstract class TabulatorOptionsScript extends Script {
 			}
 		}
 
+		// Catch-all for any Tabulator table-level option (layout, height, pagination, paginationSize, etc.)
 		public Object methodMissing(String name, Object args) {
 			if (args instanceof Object[] && ((Object[]) args).length > 0) {
 				tableOptions.put(name, ((Object[]) args)[0]);
@@ -168,10 +155,5 @@ public abstract class TabulatorOptionsScript extends Script {
 			if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
 			return out;
 		}
-	}
-
-	@Override
-	public Object run() {
-		return null;
 	}
 }

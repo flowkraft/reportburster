@@ -29,7 +29,11 @@ export type SqlDialect =
   | "oracle"
   | "db2";
 
-/** Default fallback for unknown / missing dialect — SQLite (our bundled default). */
+/** Default fallback for unknown / missing dialect — SQLite (our bundled
+ *  default; new users land on the sample SQLite database). The default
+ *  should rarely be hit at runtime because useWidgetData waits for the
+ *  connection list to load before firing widget queries — see
+ *  `useWidgetData.ts`. */
 const DEFAULT_DIALECT: SqlDialect = "sqlite";
 
 export function dialectFor(connectionType?: string | null): SqlDialect {
@@ -37,7 +41,7 @@ export function dialectFor(connectionType?: string | null): SqlDialect {
   const t = connectionType.toLowerCase();
   if (t.includes("sqlite")) return "sqlite";
   if (t.includes("duckdb")) return "duckdb";
-  if (t.includes("postgres") || t.includes("supabase")) return "postgres";
+  if (t.includes("postgres") || t.includes("supabase") || t.includes("timescale")) return "postgres";
   if (t.includes("mariadb")) return "mariadb";
   if (t.includes("mysql")) return "mysql";
   if (t.includes("clickhouse")) return "clickhouse";

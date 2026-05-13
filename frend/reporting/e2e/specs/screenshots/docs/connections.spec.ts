@@ -37,11 +37,11 @@
 import { test } from '@playwright/test';
 import * as _ from 'lodash';
 
-import { electronBeforeAfterAllTest } from '../../utils/common-setup';
-import { Constants } from '../../utils/constants';
-import { FluentTester } from '../../helpers/fluent-tester';
-import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
-import { captureDocsScreenshot } from '../../utils/docs-screenshot-helper';
+import { electronBeforeAfterAllTest } from '../../../utils/common-setup';
+import { Constants } from '../../../utils/constants';
+import { FluentTester } from '../../../helpers/fluent-tester';
+import { ConnectionsTestHelper } from '../../../helpers/areas/connections-test-helper';
+import { captureDocsScreenshot } from '../../../utils/docs-screenshot-helper';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 //

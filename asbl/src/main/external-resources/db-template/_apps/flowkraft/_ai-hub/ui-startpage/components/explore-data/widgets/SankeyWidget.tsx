@@ -6,7 +6,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
 import { Loader2 } from "lucide-react";
 import { pickSankeyFields } from "@/lib/explore-data/smart-defaults";
-import type { ColumnSchema } from "@/lib/explore-data/types";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
 
 interface SankeyWidgetProps {
   widgetId: string;
@@ -38,28 +38,18 @@ export function SankeyWidget({ widgetId }: SankeyWidgetProps) {
   };
   const paletteColors = PALETTE_COLORS[(displayConfig.sankeyPalette as string) || "default"] ?? PALETTE_COLORS.default;
 
-  // Build a ColumnSchema[] from the result row's keys so we can run the
-  // smart-defaults classifier. When tableSchema is available its typeName info
-  // is richer; otherwise we synthesize schemas from the sample row's values.
-  const inferredColumns: ColumnSchema[] = useMemo(() => {
-    const row0 = result?.data?.[0];
-    if (!row0) return [];
-    return Object.entries(row0).map(([name, v]) => ({
-      columnName: name,
-      typeName: typeof v === "number" ? "DOUBLE" : "VARCHAR",
-      isNullable: true,
-    }));
-  }, [result]);
+  // SINGLE TRUTH for column inference + saved-field validation lives in
+  // useEffectiveField. See lib/hooks/use-effective-field.ts.
+  const { inferredColumns, keys, validateField } = useEffectiveField(result);
 
   const auto = useMemo(
     () => pickSankeyFields(inferredColumns, { tableSchema }),
     [inferredColumns, tableSchema],
   );
 
-  const firstKey = inferredColumns[0]?.columnName ?? "";
-  const effectiveSource = configSource || auto.sourceField || firstKey;
-  const effectiveTarget = configTarget || auto.targetField || inferredColumns[1]?.columnName || "";
-  const effectiveValue = configValue || auto.valueField || "";
+  const effectiveSource = validateField(configSource) || auto.sourceField || keys[0] || "";
+  const effectiveTarget = validateField(configTarget) || auto.targetField || keys[1] || "";
+  const effectiveValue = validateField(configValue) || auto.valueField || "";
 
   // Stable options ref — avoid handing a fresh `{}` each render.
   const options = useMemo(

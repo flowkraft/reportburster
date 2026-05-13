@@ -10,7 +10,8 @@ import { ConfigurationTestHelper } from '../../helpers/areas/configuration-test-
 import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, hasSeedCapability, isOlapVendor, SCHEMA_TABLES_OLAP, SCHEMA_VIEWS_OLAP } from '../../helpers/areas/connections-test-helper';
 
 const DB_VENDORS_SELECTED: string[] = (() => {
-  
+  //return ['postgres']; // DEV FOCUS — comment out to restore full rotation
+
   //return ['oracle'];
   //return ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase']; // DEV FOCUS — comment out to restore full rotation
   //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
@@ -1068,10 +1069,15 @@ test.describe('', async () => {
           }
           ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(ft, tempConnName, dbVendor);
 
-          ft = ConnectionsTestHelper.seedAndWipeInvoicesViaConnectionDetails(ft, tempConnCode, 100);
+          ft = ConnectionsTestHelper.seedAndWipeInvoicesViaConnectionDetails(ft, tempConnCode, dbVendor, 100);
 
           // Escape the dot for CSS — `#id.xml` (raw) parses as id+class, not a literal `.xml` suffix.
           ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `${tempConnCode}\\.xml`, dbVendor);
+
+          // Graceful happy-path stop — finally still does nuclear `docker compose down`.
+          if (isContainer) {
+            ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
+          }
           return ft;
         } finally {
           if (isContainer) {
@@ -2016,6 +2022,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         ft = ConnectionsTestHelper.seedAndWipeUsingExampleDefaultViaConnectionDetails(
           ft,
           sampleConnectionCode,
+          sampleVendor,
         );
 
         return ft;

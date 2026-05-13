@@ -43,11 +43,35 @@ public class QueriesService {
 
 		Map<String, Object> boundParams = null;
 		if (params != null && !params.isEmpty()) {
-			sql = DatabaseHelper.convertToJdbiParameters(sql);
+			sql = DatabaseHelper.convertToJdbiParameters(sql, params);
+			java.util.Set<String> listBound = DatabaseHelper.findListBoundParameters(sql);
 			boundParams = new java.util.LinkedHashMap<>();
 			for (Map.Entry<String, Object> e : params.entrySet()) {
-				if (sql.contains(":" + e.getKey())) {
-					boundParams.put(e.getKey(), e.getValue());
+				String name = e.getKey();
+				Object value = e.getValue();
+				if (listBound.contains(name)) {
+					// IN-list param: split CSV string into a List so SqlExecutor binds via bindList.
+					// Type-coerce each value (Long → Double → String) so numeric columns get numeric
+					// binds — without this, JDBI binds VARCHAR and Postgres rejects `integer = varchar`.
+					String csv = value == null ? "" : String.valueOf(value);
+					java.util.List<Object> list = new java.util.ArrayList<>();
+					for (String s : csv.split(",")) {
+						String t = s.trim();
+						if (t.isEmpty()) continue;
+						try {
+							list.add(Long.parseLong(t));
+						} catch (NumberFormatException e1) {
+							try {
+								list.add(Double.parseDouble(t));
+							} catch (NumberFormatException e2) {
+								list.add(t);
+							}
+						}
+					}
+					if (list.isEmpty()) list.add(""); // JDBI rejects empty bindList — empty string matches nothing.
+					boundParams.put(name, list);
+				} else if (sql.contains(":" + name)) {
+					boundParams.put(name, value);
 				}
 			}
 		}

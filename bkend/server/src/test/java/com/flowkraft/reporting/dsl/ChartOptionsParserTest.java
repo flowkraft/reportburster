@@ -43,8 +43,18 @@ import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
  * {reportCode}-chart-config.groovy file. Every assertion validates that the
  * parsed output matches Chart.js's native API structure, confirming the
  * "thin wrapper" design principle.
+ *
+ * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
+ * Every test fixture uses canonical block form. Adding a test that uses the
+ * legacy parens/list-of-maps form silently weakens the contract — refuse it
+ * in review. See
+ * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the full principles.
  */
 public class ChartOptionsParserTest {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
 
 	// ═════════════════════════════════════════════════════════════════════════════
 	// TIER 1 — Every single business dashboard has these (>90%)

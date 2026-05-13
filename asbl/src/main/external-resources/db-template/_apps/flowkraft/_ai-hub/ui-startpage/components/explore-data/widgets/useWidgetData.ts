@@ -3,28 +3,10 @@
 import { useEffect, useState } from "react";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo, TableSchema } from "@/lib/explore-data/types";
-import { executeQuery, executeScript, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
+import { executeQuery, executeScript, fetchSchema, getConnectionType, hasConnectionsCached, ensureConnectionsLoaded } from "@/lib/explore-data/rb-api";
 import { sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
-
-// Module-level per-widget "we've already executed this version" tracker.
-// Survives component remounts — critical because the auto-switch
-// (tabulator → map etc.) unmounts one widget renderer and mounts another,
-// each of which calls useWidgetData(widgetId).  If the version tracker
-// were per-hook-instance (useRef), the new mount would re-fire the fetch
-// even though the store already has the result for this version.  A
-// module-level map keyed by widgetId gives us the cross-mount memory.
-// Also handles the visual-mode "refetch on widget-update" cascade: we
-// record the last-executed dataSource SIGNATURE (mode + sql + filter
-// snapshot) and short-circuit when unchanged.
-interface LastExec {
-  mode: string;
-  executeVersion?: number;
-  scriptVersion?: number;
-  sql?: string;           // for visual mode — built-once signature
-  filterSnapshot?: string; // JSON of filter values at last execution
-}
-const LAST_EXEC: Map<string, LastExec> = new Map();
+import { LAST_EXEC } from "@/lib/explore-data/widget-exec-cache";
 
 // Per-table schema cache: keyed by `${connectionId}\u0000${tableName}`.
 // Used by visual-query mode to get the selected table's full column list
@@ -95,6 +77,21 @@ export function useWidgetData(widgetId: string) {
   // against source table column metadata (Step 2 of the 3-step lookup).
   const [connectionSchemas, setConnectionSchemas] = useState<TableSchema[]>([]);
 
+  // Connection-list cache must be populated before we build SQL — otherwise
+  // getConnectionType() returns null and dialectFor() falls back to the SQLite
+  // default. SQLite-specific syntax (typeof(), strftime()) sent to a Postgres/
+  // TimescaleDB engine errors out (`function typeof(timestamp with time zone)
+  // does not exist`). Gate firing on this flag.
+  const [connectionsReady, setConnectionsReady] = useState<boolean>(hasConnectionsCached);
+  useEffect(() => {
+    if (connectionsReady) return;
+    let cancelled = false;
+    ensureConnectionsLoaded().finally(() => {
+      if (!cancelled) setConnectionsReady(hasConnectionsCached());
+    });
+    return () => { cancelled = true; };
+  }, [connectionsReady]);
+
   const dataSource = widget?.dataSource;
   const tableName = dataSource?.visualQuery?.table || "";
 
@@ -130,6 +127,9 @@ export function useWidgetData(widgetId: string) {
   // MapWidget etc., and each mount used to restart the version counter).
   useEffect(() => {
     if (!connectionId || !dataSource) return;
+    // Wait for the connection list before building SQL — see connectionsReady
+    // declaration above for why.
+    if (!connectionsReady) return;
 
     const mode = dataSource.mode;
     const prev = LAST_EXEC.get(widgetId);
@@ -147,22 +147,16 @@ export function useWidgetData(widgetId: string) {
       if (!script) { clearWidgetQueryLoading(widgetId); return; }
 
       let cancelled = false;
+      let settled = false;
       setWidgetQueryLoading(widgetId);
       executeScript(connectionId, script, filterValues ?? {})
-        .then((res) => { if (!cancelled) setWidgetQueryResult(widgetId, res); })
-        .catch((e) => { if (!cancelled) setWidgetQueryError(widgetId, e instanceof Error ? e.message : "Script failed"); });
+        .then((res) => { settled = true; if (!cancelled) setWidgetQueryResult(widgetId, res); })
+        .catch((e) => { settled = true; if (!cancelled) setWidgetQueryError(widgetId, e instanceof Error ? e.message : "Script failed"); });
 
-      return () => { cancelled = true; };
-    }
-
-    // SQL / AI-SQL — version-gated re-execution (only when Run is clicked).
-    if (mode === "sql" || mode === "ai-sql") {
-      const currentVersion = dataSource.executeVersion ?? 0;
-      if (prev && prev.mode === mode && prev.executeVersion === currentVersion) {
-        console.log('[useWidgetData] SKIP-sql widgetId=' + widgetId + ' ver=' + currentVersion);
-        return;
-      }
-      LAST_EXEC.set(widgetId, { mode, executeVersion: currentVersion });
+      return () => {
+        cancelled = true;
+        if (!settled) clearWidgetQueryLoading(widgetId);
+      };
     }
 
     // Build raw SQL. Filter values are sent to the backend separately as named
@@ -175,6 +169,24 @@ export function useWidgetData(widgetId: string) {
     );
     if (!raw) { clearWidgetQueryLoading(widgetId); return; }
 
+    // SQL / AI-SQL — re-execute when Run is clicked OR when dashboard filter
+    // values change AND the SQL contains a ${param} placeholder. Without the
+    // filter-aware branch, View SQL widgets bound to dashboard params (e.g. Win
+    // Rate, Sharpe Ratio with `WHERE strategy_run_id IN (${strategy_runs})`)
+    // would not refresh until the user clicks Run Query, breaking the dashboard.
+    if (mode === "sql" || mode === "ai-sql") {
+      const currentVersion = dataSource.executeVersion ?? 0;
+      const usesParams = raw.includes("${") || raw.includes("#{");
+      const filterSnapshot = usesParams ? JSON.stringify(filterValues ?? {}) : "";
+      if (prev && prev.mode === mode &&
+          prev.executeVersion === currentVersion &&
+          prev.filterSnapshot === filterSnapshot) {
+        console.log('[useWidgetData] SKIP-sql widgetId=' + widgetId + ' ver=' + currentVersion);
+        return;
+      }
+      LAST_EXEC.set(widgetId, { mode, executeVersion: currentVersion, filterSnapshot });
+    }
+
     if (mode === "visual") {
       const filterSnapshot = JSON.stringify(filterValues ?? {});
       if (prev && prev.mode === "visual" && prev.sql === raw && prev.filterSnapshot === filterSnapshot) {
@@ -185,40 +197,28 @@ export function useWidgetData(widgetId: string) {
     }
 
     let cancelled = false;
-    // [SQL-TRACE] diagnostic — leave commented; uncomment to debug query
-    // execution per widget (FIRE / DISCARDED / RESULT with rows + first row).
-    // console.log(
-    //   '[SQL-TRACE useWidgetData FIRE] widgetId=' + widgetId +
-    //   ' mode=' + mode +
-    //   ' SQL=<<<' + raw.replace(/\n/g, ' ') + '>>>',
-    // );
+    let settled = false;  // set true when result/error has been stored
     setWidgetQueryLoading(widgetId);
     executeQuery(connectionId, raw, filterValues ?? {})
       .then((res) => {
-        if (cancelled) {
-          // console.log('[SQL-TRACE useWidgetData DISCARDED] widgetId=' + widgetId);
-        } else {
-          // const firstRow = res.data?.[0];
-          // console.log(
-          //   '[SQL-TRACE useWidgetData RESULT] widgetId=' + widgetId +
-          //   ' rows=' + (res.data?.length ?? 0) +
-          //   ' rowCountField=' + res.rowCount +
-          //   ' colNames=' + JSON.stringify(firstRow ? Object.keys(firstRow) : []) +
-          //   ' firstRow=' + JSON.stringify(firstRow ?? null),
-          // );
-          setWidgetQueryResult(widgetId, res);
-        }
+        settled = true;
+        if (!cancelled) setWidgetQueryResult(widgetId, res);
       })
       .catch((e) => {
+        settled = true;
         console.log('[useWidgetData] ERROR widgetId=' + widgetId + ' ' + (e instanceof Error ? e.message : String(e)));
         if (!cancelled) setWidgetQueryError(widgetId, e instanceof Error ? e.message : "Query failed");
       });
 
     return () => {
       cancelled = true;
-      console.log('[useWidgetData] CLEANUP widgetId=' + widgetId + ' mode=' + mode);
+      // If the in-flight fetch was abandoned before it settled, clear loading
+      // so the spinner doesn't stick. The next effect run (if it doesn't dedup)
+      // will call setWidgetQueryLoading again — the brief gap is invisible
+      // because React runs cleanup + next-effect inside the same commit phase.
+      if (!settled) clearWidgetQueryLoading(widgetId);
     };
-  }, [connectionId, dataSource, filterValues, filterVersion, widgetId, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
+  }, [connectionId, dataSource, filterValues, filterVersion, widgetId, connectionsReady, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
 
   return {
     result: cached?.result ?? null,

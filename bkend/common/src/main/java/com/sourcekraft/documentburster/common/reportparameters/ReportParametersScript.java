@@ -6,6 +6,21 @@ import groovy.lang.Closure;
 
 import java.util.*;
 
+/**
+ * <h2>ReportParametersScript — parameters DSL parser, block form only.</h2>
+ *
+ * <p>See {@code com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * (in the {@code bkend/server} module) for full DSL architecture principles +
+ * parameters-specific GOOD/BAD examples. This file lives in {@code bkend/common}
+ * which can't import from {@code bkend/server}, so the link is a Javadoc
+ * reference rather than a compile pin — but the principles apply equally:
+ * single canonical block-form syntax, no parallel/drifted forms, UI↔DSL
+ * round-trip is contractual.
+ *
+ * <p>The matching emitter is {@code BlockFormEmitter} with
+ * {@code BlockFormRules.REPORTPARAMETERS} (uses the {@code NamedArgsBlock}
+ * rule with {@code wrap=false}).
+ */
 public abstract class ReportParametersScript extends Script {
     private final List<Map<String,Object>> paramsMetadataList = new ArrayList<>();
     private Map<String,Object> currentParam;

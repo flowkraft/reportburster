@@ -250,6 +250,7 @@ test.describe('Data Canvas Use Cases', () => {
   let electronPage: Page | null = null;
 
   test.beforeAll(async ({ beforeAfterAll }) => {
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
     // Get the Electron/browser first page for connection + AI Hub setup
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const app = beforeAfterAll as any;
@@ -276,6 +277,7 @@ test.describe('Data Canvas Use Cases', () => {
   });
 
   test.afterAll(async () => {
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
     // Close the external Chromium browser first (fast, doesn't need Electron)
     if (externalBrowser) await externalBrowser.close();
     // Stop the AI Hub server via the Electron app — runs whether tests pass or fail

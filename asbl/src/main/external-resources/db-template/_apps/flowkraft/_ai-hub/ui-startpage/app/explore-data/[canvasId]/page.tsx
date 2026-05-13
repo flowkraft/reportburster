@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { useCanvasStore } from "@/lib/stores/canvas-store";
+import { useCanvasStore, type ParametersConfig } from "@/lib/stores/canvas-store";
 import { useSaveStatusStore } from "@/lib/stores/save-status-store";
 import { usePublishStatusStore } from "@/lib/stores/publish-status-store";
 import { usePublishDirty } from "@/lib/stores/use-publish-dirty";
@@ -19,34 +19,18 @@ import { FilterBar } from "@/components/explore-data/FilterBar";
 import { SelectionBar } from "@/components/explore-data/SelectionBar";
 import { toast } from "sonner";
 
-const RB_BASE = process.env.NEXT_PUBLIC_RB_API_URL || "http://localhost:9090/api";
-
 /**
- * Parse the canvas filterDsl via the backend and return a {paramId: defaultValue}
- * map for params whose defaultValue is a non-empty string. Used to pre-seed the
- * canvas store's filterValues BEFORE any widget mounts — prevents Visual-mode
- * preview queries from firing with empty params against SQL containing ${param}.
- * Failures (bad DSL, network) are swallowed and yield an empty map — the
- * existing FilterBar async seed is still a backstop.
+ * Read defaults straight from the canonical parametersConfig Map. Used to
+ * pre-seed the canvas store's filterValues BEFORE any widget mounts — prevents
+ * Visual-mode preview queries from firing with empty params against SQL
+ * containing ${param}. No DSL parse round-trip needed.
  */
-async function seedFilterValuesFromDsl(filterDsl: string): Promise<Record<string, string>> {
-  if (!filterDsl?.trim()) return {};
-  try {
-    const res = await fetch(`${RB_BASE}/dsl/reportparameters/parse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dslCode: filterDsl }),
-    });
-    if (!res.ok) return {};
-    const data = (await res.json()) as { parameters?: Array<{ id: string; defaultValue?: unknown }> };
-    const out: Record<string, string> = {};
-    for (const p of data.parameters ?? []) {
-      if (p.defaultValue != null && String(p.defaultValue) !== "") out[p.id] = String(p.defaultValue);
-    }
-    return out;
-  } catch {
-    return {};
+function seedFilterValuesFromParameters(parameters: Array<{ id: string; defaultValue?: unknown }>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const p of parameters ?? []) {
+    if (p.defaultValue != null && String(p.defaultValue) !== "") out[p.id] = String(p.defaultValue);
   }
+  return out;
 }
 
 interface PageProps {
@@ -95,20 +79,17 @@ export default function CanvasEditorPage({ params }: PageProps) {
         return;
       }
       const state = JSON.parse((canvas.state as string) || "{}");
-      const filterDsl: string = state.filterDsl || "";
+      const parametersConfig = (state.parametersConfig as ParametersConfig | undefined) ?? { parameters: [] };
       // Pre-seed filterValues from param defaults so Visual-mode widgets bound
-      // to ${param} never race against the FilterBar's async DSL parse. Without
-      // this, a widget can fire its preview query with filterValues={} BEFORE
-      // FilterBar's 300ms-debounced parse completes, sending literal ${param}
-      // to the backend and erroring out.
-      const seededFilterValues = await seedFilterValuesFromDsl(filterDsl);
+      // to ${param} fire their preview query with the right defaults from the start.
+      const seededFilterValues = seedFilterValuesFromParameters(parametersConfig.parameters ?? []);
       store.loadCanvas({
         id: canvas.id as string,
         name: canvas.name as string,
         description: (canvas.description as string) || "",
         connectionId: (canvas.connectionId as string) || null,
         widgets: state.widgets || [],
-        filterDsl,
+        parametersConfig,
         filterValues: seededFilterValues,
         filterVersion: 0,
         selectedWidgetId: null,
@@ -159,7 +140,7 @@ export default function CanvasEditorPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div id="canvasBuilderRoot" className="flex flex-col h-[calc(100vh-4rem)]">
       <CanvasToolbar
         canvasId={canvasId}
         onSave={handleSave}
@@ -185,23 +166,28 @@ export default function CanvasEditorPage({ params }: PageProps) {
             </button>
           )
         )}
-        <Canvas />
-        {store.editMode && (
-          rightOpen ? (
-            <ConfigPanel
-              onCollapse={() => { rightManualClose.current = true; setRightOpen(false); }}
-            />
-          ) : (
-            <button
-              id="btnExpandRightPanel"
-              onClick={() => { rightManualClose.current = false; setRightOpen(true); }}
-              className="w-6 shrink-0 border-l border-border bg-muted/30 flex items-center justify-center hover:bg-accent transition-colors"
-              title="Show config panel"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground font-bold" />
-            </button>
-          )
-        )}
+        {/* canvasWorkArea wraps the canvas grid + right config panel so a single
+            screenshot can capture them together without the left tables panel
+            or its expand chevron leaking in — see captureWidgetZoom. */}
+        <div id="canvasWorkArea" className="flex flex-1 overflow-hidden">
+          <Canvas />
+          {store.editMode && (
+            rightOpen ? (
+              <ConfigPanel
+                onCollapse={() => { rightManualClose.current = true; setRightOpen(false); }}
+              />
+            ) : (
+              <button
+                id="btnExpandRightPanel"
+                onClick={() => { rightManualClose.current = false; setRightOpen(true); }}
+                className="w-6 shrink-0 border-l border-border bg-muted/30 flex items-center justify-center hover:bg-accent transition-colors"
+                title="Show config panel"
+              >
+                <ChevronLeft className="w-5 h-5 text-foreground font-bold" />
+              </button>
+            )
+          )}
+        </div>
       </div>
     </div>
   );

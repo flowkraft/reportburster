@@ -7,7 +7,7 @@ import { useRbElementReady } from "./useRbElementReady";
 import { Loader2 } from "lucide-react";
 import { pickProgressField, pickProgressGoal } from "@/lib/explore-data/smart-defaults";
 import { pickColumnFormat } from "@/lib/explore-data/type-formatters";
-import type { ColumnSchema } from "@/lib/explore-data/types";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
 
 interface ProgressWidgetProps {
   widgetId: string;
@@ -30,23 +30,16 @@ export function ProgressWidget({ widgetId }: ProgressWidgetProps) {
   const configGoal = displayConfig.goal as number | undefined;
   const configFormat = (displayConfig.format as string) || "";
 
-  const inferredColumns: ColumnSchema[] = useMemo(() => {
-    const row0 = result?.data?.[0];
-    if (!row0) return [];
-    return Object.entries(row0).map(([name, v]) => ({
-      columnName: name,
-      typeName: typeof v === "number" ? "DOUBLE" : "VARCHAR",
-      isNullable: true,
-    }));
-  }, [result]);
+  // SINGLE TRUTH for column inference + saved-field validation lives in
+  // useEffectiveField. See lib/hooks/use-effective-field.ts.
+  const { inferredColumns, keys, validateField } = useEffectiveField(result);
 
   const auto = useMemo(
     () => pickProgressField(inferredColumns, tableSchema),
     [inferredColumns, tableSchema],
   );
 
-  const firstKey = inferredColumns[0]?.columnName ?? "";
-  const effectiveField = configField || auto.field || firstKey;
+  const effectiveField = validateField(configField) || auto.field || keys[0] || "";
 
   // Derive goal from the first row's value if not configured.
   const effectiveGoal = useMemo(() => {

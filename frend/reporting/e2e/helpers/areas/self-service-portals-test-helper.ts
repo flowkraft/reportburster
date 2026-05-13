@@ -73,8 +73,28 @@ export class SelfServicePortalsTestHelper {
     ft.actions.push(async (): Promise<void> => {
       const stateEl = ft.window.locator(stateSel);
       await stateEl.waitFor({ state: 'visible', timeout });
-      const text = ((await stateEl.textContent()) || '').toLowerCase();
-      if (!text.includes('running') && !text.includes('starting')) return;
+      let text = ((await stateEl.textContent()) || '').toLowerCase();
+
+      // If a transition is already in progress, wait for it to resolve before acting.
+      // "starting" → button disabled; clicking Stop would be a no-op.
+      // "stopping" → button disabled; nothing to do but wait.
+      if (text.includes('starting') || text.includes('stopping')) {
+        console.log(`[startApp] app '${appId}' is in transition ('${text.trim()}') — waiting to resolve`);
+        await ft.window.waitForFunction(
+          (sel: string) => {
+            const el = document.querySelector(sel);
+            const t = (el?.textContent || '').toLowerCase();
+            return !!el && !t.includes('starting') && !t.includes('stopping');
+          },
+          stateSel,
+          { timeout: 120_000 },
+        ).catch(() => {
+          console.log(`[startApp] warning: app '${appId}' still in transition after 2 min — proceeding anyway`);
+        });
+        text = ((await stateEl.textContent()) || '').toLowerCase();
+      }
+
+      if (!text.includes('running')) return;
 
       console.log(`[startApp] app '${appId}' is already '${text.trim()}' — stopping first for a clean start`);
       await ft.window.locator(btnSel).click();
@@ -124,9 +144,16 @@ export class SelfServicePortalsTestHelper {
    * Create a new Playwright browser context for external portal navigation.
    * @param headless - Whether to run the browser in headless mode (default: false for visibility)
    */
-  static async createExternalBrowser(headless: boolean = false): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
-    const browser = await chromium.launch({ headless });
-    const context = await browser.newContext();
+  static async createExternalBrowser(
+    headless: boolean = false,
+    contextOptions: { deviceScaleFactor?: number; viewport?: { width: number; height: number } } = {},
+  ): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
+    const launchArgs: string[] = [];
+    if (contextOptions.deviceScaleFactor && contextOptions.deviceScaleFactor !== 1) {
+      launchArgs.push(`--force-device-scale-factor=${contextOptions.deviceScaleFactor}`);
+    }
+    const browser = await chromium.launch({ headless, args: launchArgs });
+    const context = await browser.newContext(contextOptions);
     const page = await context.newPage();
     return { browser, context, page };
   }

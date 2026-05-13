@@ -9,7 +9,7 @@
  *                   dirty = false if exportedReportCode is set (assume the
  *                   currently-persisted state matches the last publish —
  *                   true in practice because autosave is always in sync).
- *   - Any persisted-slice change (widgets / name / filterDsl / connectionId)
+ *   - Any persisted-slice change (widgets / name / parametersConfig / connectionId)
  *     → markDirty().
  *   - Publish dialog reports success → markClean().
  */

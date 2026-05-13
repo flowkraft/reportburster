@@ -181,7 +181,15 @@ public class SqlExecutor {
 	private List<Map<String, Object>> executeQuery(Handle handle, String sql, Map<String, Object> params) {
 		org.jdbi.v3.core.statement.Query query = handle.createQuery(sql);
 		if (params != null && !params.isEmpty()) {
-			query.bindMap(params);
+			Map<String, Object> scalarParams = new java.util.LinkedHashMap<>();
+			for (Map.Entry<String, Object> e : params.entrySet()) {
+				if (e.getValue() instanceof java.util.List) {
+					query.bindList(e.getKey(), (java.util.List<?>) e.getValue());
+				} else {
+					scalarParams.put(e.getKey(), e.getValue());
+				}
+			}
+			if (!scalarParams.isEmpty()) query.bindMap(scalarParams);
 		}
 		// Use getColumnLabel() directly so aliases like AS "Revenue" are preserved
 		// as-is, matching the case the published Groovy script returns via JDBC.

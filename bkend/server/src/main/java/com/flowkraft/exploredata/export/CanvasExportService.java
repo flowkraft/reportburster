@@ -109,10 +109,15 @@ public class CanvasExportService {
 
         List<Map<String, Object>> widgets =
                 (List<Map<String, Object>>) stateMap.getOrDefault("widgets", List.of());
-        String filterDsl = String.valueOf(stateMap.getOrDefault("filterDsl", ""));
+        // Single source of truth: parametersConfig Map. The DSL text is
+        // serialized server-side at publish time via DashboardFileGenerator.
+        Map<String, Object> parametersConfig = (Map<String, Object>)
+                stateMap.getOrDefault("parametersConfig", Map.of("parameters", List.of()));
+        List<Map<String, Object>> parametersList = (List<Map<String, Object>>)
+                parametersConfig.getOrDefault("parameters", List.of());
 
         // ── Step 1: Compile check (before touching disk) ──────────────────────
-        ScriptAssembler.AssembledScript assembled = ScriptAssembler.assemble(widgets, filterDsl);
+        ScriptAssembler.AssembledScript assembled = ScriptAssembler.assemble(widgets, parametersList);
 
         // ── Step 2: Delete existing report (clean-sweep + idempotent) ─────────
         try { reportsService.deleteConfiguration(reportId); } catch (Exception ignored) {}
@@ -138,7 +143,7 @@ public class CanvasExportService {
 
         // ── Step 6: Generate + write all sidecar files server-side ────────────
         DashboardFileGenerator.GeneratedFiles files = DashboardFileGenerator.generate(
-                widgets, filterDsl, reportId, rbApiBaseUrl + "/reporting");
+                widgets, parametersList, reportId, rbApiBaseUrl + "/reporting");
 
         writeIfPresent(templateDir, reportId + "-template.html",                 files.templateHtml());
         writeIfPresent(configDir,   reportId + "-chart-config.groovy",           files.chartConfigGroovy());

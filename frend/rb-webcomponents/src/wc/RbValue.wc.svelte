@@ -73,7 +73,14 @@
       case 'currency': {
         const num = parseFloat(str.replace(/[^0-9.\-]/g, ''));
         if (isNaN(num)) return str;
-        return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        // Use Intl currency style so negative values render as "-$5,234,567"
+        // (sign outside the symbol — trader convention) instead of "$-5,234,567".
+        return num.toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
       }
       case 'number': {
         const num = parseFloat(str.replace(/[^0-9.\-]/g, ''));
@@ -83,7 +90,13 @@
       case 'percent': {
         const num = parseFloat(str.replace(/[^0-9.\-]/g, ''));
         if (isNaN(num)) return str;
-        return Math.round(num * 100) + '%';
+        // Use 1-2 decimals (not Math.round) so small values like 0.0811 show
+        // as -8.11% instead of -8%. Drawdowns / returns / rates routinely live
+        // in the sub-1% range where rounding to integer destroys signal.
+        return (num * 100).toLocaleString('en-US', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 2,
+        }) + '%';
       }
       case 'date': {
         const d = new Date(str);

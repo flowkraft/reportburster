@@ -46,6 +46,27 @@ export function getConnectionType(connectionId: string | null | undefined): stri
   return match?.dbserver?.type ?? null;
 }
 
+/** True when the connection list has been fetched at least once and is non-empty.
+ *  Used by widget data hooks to gate query firing — without this, a widget can
+ *  build its SQL with the SQLite default dialect during the brief window
+ *  between page mount and the connections fetch resolving, then send sqlite
+ *  syntax (typeof, strftime) to whatever the actual engine is. */
+export function hasConnectionsCached(): boolean {
+  return _lastConnections.length > 0;
+}
+
+/** Idempotent: returns the in-flight or completed fetchConnections() promise.
+ *  Multiple callers awaiting at startup share one network request. */
+let _connectionsPromise: Promise<ConnectionInfo[]> | null = null;
+export function ensureConnectionsLoaded(): Promise<ConnectionInfo[]> {
+  if (_lastConnections.length > 0) return Promise.resolve(_lastConnections);
+  if (_connectionsPromise) return _connectionsPromise;
+  _connectionsPromise = fetchConnections()
+    .catch(() => [] as ConnectionInfo[])
+    .finally(() => { _connectionsPromise = null; });
+  return _connectionsPromise;
+}
+
 export async function fetchSchema(connectionId: string): Promise<SchemaInfo> {
   const res = await fetch(`${RB_BASE}/explore-data/schema/${encodeURIComponent(connectionId)}`);
   if (!res.ok) throw new Error("Failed to load schema");

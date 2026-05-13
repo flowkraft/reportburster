@@ -8,7 +8,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { fetchSchema } from "@/lib/explore-data/rb-api";
 import { autoPickMeasure } from "@/lib/explore-data/smart-defaults";
 import { pickColumnFormat } from "@/lib/explore-data/type-formatters";
-import type { ColumnSchema } from "@/lib/explore-data/types";
+import { useEffectiveField } from "@/lib/hooks/use-effective-field";
 
 interface NumberWidgetProps {
   widgetId: string;
@@ -41,20 +41,11 @@ export function NumberWidget({ widgetId }: NumberWidgetProps) {
   const configFormat = (displayConfig.numberFormat as string) || "";
   const configLabel = (displayConfig.numberLabel as string) || "";
 
-  // Auto-pick: delegated to the library's `autoPickMeasure` (uses `classifyColumn`
-  // under the hood). Build pseudo-columns from the first row's values so the
-  // library function can classify by type without needing a TableSchema.
-  const rows = result?.data ?? [];
-  const keys = rows.length > 0 ? Object.keys(rows[0]) : [];
-  const pseudoColumns: ColumnSchema[] = keys.map((k) => {
-    const v = rows[0]?.[k];
-    const typeName = typeof v === "number" ? "DOUBLE"
-      : (typeof v === "string" && v !== "" && !isNaN(Number(v))) ? "DOUBLE"
-      : "VARCHAR";
-    return { columnName: k, typeName, isNullable: true };
-  });
-  const autoField = autoPickMeasure(pseudoColumns)?.columnName;
-  const effectiveField = configField || autoField || keys[0] || "";
+  // SINGLE TRUTH for column inference + saved-field validation lives in
+  // useEffectiveField. See lib/hooks/use-effective-field.ts.
+  const { inferredColumns, keys, validateField } = useEffectiveField(result);
+  const autoField = autoPickMeasure(inferredColumns)?.columnName;
+  const effectiveField = validateField(configField) || autoField || keys[0] || "";
   // Infer format from column name (currency for revenue/freight/price/etc.).
   // pickColumnFormat returns a richer FormatSpec — we collapse to the two
   // values <rb-value> understands: "currency" | "number".

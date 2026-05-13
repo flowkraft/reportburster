@@ -22,7 +22,56 @@ import {
   pickDefaultAxes,
   canReuseAxisPicks,
 } from "@/lib/explore-data/smart-defaults";
+import { inferColumnsFromRow } from "@/lib/explore-data/widget-defaults";
+import { useDslConfig } from "@/lib/hooks/use-dsl-config";
+import type { ChartDslOptions, ChartDataBlock } from "@/lib/explore-data/dsl-sync/chart-mapping";
 import type { ColumnSchema } from "@/lib/explore-data/types";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: this widget renders FROM the DSL Map produced by
+ * useDslConfig (the canonical configuration). Same Map flows to <rb-chart>
+ * here AND to the published page after DSL→parse round-trip.
+ * ============================================================================
+ */
+
+/** Read x-axis fields from the canonical Map: [labelField, seriesField]. */
+function readXFields(map: ChartDslOptions): string[] {
+  const data = (map.data as ChartDataBlock | undefined) ?? {};
+  const out: string[] = [];
+  if (typeof data.labelField === "string" && data.labelField) out.push(data.labelField);
+  if (typeof data.seriesField === "string" && data.seriesField) out.push(data.seriesField);
+  return out;
+}
+
+/** Read y-axis fields from the canonical Map: datasets[].field. */
+function readYFields(map: ChartDslOptions): string[] {
+  const data = (map.data as ChartDataBlock | undefined) ?? {};
+  return (data.datasets ?? []).map((d) => d.field).filter((f): f is string => Boolean(f));
+}
+
+/** Read the chart title from `options.plugins.title.text`. */
+function readTitle(map: ChartDslOptions): string {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const plugins = opts?.plugins as Record<string, unknown> | undefined;
+  const title = plugins?.title as Record<string, unknown> | undefined;
+  return typeof title?.text === "string" ? title.text : "";
+}
+
+/** Read the legend setting: "show" | "hide" | "auto" (auto = key absent). */
+function readLegend(map: ChartDslOptions): "auto" | "show" | "hide" {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const plugins = opts?.plugins as Record<string, unknown> | undefined;
+  const legend = plugins?.legend as Record<string, unknown> | undefined;
+  if (legend === undefined) return "auto";
+  if (typeof legend.display === "boolean") return legend.display ? "show" : "hide";
+  return "auto";
+}
 
 const PALETTE_COLORS: Record<string, string[]> = {
   default: [],   // empty = fall through to colorForDataset (semantic colours)
@@ -42,21 +91,20 @@ interface ChartWidgetProps {
 }
 
 // Build a ColumnSchema[] from result row keys. Prefers tableSchema's typeName
-// info when the column exists there; otherwise synthesizes from the first
-// row's values. Used to feed the library's `splitDimsAndMeasures` + `pickDefaultAxes`.
+// info when the column exists there; otherwise falls back to the centralized
+// inferColumnsFromRow (SINGLE TRUTH per smart-defaults/classification.ts).
+// Used to feed the library's `splitDimsAndMeasures` + `pickDefaultAxes`.
 function resultColumnsFrom(
   keys: string[],
   row0: Record<string, unknown> | undefined,
   tableSchema: import("@/lib/explore-data/types").TableSchema | null,
 ): ColumnSchema[] {
+  const inferred = row0 ? inferColumnsFromRow(row0) : [];
+  const inferredByName = new Map(inferred.map((c) => [c.columnName, c]));
   return keys.map((k) => {
     const fromTable = tableSchema?.columns.find((c) => c.columnName === k);
     if (fromTable) return fromTable;
-    const v = row0?.[k];
-    const typeName = typeof v === "number" ? "DOUBLE"
-      : (typeof v === "string" && v !== "" && !isNaN(Number(v))) ? "DOUBLE"
-      : "VARCHAR";
-    return { columnName: k, typeName, isNullable: true };
+    return inferredByName.get(k) ?? { columnName: k, typeName: "VARCHAR", isNullable: true };
   });
 }
 
@@ -214,6 +262,8 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
   // Top-N clip state — "+ N more hidden" note shown below the chart.
   const [hiddenCount, setHiddenCount] = useState(0);
 
+  const { config: dslMap, updateConfig: updateDslMap } = useDslConfig(widgetId, "chart");
+
   const ds = widget?.dataSource;
   const vq = ds?.visualQuery;
   const isVisualMode = ds?.mode === "visual" || ds?.mode === undefined;
@@ -274,15 +324,14 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       return;
     }
 
-    const displayConfig = widget?.displayConfig || {};
-    const chartTitle      = (displayConfig.chartTitle      as string | undefined) || "";
-    const chartShowLegend = (displayConfig.chartShowLegend as string | undefined) || "auto";
-    const chartPalette    = (displayConfig.chartPalette    as string | undefined) || "default";
+    // ── Read all chart config from the canonical DSL Map at displayConfig.dslConfig.
+    const chartTitle      = readTitle(dslMap);
+    const chartShowLegend = readLegend(dslMap);
+    const chartPalette    = (dslMap.palette as string | undefined) ?? "default";
     const paletteColors   = PALETTE_COLORS[chartPalette] ?? [];
-    const configChartType = displayConfig.chartType as string | undefined;
-    // Array-shaped config: xFields[0]=X, xFields[1]=series-split; yFields=metrics[].
-    const configXFields = (displayConfig.xFields as string[] | undefined) ?? [];
-    const configYFields = (displayConfig.yFields as string[] | undefined) ?? [];
+    const configChartType = dslMap.type as string | undefined;
+    const configXFields   = readXFields(dslMap);
+    const configYFields   = readYFields(dslMap);
 
     const groupByCols = (vq?.groupBy ?? []).filter((c) => keys.includes(c));
     const groupByBuckets = vq?.groupByBuckets ?? {};
@@ -366,6 +415,43 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       chartType = enforceChartTypeLimits(chartType, rows.length, firstDimKind);
     }
 
+    // Effective seriesField: user pick wins; else auto-promote the visual
+    // query's 2nd groupBy column when shape allows (2+ dims, 1 measure).
+    // Without this, an explicit Line/Area chart with `groupBy: [ts, run_id]` +
+    // `AVG(equity)` would collapse to a single line because `seriesField` was
+    // never populated in the DSL Map.
+    let effectiveSeriesField: string | undefined = configXFields[1];
+    if (
+      !effectiveSeriesField &&
+      groupByCols.length >= 2 &&
+      yFields.length === 1
+    ) {
+      const candidate = groupByCols[1];
+      if (candidate && candidate !== xField && keys.includes(candidate)) {
+        effectiveSeriesField = candidate;
+      }
+    }
+
+    // ── Persist auto-picks back to the canonical Map (Principle 4).
+    //    The publisher reads displayConfig.dslConfig directly, so picks made
+    //    only at render-time would never reach the exported chart-config.groovy.
+    //    Compare snapshots first to avoid update loops.
+    if (xField && yFields.length > 0) {
+      const dataBlock: { labelField: string; seriesField?: string; datasets: { field: string; label: string }[] } = {
+        labelField: xField,
+        datasets: yFields.map((f) => ({ field: f, label: f })),
+      };
+      if (effectiveSeriesField && keys.includes(effectiveSeriesField)) {
+        dataBlock.seriesField = effectiveSeriesField;
+      }
+      const desiredMap = { ...dslMap, type: chartType, data: dataBlock };
+      // Snapshot diff: only write when something actually changed. Without this
+      // every render re-writes the same Map, looping the effect and pegging CPU.
+      if (JSON.stringify(desiredMap) !== JSON.stringify(dslMap)) {
+        updateDslMap(desiredMap);
+      }
+    }
+
     // Top-N clip + sort desc for bar charts (unless user specified a sort, OR
     // the user has opted to "show all" via the footer override from 4.7).
     const showAll = (widget?.displayConfig.chartShowAll as boolean | undefined) === true;
@@ -391,18 +477,17 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       options?: unknown;
     };
 
-    // Multi-series pivot: when user set xFields[1] (an explicit series-split
-    // dim), or when defaultDisplay auto-decided the shape needs series-split
-    // (2 breakouts with time + category, or two-categorical grouped bar), the
-    // second dimension drives dataset splitting client-side. Single measure only.
-    const userSeriesField = configXFields[1];
-    const wantsSeries = userSeriesField
-      ? yFields.length >= 1 && !!xField && keys.includes(userSeriesField)
-      : (!configChartType && decision.displayConfig?.series === true && groupByCols.length >= 2 && yFields.length === 1);
+    // Multi-series pivot: split datasets by the 2nd dimension when present.
+    // `effectiveSeriesField` covers both the user's explicit pick AND the
+    // auto-promotion of groupByCols[1] computed above, so this path fires on
+    // the very first render — no round-trip through DSL persistence required.
+    const wantsSeries = !!effectiveSeriesField
+      && yFields.length >= 1
+      && !!xField
+      && keys.includes(effectiveSeriesField);
 
     if (wantsSeries) {
-      const splitField = userSeriesField ?? groupByCols[1];
-      el.data = buildChartJsDataWithSeries(rows, xField!, splitField, yFields[0], chartType, paletteColors);
+      el.data = buildChartJsDataWithSeries(rows, xField!, effectiveSeriesField!, yFields[0], chartType, paletteColors);
     } else {
       el.data = buildChartJsData(rows, xField!, yFields, chartType, paletteColors);
     }

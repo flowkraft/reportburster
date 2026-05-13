@@ -141,7 +141,7 @@ a tab strip. The visible tabs are:
      │   Excel, SQL, Groovy scripts, JasperReports).
      │   Docs: /docs/report-generation
      │
-     ├── Explore Data & Build Dashboards    ★ NEW IN 15.1.0
+     ├── Explore Data & Build Dashboards    ★ NEW IN 15.2.0
      │   Apps Manager for the Explore Data Canvas — a Docker-based
      │   visual workspace. Click Start (waits for the container), then
      │   Launch (opens the canvas in a browser at localhost:8440/explore-data).
@@ -183,7 +183,7 @@ Reached via: Top menu → Configuration → Reports, Connections & Cubes
      │         /docs/report-distribution-email
      │
      └── Cubes / Semantic Layer           [route: /configuration-crud/cubes]
-         ★ NEW IN 15.1.0
+         ★ NEW IN 15.2.0
          Define reusable Cube definitions over your database tables —
          dimensions, measures, joins, segments, hierarchies — in business
          language. Cubes power the Explore Data Canvas, dashboards,
@@ -325,7 +325,7 @@ DOCUMENTATION SITE MAP (https://datapallas.com/docs)
     /docs/data-exploration/database-connections .. DB Connections
     /docs/data-exploration/chat2db-ai . Chat2DB AI
 
-  Semantic Layer (Cubes)               ★ NEW IN 15.1.0
+  Semantic Layer (Cubes)               ★ NEW IN 15.2.0
     /docs/semantic-layer .............. Overview — Why & What
     /docs/semantic-layer/quickstart ... Your First Cube (5-min walkthrough)
     /docs/semantic-layer/dsl-reference  Cube DSL Reference
@@ -372,8 +372,8 @@ DOCUMENTATION SITE MAP (https://datapallas.com/docs)
 
   Advanced Scenarios
     /docs/advanced .................... Overview
-    /docs/advanced/cli ................ CLI Reference        ★ NEW IN 15.1.0
-    /docs/advanced/api ................ REST API Reference   ★ NEW IN 15.1.0
+    /docs/advanced/cli ................ CLI Reference        ★ NEW IN 15.2.0
+    /docs/advanced/api ................ REST API Reference   ★ NEW IN 15.2.0
     /docs/advanced/scripting .......... Scripting (Groovy hooks)
     /docs/advanced/curl ............... cURL Integration
     /docs/advanced/work-well-apps ..... "Work Well" Companion Apps

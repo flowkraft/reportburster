@@ -250,9 +250,15 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
   useEffect(() => {
     if (selectedWidget?.type !== "chart") return;
     if (columns.length === 0) return;
-    const chartType = (selectedWidget.displayConfig.chartType as string) || "bar";
-    const currentXFields = (selectedWidget.displayConfig.xFields as string[] | undefined) ?? [];
-    const currentYFields = (selectedWidget.displayConfig.yFields as string[] | undefined) ?? [];
+    // Read all chart config from the canonical DSL Map (Principle 4).
+    const dslMap = (selectedWidget.displayConfig.dslConfig ?? {}) as Record<string, unknown>;
+    const dataBlock = (dslMap.data ?? {}) as { labelField?: string; seriesField?: string; datasets?: { field: string; label?: string }[] };
+    const chartType = (dslMap.type as string | undefined) ?? "bar";
+    const currentXFields: string[] = [];
+    if (typeof dataBlock.labelField === "string" && dataBlock.labelField) currentXFields.push(dataBlock.labelField);
+    if (typeof dataBlock.seriesField === "string" && dataBlock.seriesField) currentXFields.push(dataBlock.seriesField);
+    const currentYFields: string[] = (dataBlock.datasets ?? []).map((d) => d.field).filter((f): f is string => Boolean(f));
+    const currentBubble = dslMap.bubbleSizeField as string | undefined;
     const { dims, measures } = splitDimsAndMeasures(columns);
     const defaults = pickDefaultAxes(dims, measures, chartType, { cardinality });
 
@@ -260,32 +266,34 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
     const keepY = canReuseAxisPicks(currentYFields, columns);
     const nextX = keepX ? currentXFields : defaults.xFields;
     const nextY = keepY ? currentYFields : defaults.yFields;
-    const nextBubble = selectedWidget.displayConfig.bubbleSizeField
-      ?? defaults.bubbleSizeField;
+    const nextBubble = currentBubble ?? defaults.bubbleSizeField;
 
-    // Only write when something actually changed — avoid an infinite useEffect loop.
     const changed =
-      nextX.join("\u0000") !== currentXFields.join("\u0000") ||
-      nextY.join("\u0000") !== currentYFields.join("\u0000") ||
-      nextBubble !== selectedWidget.displayConfig.bubbleSizeField;
+      nextX.join(" ") !== currentXFields.join(" ") ||
+      nextY.join(" ") !== currentYFields.join(" ") ||
+      nextBubble !== currentBubble;
     if (!changed) return;
+
+    const newData: { labelField?: string; seriesField?: string; datasets?: { field: string; label?: string }[] } = { ...dataBlock };
+    if (nextX[0]) newData.labelField = nextX[0]; else delete newData.labelField;
+    if (nextX[1]) newData.seriesField = nextX[1]; else delete newData.seriesField;
+    if (nextY.length > 0) newData.datasets = nextY.map((f) => ({ field: f, label: f }));
+    else delete newData.datasets;
+
+    const newMap: Record<string, unknown> = { ...dslMap };
+    if (newData.labelField || newData.seriesField || newData.datasets) newMap.data = newData;
+    else delete newMap.data;
+    if (nextBubble !== undefined) newMap.bubbleSizeField = nextBubble;
+    else delete newMap.bubbleSizeField;
 
     updateWidgetDisplayConfig(selectedWidget.id, {
       ...selectedWidget.displayConfig,
-      xFields: nextX,
-      yFields: nextY,
-      ...(nextBubble !== undefined ? { bubbleSizeField: nextBubble } : {}),
-      // Track what came from auto-pick so the AutoBadge renders correctly.
-      _auto: {
-        ...((selectedWidget.displayConfig._auto as Record<string, boolean> | undefined) ?? {}),
-        xFields: !keepX,
-        yFields: !keepY,
-      },
+      dslConfig: newMap,
     });
   }, [
     selectedWidget?.id,
     selectedWidget?.type,
-    selectedWidget?.displayConfig?.chartType,
+    (selectedWidget?.displayConfig?.dslConfig as { type?: unknown } | undefined)?.type,
     // Stringify so the effect re-fires on real changes, not on identity flips.
     columns.map((c) => c.columnName).join("\u0000"),
     Object.entries(cardinality).map(([k, v]) => `${k}:${v}`).join("\u0000"),
@@ -442,7 +450,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
   };
 
   return (
-    <div className="w-80 shrink-0 border-l border-border bg-muted/30 flex flex-col overflow-hidden">
+    <div id="configPanel" className="w-80 shrink-0 border-l border-border bg-muted/30 flex flex-col overflow-hidden">
       <div className="flex items-center justify-end border-b border-border px-2 py-1.5 shrink-0">
         <button id="btnCollapseRightPanel" onClick={onCollapse} className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" title="Hide config panel">
           <ChevronRight className="w-3.5 h-3.5" />
@@ -478,7 +486,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
           //           2) Otherwise fall back to the smart-defaults #1 ranked subtype.
           // The "More widgets" section always shows the generic "Chart" label.
           const _savedChartType = selectedWidget?.type === "chart"
-            ? (selectedWidget.displayConfig?.chartType as string | undefined)
+            ? ((selectedWidget.displayConfig?.dslConfig as { type?: unknown } | undefined)?.type as string | undefined)
             : undefined;
           // Chart subtype ranking splits widget.columns (the authoritative
           // post-agg effective view written by Effect 2).  Internal isTemporalLike
@@ -516,15 +524,28 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
                   // click on Number / Gauge / Progress / Trend / Sankey lands
                   // on sensible preselected columns without an extra click.
                   const prevConfig = selectedWidget.displayConfig || {};
+                  // Strip auto-picked values from prior widget-type eras so the
+                  // new type's seeder re-picks using its own heuristic. The
+                  // `_auto_<key>` sibling flag (written by the `seed()` helper
+                  // in widget-defaults.ts) is the contract distinguishing
+                  // "auto-picked, free to refresh" from "user-set via Display
+                  // panel, sacred". Fixes the gauge↔progress `field` carryover
+                  // and the trend↔sankey `valueField` carryover.
+                  const cleaned: WidgetDisplayConfig = {};
+                  for (const [k, v] of Object.entries(prevConfig)) {
+                    if (k.startsWith("_auto_")) continue;            // drop the flags themselves
+                    if (prevConfig[`_auto_${k}`]) continue;          // drop auto-picked values
+                    cleaned[k] = v;
+                  }
                   const patch = seedDisplayConfigForType(
                     type,
-                    prevConfig,
+                    cleaned,
                     columns,
                     { cardinality, extractions: extractionsSet },
                     selectedWidget.shape,
                   );
                   updateWidgetDisplayConfig(selectedWidget.id, {
-                    ...(patch ?? prevConfig),
+                    ...(patch ?? cleaned),
                     userPicked: true,
                   });
                 }}

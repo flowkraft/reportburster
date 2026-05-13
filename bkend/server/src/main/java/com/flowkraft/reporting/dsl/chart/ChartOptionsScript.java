@@ -22,8 +22,10 @@ import java.util.*;
  *    Such deviations are kept to the absolute minimum.
  * 3. Both chart-level and dataset-level use methodMissing catch-alls so that ANY current
  *    or future Chart.js property works automatically without code changes here.
- * 4. The output of getOptions() is a flat Map that matches Chart.js's constructor
- *    config object directly — no intermediate wrappers.
+ * 4. The output of getOptions() is a Map shaped 1:1 like Chart.js's constructor
+ *    config object — {@code { type, data: { labelField, seriesField, labels,
+ *    datasets }, options }}. Single source of truth: see
+ *    {@link #buildOptionsMap}.
  *
  * Usage:
  *   chart {
@@ -37,22 +39,40 @@ import java.util.*;
  *     options { responsive true; plugins { title { display true; text 'Report' } } }
  *   }
  */
+/**
+ * <h2>ChartOptionsScript — chart DSL parser, block form only.</h2>
+ *
+ * <p>See {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for full DSL architecture principles + chart-specific GOOD/BAD examples.
+ * Static init below compile-pins this class to that readme.
+ *
+ * <p><b>Important:</b> {@code labelField}, {@code seriesField}, and
+ * {@code datasets} live ONLY inside the {@code data { }} block — top-level
+ * setters were removed in the unification refactor. Do not re-add them.
+ */
 public abstract class ChartOptionsScript extends Script {
-	private String type = null;
-	private String labelField = null;
-	private Map<String, Object> options = new LinkedHashMap<>();
-	private final List<String> labels = new ArrayList<>();
-	private final List<Map<String, Object>> datasets = new ArrayList<>();
-	private final List<Map<String, Object>> dataRows = new ArrayList<>();
 
-	// Named blocks: id → options map
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
+	// ── Single source of truth for parsing chart DSL ──
+	// Both the unnamed `chart { ... }` and named `chart('id') { ... }` forms
+	// dispatch their closure body to a NamedChartDelegate — the ONE class that
+	// owns all setters, methodMissing, and the data{}/options{} sub-delegates.
+	// Per DSLPrinciplesReadme Principle 2 (DRY): no parallel parser surfaces.
+
+	/** Captures the unnamed default {@code chart { ... }} block, if present. */
+	private NamedChartDelegate unnamedDelegate;
+
+	/** Named blocks: id → options map (populated by {@link #chart(String, Closure)}). */
 	private final Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
 
 	// DSL root — unnamed (default)
 	public void chart(Closure<?> body) {
-		body.setDelegate(this);
+		NamedChartDelegate delegate = new NamedChartDelegate();
+		body.setDelegate(delegate);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
+		this.unnamedDelegate = delegate;
 	}
 
 	// DSL root — named block for aggregator reports
@@ -64,64 +84,43 @@ public abstract class ChartOptionsScript extends Script {
 		namedOptions.put(id, delegate.getOptions());
 	}
 
-	// Chart type: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
-	public void type(String t) { this.type = t; }
-
-	// labelField and datasets at the top level (emitted by GroovyDslEmitter)
-	public void labelField(String f) { this.labelField = f; }
-
-	@SuppressWarnings("unchecked")
-	public void datasets(List<?> list) {
-		if (list == null) return;
-		for (Object item : list) {
-			if (item instanceof Map) this.datasets.add(new LinkedHashMap<>((Map<String, Object>) item));
-		}
-	}
-
-	// Chart.js options - map form
-	public void options(Map<String, Object> args) {
-		if (args != null) options.putAll(args);
-	}
-
-	// Chart.js options - closure form for nested structure
-	public void options(Closure<?> body) {
-		NestedMapDelegate d = new NestedMapDelegate(options);
-		body.setDelegate(d);
-		body.setResolveStrategy(Closure.DELEGATE_FIRST);
-		body.call();
-	}
-
-	// ── Chart.js data { } block ──
-
-	// data block - closure form (Chart.js aligned: data { labelField ...; datasets { ... } })
-	public void data(Closure<?> body) {
-		DataDelegate dd = new DataDelegate();
-		body.setDelegate(dd);
-		body.setResolveStrategy(Closure.DELEGATE_FIRST);
-		body.call();
-		if (dd.labelField != null) this.labelField = dd.labelField;
-		if (!dd.labels.isEmpty()) this.labels.addAll(dd.labels);
-		this.datasets.addAll(dd.datasets);
-	}
-
-	// Optional data override - defaults to ctx.reportData if not specified
-	public void data(List<Map<String, Object>> rows) {
-		if (rows != null) {
-			for (Map<String, Object> r : rows) {
-				this.dataRows.add(new LinkedHashMap<>(r));
-			}
-		}
-	}
-
-	/** Return final options map */
+	/** Return final options map for the unnamed form (empty if none was declared). */
 	public Map<String, Object> getOptions() {
+		return unnamedDelegate != null ? unnamedDelegate.getOptions() : new LinkedHashMap<>();
+	}
+
+	/**
+	 * Build the canonical chart Map from a delegate's parsed state. SINGLE
+	 * SOURCE OF TRUTH per DSLPrinciplesReadme Principle 2 (DRY): both the
+	 * top-level {@code chart { ... }} form and the named
+	 * {@code chart('id') { ... }} form route through this helper so the
+	 * emitted shape cannot drift.
+	 *
+	 * <p>Canonical shape per the README (Chart section):
+	 * {@code { type, options, data: { labelField, seriesField, labels, datasets } }}.
+	 * labelField/seriesField/labels/datasets are NEVER emitted at the top
+	 * level — they live inside the nested {@code data { }} block (Chart.js
+	 * shape). Top-level emission caused the byte-stable round-trip bug where
+	 * the Map ended up with BOTH flat keys AND a nested {@code data} block.
+	 */
+	private static Map<String, Object> buildOptionsMap(
+			String type, String labelField, String seriesField,
+			Map<String, Object> options, List<String> labels,
+			List<Map<String, Object>> datasets, List<Map<String, Object>> dataRows) {
 		Map<String, Object> out = new LinkedHashMap<>();
 		if (type != null) out.put("type", type);
-		if (labelField != null) out.put("labelField", labelField);
 		if (!options.isEmpty()) out.put("options", new LinkedHashMap<>(options));
-		if (!labels.isEmpty()) out.put("labels", new ArrayList<>(labels));
-		if (!datasets.isEmpty()) out.put("datasets", new ArrayList<>(datasets));
-		if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
+		if (!dataRows.isEmpty()) {
+			// Legacy override form: chart { data([[row1],[row2]]) } — preserve.
+			out.put("data", new ArrayList<>(dataRows));
+		} else if (labelField != null || seriesField != null || !labels.isEmpty() || !datasets.isEmpty()) {
+			Map<String, Object> data = new LinkedHashMap<>();
+			if (labelField != null) data.put("labelField", labelField);
+			if (seriesField != null) data.put("seriesField", seriesField);
+			if (!labels.isEmpty()) data.put("labels", new ArrayList<>(labels));
+			if (!datasets.isEmpty()) data.put("datasets", new ArrayList<>(datasets));
+			out.put("data", data);
+		}
 		return out;
 	}
 
@@ -133,16 +132,6 @@ public abstract class ChartOptionsScript extends Script {
 	@Override
 	public Object run() { return null; }
 
-	// Groovy dynamic method handling for top-level options
-	public Object methodMissing(String name, Object args) {
-		if (args instanceof Object[] && ((Object[]) args).length > 0) {
-			this.options.put(name, ((Object[]) args)[0]);
-		} else {
-			this.options.put(name, args);
-		}
-		return null;
-	}
-
 	// ═══════════════════════════════════════════════════════════════════════════
 	// Inner classes
 	// ═══════════════════════════════════════════════════════════════════════════
@@ -153,10 +142,12 @@ public abstract class ChartOptionsScript extends Script {
 	 */
 	private static class DataDelegate {
 		String labelField;
+		String seriesField;
 		final List<String> labels = new ArrayList<>();
 		final List<Map<String, Object>> datasets = new ArrayList<>();
 
 		public void labelField(String f) { this.labelField = f; }
+		public void seriesField(String f) { this.seriesField = f; }
 
 		public void labels(List<String> vals) { if (vals != null) labels.addAll(vals); }
 
@@ -268,6 +259,7 @@ public abstract class ChartOptionsScript extends Script {
 	private static class NamedChartDelegate {
 		private String type = null;
 		private String labelField = null;
+		private String seriesField = null;
 		private Map<String, Object> options = new LinkedHashMap<>();
 		private final List<String> labels = new ArrayList<>();
 		private final List<Map<String, Object>> datasets = new ArrayList<>();
@@ -275,14 +267,16 @@ public abstract class ChartOptionsScript extends Script {
 
 		public void type(String t) { this.type = t; }
 
+		// Explicit flat-form setters — mirror the root-class setters above.
+		// The emitter promotes these fields to flat root level; these setters handle re-parse.
 		public void labelField(String f) { this.labelField = f; }
-
-		@SuppressWarnings("unchecked")
-		public void datasets(List<?> list) {
-			if (list == null) return;
-			for (Object item : list) {
-				if (item instanceof Map) this.datasets.add(new LinkedHashMap<>((Map<String, Object>) item));
-			}
+		public void seriesField(String f) { this.seriesField = f; }
+		public void datasets(Closure<?> body) {
+			DatasetsContainer dc = new DatasetsContainer();
+			body.setDelegate(dc);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+			datasets.addAll(dc.getDatasets());
 		}
 
 		public void options(Map<String, Object> args) {
@@ -307,6 +301,7 @@ public abstract class ChartOptionsScript extends Script {
 			body.setResolveStrategy(Closure.DELEGATE_FIRST);
 			body.call();
 			if (dd.labelField != null) this.labelField = dd.labelField;
+			if (dd.seriesField != null) this.seriesField = dd.seriesField;
 			if (!dd.labels.isEmpty()) this.labels.addAll(dd.labels);
 			this.datasets.addAll(dd.datasets);
 		}
@@ -330,14 +325,9 @@ public abstract class ChartOptionsScript extends Script {
 		}
 
 		public Map<String, Object> getOptions() {
-			Map<String, Object> out = new LinkedHashMap<>();
-			if (type != null) out.put("type", type);
-			if (labelField != null) out.put("labelField", labelField);
-			if (!options.isEmpty()) out.put("options", new LinkedHashMap<>(options));
-			if (!labels.isEmpty()) out.put("labels", new ArrayList<>(labels));
-			if (!datasets.isEmpty()) out.put("datasets", new ArrayList<>(datasets));
-			if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
-			return out;
+			// Routes through the same canonical-shape builder as the top-level
+			// `chart { ... }` form — see ChartOptionsScript.buildOptionsMap.
+			return buildOptionsMap(type, labelField, seriesField, options, labels, datasets, dataRows);
 		}
 	}
 }

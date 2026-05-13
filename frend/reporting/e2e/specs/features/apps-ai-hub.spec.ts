@@ -150,7 +150,7 @@ async function assertHomeAndWorkspaceNavigation(page: Page): Promise<void> {
   await expect(exploreHeading).toBeVisible({ timeout: 10000 });
   console.log('[T15] Home redirects to Explore Data page — verified');
 
-  // Navigate to agents (Data Geeks (AI Crew) menu item)
+  // Navigate to agents (Data Greeks (AI Crew) menu item)
   await page.goto(`${AI_HUB_BASE_URL}/agents`);
   await page.waitForLoadState('networkidle');
 

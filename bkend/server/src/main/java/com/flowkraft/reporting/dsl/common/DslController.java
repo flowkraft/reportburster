@@ -19,7 +19,6 @@ import com.flowkraft.reporting.dsl.chart.ChartOptionsScript;
 import com.flowkraft.reporting.dsl.cube.CubeOptionsScript;
 import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsScript;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsScript;
-import com.flowkraft.reporting.dsl.reportparameters.ReportParametersEmitter;
 import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsScript;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
@@ -29,7 +28,14 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 /**
- * Bidirectional DSL round-trip endpoints for data-canvas widgets.
+ * <h2>DslController — single bidirectional DSL round-trip endpoint.</h2>
+ *
+ * <p>See {@link DSLPrinciplesReadme#iAmImportantReadme()} for full DSL
+ * architecture principles + GOOD/BAD examples (single canonical syntax, DRY,
+ * round-trip contract). Static init below compile-pins this class to that
+ * readme.
+ *
+ * <p>Bidirectional DSL round-trip endpoints for data-canvas widgets.
  *
  *   POST /api/dsl/{type}/parse       body: { dslCode }            → { options }
  *   POST /api/dsl/{type}/serialize   body: { options }            → { dslCode }
@@ -46,14 +52,20 @@ import groovy.lang.Script;
  * emitter can re-emit unchanged.
  *
  * Serialize receives the options map back from the UI and emits Groovy DSL
- * via GroovyDslEmitter. `priorDslCode` is accepted in the payload for future
- * AST-preserving emission; today it's ignored since the parsers already
- * capture unknown keys via methodMissing (chart/tabulator/cube) and the
- * strict schemas (filterpane/pivot) expose every accepted key via the UI.
+ * via {@link BlockFormEmitter} with widget-specific {@link BlockFormRules}.
+ * Output is canonical block form across ALL DSL types (chart, tabulator, pivot,
+ * filterpane, cube, reportparameters) — single quotes, command-chain syntax,
+ * builder blocks for list-of-maps where applicable. {@code priorDslCode} is
+ * accepted in the payload for future AST-preserving emission; today it's
+ * ignored since the parsers already capture unknown keys via methodMissing
+ * (chart/tabulator/cube) and the strict schemas (filterpane/pivot) expose
+ * every accepted key via the UI.
  */
 @RestController
 @RequestMapping(value = "/api/dsl", produces = MediaType.APPLICATION_JSON_VALUE)
 public class DslController {
+
+    static { DSLPrinciplesReadme.iAmImportantReadme(); }
 
     private static final Logger log = LoggerFactory.getLogger(DslController.class);
 
@@ -95,21 +107,6 @@ public class DslController {
             @PathVariable String type,
             @RequestBody Map<String, Object> body) {
         try {
-            // reportparameters serializes a list of ParamMeta objects → DSL text.
-            // The frontend sends { options: { parameters: [...] } }.
-            if ("reportparameters".equals(type)) {
-                Object rawOptions = body.get("options");
-                List<?> parameters = List.of();
-                if (rawOptions instanceof Map<?, ?> optMap) {
-                    Object p = ((Map<?, ?>) optMap).get("parameters");
-                    if (p instanceof List<?> list) parameters = list;
-                }
-                String dslCode = ReportParametersEmitter.emit(parameters);
-                Map<String, Object> out = new LinkedHashMap<>();
-                out.put("dslCode", dslCode);
-                return ResponseEntity.ok(out);
-            }
-
             Object rawOptions = body.get("options");
             if (!(rawOptions instanceof Map)) {
                 Map<String, Object> err = new LinkedHashMap<>();
@@ -117,7 +114,14 @@ public class DslController {
                 return ResponseEntity.badRequest().body(err);
             }
             String rootKeyword = rootKeywordFor(type);
-            String dslCode = GroovyDslEmitter.emit(rootKeyword, (Map<String, Object>) rawOptions);
+            // Single canonical block-form output for ALL DSL types (chart, tabulator,
+            // pivot, filterpane, cube, reportparameters): command-chain syntax for
+            // scalars, builder blocks for list-of-maps where applicable, single-quoted
+            // strings, 2-space indent. Per-type plural-key rules in BlockFormRules.
+            String dslCode = BlockFormEmitter.emit(
+                rootKeyword,
+                (Map<String, Object>) rawOptions,
+                BlockFormRules.forType(type));
             Map<String, Object> out = new LinkedHashMap<>();
             out.put("dslCode", dslCode);
             return ResponseEntity.ok(out);
@@ -166,11 +170,12 @@ public class DslController {
 
     private static String rootKeywordFor(String type) {
         return switch (type) {
-            case "filterpane" -> "filterPane";
-            case "chart"      -> "chart";
-            case "tabulator"  -> "tabulator";
-            case "pivot"      -> "pivotTable";
-            case "cube"       -> "cube";
+            case "filterpane"        -> "filterPane";
+            case "chart"             -> "chart";
+            case "tabulator"         -> "tabulator";
+            case "pivot"             -> "pivotTable";
+            case "cube"              -> "cube";
+            case "reportparameters"  -> "reportParameters";
             default -> throw new IllegalArgumentException("Unknown DSL type: " + type);
         };
     }

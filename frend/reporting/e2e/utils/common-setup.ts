@@ -27,11 +27,17 @@ export const electronBeforeAfterAllTest = isElectron
   ? base.extend<
       {
         beforeAfterEach: Page;
+        skipCleanState: boolean;
       },
       {
         beforeAfterAll: ElectronApplication;
       }
     >({
+      // Opt-in switch: when `true`, the per-test restoreDocumentBursterCleanState
+      // is skipped so the test inherits state from the previous one. Used by
+      // shared-state describe.serial groups (e.g. algo-trading Blocks 2-5).
+      skipCleanState: [false, { option: true }],
+
       beforeAfterAll: [
         async ({}, run) => {
           //console.log(
@@ -47,7 +53,7 @@ export const electronBeforeAfterAllTest = isElectron
         { scope: 'worker' },
       ],
       beforeAfterEach: [
-        async ({ beforeAfterAll: electronApp }, run) => {
+        async ({ beforeAfterAll: electronApp, skipCleanState }, run) => {
           try {
             //console.log(
             //  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
@@ -57,9 +63,11 @@ export const electronBeforeAfterAllTest = isElectron
             const shouldDeactivateLicenseKey = false;
 
             //reload default "clean" configuration
-            await Helpers.restoreDocumentBursterCleanState(
-              shouldDeactivateLicenseKey,
-            );
+            if (!skipCleanState) {
+              await Helpers.restoreDocumentBursterCleanState(
+                shouldDeactivateLicenseKey,
+              );
+            }
 
             const firstPage = await electronApp.firstWindow();
 
@@ -81,11 +89,13 @@ export const electronBeforeAfterAllTest = isElectron
   : base.extend<
       {
         beforeAfterEach: Page;
+        skipCleanState: boolean;
       },
       {
         beforeAfterAll: { browser: Browser; context: BrowserContext };
       }
     >({
+      skipCleanState: [false, { option: true }],
       beforeAfterAll: [
         async ({}, run) => {
           const { browser, context } = await Helpers.browserLaunch();
@@ -97,12 +107,14 @@ export const electronBeforeAfterAllTest = isElectron
         { scope: 'worker' },
       ],
       beforeAfterEach: [
-        async ({ beforeAfterAll: { browser, context } }, run) => {
+        async ({ beforeAfterAll: { browser, context }, skipCleanState }, run) => {
           const shouldDeactivateLicenseKey = false;
 
-          await Helpers.restoreDocumentBursterCleanState(
-            shouldDeactivateLicenseKey,
-          );
+          if (!skipCleanState) {
+            await Helpers.restoreDocumentBursterCleanState(
+              shouldDeactivateLicenseKey,
+            );
+          }
 
           const [firstPage] = context.pages();
 

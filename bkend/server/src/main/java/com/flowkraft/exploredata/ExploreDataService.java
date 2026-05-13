@@ -118,7 +118,7 @@ public class ExploreDataService {
         String name  = String.valueOf(body.getOrDefault("name", "Untitled Canvas"));
         String desc  = body.containsKey("description") ? (String) body.get("description") : null;
         String conn2 = body.containsKey("connectionId") ? (String) body.get("connectionId") : null;
-        String state = "{\"widgets\":[],\"filterDsl\":\"\"}";
+        String state = "{\"widgets\":[],\"parametersConfig\":{\"parameters\":[]}}";
 
         try (Connection conn = connection();
              PreparedStatement ps = conn.prepareStatement("""

@@ -57,8 +57,18 @@ import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsParser;
  *   ADVANCED     ( 1 test:  #45)
  *
  * Plus edge-case tests and named-block tests at the end.
+ *
+ * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
+ * Every test fixture uses canonical block form. Adding a test that uses the
+ * legacy parens/list-of-maps form silently weakens the contract — refuse it
+ * in review. See
+ * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the full principles.
  */
 public class TabulatorOptionsParserTest {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
 
 	// ═════════════════════════════════════════════════════════════════════════════
 	// LAYOUT  (#1 – #23)

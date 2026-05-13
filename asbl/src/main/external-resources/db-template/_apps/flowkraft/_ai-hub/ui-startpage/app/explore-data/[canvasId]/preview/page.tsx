@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { useCanvasStore } from "@/lib/stores/canvas-store";
+import { useCanvasStore, type ParametersConfig } from "@/lib/stores/canvas-store";
 import { fetchCanvas } from "@/lib/explore-data/rb-api";
 import { Canvas } from "@/components/explore-data/Canvas";
 import { FilterBar } from "@/components/explore-data/FilterBar";
@@ -36,7 +36,7 @@ export default function CanvasPreviewPage({ params }: PageProps) {
         description: (canvas.description as string) || "",
         connectionId: (canvas.connectionId as string) || null,
         widgets: state.widgets || [],
-        filterDsl: state.filterDsl || "",
+        parametersConfig: (state.parametersConfig as ParametersConfig | undefined) ?? { parameters: [] },
         filterValues: {},
         filterVersion: 0,
         selectedWidgetId: null,

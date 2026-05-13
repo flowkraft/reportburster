@@ -26,7 +26,8 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
 const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
-  
+  return ['oracle']; // DEV FOCUS — comment out to restore full rotation
+
   //return ['mariadb'];
   //return ['mysql'];
   //return ['mariadb'];

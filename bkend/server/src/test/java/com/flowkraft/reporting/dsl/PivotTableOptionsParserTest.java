@@ -26,8 +26,18 @@ import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsParser;
  * Each test contains the exact Groovy DSL a user would write in their
  * {reportCode}-pivot-config.groovy file. Every assertion validates that the
  * parsed output matches react-pivottable's API structure.
+ *
+ * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
+ * Every test fixture uses canonical block form. Adding a test that uses the
+ * legacy parens/list-of-maps form silently weakens the contract — refuse it
+ * in review. See
+ * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the full principles.
  */
 public class PivotTableOptionsParserTest {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
 
 	// ═════════════════════════════════════════════════════════════════════════════
 	// FUNDAMENTALS

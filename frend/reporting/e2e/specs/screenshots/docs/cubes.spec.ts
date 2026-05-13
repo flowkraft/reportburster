@@ -29,16 +29,16 @@
 
 import { test } from '@playwright/test';
 
-import { electronBeforeAfterAllTest } from '../../utils/common-setup';
-import { Constants } from '../../utils/constants';
-import { FluentTester } from '../../helpers/fluent-tester';
-import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
-import { toConnectionCode } from '../../helpers/explore-data-test-helper';
+import { electronBeforeAfterAllTest } from '../../../utils/common-setup';
+import { Constants } from '../../../utils/constants';
+import { FluentTester } from '../../../helpers/fluent-tester';
+import { ConnectionsTestHelper } from '../../../helpers/areas/connections-test-helper';
+import { toConnectionCode } from '../../../helpers/explore-data-test-helper';
 import {
   captureDocsScreenshot,
   captureDocsScreenshotWithOverlay,
   captureDocsScreenshotWithHighlight,
-} from '../../utils/docs-screenshot-helper';
+} from '../../../utils/docs-screenshot-helper';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 

@@ -7,7 +7,12 @@ import { pickGaugeField } from "@/lib/explore-data/smart-defaults";
 
 // Fixed traffic-light colors — matches rb-gauge DEFAULT_BANDS.
 const BAND_COLORS = ["#ef8c8c", "#f9d45c", "#88bf4d"] as const;
-const BAND_LABELS = ["Red (low)", "Yellow (mid)", "Green (high)"] as const;
+// Labels reflect the COLOR each band renders as. When `gaugeBandsReverse` is on,
+// the gauge inverts colors (green-on-left, red-on-right for risk metrics), so the
+// labels flip too — otherwise the panel shows "Red (low) = 36M" while the user
+// sees a green band on the left, which is the cliff we close here.
+const BAND_LABELS_DEFAULT  = ["Red (low)",   "Yellow (mid)", "Green (high)"] as const;
+const BAND_LABELS_REVERSED = ["Green (low)", "Yellow (mid)", "Red (high)"]   as const;
 
 const DEFAULT_BANDS = [
   { to: 33,  color: BAND_COLORS[0] },
@@ -39,6 +44,8 @@ export function GaugeConfig({ config, columns, onChange }: GaugeConfigProps) {
   const label  = (config.label  as string) || "";
   const format = (config.gaugeFormat as string) || "number";
   const bands  = (config.gaugeBands  as { to: number; color: string }[] | undefined) ?? DEFAULT_BANDS;
+  const reverseColors = (config.gaugeBandsReverse as boolean | undefined) ?? false;
+  const bandLabels = reverseColors ? BAND_LABELS_REVERSED : BAND_LABELS_DEFAULT;
 
   const measures = columns.filter((c) => getFieldKind(c) === "measure");
 
@@ -93,6 +100,7 @@ export function GaugeConfig({ config, columns, onChange }: GaugeConfigProps) {
       <div>
         <span className="text-xs text-muted-foreground">Label</span>
         <input
+          id="inputGaugeLabel"
           value={label}
           onChange={(e) => onChange({ ...config, label: e.target.value })}
           placeholder="Auto from field name"
@@ -104,6 +112,7 @@ export function GaugeConfig({ config, columns, onChange }: GaugeConfigProps) {
       <div>
         <span className="text-xs text-muted-foreground">Format</span>
         <select
+          id="selectGaugeFormat"
           value={format}
           onChange={(e) => onChange({ ...config, gaugeFormat: e.target.value })}
           className="w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
@@ -126,27 +135,53 @@ export function GaugeConfig({ config, columns, onChange }: GaugeConfigProps) {
           </button>
         </div>
         <div className="space-y-1.5">
-          {bands.map((band, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <div
-                className="w-4 h-4 rounded shrink-0 border border-black/10"
-                style={{ backgroundColor: band.color }}
-                title={BAND_LABELS[idx]}
-              />
-              <span className="text-xs text-muted-foreground w-20 shrink-0">{BAND_LABELS[idx] ?? `Band ${idx + 1}`}</span>
-              <input
-                type="number"
-                value={band.to}
-                onChange={(e) => setBandTo(idx, Number(e.target.value))}
-                className="flex-1 text-sm bg-background border border-border rounded-md px-2 py-1 text-foreground"
-              />
-            </div>
-          ))}
+          {bands.map((band, idx) => {
+            // When reverseColors is on, the gauge renders this slot's band with
+            // the opposite-end color. Mirror that here so the swatch matches the
+            // visual rendering on the canvas.
+            const renderedColor = reverseColors
+              ? bands[bands.length - 1 - idx]?.color ?? band.color
+              : band.color;
+            const label = bandLabels[idx] ?? `Band ${idx + 1}`;
+            return (
+              <div key={idx} className="flex items-center gap-2">
+                <div
+                  className="w-4 h-4 rounded shrink-0 border border-black/10"
+                  style={{ backgroundColor: renderedColor }}
+                  title={label}
+                />
+                <span className="text-xs text-muted-foreground w-20 shrink-0">{label}</span>
+                <input
+                  id={`inputGaugeBand-${idx}`}
+                  type="number"
+                  value={band.to}
+                  onChange={(e) => setBandTo(idx, Number(e.target.value))}
+                  className="flex-1 text-sm bg-background border border-border rounded-md px-2 py-1 text-foreground"
+                />
+              </div>
+            );
+          })}
         </div>
         <p className="text-[10px] text-muted-foreground mt-1">
           Each band covers from the previous threshold up to this value. Values are on the same scale as Min / Max.
         </p>
       </div>
+
+      {/* Risk-metric mode — flips color order so high values render red.
+          Storage key stays `gaugeBandsReverse` for backward compat. */}
+      <label htmlFor="cbGaugeHigherIsWorse" className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+        <input
+          id="cbGaugeHigherIsWorse"
+          type="checkbox"
+          checked={reverseColors}
+          onChange={(e) => onChange({ ...config, gaugeBandsReverse: e.target.checked })}
+          className="rounded border-border"
+        />
+        <span>Higher = worse</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          {reverseColors ? "risk metric" : "performance metric"}
+        </span>
+      </label>
     </div>
   );
 }

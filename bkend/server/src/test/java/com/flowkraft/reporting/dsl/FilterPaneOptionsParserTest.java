@@ -15,8 +15,18 @@ import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
 /**
  * Tests for FilterPaneOptionsParser — validates Groovy DSL parsing
  * for the rb-filter-pane web component configuration.
+ *
+ * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
+ * Every test fixture uses canonical block form. Adding a test that uses the
+ * legacy parens/list-of-maps form silently weakens the contract — refuse it
+ * in review. See
+ * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
+ * for the full principles.
  */
 class FilterPaneOptionsParserTest {
+
+    static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
+
 
     @Nested
     @DisplayName("FUNDAMENTALS — minimal and default configurations")

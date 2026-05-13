@@ -3,7 +3,20 @@
 import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
-import { AutoBadge, isAutoField, clearAutoFlag } from "./AutoBadge";
+import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pane-mapping";
+
+/**
+ * ============================================================================
+ * 📖 LLM / AI ASSISTANTS — READ FIRST
+ *
+ *   bkend/server/src/main/java/com/flowkraft/reporting/dsl/common/
+ *     DSLPrinciplesReadme.java
+ *
+ * Especially Principle 4: every UI gesture in this Display tab panel mutates
+ * the canonical DSL Map at displayConfig.dslConfig — never the old structured
+ * fields (filterField, filterPaneLabel, etc., now removed).
+ * ============================================================================
+ */
 
 const SORT_OPTIONS = [
   { value: "",            label: "Auto (smart default)" },
@@ -13,16 +26,22 @@ const SORT_OPTIONS = [
   { value: "none",        label: "None" },
 ] as const;
 
-const SHOW_SEARCH_OPTIONS = [
-  { value: "auto", label: "Auto" },
-  { value: "on",   label: "Always on" },
-  { value: "off",  label: "Always off" },
-] as const;
-
 interface FilterPaneConfigProps {
   config: WidgetDisplayConfig;
   columns: ColumnSchema[];
   onChange: (config: WidgetDisplayConfig) => void;
+}
+
+function readDslMap(config: WidgetDisplayConfig): FilterPaneDslOptions {
+  return (config.dslConfig as FilterPaneDslOptions) ?? {};
+}
+
+function setDslMap(
+  config: WidgetDisplayConfig,
+  next: FilterPaneDslOptions,
+  onChange: (c: WidgetDisplayConfig) => void,
+): void {
+  onChange({ ...config, dslConfig: next });
 }
 
 function GroupHeader({ children }: { children: React.ReactNode }) {
@@ -33,32 +52,50 @@ function GroupHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** parse "240px" → 240; anything else → undefined */
+function parseHeightPx(h: unknown): number | undefined {
+  if (typeof h !== "string") return undefined;
+  const m = /^(\d+)px$/.exec(h);
+  return m ? parseInt(m[1], 10) : undefined;
+}
+
 export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfigProps) {
-  const field = (config.filterField as string) || "";
+  const map = readDslMap(config);
+
+  const field = (map.field as string | undefined) ?? "";
+  const label = (map.label as string | undefined) ?? "";
+  const sort = (map.sort as string | undefined) ?? "";
+  const multiSelect = (map.multiSelect as boolean | undefined) ?? true;
+  // showSearch: boolean → "on"/"off", undefined → "auto"
+  const showSearch = map.showSearch === true ? "on"
+                   : map.showSearch === false ? "off"
+                   : "auto";
+  const showCount = (map.showCount as boolean | undefined) ?? false;
+  const maxValues = (map.maxValues as number | undefined) ?? 1000;
+  const heightPx = parseHeightPx(map.height);
+  const heightMode = heightPx ? "fixed" : "auto";
+
   const dimensions = columns.filter((c) => getFieldKind(c) === "dimension");
-
-  const label          = (config.filterPaneLabel       as string)  || "";
-  const sort           = (config.filterPaneSort        as string)  || "";
-  const multiSelect    = (config.filterPaneMultiSelect as boolean | undefined) ?? true;
-  const showSearch     = (config.filterPaneShowSearch  as string)  || "auto";
-  const showCount      = (config.filterPaneShowCount   as boolean | undefined) ?? false;
-  const maxValues      = (config.filterPaneMaxValues   as number | undefined)  ?? 1000;
-  const heightMode     = (config.filterPaneHeightMode  as string)  || "auto";
-  const heightPx       = (config.filterPaneHeightPx    as number | undefined)  ?? 240;
-
   const inputCls = "w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground";
+
+  const setMap = (patch: Partial<FilterPaneDslOptions>) => {
+    const next: FilterPaneDslOptions = { ...map };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined) delete (next as Record<string, unknown>)[k];
+      else (next as Record<string, unknown>)[k] = v;
+    }
+    setDslMap(config, next, onChange);
+  };
 
   return (
     <div className="space-y-3">
-      {/* ── Field picker (unchanged) ── */}
       <div>
         <span className="text-xs text-muted-foreground">
           Field to explore <span className="text-blue-500">(dimension)</span>
-          {isAutoField(config, "filterField") && <AutoBadge reason="Lowest-cardinality low-card dimension (IDs and wide text excluded)." />}
         </span>
         <select
           value={field}
-          onChange={(e) => onChange(clearAutoFlag({ ...config, filterField: e.target.value }, "filterField"))}
+          onChange={(e) => setMap({ field: e.target.value || undefined })}
           className={inputCls}
         >
           <option value="">Pick a field...</option>
@@ -78,26 +115,24 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         Shows all distinct values for this field. Click a value to select it — all other widgets will highlight what&apos;s associated and dim what&apos;s excluded.
       </p>
 
-      {/* ── Display ── */}
       <GroupHeader>Display</GroupHeader>
       <div>
         <span className="text-xs text-muted-foreground">Label</span>
         <input
           type="text"
           value={label}
-          onChange={(e) => onChange({ ...config, filterPaneLabel: e.target.value })}
+          onChange={(e) => setMap({ label: e.target.value || undefined })}
           placeholder="Auto from field name"
           className={inputCls}
         />
       </div>
 
-      {/* ── Behavior ── */}
       <GroupHeader>Behavior</GroupHeader>
       <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
         <input
           type="checkbox"
           checked={multiSelect}
-          onChange={(e) => onChange({ ...config, filterPaneMultiSelect: e.target.checked })}
+          onChange={(e) => setMap({ multiSelect: e.target.checked })}
           className="rounded border-border"
         />
         <span>Multi-select</span>
@@ -109,7 +144,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         <span className="text-xs text-muted-foreground">Sort by</span>
         <select
           value={sort}
-          onChange={(e) => onChange({ ...config, filterPaneSort: e.target.value })}
+          onChange={(e) => setMap({ sort: e.target.value || undefined })}
           className={inputCls}
         >
           {SORT_OPTIONS.map((o) => (
@@ -118,18 +153,20 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         </select>
       </div>
 
-      {/* ── Value list ── */}
       <GroupHeader>Value list</GroupHeader>
       <div>
         <span className="text-xs text-muted-foreground">Show search box</span>
         <select
           value={showSearch}
-          onChange={(e) => onChange({ ...config, filterPaneShowSearch: e.target.value })}
+          onChange={(e) => {
+            const v = e.target.value;
+            setMap({ showSearch: v === "on" ? true : v === "off" ? false : undefined });
+          }}
           className={inputCls}
         >
-          {SHOW_SEARCH_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+          <option value="auto">Auto</option>
+          <option value="on">Always on</option>
+          <option value="off">Always off</option>
         </select>
         <p className="text-[10px] text-muted-foreground mt-1">
           Auto shows the box only when there are many values.
@@ -139,7 +176,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         <input
           type="checkbox"
           checked={showCount}
-          onChange={(e) => onChange({ ...config, filterPaneShowCount: e.target.checked })}
+          onChange={(e) => setMap({ showCount: e.target.checked || undefined })}
           className="rounded border-border"
         />
         <span>Show value counts</span>
@@ -153,7 +190,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
           value={maxValues}
           onChange={(e) => {
             const n = Number(e.target.value);
-            onChange({ ...config, filterPaneMaxValues: Number.isFinite(n) && n > 0 ? n : 1000 });
+            setMap({ maxValues: Number.isFinite(n) && n > 0 ? n : 1000 });
           }}
           className={inputCls}
         />
@@ -162,14 +199,13 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         </p>
       </div>
 
-      {/* ── Layout ── */}
       <GroupHeader>Layout</GroupHeader>
       <div>
         <span className="text-xs text-muted-foreground">Height</span>
         <div className="flex gap-1 mt-1">
           <button
             type="button"
-            onClick={() => onChange({ ...config, filterPaneHeightMode: "auto" })}
+            onClick={() => setMap({ height: undefined })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "auto"
                 ? "border-primary bg-primary/5 text-foreground"
@@ -180,7 +216,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
           </button>
           <button
             type="button"
-            onClick={() => onChange({ ...config, filterPaneHeightMode: "fixed" })}
+            onClick={() => setMap({ height: `${heightPx ?? 240}px` })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "fixed"
                 ? "border-primary bg-primary/5 text-foreground"
@@ -194,10 +230,10 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
               <input
                 type="number"
                 min={40}
-                value={heightPx}
+                value={heightPx ?? 240}
                 onChange={(e) => {
                   const n = Number(e.target.value);
-                  onChange({ ...config, filterPaneHeightPx: Number.isFinite(n) && n > 0 ? n : 240 });
+                  setMap({ height: `${Number.isFinite(n) && n > 0 ? n : 240}px` });
                 }}
                 className="w-16 text-sm bg-background border border-border rounded-md px-2 py-1 text-foreground"
               />

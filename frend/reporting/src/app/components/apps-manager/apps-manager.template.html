@@ -281,8 +281,9 @@
           <div *ngIf="app.type !== 'desktop' && app.launchLinks?.length > 1" 
             class="btn-group pull-right" 
             style="margin-left: 10px; position: relative; z-index: 9999;">
-            <button type="button" 
-                    class="btn btn-default dropdown-toggle" 
+            <button type="button"
+                    [id]="'btnLaunch_' + sanitizeAppId(app.id)"
+                    class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     [disabled]="!isAppRunning(app)"
                     [class.disabled]="!isAppRunning(app)"
