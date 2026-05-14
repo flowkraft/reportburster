@@ -12,7 +12,7 @@
 
 <br>
 
-## A Full-Stack BI Platform
+## A Full-Stack Data Platform
 
 DataPallas is a full-stack BI platform — interactive dashboards and pivot tables (like Tableau or Power BI) alongside pixel-perfect report generation (like Crystal Reports), all in one tool. The video above covers building dashboards for an algorithmic trading platform, but DataPallas can be easily used across ERP, CRM, Finance, Accounting, or any other domain.
 
@@ -106,6 +106,8 @@ Full documentation is available at **[datapallas.com/docs](https://datapallas.co
 ## Also the Best Way to Learn Anything Data
 
 Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. 5 minutes on your laptop and BAM — Oracle, SQL Server, Postgres, all running with real data. DataPallas ships with sample real-world databases ready to query on day one, so you learn on actual schemas, not toy examples.
+
+**[DataPallas in 5 Minutes →](https://datapallas.com/docs/quickstart)**
 
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
