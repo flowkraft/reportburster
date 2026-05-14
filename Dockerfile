@@ -2,13 +2,22 @@
 # DataPallas Server Dockerfile
 # Multi-stage build optimized for caching and clean builds
 # =============================================================================
-# 
+#
+# RELEASE BUILDS ARE DRIVEN BY DockerAssembler.java (asbl/.../assembly/),
+# NOT by hand-typed `docker build`. The assembler:
+#   1. Reads the version from pom.xml -> settings.xml
+#   2. Rewrites this file to Dockerfile.assembled, patching the
+#      `version="0.0.0"` placeholder in the LABEL block below with the
+#      real value (e.g. version="15.2.0")
+#   3. Runs `docker build` with TWO tags: :latest AND :<version>
+# See asbl/pack-datapallas.bat for the push step that uploads both tags.
+#
 # BUILD MODES:
-# 
+#
 # 1. DEVELOPMENT BUILD (uses cache, fast rebuilds):
 #    docker build -t flowkraft/datapallas-server:dev .
 #
-# 2. RELEASE BUILD (100% clean, no cache):
+# 2. RELEASE BUILD (100% clean, no cache) — normally invoked via DockerAssembler:
 #    docker build --no-cache --build-arg BUILD_DATE=$(date -u +%Y%m%d%H%M%S) \
 #                 -t flowkraft/datapallas-server:X.Y.Z .
 #
@@ -94,6 +103,9 @@ RUN npm run custom:release-web && npm prune --production --force
 FROM eclipse-temurin:17-jre
 
 # Metadata
+# NOTE: version="0.0.0" is a PLACEHOLDER. DockerAssembler.java rewrites it
+# during packaging to the real value read from pom.xml <revision>.
+# DO NOT MANUALLY CHANGE IT — bump the version in pom.xml instead.
 LABEL maintainer="FlowKraft" \
       version="0.0.0" \
       description="DataPallas Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
