@@ -12,7 +12,7 @@
 
 <br>
 
-## A Full-Stack Data Platform
+## An End-to-End Data Platform
 
 DataPallas is a full-stack BI platform — interactive dashboards and pivot tables (like Tableau or Power BI) alongside pixel-perfect report generation (like Crystal Reports), all in one tool. The video above covers building dashboards for an algorithmic trading platform, but DataPallas can be easily used across ERP, CRM, Finance, Accounting, or any other domain.
 
