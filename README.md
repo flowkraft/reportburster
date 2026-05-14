@@ -2,15 +2,39 @@
 
 # DataPallas
 
-*Helps you reach **"I get it"** and then **"it's live and beautiful"** for any data requirement — faster than any other platform.*
+*From raw data to shipped dashboards. From zero SQL knowledge to data fluency.*
 
 <a href="https://datapallas.com" target="_blank">
-  <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas">
+  <img src=".github/0030-algo-trading-dashboard-reveal.gif" alt="DataPallas — Building an Algo Trading BI Dashboard">
 </a>
 
-### [Watch the video on datapallas.com &rarr;](https://datapallas.com)
-
 </div>
+
+<br>
+
+## A Full-Stack BI Platform
+
+DataPallas is a full-stack BI platform — interactive dashboards and pivot tables (like Tableau or Power BI) alongside pixel-perfect report generation (like Crystal Reports), all in one tool. The video above covers building dashboards for an algorithmic trading platform, but every sample below works the same way across ERP, CRM, Finance, Accounting, or any other domain.
+
+For a deep-dive into the algo trading dashboards shown above, read <a href="https://datapallas.com/blog/algo-trading-data-model" target="_blank">this blog post</a>.
+
+To explore the full range of what DataPallas can do — from PDF bursting to SQL-driven reports to live BI dashboards — check out the samples below.
+
+<br>
+
+<a href="https://datapallas.com" target="_blank">
+  <img src=".github/screenshots/0010-dashboard.png" alt="DataPallas — BI Dashboards & Analytics">
+</a>
+
+<br>
+
+## Also the Best Way to Learn Anything Data
+
+Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. Not by reading slides, but by doing: real databases, real queries, real dashboards. The platform guides you from zero to production-ready, step by step.
+
+<a href="https://datapallas.com" target="_blank">
+  <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
+</a>
 
 <br>
 
@@ -23,12 +47,6 @@
 | **[3.&nbsp;Report Generation](https://datapallas.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
 
 Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting) | [5. self-service document portals](https://datapallas.com/docs/document-portal) | [6. AI crew](https://datapallas.com/docs/ai-crew/the-team)
-
-<br>
-
-<a href="https://datapallas.com" target="_blank">
-  <img src=".github/screenshots/0010-dashboard.png" alt="DataPallas — BI Dashboards & Analytics">
-</a>
 
 <br>
 
