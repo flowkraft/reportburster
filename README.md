@@ -28,16 +28,6 @@ To explore the full range of what DataPallas can do — from PDF bursting to SQL
 
 <br>
 
-## Also the Best Way to Learn Anything Data
-
-Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. Not by reading slides, but by doing: real databases, real queries, real dashboards. The platform guides you from zero to production-ready, step by step.
-
-<a href="https://datapallas.com" target="_blank">
-  <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
-</a>
-
-<br>
-
 ## One Modern BI Platform, Not Three Legacy Ones
 
 | What you need | What you're using today | DataPallas |
@@ -120,6 +110,16 @@ We welcome contributions! Bug reports, feature requests, documentation, or code 
 ## All Features Are Included
 
 **Start using it today with no artificial restrictions — all features included. No community vs. enterprise editions.**
+
+---
+
+## Also the Best Way to Learn Anything Data
+
+Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. Not by reading slides, but by doing: real databases, real queries, real dashboards. The platform guides you from zero to production-ready, step by step.
+
+<a href="https://datapallas.com" target="_blank">
+  <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
+</a>
 
 ---
 
