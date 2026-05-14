@@ -14,11 +14,11 @@
 
 ## A Full-Stack BI Platform
 
-DataPallas is a full-stack BI platform — interactive dashboards and pivot tables (like Tableau or Power BI) alongside pixel-perfect report generation (like Crystal Reports), all in one tool. The video above covers building dashboards for an algorithmic trading platform, but every sample below works the same way across ERP, CRM, Finance, Accounting, or any other domain.
+DataPallas is a full-stack BI platform — interactive dashboards and pivot tables (like Tableau or Power BI) alongside pixel-perfect report generation (like Crystal Reports), all in one tool. The video above covers building dashboards for an algorithmic trading platform, but DataPallas can be easily used across ERP, CRM, Finance, Accounting, or any other domain.
 
 For a deep-dive into the algo trading dashboards shown above, read <a href="https://datapallas.com/blog/algo-trading-data-model" target="_blank">this blog post</a>.
 
-To explore the full range of what DataPallas can do — from PDF bursting to SQL-driven reports to live BI dashboards — check out the samples below.
+To explore the full range of what DataPallas can do — from PDF bursting to SQL-driven reports to live BI dashboards — read on.
 
 <br>
 
@@ -101,16 +101,6 @@ Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting)
 
 Full documentation is available at **[datapallas.com/docs](https://datapallas.com/docs)**.
 
-## Contributing
-
-We welcome contributions! Bug reports, feature requests, documentation, or code — every bit helps.
-
-- **Bug reports & feature requests:** [Open an issue](https://github.com/flowkraft/datapallas/issues)
-
-## All Features Are Included
-
-**Start using it today with no artificial restrictions — all features included. No community vs. enterprise editions.**
-
 ---
 
 ## Also the Best Way to Learn Anything Data
@@ -120,6 +110,16 @@ Before you build, DataPallas is the best possible platform for learning anything
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
 </a>
+
+## Contributing
+
+We welcome contributions! Bug reports, feature requests, documentation, or code — every bit helps.
+
+- **Bug reports & feature requests:** [Open an issue](https://github.com/flowkraft/datapallas/issues)
+
+## All Features Are Included
+
+**Start using it today with no artificial restrictions — all features included. No community vs. enterprise editions.**
 
 ---
 
