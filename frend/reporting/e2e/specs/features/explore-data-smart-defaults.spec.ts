@@ -304,7 +304,7 @@ const DATA_CANVAS_URL = `${AI_HUB_BASE_URL}/explore-data`;
 //const RUN_ALL_BRANCHES: string | null = 'sqlite';      // fastest, no Docker
 // const RUN_ALL_BRANCHES: string | null = 'clickhouse'; // exotic type names
 //const RUN_ALL_BRANCHES: string | null = 'supabase';      // DEV: force supabase
-const RUN_ALL_BRANCHES: string | null = 'null';     // DEV FOCUS — set back to null to restore random rotation
+const RUN_ALL_BRANCHES: string | null = null;       // DEV FOCUS — set to a vendor string (e.g., 'sqlite') to force all-branches mode
 
 // ── ALL_BRANCHES ───────────────────────────────────────────────────────────────
 // Each branch = a distinct data context that triggers different smart-defaults
