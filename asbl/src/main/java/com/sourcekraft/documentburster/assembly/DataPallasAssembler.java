@@ -31,7 +31,7 @@ public class DataPallasAssembler extends AbstractAssembler {
 					protected void processLine(String line) {
 						System.out.println(line);
 					}
-				}).execute();
+				}).exitValueNormal().execute();
 
 		System.out.println(
 				"------------------------------------- DONE_01:DataPallas _generate DataPallas.exe ... -------------------------------------");
