@@ -115,7 +115,7 @@ We welcome contributions! Bug reports, feature requests, documentation, or code 
 
 ## Also the Best Way to Learn Anything Data
 
-Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. Not by reading slides, but by doing: real databases, real queries, real dashboards. The platform guides you from zero to production-ready, step by step.
+Before you build, DataPallas is the best possible platform for learning anything data — SQL, data modelling, ETL, data warehouses. 5 minutes on your laptop and BAM — Oracle, SQL Server, Postgres, all running with real data. DataPallas ships with sample real-world databases ready to query on day one, so you learn on actual schemas, not toy examples.
 
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas — Learn SQL, Data Modelling, ETL, Data Warehouses">
