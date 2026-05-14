@@ -9,3 +9,8 @@
 *.sh text eol=lf
 Dockerfile* text eol=lf
 docker-compose* text eol=lf
+
+# Force CRLF for Windows batch files — cmd.exe misparses LF-only .bat
+# files (strips leading characters from each command).
+*.bat text eol=crlf
+*.cmd text eol=crlf
