@@ -2,7 +2,7 @@
 
 # DataPallas
 
-*From raw data to shipped dashboards. From zero SQL knowledge to data fluency.*
+*Helps you reach **"I get it"** and then **"it's live and beautiful"** for any data requirement — faster than any other platform.*
 
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/0030-algo-trading-dashboard-reveal.gif" alt="DataPallas — Building an Algo Trading BI Dashboard">
