@@ -284,8 +284,10 @@ async function createGroup(
     headers: { Cookie: admin, ...xsrfHeader(admin), 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, ...body }),
   });
-  expect(res.status, `creating the group ${name}`).toBe(201);
-  return (await res.json()).id;
+  // A refusal says why in its body (an unknown connection, a taken name): the failure carries it.
+  const text = await res.text();
+  expect(res.status, `creating the group ${name}: ${text}`).toBe(201);
+  return JSON.parse(text).id;
 }
 
 /**
@@ -1866,22 +1868,31 @@ test.describe('Auth — Server: the menus follow the role', () => {
 /** The Groups tab has no id of its own; it is the second tab of the Users screen, by its heading. */
 const GROUPS_TAB = 'button[role="tab"]:has-text("Groups")';
 
+/** The database connection the group CRUD test limits its group to (no digits: see below). */
+const GROUP_CONNECTION_NAME = 'Group Crud';
+const GROUP_CONNECTION = 'db-group-crud-sqlite';
+
 test.describe('Auth — Server: groups', () => {
 
   test('(groups) an ADMIN creates, renames and deletes a group, and a duplicate name is refused', async () => {
+    // A group limits the DATABASE connections its members may use, and the server refuses a limit
+    // naming anything else (`eml-contact`, the one connection that ships, is an email connection),
+    // so the group is given a database connection of its own.
     const admin = await login(ADMIN.username, ADMIN.password);
-    const groupId = await createGroup(admin, 'e2e-crud-group', {
-      settings: { connections: [SAMPLE_CONNECTION] },
-    });
+    await createSqliteConnection(admin, GROUP_CONNECTION_NAME, GROUP_CONNECTION);
+    let groupId: number | undefined;
     let second: number | undefined;
 
     try {
+      groupId = await createGroup(admin, 'e2e-crud-group', {
+        settings: { connections: [GROUP_CONNECTION] },
+      });
       const created = (await listGroups(admin)).find((g) => g.id === groupId);
       expect(created.name).toBe('e2e-crud-group');
       expect(
         created.settings.connections,
         'a group is created with its limits, not created and then limited',
-      ).toEqual([SAMPLE_CONNECTION]);
+      ).toEqual([GROUP_CONNECTION]);
 
       await updateGroup(admin, groupId, { name: 'e2e-crud-group-renamed' });
       expect(
@@ -1911,7 +1922,8 @@ test.describe('Auth — Server: groups', () => {
       ).toBe(false);
     } finally {
       if (second !== undefined) await deleteGroup(admin, second);
-      await statusAs(admin, 'DELETE', `/api/iam/groups/${groupId}`);
+      if (groupId !== undefined) await statusAs(admin, 'DELETE', `/api/iam/groups/${groupId}`);
+      await statusAs(admin, 'DELETE', `/api/connections/${GROUP_CONNECTION}`);
     }
   });
 
