@@ -333,10 +333,14 @@ async function dashboardReadStatuses(
   return {
     page: page.status,
     config: await statusAs(cookie, 'GET', `/api/reports/${reportId}/config`),
+    // A count over no field: the one pivot that means the same on either sample (g-dashboard's rows
+    // have `country`, g-pivottable's `vw_sales_detail` has `customer_country`, and naming a column the
+    // other lacks answers 500, which is not a statement about who may read).
     pivot: await statusAs(cookie, 'POST', `/api/analytics/pivot?reportId=${reportId}`, {
-      rows: ['country'],
+      rows: [],
       cols: [],
       vals: [],
+      aggregatorName: 'Count',
     }),
   };
 }
