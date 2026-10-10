@@ -817,9 +817,14 @@ test.describe('Auth — Server: each role can do its own job', () => {
 
     const settings = await answerAs(operator, 'GET', '/api/reports/split-only/settings');
     expect(settings.status, 'the screen reads the report settings before it submits').toBe(200);
-    expect(settings.json?.settings?.template, 'and they are that report’s own settings').toBe(
-      'split-only',
-    );
+    // A settings file names no report: `template` is the friendly template name ("Bursting"), the
+    // same for every report made from the burst template. What makes these split-only's own
+    // settings is the one thing that sample changes from the burst defaults: it splits and
+    // distributes nothing (the defaults distribute).
+    expect(
+      settings.json?.settings?.capabilities?.reportdistribution,
+      'and they are that report’s own settings: split-only distributes nothing, the defaults do',
+    ).toBe(false);
 
     const submitted = await answerAs(operator, 'POST', '/api/jobs', {
       type: 'burst',
