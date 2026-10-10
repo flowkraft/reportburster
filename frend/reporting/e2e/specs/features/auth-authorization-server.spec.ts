@@ -2353,8 +2353,6 @@ const CHART_DSL = [
 ].join('\n');
 
 test.describe('Auth — Server: run-sql and author limits', () => {
-  test.describe.configure({ mode: 'serial' });
-
   test.beforeAll(async () => {
     const admin = await login(ADMIN.username, ADMIN.password);
     await createSqliteConnection(admin, ALLOWED_CONNECTION_NAME, ALLOWED_CONNECTION);
@@ -3388,8 +3386,6 @@ async function jobCount(admin: string): Promise<number> {
 }
 
 test.describe('Auth — Server: the reports a caller may run', () => {
-  test.describe.configure({ mode: 'serial' });
-
   const RUNNER = { username: 'e2e-limits-runner', password: 'E2eLimitsRunnerPass123!' };
   /** The same limits held by a REPORT_AUTHOR: the two screens that offer reports sit on two rungs. */
   const PICKER = { username: 'e2e-pickers-author', password: 'E2ePickersAuthorPass123!' };
@@ -3419,6 +3415,25 @@ test.describe('Auth — Server: the reports a caller may run', () => {
     // person is offered would never be looked at.
     await createUser(admin, PICKER.username, PICKER.password, 'REPORT_AUTHOR');
     await setUserGroups(admin, PICKER.username, [groupId]);
+
+    // What AbstractBurster leaves behind when a burst is paused: JobProgressDetails, marshalled by
+    // JAXB as <jobprogress>. Written by the administrator rather than by pausing a real job, because
+    // what is being checked is which report the resume would run, not how it came to be paused.
+    // Written here, once, because two tests resume it (the limited caller is refused, the admin is
+    // not) and neither may depend on the other having run.
+    expect(
+      await fsWrite(
+        admin,
+        RESUME_PROGRESS_FILE,
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+          '<jobprogress>\n' +
+          '  <jobtype>burst</jobtype>\n' +
+          `  <configurationFilePath>config/reports/${NOT_RUNNABLE_REPORT}/settings.xml</configurationFilePath>\n` +
+          '  <filepath>samples/burst/Payslips.pdf</filepath>\n' +
+          '</jobprogress>\n',
+      ),
+      'the administrator writes the paused job file',
+    ).toBe(200);
   });
 
   test.afterAll(async () => {
@@ -3577,25 +3592,8 @@ test.describe('Auth — Server: the reports a caller may run', () => {
     // The fourth door, and the only one that names no report: resume is handed a .progress file, and
     // the report it runs is whatever `configurationFilePath` inside it says. A check that keyed on
     // the request would find nothing to look at here — which is exactly why this test exists.
+    // The paused job file both resume tests ask about is written by the group's beforeAll.
     const admin = await login(ADMIN.username, ADMIN.password);
-
-    // What AbstractBurster leaves behind when a burst is paused: JobProgressDetails, marshalled by
-    // JAXB as <jobprogress>. Written here by the administrator rather than by pausing a real job,
-    // because what is being checked is which report the resume would run, not how it came to be paused.
-    expect(
-      await fsWrite(
-        admin,
-        RESUME_PROGRESS_FILE,
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-          '<jobprogress>\n' +
-          '  <jobtype>burst</jobtype>\n' +
-          `  <configurationFilePath>config/reports/${NOT_RUNNABLE_REPORT}/settings.xml</configurationFilePath>\n` +
-          '  <filepath>samples/burst/Payslips.pdf</filepath>\n' +
-          '</jobprogress>\n',
-      ),
-      'the administrator writes the paused job file',
-    ).toBe(200);
-
     const runner = await login(RUNNER.username, RUNNER.password);
     const before = await jobCount(admin);
 
@@ -3866,8 +3864,6 @@ async function reportIdsOf(cookie: string): Promise<string[]> {
 }
 
 test.describe('Auth — Server: the reports a group grants', () => {
-  test.describe.configure({ mode: 'serial' });
-
   const GRANTEE = { username: 'e2e-grants-operator', password: 'E2eGrantsOperatorPass123!' };
 
   test.beforeAll(async () => {
