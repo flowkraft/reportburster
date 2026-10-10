@@ -240,6 +240,24 @@ async function listGroups(admin: string): Promise<any[]> {
   return jsonAs(admin, '/api/iam/groups');
 }
 
+/**
+ * The id of the group a dialog has just saved, once the listing has it.
+ *
+ * The Groups tab is then waited on by that group's own row (`#btnEditGroup-<id>`), never by its name:
+ * a test's group name is also the start of its member's username, so a text match finds several
+ * elements and waits its whole budget (40 minutes once, after which the API session had expired
+ * and the next call read an empty body).
+ */
+async function savedGroupId(admin: string, name: string): Promise<number> {
+  await expect
+    .poll(async () => (await listGroups(admin)).some((g) => g.name === name), {
+      message: `the group ${name} is saved`,
+      timeout: 15_000,
+    })
+    .toBe(true);
+  return (await listGroups(admin)).find((g) => g.name === name).id;
+}
+
 /** Put a user in exactly these groups. An empty list takes them out of all of them. */
 async function setUserGroups(admin: string, username: string, groupIds: number[]) {
   expect(
@@ -2049,10 +2067,10 @@ test.describe('Auth — Server: groups', () => {
         .click('#groupScripts')
         .waitOnElementToBecomeVisible('#groupScriptsNote')
         .click('#btnSaveGroup')
-        .waitOnElementToBecomeInvisible('#groupDialog')
-        .waitOnElementWithTextToBecomeVisible(groupName);
+        .waitOnElementToBecomeInvisible('#groupDialog');
 
-      const groupId = (await listGroups(admin)).find((g) => g.name === groupName).id;
+      const groupId = await savedGroupId(admin, groupName);
+      await ft.waitOnElementToBecomeVisible(`#btnEditGroup-${groupId}`);
 
       await openUsersScreenFilteredTo(page, ft, member.username);
       await ft
@@ -2188,10 +2206,11 @@ test.describe('Auth — Server: groups', () => {
         .click(`#groupReport-${sqlReport}`)
         .click(`#groupReport-${fileReport}`)
         .click('#btnSaveGroup')
-        .waitOnElementToBecomeInvisible('#groupDialog')
-        .waitOnElementWithTextToBecomeVisible(groupName);
+        .waitOnElementToBecomeInvisible('#groupDialog');
 
-      const saved = (await listGroups(admin)).find((g) => g.name === groupName);
+      const savedId = await savedGroupId(admin, groupName);
+      await ft.waitOnElementToBecomeVisible(`#btnEditGroup-${savedId}`);
+      const saved = (await listGroups(admin)).find((g) => g.id === savedId);
       expect(saved.reports.sort(), 'both ticked reports are granted').toEqual(
         [sqlReport, fileReport].sort(),
       );
