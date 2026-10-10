@@ -5736,7 +5736,7 @@ test.describe('Auth — Server: the capability table and the doors behind it', (
         const door = doorFor(capability);
         if (isDoorless(door)) continue;
 
-        const status = await statusAs(session, door.method, door.path);
+        const status = await statusAs(session, door.method, door.path, door.body);
         expect(
           wasAdmitted(status),
           `${role.who} is promised ${capability}, but ${door.method} ${door.path} answered ` +
@@ -5764,7 +5764,7 @@ test.describe('Auth — Server: the capability table and the doors behind it', (
         const door = doorFor(capability);
         if (isDoorless(door)) continue;
 
-        const status = await statusAs(session, door.method, door.path);
+        const status = await statusAs(session, door.method, door.path, door.body);
         expect(
           status,
           `${role.who} is not promised ${capability}, yet ${door.method} ${door.path} answered ` +

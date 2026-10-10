@@ -22,6 +22,12 @@ export type CapabilityDoor = {
   /** The call that stands for this capability. */
   method: string;
   path: string;
+  /**
+   * The request body, for an endpoint that reads one. Spring rejects a missing `@RequestBody` before
+   * method security runs, so without it a closed door answers 500 instead of 403 (a wart of the
+   * product, noted, not fixed here).
+   */
+  body?: unknown;
   /** Why this endpoint is the one that stands for this capability. */
   because: string;
 };
@@ -45,6 +51,7 @@ export const CAPABILITY_DOORS: Record<string, CapabilityDoor | NoDoor> = {
   revealSecrets: {
     method: 'POST',
     path: '/api/connections/e2e-no-such-connection/reveal-password',
+    body: {},
     because:
       'the one endpoint that hands back a stored password, asked about a connection that does not' +
       ' exist, so an open door answers with "no such connection" and never with a secret',
