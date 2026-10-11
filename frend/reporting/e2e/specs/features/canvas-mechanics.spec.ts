@@ -1059,6 +1059,44 @@ async function pChartCounts(page: Page, widgetId: string): Promise<Record<string
   });
 }
 
+/** The rows a PUBLISHED widget was handed, by its own component id: the `data` of its rb-* element.
+ *  A published tile is replaced by a copy of itself when the parameters change
+ *  (`refreshDataWidgets`), so the element is looked up again on every read, and an answer of no
+ *  rows at all is one of the answers worth asserting - which is why this does not wait for rows
+ *  the way `pWaitRows` does. */
+async function pPublishedRows(page: Page, componentId: string): Promise<Array<Record<string, unknown>>> {
+  const tile = page.locator(`[component-id="${componentId}"]`).first();
+  if ((await tile.count()) === 0) return [];
+  return tile.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (el as any).data;
+    return Array.isArray(data) ? (JSON.parse(JSON.stringify(data)) as Array<Record<string, unknown>>) : [];
+  });
+}
+
+/** Wait until what a published widget shows satisfies `ok`, then hand the rows back. */
+async function pWaitPublished(
+  page: Page,
+  componentId: string,
+  ok: (rows: Array<Record<string, unknown>>) => boolean,
+  message: string,
+): Promise<Array<Record<string, unknown>>> {
+  await expect
+    .poll(async () => ok(await pPublishedRows(page, componentId)), { message, timeout: 60_000, intervals: [1_000] })
+    .toBe(true);
+  return pPublishedRows(page, componentId);
+}
+
+/** The one number a published KPI shows, as the reader reads it. */
+async function pPublishedScalarIs(page: Page, componentId: string, want: number, message: string): Promise<void> {
+  await expect
+    .poll(async () => {
+      const rows = await pPublishedRows(page, componentId);
+      return rows.length > 0 ? Number(Object.values(rows[0])[0]) : null;
+    }, { message, timeout: 60_000, intervals: [1_000] })
+    .toBe(want);
+}
+
 /** What a widget says about the pane fields that do not reach it. */
 const pNotFiltered = (page: Page, widgetId: string): Locator =>
   page.locator(`[id="widgetNotFiltered-${widgetId}"]`);
@@ -4174,5 +4212,156 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
       'the KPI counts the mobile_app orders and the web orders');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['mobile_app', 'web']), 'two bars are left');
   });
+});
+
+test('(canvas mechanics) M57 The same panes on the published dashboard, and a locked link only narrows', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  let readerContext: BrowserContext | undefined;
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M57 Published filter pane', async (canvasId) => {
+      // The same dashboard as M56, with the two things a published page adds: a filter bar, so a
+      // share link has something to lock, and a pasted query that uses it. The query's result
+      // carries both pane fields, so both panes reach it - and the filter bar's own condition sits
+      // on its own line, so "All channels" (the default) counts every order.
+      await addFilterBarParam(page, B_CHANNEL_FILTER_DSL);
+
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+
+      const table = await fAddTabulator(page, 'dash_demo.orders',
+        'SELECT channel, device, COUNT(*) AS n FROM dash_demo.orders\nWHERE channel = ${channel}\nGROUP BY channel, device');
+      await pWaitRows(page, table, (rows) => rows.length === pPairs.length,
+        'the pasted query answers a row per channel and device');
+
+      const channelPane = await addFilterPane(page, 'orders', 'channel');
+      const devicePane = await addFilterPane(page, 'orders', 'device');
+      await expect(pValue(page, channelPane, 'web'), 'the pane lists the values of its field').toBeVisible();
+      await expect(pValue(page, devicePane, 'mobile'), 'and so does the second one').toBeVisible();
+
+      // The names the published dashboard calls these widgets, which is how a reader's page is read.
+      const ids = await getCanvasComponentIds(page, canvasId);
+      const pubKpi = ids.number[0];
+      const pubTable = ids.tabulator[0];
+      const pubChannelPane = ids['filter-pane'][0];
+      const pubDevicePane = ids['filter-pane'][1];
+      expect(pubChannelPane, 'a published pane is named after its field').toContain('filter-pane_channel_');
+      expect(pubDevicePane, 'and so is the second one').toContain('filter-pane_device_');
+
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+
+      // The share link is made while the author is still on the canvas: locked to one channel, so
+      // the reader below meets a dashboard whose filter bar cannot be moved.
+      await page.locator('#btnShareDashboard').click();
+      await page.locator('#shareDialog').waitFor({ state: 'visible', timeout: 10_000 });
+      await page.locator('#shareLockParam-channel').check();
+      const lockValue = page.locator('#shareLockValue-channel');
+      await lockValue.waitFor({ state: 'visible', timeout: 10_000 });
+      await lockValue.locator('#channel').selectOption(B_CHANNEL);
+      await page.locator('#btnCreateShareLink').click();
+      await page.locator('#shareNewUrl').waitFor({ state: 'visible', timeout: 15_000 });
+      const shareUrl = await page.locator('#shareNewUrl').inputValue();
+      await page.locator('#btnShareClose').click();
+
+      // ── The same clicks, on the published page ───────────────────────────
+      await openPublished(page, reportId);
+      await expect(pValue(page, pubChannelPane, 'web'), 'the published pane lists its own values')
+        .toBeVisible({ timeout: 60_000 });
+
+      // − nothing picked is not a filter here either.
+      await pPublishedScalarIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
+      await pWaitPublished(page, pubTable, (rows) => rows.length === pPairs.length,
+        'and the published query answers a row per channel and device');
+      await expect(page.locator('#paneSelectionBar'), 'with nothing picked there is nothing to show')
+        .toHaveCount(0);
+
+      // + one value picked: the same numbers the canvas gave for the same click.
+      await pClick(page, pubChannelPane, 'web');
+      await pPublishedScalarIs(page, pubKpi, pCount((r) => r.channel === 'web'),
+        'the published KPI counts the web orders');
+      await pWaitPublished(page, pubTable,
+        (rows) => rows.length === pDevicesOf('web').length && rows.every((r) => String(r.channel) === 'web'),
+        'and the published query keeps its web rows only');
+      await expect(page.locator('#paneSelectionBar'), 'the chips bar says what is picked').toBeVisible();
+      await expect(page.locator(`[id="btnRemoveSelection-channel-web"]`), 'one chip, for that one pick')
+        .toBeVisible();
+
+      // + a second field ANDs with the first, on the published page as on the canvas.
+      await pClick(page, pubDevicePane, 'mobile');
+      const webMobile = (r: Record<string, string>) => r.channel === 'web' && r.device === 'mobile';
+      await pPublishedScalarIs(page, pubKpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
+      await pWaitPublished(page, pubTable,
+        (rows) => rows.length === 1 && String(rows[0].channel) === 'web' && String(rows[0].device) === 'mobile'
+          && Number(rows[0].n) === pCount(webMobile),
+        'and the query is down to that one pair');
+
+      // + Clear all drops both picks, and the dashboard answers for everything again.
+      await page.locator('#btnClearSelections').click();
+      await pPublishedScalarIs(page, pubKpi, pOrders.length, 'Clear all brings every order back');
+      await pWaitPublished(page, pubTable, (rows) => rows.length === pPairs.length, 'and every pair');
+      await expect(page.locator('#paneSelectionBar'), 'and the chips bar goes with the picks')
+        .toHaveCount(0);
+
+      // + the grey-outs, which a published pane reads off its own list (it may not ask
+      //   /api/analytics/explore): a mobile_app order only ever ships on a phone, so with
+      //   mobile_app picked the other devices are the values that would answer no row.
+      await pClick(page, pubChannelPane, 'mobile_app');
+      for (const device of pDevicesOf('mobile_app')) {
+        await expect(pValue(page, pubDevicePane, device), `a mobile_app order can ship on a ${device}`)
+          .toHaveAttribute('data-state', 'associated', { timeout: 60_000 });
+      }
+      for (const device of pDevices.filter((d) => !pDevicesOf('mobile_app').includes(d))) {
+        await expect(pValue(page, pubDevicePane, device), `no mobile_app order ships on a ${device}`)
+          .toHaveAttribute('data-state', 'excluded', { timeout: 60_000 });
+      }
+      // − and a pane's own pick leaves its own list alone: its neighbour is still worth picking.
+      await expect(pValue(page, pubChannelPane, 'web'), 'the other channels stay live')
+        .toHaveAttribute('data-state', 'associated');
+
+      // ── A share link with a locked filter-bar value: a pick only narrows ──
+      readerContext = await page.context().browser()!.newContext();
+      const reader = await readerContext.newPage();
+      await reader.goto(shareUrl, { waitUntil: 'networkidle', timeout: 60_000 });
+      await expect(reader.locator('rb-dashboard'), 'the link opens the dashboard with no sign-in')
+        .toBeVisible({ timeout: 60_000 });
+      await expect(reader.locator('#channel'), 'the locked control cannot be changed')
+        .toBeDisabled({ timeout: 30_000 });
+
+      // The lock is what the reader starts from: the one channel it fixed.
+      const lockedRows = (rows: Array<Record<string, unknown>>) =>
+        rows.length > 0 && rows.every((r) => String(r.channel) === B_CHANNEL);
+      await pWaitPublished(reader, pubTable, lockedRows, 'the locked link answers for its own channel only');
+
+      // + a pane pick of the locked value changes nothing: it narrows to what is already there.
+      await pClick(reader, pubChannelPane, B_CHANNEL);
+      await pWaitPublished(reader, pubTable,
+        (rows) => lockedRows(rows) && rows.length === pDevicesOf(B_CHANNEL).length,
+        'picking the locked channel leaves the same rows');
+
+      // − a pane pick of ANOTHER value cannot widen past the lock: it narrows to nothing.
+      await pClick(reader, pubChannelPane, B_CHANNEL);
+      await pClick(reader, pubChannelPane, 'web');
+      await pWaitPublished(reader, pubTable, (rows) => rows.length === 0,
+        'a pane cannot reach rows the link locked away');
+      await expect(reader.locator(`[id="btnRemoveSelection-channel-web"]`), 'the pick itself was taken')
+        .toBeVisible();
+
+      // + and a device pick narrows inside the lock, as a slicer should.
+      await reader.locator('#btnClearSelections').click();
+      await pClick(reader, pubDevicePane, pDevicesOf(B_CHANNEL)[0]);
+      await pWaitPublished(reader, pubTable,
+        (rows) => rows.length === 1 && String(rows[0].channel) === B_CHANNEL
+          && String(rows[0].device) === pDevicesOf(B_CHANNEL)[0],
+        'the one pair the lock and the pick leave');
+    });
+  } finally {
+    if (readerContext) await readerContext.close();
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
 });
 });
