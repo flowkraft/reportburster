@@ -151,15 +151,19 @@ public class ClickHouseAnalyticsService {
                 request.getTableName(), request.getSelections().size(), request.getFields().size());
 
         long startTime = System.currentTimeMillis();
-        String tableName = request.getTableName();
         String connectionCode = request.getConnectionCode();
         int limit = request.getLimit() > 0 ? request.getLimit() : 500;
 
         Map<String, ExploreResponse.FieldState> fieldStates = new LinkedHashMap<>();
 
+        // The table with its schema, each name quoted on its own: a pane on
+        // `dash_demo.orders` asked for `"dash_demo.orders"` and got the sample table of that
+        // name in the default schema, whose columns are other columns
+        // (`ExploreRequest.quotedTable`).
+        String quotedTable = request.quotedTable(name -> "`" + name.replace("`", "``") + "`");
+
         for (String field : request.getFields()) {
             String quotedField = "`" + field.replace("`", "``") + "`";
-            String quotedTable = "`" + tableName.replace("`", "``") + "`";
 
             String allSql = "SELECT DISTINCT " + quotedField
                     + " FROM " + quotedTable

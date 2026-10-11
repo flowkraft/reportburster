@@ -7,6 +7,7 @@
 
 import type { SchemaInfo, ConnectionInfo, QueryResult } from "./types";
 import type { CubeSelection } from "@/lib/stores/canvas-store";
+import { asTableRef, type TableRef } from "./table-ref";
 
 const RB_BASE = "/api/dp";
 
@@ -393,14 +394,26 @@ export interface ExploreResponse {
  */
 export async function exploreAssociations(
   connectionCode: string,
-  tableName: string,
+  table: TableRef | string,
   selections: ExploreSelection[],
   fields: string[],
 ): Promise<ExploreResponse> {
+  // A table is a (schema, name) pair here as everywhere else (`table-ref.ts`), and it travels as
+  // a pair: the server quotes each name on its own (`ExploreRequest.quotedTable`). Sent as one
+  // string, `dash_demo.orders` asked for a table of that exact name and the sample table of the
+  // same name in the default schema answered instead - with other columns, so every grey-out
+  // request came back a 500 and no pane ever dimmed a value.
+  const ref = asTableRef(table);
   const res = await fetch(`${RB_BASE}/analytics/explore`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ connectionCode, tableName, selections, fields }),
+    body: JSON.stringify({
+      connectionCode,
+      tableName: ref.name,
+      tableSchema: ref.schema,
+      selections,
+      fields,
+    }),
   });
   if (!res.ok) {
     const text = await res.text();
