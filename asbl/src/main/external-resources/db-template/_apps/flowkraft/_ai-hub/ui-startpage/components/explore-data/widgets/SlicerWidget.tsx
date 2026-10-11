@@ -5,7 +5,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { executeQuery, exploreAssociations, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { buildDistinctValuesSql } from "@/lib/explore-data/sql-builder";
-import { slicerFieldsForTable, slicerNarrowingLines, slicerTableKeyOf } from "@/lib/explore-data/slicer-filters";
+import { selectableFieldsForTable, slicerNarrowingLines, slicerTableKeyOf } from "@/lib/explore-data/slicer-filters";
 import { asTableRef, findTable } from "@/lib/explore-data/table-ref";
 import { autoSlicerField, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
 import { useRbElementReady } from "./useRbElementReady";
@@ -62,11 +62,12 @@ export function SlicerWidget({ widgetId }: SlicerWidgetProps) {
   const table = (widget?.dataSource?.visualQuery?.table as string) || "";
   const tableSchema = widget?.dataSource?.visualQuery?.tableSchema;
   const tableRef = asTableRef(table, tableSchema);
-  // The fields the OTHER slicers of this table filter by, for the published value query below.
-  // Kept as one string, not the array, so the effect runs again when a slicer is added or its
-  // field changes - and not on every render, which a fresh array would do.
+  // The OTHER fields this table can be selected on - the other slicers' and the ones a
+  // cross-filtering widget's clicks select - for the published value query below. Kept as one
+  // string, not the array, so the effect runs again when a field is added or changes, and not on
+  // every render, which a fresh array would do.
   const otherSlicerFieldsKey = widget
-    ? slicerFieldsForTable(widgets, slicerTableKeyOf(widget))
+    ? selectableFieldsForTable(widgets, slicerTableKeyOf(widget))
         .filter((f) => f !== field)
         .join(",")
     : "";

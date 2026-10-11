@@ -633,9 +633,13 @@ public class DashboardFileGenerator {
     private static String generateMapConfig(List<Map<String, Object>> maps) throws Exception {
         if (maps.isEmpty()) return "";
         Map<String, Object> out = new LinkedHashMap<>();
+        // A map has no DSL of its own, so `clicksFilter` - whether a click on a region or a point
+        // selects its dimension value, like a slicer pick (`slicer-filters.ts`) - is one of these
+        // keys, and travels to the published map the way every other map setting does.
         List<String> keys = List.of("mapType", "region", "dimension", "metric",
             "latField", "lonField", "geoJsonUrl", "geoJsonKey",
-            "tileUrl", "attribution", "colorScale", "zoom", "center", "fitBounds");
+            "tileUrl", "attribution", "colorScale", "zoom", "center", "fitBounds",
+            "clicksFilter");
         for (Map<String, Object> w : maps) {
             Map<String, Object> cfg = displayConfig(w);
             Map<String, Object> entry = new LinkedHashMap<>();

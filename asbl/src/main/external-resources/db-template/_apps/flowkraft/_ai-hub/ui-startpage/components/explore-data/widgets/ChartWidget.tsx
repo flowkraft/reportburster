@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWidgetData } from "./useWidgetData";
 import { asDerivedWrite, useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
+import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
 import { IconSparkles as Sparkles } from "@/components/shared/Icons";
 import { fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
@@ -260,8 +261,10 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
   const updateWidgetDataSource = useCanvasStore((s) => s.updateWidgetDataSource);
   const updateWidgetDisplayConfig = useCanvasStore((s) => s.updateWidgetDisplayConfig);
   const changeWidgetRenderMode = useCanvasStore((s) => s.changeWidgetRenderMode);
-  const ref = useRef<HTMLElement>(null);
+  const { ref, el: chartEl, attach: attachChart } = useRbElement();
   const ready = useRbElementReady("rb-chart");
+  // This chart's own clicks, when its author ticked the box in the Display tab.
+  useCrossFilterClicks(chartEl, widget);
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoErr, setAutoErr] = useState<string | null>(null);
 
@@ -613,7 +616,7 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
     <div className="h-full flex flex-col">
       <div className="flex-1 min-h-0 relative">
         {/* @ts-expect-error - Web component custom element */}
-        <rb-chart ref={ref} id={`widgetViz-${widgetId}`} style={{ position: "absolute", inset: 0, display: "block" }} />
+        <rb-chart ref={attachChart} id={`widgetViz-${widgetId}`} style={{ position: "absolute", inset: 0, display: "block" }} />
       </div>
       {hiddenCount > 0 && widget && (
         <div className="shrink-0 px-2 py-0.5 text-[10px] text-base-content/60 bg-base-200/40 border-t border-base-300/50 flex items-center justify-between gap-2">

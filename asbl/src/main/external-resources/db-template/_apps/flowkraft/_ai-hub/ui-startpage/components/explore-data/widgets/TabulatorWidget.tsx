@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { useWidgetData } from "./useWidgetData";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
+import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
 // lucide-react removed
 import { looksLikeBoolean, isTemporalExtraction } from "@/lib/explore-data/smart-defaults";
 import type { ColumnSchema } from "@/lib/explore-data/types";
@@ -69,8 +70,10 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const { result, loading, error } = useWidgetData(widgetId);
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const updateWidgetDisplayConfig = useCanvasStore((s) => s.updateWidgetDisplayConfig);
-  const ref = useRef<HTMLElement>(null);
+  const { ref, el: tableEl, attach: attachTable } = useRbElement();
   const ready = useRbElementReady("rb-tabulator");
+  // This table's own clicks, when its author ticked the box in the Display tab.
+  useCrossFilterClicks(tableEl, widget);
   const [activeField, setActiveField] = useState<string | null>(null);
 
   // ── Single source of truth: the canonical DSL Map. If displayConfig has
@@ -192,7 +195,7 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   return (
     <div className="h-full flex flex-col">
       {/* @ts-expect-error - Web component custom element */}
-      <rb-tabulator key={`${tabulatorTheme}|${tabulatorLayout}|${tabulatorPagination}|${tabulatorPageSize}`} ref={ref} id={`widgetViz-${widgetId}`} component-id={widgetId} theme={tabulatorTheme} style={{ display: "block", width: "100%", flex: 1 }} />
+      <rb-tabulator key={`${tabulatorTheme}|${tabulatorLayout}|${tabulatorPagination}|${tabulatorPageSize}`} ref={attachTable} id={`widgetViz-${widgetId}`} component-id={widgetId} theme={tabulatorTheme} style={{ display: "block", width: "100%", flex: 1 }} />
       {atLimit && (
         <div className="shrink-0 px-2 py-0.5 text-[10px] text-base-content/60 bg-base-200/40 border-t border-base-300/50 text-right">
           showing first {limit} rows — add a filter or raise the limit to see more

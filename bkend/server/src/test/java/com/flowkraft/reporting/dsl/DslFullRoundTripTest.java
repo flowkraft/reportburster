@@ -259,6 +259,47 @@ public class DslFullRoundTripTest {
         }
     }
 
+    /**
+     * "Clicks filter the dashboard" survives the trip through the DSL text.
+     *
+     * <p>A chart, a table and a map each carry one tick that says a click on them selects the value
+     * it stands for. The tick is a setting of the widget, kept in the widget's own DSL, so the
+     * Display tab has to hand it back unchanged - otherwise a dashboard stops cross-filtering the
+     * moment its author opens the editor and saves.
+     *
+     * <p>A chart's options are read key by key, so {@code clicksFilter} has an explicit setter
+     * there; a table's whole map passes through, so it only has to be emitted and re-parsed. A
+     * map's configuration is JSON and has no DSL text to lose it in.
+     */
+    @Test
+    public void roundTrip_clicksFilter() throws Exception {
+        Map<String, Object> chart = parseChartRawNamed(
+            "chart('ordersByChannel') {\n" +
+            "  type 'bar'\n" +
+            "  clicksFilter true\n" +
+            "  data { labelField 'channel'; datasets { dataset { field 'orders' } } }\n" +
+            "}").get("ordersByChannel");
+        assertEquals(Boolean.TRUE, chart.get("clicksFilter"), "the chart's tick is parsed");
+
+        String emittedChart = BlockFormEmitter.emitNamed("chart", "ordersByChannel", chart,
+                                                          BlockFormRules.CHART);
+        assertEquals(chart, parseChartRawNamed(emittedChart).get("ordersByChannel"),
+            "a chart's `clicksFilter` survives the round trip");
+
+        Map<String, Object> table = TabulatorOptionsParser.parseGroovyTabulatorDslCode(
+            "tabulator('orders') {\n" +
+            "  clicksFilter true\n" +
+            "  columns { column { field 'channel'; title 'Channel' } }\n" +
+            "}").getNamedOptions().get("orders");
+        assertEquals(Boolean.TRUE, table.get("clicksFilter"), "the table's tick is parsed");
+
+        String emittedTable = BlockFormEmitter.emitNamed("tabulator", "orders", table,
+                                                          BlockFormRules.TABULATOR, true);
+        assertEquals(table, TabulatorOptionsParser.parseGroovyTabulatorDslCode(emittedTable)
+                .getNamedOptions().get("orders"),
+            "a table's `clicksFilter` survives the round trip");
+    }
+
     // ═════════════════════════════════════════════════════════════════════════════
     // PIVOT TABLE
     // ═════════════════════════════════════════════════════════════════════════════

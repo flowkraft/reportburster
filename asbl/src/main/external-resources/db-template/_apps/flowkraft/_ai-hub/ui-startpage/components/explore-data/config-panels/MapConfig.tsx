@@ -167,6 +167,24 @@ export function MapConfig({ config, columns, shape, onChange }: MapConfigProps) 
         </div>
       )}
 
+      {/* A map has no DSL Map of its own, so its clicks setting is a display-config key - the
+          same key `slicer-filters.ts` reads and the publisher writes into `-map-config.json`. */}
+      <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
+        <input
+          id="chkMapClicksFilter"
+          type="checkbox"
+          checked={config.clicksFilter === true}
+          onChange={(e) => {
+            const next = { ...config } as Record<string, unknown>;
+            if (e.target.checked) next.clicksFilter = true;
+            else delete next.clicksFilter;
+            onChange(next as typeof config);
+          }}
+          className="rounded border-base-300"
+        />
+        <span>Clicks filter the dashboard</span>
+      </label>
+
       {/* Metric — always relevant (drives color intensity in region/grid, popup data in pin) */}
       <div>
         <span className="text-xs text-base-content/60">

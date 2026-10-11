@@ -1,9 +1,18 @@
 /**
- * What a slicer's selections do to the other widgets of the canvas.
+ * What a reader's selections do to the other widgets of the canvas.
  *
- * A slicer applies by itself to every widget built on its table, and the
- * author writes nothing. (The filter bar is the other half and keeps its own job: a parameter the
- * author places in their own SQL as `${param}`.)
+ * A selection is made in one of two ways, and one rule answers both:
+ *   - a slicer, which applies by itself to every widget built on its table, and the author writes
+ *     nothing;
+ *   - a click on a chart bar, a table cell or a map point, on a widget whose author ticked "Clicks
+ *     filter the dashboard" (`clicksFilter` in the widget's own DSL). The click selects the value
+ *     it points at, exactly as a slicer click does, and a second click drops it again.
+ * (The filter bar is the other half and keeps its own job: a parameter the author places in their
+ * own SQL as `${param}`.)
+ *
+ * A widget is never filtered by a field its own clicks select, the same way a slicer's own list is
+ * not narrowed by its own pick: a chart that collapsed to the one bar just clicked would be a
+ * chart nobody can click twice.
  *
  * The rule, in one place:
  *   - the values picked for ONE field are OR-ed together — one `IN (…)` list;
@@ -32,6 +41,15 @@ import type { SlicerDslOptions } from "./dsl-sync/slicer-mapping";
 import { paramRefOf } from "./sql-builder";
 import { quoteIdent, type SqlDialect } from "./sql-dialects";
 import { tableKey } from "./table-ref";
+
+/**
+ * The event a widget fires when a click of its own makes a selection.
+ *
+ * LOGIC-MIRROR of {@code CROSS_FILTER_EVENT} in
+ * `frend/rb-webcomponents/src/shared/slicer-selections.ts` - the components dispatch it and both
+ * hosts listen for it, so the two have to spell it the same way.
+ */
+export const CROSS_FILTER_EVENT = "crossFilterSelect";
 
 /** The one prefix a slicer parameter carries, so nothing else can be taken for one. */
 export const SLICER_PARAM_PREFIX = "__slicer_";
@@ -94,35 +112,115 @@ export function allSlicerFields(widgets: Widget[]): string[] {
   return fields;
 }
 
+/**
+ * Whether this widget's clicks make a selection: the author's tick, off everywhere until ticked.
+ *
+ * A chart, a table and a pivot keep it in their canonical DSL Map (Principle 4) beside every other
+ * display setting, so it travels into the published config file with them. A map has no DSL of its
+ * own - its settings are display-config keys - so there it is one of those.
+ */
+export function clicksFilterOf(widget: Widget): boolean {
+  const dsl = widget.displayConfig?.dslConfig as Record<string, unknown> | undefined;
+  if (typeof dsl?.clicksFilter === "boolean") return dsl.clicksFilter;
+  return widget.displayConfig?.clicksFilter === true;
+}
+
+/**
+ * The fields one widget's clicks can select a value of - nothing unless its author ticked the box.
+ *
+ * What a click points at is a value of the widget's own grouping, so that is what it selects:
+ *   - a chart: the field its labels come from, and the one its series come from;
+ *   - a table: the columns it groups by, or, when it groups by nothing, its dimension columns -
+ *     a click lands on one cell, and the cell's column is the field;
+ *   - a map: the field its regions or points are named by.
+ *
+ * These are also the fields every OTHER widget of the table carries a condition for, so the set
+ * has to be the same before and after a click: it is read from the widget's configuration, never
+ * from what happens to be on screen.
+ */
+export function crossFilterFieldsOf(widget: Widget): string[] {
+  if (!clicksFilterOf(widget)) return [];
+  const dsl = (widget.displayConfig?.dslConfig ?? {}) as Record<string, unknown>;
+  const out: string[] = [];
+  const add = (v: unknown) => {
+    if (typeof v === "string" && v && !out.includes(v)) out.push(v);
+  };
+  if (widget.type === "chart") {
+    const data = (dsl.data ?? {}) as Record<string, unknown>;
+    add(data.labelField);
+    add(data.seriesField);
+    return out;
+  }
+  if (widget.type === "tabulator") {
+    const groupBy = widget.dataSource?.visualQuery?.groupBy ?? [];
+    if (groupBy.length > 0) {
+      groupBy.forEach(add);
+      return out;
+    }
+    (widget.shape?.dims ?? []).forEach((d) => add(d.name));
+    return out;
+  }
+  if (widget.type === "map") {
+    add(widget.displayConfig?.dimension);
+    return out;
+  }
+  return out;
+}
+
+/**
+ * Every field a selection can be made on for one table: its slicers' fields and the fields the
+ * cross-filtering widgets of that table click on, in canvas order, no repeats.
+ *
+ * This is the set each widget of the table carries one condition for, so a click can only ever
+ * narrow a query that was already written to expect it.
+ */
+export function selectableFieldsForTable(widgets: Widget[], tableKeyOfWidget: string): string[] {
+  if (!tableKeyOfWidget) return [];
+  const fields = slicerFieldsForTable(widgets, tableKeyOfWidget);
+  for (const w of widgets) {
+    if (slicerTableKeyOf(w) !== tableKeyOfWidget) continue;
+    for (const field of crossFilterFieldsOf(w)) if (!fields.includes(field)) fields.push(field);
+  }
+  return fields;
+}
+
+/** Every field any selection of this canvas can be made on, in canvas order, no repeats. */
+export function allSelectableFields(widgets: Widget[]): string[] {
+  const fields = allSlicerFields(widgets);
+  for (const w of widgets)
+    for (const field of crossFilterFieldsOf(w)) if (!fields.includes(field)) fields.push(field);
+  return fields;
+}
+
 /** The values picked for one field, in the order they were picked. */
 export function selectedValuesOf(selections: ExploreSelection[], field: string): string[] {
   return selections.filter((s) => s.field === field).map((s) => s.value);
 }
 
 /**
- * The value of every slicer parameter of this canvas: the picked values, comma separated, and the
- * empty string for a field nothing is picked in (which is what turns its line off).
+ * The value of every selection parameter of this canvas: the picked values, comma separated, and
+ * the empty string for a field nothing is picked in (which is what turns its line off).
  *
- * Every slicer parameter is always sent, because a `${…}` the request says nothing about is not a
- * parameter the server can leave out of the SQL.
+ * Every one is always sent, because a `${…}` the request says nothing about is not a parameter the
+ * server can leave out of the SQL. A cross-filter field is one of them: it binds through the same
+ * `__slicer_<field>` parameter, because it is the same kind of selection made another way.
  */
 export function slicerParamValues(
   widgets: Widget[],
   selections: ExploreSelection[],
 ): Record<string, string> {
   const values: Record<string, string> = {};
-  for (const field of allSlicerFields(widgets)) {
+  for (const field of allSelectableFields(widgets)) {
     values[slicerParamName(field)] = selectedValuesOf(selections, field).join(",");
   }
   return values;
 }
 
-/** One `in` filter per slicer field of a table, each bound to the field's own parameter. */
-export function slicerFiltersForTable(
-  widgets: Widget[],
-  tableKeyOfWidget: string,
+/** One `in` filter per selectable field, each bound to the field's own parameter. */
+export function slicerFiltersFor(
+  fields: readonly string[],
 ): { column: string; operator: string; value: string }[] {
-  return slicerFieldsForTable(widgets, tableKeyOfWidget).map((field) => ({
+  return fields.map((field) => ({
     column: field,
     operator: "in",
     value: `\${${slicerParamName(field)}}`,
@@ -162,7 +260,9 @@ export function slicerFilterPlanFor(
   resultColumns?: readonly string[] | null,
 ): SlicerFilterPlan {
   if (!widget || widget.type === "slicer") return NO_PLAN;
-  const fields = slicerFieldsForTable(widgets, slicerTableKeyOf(widget));
+  const own = crossFilterFieldsOf(widget);
+  const fields = selectableFieldsForTable(widgets, slicerTableKeyOf(widget))
+    .filter((f) => !own.includes(f));
   if (fields.length === 0) return NO_PLAN;
 
   const mode = widget.dataSource?.mode;
@@ -177,7 +277,7 @@ export function slicerFilterPlanFor(
   if (kind === "cube") return { filters: [], wrapFields: [], notFiltered: fields };
 
   if (mode === "visual") {
-    return { filters: slicerFiltersForTable(widgets, slicerTableKeyOf(widget)), wrapFields: [], notFiltered: [] };
+    return { filters: slicerFiltersFor(fields), wrapFields: [], notFiltered: [] };
   }
 
   // A Groovy script is not SQL to wrap, and its rows are whatever the script made of them: filtering

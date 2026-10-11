@@ -4,6 +4,7 @@
   import { TabulatorFull } from 'tabulator-tables';
   import { formatMeasure } from '../shared/cube-format';
   import { reportQuery } from '../shared/report-query';
+  import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
 
   // One formatter of our own, beside Tabulator's own.
   //
@@ -119,6 +120,12 @@
   //   'midnight-site'    -> midnight + tabulator.info colour overrides
   // ============================================================================
   export let theme: string = '';
+
+  // Clicks that filter the dashboard (`clicksFilter` in the table's DSL): a cell click selects
+  // that column's value, the way a slicer pick does. A published table is told by its own config
+  // file; the canvas sets the prop.
+  export let clicksFilter: boolean = false;
+  $: if ((options as any)?.clicksFilter === true) clicksFilter = true;
 
   // ============================================================================
   // Mode 1 Props — traditional props-based usage (e.g., from Angular)
@@ -449,6 +456,7 @@
         if (tm === 'true' || tm === '') testMode = true;
       }
       if (!theme) theme = hostEl.getAttribute('theme') || '';
+      if (hostEl.getAttribute('clicks-filter') === 'true') clicksFilter = true;
     }
 
     if (!container) {
@@ -644,8 +652,20 @@
       table.on('rowClick', (e, row) => dispatch('rowClick', { event: e, row, rowData: row.getData() }));
       // One cell, not the whole row: a cube's drill-through is a question about the number that
       // was clicked, so the field it belongs to travels with the row it is in.
-      table.on('cellClick', (e, cell) => dispatch('cellClick',
-        { event: e, field: cell.getField(), value: cell.getValue(), rowData: cell.getRow().getData() }));
+      table.on('cellClick', (e, cell) => {
+        dispatch('cellClick',
+          { event: e, field: cell.getField(), value: cell.getValue(), rowData: cell.getRow().getData() });
+        // Clicks that filter the dashboard (`clicksFilter` in this table's DSL): the cell clicked
+        // is a value of its own column, so that column is the field selected - one event, the
+        // same shape a slicer's pick has. Nothing is sent when the author did not tick the box,
+        // and nothing when the cell is empty: a selection of nothing takes every row away.
+        if (!clicksFilter) return;
+        const field = cell.getField();
+        const raw = cell.getValue();
+        const value = raw == null ? '' : String(raw);
+        if (!field || !value) return;
+        dispatch(CROSS_FILTER_EVENT, { field, value });
+      });
       table.on('dataLoaded', (d) => dispatch('dataLoaded', { data: d }));
       table.on('dataFiltered', (filters: any[], rows: any[]) => dispatch('dataFiltered', { filters, rowCount: rows.length }));
 

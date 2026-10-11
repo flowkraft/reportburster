@@ -16,6 +16,8 @@
 type DslColumn = { field: string; title?: string; visible?: boolean; [k: string]: unknown };
 
 export type TabulatorDslOptions = {
+  /** A click on a cell selects that column's value, like a slicer pick (`slicer-filters.ts`). */
+  clicksFilter?: boolean;
   layout?: string;
   pagination?: boolean;
   paginationSize?: number;

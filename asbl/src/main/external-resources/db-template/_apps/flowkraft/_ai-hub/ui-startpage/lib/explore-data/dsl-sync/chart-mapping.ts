@@ -21,6 +21,8 @@ export type ChartDataBlock = {
 };
 
 export type ChartDslOptions = {
+  /** A click on a bar selects its label's value, like a slicer pick (`slicer-filters.ts`). */
+  clicksFilter?: boolean;
   type?: string;
   data?: ChartDataBlock;
   options?: Record<string, unknown>;
