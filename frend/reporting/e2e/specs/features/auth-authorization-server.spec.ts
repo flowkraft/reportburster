@@ -44,6 +44,7 @@ import {
   type NoDoor,
 } from '../../helpers/capability-endpoints';
 import {
+  addFilterBarParam,
   addTableToCanvas,
   createFreshCanvas,
   getLastWidgetId,
@@ -4954,16 +4955,13 @@ test.describe('Auth — Server: the AI Hub door', () => {
   });
 
   /**
-   * Give a published report one `select` parameter, exactly the way the shipped `g-dashboard`
-   * sample declares its own: a `<reportId>-report-parameters-spec.groovy` next to its settings.
-   *
-   * A canvas published from the AI Hub declares no parameters — there is no UI for that yet — so a
-   * lock has nothing to bite on until one is wired here. `loadReportConfig` reads that file by name
-   * and resolves its SQL-driven options through the report's own connection, so writing the file is
-   * the whole of it; nothing in reporting.xml has to change.
+   * One `select` parameter, declared the way an author declares it: on the canvas's filter bar,
+   * before publishing, so the published dashboard carries it (its template holds the filter bar
+   * only when the canvas had parameters at publish time; a spec file written afterwards reaches the
+   * Share dialog but never the recipient's page). Its options are SQL, resolved through the
+   * report's own connection.
    */
-  async function giveReportACountryParameter(admin: string, reportId: string) {
-    const groovy = `reportParameters {
+  const COUNTRY_PARAMETER_DSL = `reportParameters {
     parameter(id: 'country', type: String, label: 'Country', defaultValue: '-- All --') {
         constraints(required: false)
         ui(control: 'select',
@@ -4971,19 +4969,13 @@ test.describe('Auth — Server: the AI Hub door', () => {
     }
 }
 `;
-    const res = await fetch(`${BASE_URL}/api/reports/${reportId}/script/paramsSpecScript`, {
-      method: 'PUT',
-      headers: { Cookie: admin, ...xsrfHeader(admin), 'Content-Type': 'text/plain' },
-      body: groovy,
-    });
-    expect(res.status, 'the parameter spec is saved on the report').toBe(200);
 
-    // Saved is not the same as visible: the Share dialog offers what /config reports, and that is
-    // the file having been found, parsed AND its options resolved against the connection.
+  /** Declared is not the same as visible: the Share dialog offers what /config reports. */
+  async function expectReportHasCountryParameter(admin: string, reportId: string) {
     const config = await jsonAs(admin, `/api/reports/${reportId}/config`);
     expect(
       (config.parameters ?? []).map((p: any) => p.id),
-      'and the report now reports it as a parameter',
+      'the published report reports the parameter',
     ).toContain('country');
   }
 
@@ -5023,9 +5015,8 @@ test.describe('Auth — Server: the AI Hub door', () => {
 
     await exploreAndPublishAs(page, AUTHOR, 'e2e-shareui-locked', async (reportId) => {
       const admin = await login(ADMIN.username, ADMIN.password);
-      await giveReportACountryParameter(admin, reportId);
+      await expectReportHasCountryParameter(admin, reportId);
 
-      // After the spec is written, because the dialog reads the report's parameters when it opens.
       const ft = new FluentTester(page);
       await ft
         .waitOnElementToBecomeVisible('#btnShareDashboard')
@@ -5081,6 +5072,9 @@ test.describe('Auth — Server: the AI Hub door', () => {
 
       const author = await login(AUTHOR.username, AUTHOR.password);
       await revokeAllShareLinks(author, reportId);
+    }, async () => {
+      // Before publishing: the filter bar the author declares here is what the published page shows.
+      await addFilterBarParam(page, COUNTRY_PARAMETER_DSL);
     });
   });
 
