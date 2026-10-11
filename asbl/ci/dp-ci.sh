@@ -28,10 +28,10 @@
 #                                   target (default) or electron-linux (E2E_TARGET=electron-linux), and it NEVER rebuilds the package. The jars and the UI are built from
 #                                   the tree on every run; the package supplies the content (db-template, config, samples, scripts). E2E_PACKAGE says what happens to it:
 #                                     package-reuse-as-is (default)      run on the package exactly as it stands (a fix to specs, helpers, Java, the UI). Instant.
-#                                     package-rsync-simple-file-changes  copy the plain db-template files changed since the package was built (committed or not) into the
+#                                     package-rsync-simple-file-changes  copy the plain db-template files changed since the package was built (commits, and new untracked files) into the
 #                                                                        package and the testground; stops with "use package-repackage" when one of them is not a verbatim
 #                                                                        copy (generated, transformed or named by the assembler). Seconds.
-#                                     package-repackage                  package the content again on the jars already built (AssemblerTest#refreshContentForE2E), minutes.
+#                                     package-repackage                  package the content again on the jars already built (AssemblerTest#refreshContentForE2E), about 3.5 min.
 #                                                                        Not a full rebuild: that is dp-ci-package (about 26 min).
 #                                   The old values reuse and content are refused, naming the new one. Not a release check: the real `e2e` is. The log says which
 #                                   package it ran on: an `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` line.
@@ -996,7 +996,7 @@ if [ "${1:-}" = "--inside" ]; then
   package_stamp() { mkdir -p "$(dirname "$PKG_STAMP")" && printf '%s\n' "$SHA" > "$PKG_STAMP"; }
 
   # package-rsync-simple-file-changes. The db-template files that differ between the commit the package was built from and the tree as
-  # it is (committed or not, new files included) are copied into the package and the testground, but only where a copy is all the
+  # it is (commits, and new untracked files: the launcher refuses a tree with changes to tracked files) are copied into the package and the testground, but only where a copy is all the
   # assembler would have done with them: the package must hold the file byte for byte as it was at that commit (the assembler overlays
   # the bkend/reporting template and rewrites many configs and samples afterwards), and the assembler code must not name it (it may
   # generate or check it). One path that fails either test, or a deleted file, and nothing is copied: use package-repackage. A file the
