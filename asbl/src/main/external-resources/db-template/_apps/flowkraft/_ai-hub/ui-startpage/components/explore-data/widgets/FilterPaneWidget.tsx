@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { executeQuery, exploreAssociations, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
@@ -46,7 +46,11 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
   const { config: dslMap, updateConfig } = useDslConfig(widgetId, "filterpane");
 
-  const ref = useRef<HTMLElement>(null);
+  // The pane element in state, not in a ref alone: a ref being filled does not re-run an effect,
+  // and this element appears late - the widget renders a hint, then a spinner, and only then the
+  // pane. An effect that read the ref on the first render found nothing and was never asked again,
+  // which is how a pane ended up listening to nothing (its clicks reached no canvas selection).
+  const [paneEl, setPaneEl] = useState<HTMLElement | null>(null);
   const ready = useRbElementReady("rb-filter-pane");
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,7 +131,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   }, [connectionId, table, exploreVersion]);
 
   useEffect(() => {
-    if (!ready || !ref.current || !field) return;
+    if (!paneEl || !field) return;
 
     const fieldStates = exploreFieldStates[field];
     const selectedSet = exploreSelections.filter((s) => s.field === field).map((s) => s.value);
@@ -145,7 +149,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       pickedSort = looksNumeric ? "count_desc" : "asc";
     }
 
-    const el = ref.current as HTMLElement & {
+    const el = paneEl as HTMLElement & {
       data?: unknown;
       componentId?: string;
       field?: string;
@@ -189,11 +193,11 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     el.selectedValues = selectedSet;
     el.associatedValues = fieldStates ? fieldStates.associated : null;
     el.excludedValues = fieldStates ? fieldStates.excluded : null;
-  }, [ready, rows, field, exploreSelections, exploreFieldStates, dslMap]);
+  }, [paneEl, rows, field, exploreSelections, exploreFieldStates, dslMap]);
 
   useEffect(() => {
-    if (!ready || !ref.current) return;
-    const el = ref.current;
+    if (!paneEl) return;
+    const el = paneEl;
 
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { field: string; value: string };
@@ -204,7 +208,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
     el.addEventListener("filterPaneSelect", handler);
     return () => el.removeEventListener("filterPaneSelect", handler);
-  }, [ready, toggleExploreSelection]);
+  }, [paneEl, toggleExploreSelection]);
 
   if (!field) {
     if (!table) {
@@ -246,6 +250,6 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
   return (
     // @ts-expect-error - Web component custom element
-    <rb-filter-pane ref={ref} style={{ display: "block", width: "100%", height: "100%" }} />
+    <rb-filter-pane ref={setPaneEl} style={{ display: "block", width: "100%", height: "100%" }} />
   );
 }
