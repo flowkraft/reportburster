@@ -440,10 +440,11 @@ export function ChatAgentPage({ config: cfg }: { config: ChatAgentConfig }) {
                       </>
                     )}
 
-                    {/* Error — actionable CTA when the crew isn't provisioned, else the friendly box */}
+                    {/* Error — actionable CTA when the crew isn't provisioned, else the friendly box. One id per
+                        box: the newest answer's is chat-last-error, an older one's chat-error-<message id>. */}
                     {r?.error &&
                       (isNoAgentsError(r.error) ? (
-                        <div id="chat-error-response" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                        <div id={isLastAssistant ? "chat-last-error" : `chat-error-${msg.id}`} className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
                           <div className="text-base font-semibold">{cfg.name}&apos;s agents aren&apos;t provisioned yet</div>
                           <div className="mt-1 text-amber-800">
                             To start chatting, provision the DataPallas AI Crew. If you haven&apos;t added your LLM API key
@@ -459,7 +460,7 @@ export function ChatAgentPage({ config: cfg }: { config: ChatAgentConfig }) {
                           </a>
                         </div>
                       ) : (
-                        <div id="chat-error-response" className="rounded-2xl px-4 py-3 text-sm bg-red-50 text-red-700">
+                        <div id={isLastAssistant ? "chat-last-error" : `chat-error-${msg.id}`} className="rounded-2xl px-4 py-3 text-sm bg-red-50 text-red-700">
                           <div className="font-medium">{friendlyError(r.error)}</div>
                           <details className="mt-1">
                             <summary className="cursor-pointer text-xs opacity-70">Show technical details</summary>
@@ -502,7 +503,7 @@ export function ChatAgentPage({ config: cfg }: { config: ChatAgentConfig }) {
                               )}
                               {r.data && r.data.length > 0 && (
                                 <div id={isLastAssistant ? "chat-last-table" : undefined} className="overflow-x-auto rounded-xl border text-sm">
-                                  <div className="px-3 py-1.5 text-xs text-base-content/60 border-b bg-base-200/50">
+                                  <div id={isLastAssistant ? "chat-last-table-count" : undefined} className="px-3 py-1.5 text-xs text-base-content/60 border-b bg-base-200/50">
                                     {r.row_count} row{r.row_count !== 1 ? "s" : ""}
                                     {r.execution_time_ms ? ` · ${r.execution_time_ms.toFixed(0)} ms` : ""}
                                   </div>

@@ -401,18 +401,18 @@ async function assertChat2DBQueries(page: Page): Promise<void> {
 
   // Wait for Athena's response (thinking disappears, content or error appears)
   try {
-    await page.waitForSelector('details, table, #chat-error-response', { timeout: 60000 });
+    await page.waitForSelector('#chat-last-sql, #chat-last-table, #chat-last-error', { timeout: 60000 });
 
     // Check for error
-    const hasError = await page.locator('#chat-error-response').first().isVisible().catch(() => false);
+    const hasError = await page.locator('#chat-last-error').isVisible().catch(() => false);
     if (hasError) {
       console.warn('[T18] L1 query returned error — API key may be unavailable or expired, skipping remaining Chat2DB tests');
       return;
     }
 
     // Assert: Athena answered with SQL + results
-    const hasSql = await page.locator('details').first().isVisible().catch(() => false);
-    const hasTable = await page.locator('table').first().isVisible().catch(() => false);
+    const hasSql = await page.locator('#chat-last-sql').isVisible().catch(() => false);
+    const hasTable = await page.locator('#chat-last-table').isVisible().catch(() => false);
     console.log(`[T18] L1: SQL block=${hasSql}, Table=${hasTable}`);
     expect(hasSql || hasTable).toBe(true);
     console.log('[T18] L1 Basic query passed — Athena answered');
@@ -435,12 +435,12 @@ async function assertChat2DBQueries(page: Page): Promise<void> {
   }
 
   try {
-    await page.waitForSelector('details, table', { timeout: 60000 });
+    await page.waitForSelector('#chat-last-sql, #chat-last-table', { timeout: 60000 });
 
-    // Count tables (new response should add a second table)
-    const tables = await page.locator('table').all();
-    console.log(`[T18] L2: Found ${tables.length} result tables`);
-    expect(tables.length).toBeGreaterThanOrEqual(2);
+    // The new answer brings its own table (the newest answer's is #chat-last-table)
+    const hasTable = await page.locator('#chat-last-table').isVisible().catch(() => false);
+    console.log(`[T18] L2: the new answer has a result table: ${hasTable}`);
+    expect(hasTable).toBe(true);
     console.log('[T18] L2 Analytics query passed — Athena answered');
   } catch {
     console.warn('[T18] L2 query timed out');
@@ -460,15 +460,14 @@ async function assertChat2DBQueries(page: Page): Promise<void> {
   }
 
   try {
-    await page.waitForSelector('details, table', { timeout: 60000 });
+    await page.waitForSelector('#chat-last-sql, #chat-last-table', { timeout: 60000 });
 
-    // The latest table should have <= 5 data rows
-    const allTables = await page.locator('table').all();
-    if (allTables.length > 0) {
-      const lastTable = allTables[allTables.length - 1];
-      const rows = await lastTable.locator('tbody tr').all();
-      console.log(`[T18] L3: Latest table has ${rows.length} rows`);
-      expect(rows.length).toBeLessThanOrEqual(5);
+    // The latest table should have <= 5 data rows (its count line: "<n> rows · <ms> ms")
+    const rowCount = page.locator('#chat-last-table-count');
+    if ((await rowCount.count()) > 0) {
+      const rows = parseInt(await rowCount.innerText(), 10);
+      console.log(`[T18] L3: Latest table has ${rows} rows`);
+      expect(rows).toBeLessThanOrEqual(5);
       console.log('[T18] L3 Follow-up query passed — Athena answered (context retained)');
     }
   } catch {

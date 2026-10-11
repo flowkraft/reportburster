@@ -76,6 +76,7 @@ import {
 // divergent captureQAPair (justQAPair full-app branch), connectChat2db (pickerShot)
 // and askAthena stay LOCAL below.
 import {
+  CHAT_ERROR_BOXES,
   AI_HUB_APP_ID,
   AI_HUB_BASE_URL,
   CHAT2DB_URL,
@@ -921,15 +922,15 @@ electronBeforeAfterAllTest(
       const askUntilClean = async (label: string, prompt: string, settle: Settle, needSql: boolean): Promise<void> => {
         let clean = false;
         for (let attempt = 1; attempt <= MAX_TRIES && !clean; attempt++) {
-          const errBefore = await chat.locator('#chat-error-response').count().catch(() => 0);
+          const errBefore = await chat.locator(CHAT_ERROR_BOXES).count().catch(() => 0);
           await askAthena(chat, prompt, settle);
-          const noError = (await chat.locator('#chat-error-response').count().catch(() => 0)) <= errBefore;
+          const noError = (await chat.locator(CHAT_ERROR_BOXES).count().catch(() => 0)) <= errBefore;
           const hasSql = needSql ? (await chat.locator('#chat-last-sql').count().catch(() => 0)) > 0 : true;
           const hasTable = settle === 'table' ? (await chat.locator('#chat-last-table').count().catch(() => 0)) > 0 : true;
           clean = noError && hasSql && hasTable;
           console.log(`[recapture:${label}] try ${attempt}/${MAX_TRIES}: noError=${noError} hasSql=${hasSql} hasTable=${hasTable} → ${clean ? 'CLEAN ✔' : 'retry'}`);
           if (clean || attempt >= MAX_TRIES) break;
-          const errText = await chat.locator('#chat-error-response').last().innerText({ timeout: 2_000 }).catch(() => '');
+          const errText = await chat.locator('#chat-last-error').innerText({ timeout: 2_000 }).catch(() => '');
           const providerErr = /went wrong|too many|rate|timeout|try again|unavailable|overloaded/i.test(errText);
           const backoffMs = providerErr ? 60_000 : 8_000;
           console.log(`[recapture:${label}] ${providerErr ? 'PROVIDER/rate-limit' : 'sql'} error — backing off ${backoffMs / 1000}s`);
@@ -939,7 +940,7 @@ electronBeforeAfterAllTest(
           // Stop guessing the cause — reveal it. Expand the error's "Show technical details"
           // so BOTH the console log AND the captured shot show the REAL reason (a 429/rate
           // limit? the agent's "must be one of []" boot failure? a timeout? the SQL error?).
-          const el = chat.locator('#chat-error-response').last();
+          const el = chat.locator('#chat-last-error');
           await el.getByText(/technical details/i).click({ timeout: 2_000 }).catch(() => {});
           await el.locator('details').evaluateAll((ds) => ds.forEach((d) => { (d as HTMLDetailsElement).open = true; })).catch(() => {});
           await chat.waitForTimeout(600);
@@ -1120,7 +1121,7 @@ async function connectChat2db(page: Page, connectionCode?: string, pickerShot?: 
  * to fail the run if Athena effectively never answers.
  */
 async function sendPromptAndWaitReply(page: Page, turn: Turn): Promise<boolean> {
-  const errorsBefore = await page.locator('#chat-error-response').count().catch(() => 0);
+  const errorsBefore = await page.locator(CHAT_ERROR_BOXES).count().catch(() => 0);
 
   const input = page.locator('#chat-input-textarea');
   await input.waitFor({ state: 'visible', timeout: 10_000 });
@@ -1154,7 +1155,7 @@ async function sendPromptAndWaitReply(page: Page, turn: Turn): Promise<boolean> 
   }
 
   // "Replied" = Athena started processing AND this turn didn't add a new error box.
-  const errorsAfter = await page.locator('#chat-error-response').count().catch(() => 0);
+  const errorsAfter = await page.locator(CHAT_ERROR_BOXES).count().catch(() => 0);
   return thinkingSeen && errorsAfter <= errorsBefore;
 }
 
