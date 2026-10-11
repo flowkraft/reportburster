@@ -93,6 +93,6 @@ export function GaugeWidget({ widgetId }: GaugeWidgetProps) {
 
   return (
     // @ts-expect-error — custom element
-    <rb-gauge ref={ref} style={{ display: "block", width: "100%", height: "100%", minHeight: "140px" }} />
+    <rb-gauge ref={ref} id={`widgetViz-${widgetId}`} style={{ display: "block", width: "100%", height: "100%", minHeight: "140px" }} />
   );
 }

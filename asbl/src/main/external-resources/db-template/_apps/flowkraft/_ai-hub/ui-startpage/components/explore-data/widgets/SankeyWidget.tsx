@@ -101,6 +101,6 @@ export function SankeyWidget({ widgetId }: SankeyWidgetProps) {
 
   return (
     // @ts-expect-error — custom element
-    <rb-sankey ref={ref} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
+    <rb-sankey ref={ref} id={`widgetViz-${widgetId}`} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
   );
 }

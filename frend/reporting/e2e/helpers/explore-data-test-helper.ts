@@ -1042,10 +1042,8 @@ export async function waitForWidgetData(
       if (!widget) return { phase: 'no-widget' as const };
       const errorEl = document.getElementById(`widgetError-${id}`);
       if (errorEl) return { phase: 'error' as const, message: (errorEl.textContent || '').trim().slice(0, 300) };
-      const viz = widget.querySelector(
-        'rb-value, rb-trend, rb-chart, rb-tabulator, rb-pivot-table, rb-map, rb-gauge',
-      );
-      if (viz) return { phase: 'rendered' as const };
+      // Every widget kind names what it draws widgetViz-<id>, so one id covers them all.
+      if (document.getElementById(`widgetViz-${id}`)) return { phase: 'rendered' as const };
       if (widget.querySelector('.animate-spin')) return { phase: 'loading' as const };
       return { phase: 'unknown' as const };
     }, widgetId);

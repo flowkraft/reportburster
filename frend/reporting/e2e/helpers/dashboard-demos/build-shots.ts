@@ -272,7 +272,7 @@ async function widgetDrawn(page: Page, id: string, timeout = 30_000): Promise<vo
       if (!widget) return false;
       if (document.getElementById(`widgetError-${wid}`)) return true; // reported by noWidgetInError
       if (widget.querySelector('.animate-spin')) return false;
-      return Array.from(widget.querySelectorAll('*')).some((el) => el.tagName.startsWith('RB-'));
+      return document.getElementById(`widgetViz-${wid}`) !== null;
     },
     id,
     { timeout, polling: 300 },
