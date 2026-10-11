@@ -243,8 +243,8 @@
           "h": 5
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// Where the money goes between the price on the label and the profit left: the discount given away,\n// then what the goods cost. The three steps run from the running total before them, so the level the\n// last one lands on is the gross profit the r1 tile shows.\ndbSql.rows(\"\"\"WITH scope AS (\n  SELECT l.qty * l.unit_price AS list_amount,\n         l.qty * l.unit_price * l.discount_pct / 100.0 AS discount_amount,\n         l.line_amount AS revenue,\n         l.line_cost AS cost\n  FROM dash_demo.order_lines l\n  JOIN dash_demo.orders o ON o.order_id = l.order_id\n  JOIN dash_demo.products p ON p.product_id = l.product_id\n  WHERE o.status <> 'cancelled'\n    AND o.order_ts >= CAST(? AS DATE)\n    AND o.order_ts < CAST(? AS DATE) + INTERVAL 1 DAY\n    AND (? = '' OR p.category = ?)\n)\nSELECT 1 AS ord, 'Revenue at list price' AS step, round(sum(list_amount), 2) AS amount FROM scope\nUNION ALL SELECT 2, 'Discounts', -round(sum(discount_amount), 2) FROM scope\nUNION ALL SELECT 3, 'Cost of goods sold', -round(sum(cost), 2) FROM scope\nORDER BY ord\"\"\", [dateFrom, dateTo, category, category])"
+          "mode": "sql",
+          "sql": "WITH scope AS (\n  SELECT l.qty * l.unit_price AS list_amount,\n         l.qty * l.unit_price * l.discount_pct / 100.0 AS discount_amount,\n         l.line_amount AS revenue,\n         l.line_cost AS cost\n  FROM dash_demo.order_lines l\n  JOIN dash_demo.orders o ON o.order_id = l.order_id\n  JOIN dash_demo.products p ON p.product_id = l.product_id\n  WHERE o.status <> 'cancelled'\n    AND o.order_ts >= ${dateFrom}\n    AND o.order_ts < ${dateTo__next_day}\n    AND p.category = ${category}\n)\nSELECT 1 AS ord, 'Revenue at list price' AS step, round(sum(list_amount), 2) AS amount FROM scope\nUNION ALL SELECT 2, 'Discounts', -round(sum(discount_amount), 2) FROM scope\nUNION ALL SELECT 3, 'Cost of goods sold', -round(sum(cost), 2) FROM scope\nORDER BY ord"
         },
         "displayConfig": {
           "dslConfig": {

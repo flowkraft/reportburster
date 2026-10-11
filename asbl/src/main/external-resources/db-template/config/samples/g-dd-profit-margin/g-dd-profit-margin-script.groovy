@@ -172,31 +172,44 @@ if (!componentId || componentId == 'chart_dd16-chart-revenue-and-margin-per-mont
     ctx.reportData('chart_dd16-chart-revenue-and-margin-per-month', data)
 }
 
-// ─── Widget: chart_dd16-chart-waterfall-list-price-to-gross-profit (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd16-chart-waterfall-list-price-to-gross-profit (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd16-chart-waterfall-list-price-to-gross-profit') {
-    def chart_dd16_chart_waterfall_list_price_to_gross_profit_data = { ->
-        // Where the money goes between the price on the label and the profit left: the discount given away,
-        // then what the goods cost. The three steps run from the running total before them, so the level the
-        // last one lands on is the gross profit the r1 tile shows.
-        dbSql.rows("""WITH scope AS (
-          SELECT l.qty * l.unit_price AS list_amount,
-                 l.qty * l.unit_price * l.discount_pct / 100.0 AS discount_amount,
-                 l.line_amount AS revenue,
-                 l.line_cost AS cost
-          FROM dash_demo.order_lines l
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          WHERE o.status <> 'cancelled'
-            AND o.order_ts >= CAST(? AS DATE)
-            AND o.order_ts < CAST(? AS DATE) + INTERVAL 1 DAY
-            AND (? = '' OR p.category = ?)
-        )
-        SELECT 1 AS ord, 'Revenue at list price' AS step, round(sum(list_amount), 2) AS amount FROM scope
-        UNION ALL SELECT 2, 'Discounts', -round(sum(discount_amount), 2) FROM scope
-        UNION ALL SELECT 3, 'Cost of goods sold', -round(sum(cost), 2) FROM scope
-        ORDER BY ord""", [dateFrom, dateTo, category, category])
-    }()
-    ctx.reportData('chart_dd16-chart-waterfall-list-price-to-gross-profit', chart_dd16_chart_waterfall_list_price_to_gross_profit_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH scope AS (\n'
+    sql << '  SELECT l.qty * l.unit_price AS list_amount,\n'
+    sql << '         l.qty * l.unit_price * l.discount_pct / 100.0 AS discount_amount,\n'
+    sql << '         l.line_amount AS revenue,\n'
+    sql << '         l.line_cost AS cost\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    if (hasDateFrom) {
+        sql << '    AND o.order_ts >= ?\n'
+        params << asDeclaredType('dateFrom', 'Date', dateFrom)
+    } else {
+        sql << '    AND 1=1\n'   // no value: this filter is off
+    }
+    if (hasDateTo__next_day) {
+        sql << '    AND o.order_ts < ?\n'
+        params << asDeclaredType('dateTo__next_day', 'Date', dateTo__next_day)
+    } else {
+        sql << '    AND 1=1\n'   // no value: this filter is off
+    }
+    if (hasCategory) {
+        sql << '    AND p.category = ?\n'
+        params << asDeclaredType('category', 'String', category)
+    } else {
+        sql << '    AND 1=1\n'   // no value: this filter is off
+    }
+    sql << ')\n'
+    sql << 'SELECT 1 AS ord, \'Revenue at list price\' AS step, round(sum(list_amount), 2) AS amount FROM scope\n'
+    sql << 'UNION ALL SELECT 2, \'Discounts\', -round(sum(discount_amount), 2) FROM scope\n'
+    sql << 'UNION ALL SELECT 3, \'Cost of goods sold\', -round(sum(cost), 2) FROM scope\n'
+    sql << 'ORDER BY ord\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd16-chart-waterfall-list-price-to-gross-profit', data)
 }
 
 // ─── Widget: pivot_dd16-pivot-margin-by-category-quarter (type=pivot, dataSource=visual) ───
