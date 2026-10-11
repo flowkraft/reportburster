@@ -77,14 +77,14 @@ test.describe('Dashboard Demos on datapallas.com', () => {
     // A browser that refused the frame leaves an element with nothing in it, so the frame is not
     // asserted by its tag but by what is inside it.
     const inside = page.frameLocator(IFRAME);
-    await expect(inside.locator('.rb-dashboard-demos-root'),
+    await expect(inside.locator('#dashboardDemosRoot'),
       'the browser let the site frame the page').toBeVisible({ timeout: 90_000 });
 
     const frame = page.frames().find((one) => one.url().includes(GALLERY_PATH)) as Frame;
     expect(frame, 'the framed page is a frame of this page').toBeTruthy();
 
     // ── The page inside it, card for card ───────────────────────────────────
-    const cardIds = await frame.locator('.rb-dashboard-demos-root .card')
+    const cardIds = await frame.locator('#dashboardDemosRoot > [id^="dd-"]')
       .evaluateAll((cards) => cards.map((card) => card.id));
     expect(cardIds, 'one card per demo, in the index\'s order').toEqual(DEMOS.map((demo) => demo.id));
     for (const demo of DEMOS) {

@@ -108,9 +108,10 @@ class DashboardDemosGalleryTest {
 		}
 		assertEquals(THE_AREAS.size(), anchors.size(), "two areas cannot share one anchor");
 
-		// Every demo is in the contents list too, linking to its own card.
+		// Every demo is in the contents list too, linking to its own card (lnkContents-<its id>).
 		for (Demo demo : demos)
-			assertEquals(1, count(contents, "<a href=\"#" + demo.id() + "\">"),
+			assertEquals(1, count(contents,
+					"<a id=\"lnkContents-" + demo.id() + "\" href=\"#" + demo.id() + "\">"),
 					demo.id() + " in the contents list");
 	}
 
