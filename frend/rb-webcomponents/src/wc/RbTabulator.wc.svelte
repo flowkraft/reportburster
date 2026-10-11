@@ -377,6 +377,31 @@
     if (size) (size as HTMLElement).id = pagerId('selectTabulatorPageSize');
   }
 
+  // The rows and cells Tabulator draws get ids too, so a reader names "row n of this table"
+  // and not Tabulator's classes: tabRow-<cid>-<n> and tabCell-<cid>-<n>-<field>, n the row's
+  // place as drawn on the page (0 is the top row, after the table's own sort and filter). A row
+  // is named when Tabulator first lays it out (rowFormatter), and the drawn rows again after every
+  // render and scroll, since Tabulator keeps a row's element when it sorts, filters or scrolls.
+  // Only a table with a component id. Ids only — no class, listener, order or option changes.
+  const drawnRows = new WeakMap<Element, any>();
+  function tagRow(row: any, el: Element): void {
+    const position = row.getPosition();
+    if (position === false) return;
+    const n = position - 1;
+    el.id = `tabRow-${componentId}-${n}`;
+    row.getCells().forEach((cell: any) => {
+      const field = cell.getField();
+      if (field) cell.getElement().id = `tabCell-${componentId}-${n}-${field}`;
+    });
+  }
+  function tagRows(): void {
+    if (!container || !componentId) return;
+    container.querySelectorAll('.tabulator-row').forEach((el) => {
+      const row = drawnRows.get(el);
+      if (row) tagRow(row, el);
+    });
+  }
+
   function updateTable() {
     if (!isReady || !table) return;
 
@@ -633,6 +658,19 @@
       }
     }
 
+    if (componentId) {
+      const authorRowFormatter = (opts as any).rowFormatter;
+      (opts as any).rowFormatter = (row: any) => {
+        if (typeof authorRowFormatter === 'function') authorRowFormatter(row);
+        // An export or print lays out its own copy of the row through this same formatter: only
+        // the table's own rows are named.
+        const el = row.getElement();
+        if (!el?.classList?.contains('tabulator-row')) return;
+        drawnRows.set(el, row);
+        tagRow(row, el);
+      };
+    }
+
     // === THE ONLY THING THE WRAPPER DOES: create Tabulator on the div ===
     try {
       if (!container) {
@@ -649,6 +687,8 @@
         tagPagerControls();
       });
       table.on('renderComplete', tagPagerControls);
+      table.on('renderComplete', tagRows);
+      table.on('scrollVertical', tagRows);
       table.on('rowClick', (e, row) => dispatch('rowClick', { event: e, row, rowData: row.getData() }));
       // One cell, not the whole row: a cube's drill-through is a question about the number that
       // was clicked, so the field it belongs to travels with the row it is in.
