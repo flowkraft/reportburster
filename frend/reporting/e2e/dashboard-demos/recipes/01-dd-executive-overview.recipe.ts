@@ -451,107 +451,96 @@ ORDER BY a.month`,
       },
     },
     {
-      kind: 'script',
-      script: `// One row per area: the KPI the board judges it on, its target from kpi_targets, and on or off
-// track. Ten KPIs are ten different questions, which is why this widget asks them itself instead of
-// being one query.
-def selectedYear = (year && year.length() >= 4) ? (year.substring(0, 4) as Integer)
-        : (dbSql.firstRow("SELECT year(as_of) AS y FROM dash_demo.as_of").y as Integer)
-
-// The day the year is read at: its last day, or the data's today while the year is still running.
-def cutoff = dbSql.firstRow("SELECT least(make_date(?, 12, 31), (SELECT as_of FROM dash_demo.as_of)) AS d",
-        [selectedYear]).d
-
-def one = { String sql, List binds -> def row = dbSql.firstRow(sql, binds); row == null ? null : row[0] }
-
-// Revenue against plan, per region, from the monthly targets.
-def attainment = [:]
-dbSql.eachRow("""SELECT t.region AS region,
-       round(100.0 * sum(o.actual) / sum(t.revenue_target), 2) AS pct
-FROM dash_demo.sales_targets t
-LEFT JOIN (SELECT date_trunc('month', o.order_ts) AS m, g.region AS region, sum(o.total_amount) AS actual
-           FROM dash_demo.orders o
-           JOIN dash_demo.geo_cities g USING (city_id)
-           WHERE o.status <> 'cancelled'
-           GROUP BY 1, 2) o ON o.m = t.month AND o.region = t.region
-WHERE year(t.month) = ?
-GROUP BY 1""", [selectedYear]) { row -> attainment[row.region] = row.pct }
-
-def grossMargin = one("""SELECT round(100.0 * sum(l.line_amount - l.line_cost) / sum(l.line_amount), 2)
-FROM dash_demo.order_lines l
-JOIN dash_demo.orders o USING (order_id)
-WHERE o.status <> 'cancelled'
-  AND year(o.order_ts) = ?""", [selectedYear])
-
-def dso = one("""SELECT round(365.0
-       * (SELECT sum(amount + tax_amount) FROM dash_demo.invoices
-          WHERE issue_date <= ? AND (last_paid_date IS NULL OR last_paid_date > ?))
-       / (SELECT sum(amount + tax_amount) FROM dash_demo.invoices
-          WHERE issue_date > ? - INTERVAL 365 DAY AND issue_date <= ?), 2)""",
-        [cutoff, cutoff, cutoff, cutoff])
-
-def onTime = one("""SELECT round(100.0 * count(CASE WHEN CAST(delivered_ts AS DATE) <= promised_date THEN 1 END) / count(*), 2)
-FROM dash_demo.orders
-WHERE delivered_ts IS NOT NULL
-  AND year(delivered_ts) = ?""", [selectedYear])
-
-def slaMet = one("""SELECT round(100.0 * count(CASE WHEN NOT sla_breached THEN 1 END) / count(*), 2)
-FROM dash_demo.support_tickets
-WHERE year(opened_ts) = ?""", [selectedYear])
-
-// Churn: the average of the months in which a subscription was cancelled, each against the
-// subscriptions that were live when that month began.
-def churn = one("""SELECT round(avg(pct), 2) FROM (
-    SELECT 100.0 * count(*) /
-           (SELECT count(*) FROM dash_demo.subscriptions s2
-            WHERE s2.start_date < m AND (s2.cancel_date IS NULL OR s2.cancel_date >= m)) AS pct
-    FROM (SELECT DISTINCT date_trunc('month', cancel_date) AS m FROM dash_demo.subscriptions
-          WHERE year(cancel_date) = ?) months
-    JOIN dash_demo.subscriptions s ON date_trunc('month', s.cancel_date) = months.m
-    GROUP BY m)""", [selectedYear])
-
-// Attrition: the people who left over the twelve months to the cutoff, against the people employed at it.
-def attrition = one("""SELECT round(100.0 * (SELECT count(*) FROM dash_demo.employees
-       WHERE termination_date >= ? - INTERVAL 365 DAY AND termination_date <= ?)
-     / (SELECT count(*) FROM dash_demo.employees
-        WHERE hire_date <= ? AND (termination_date IS NULL OR termination_date > ?)), 2)""",
-        [cutoff, cutoff, cutoff, cutoff])
-
-def measured = [
-    'EMEA|revenue_vs_plan'      : attainment['EMEA'],
-    'NA|revenue_vs_plan'        : attainment['NA'],
-    'APAC|revenue_vs_plan'      : attainment['APAC'],
-    'LATAM|revenue_vs_plan'     : attainment['LATAM'],
-    'Company|gross_margin'      : grossMargin,
-    'Finance|days_sales_outstanding': dso,
-    'Operations|on_time_delivery'   : onTime,
-    'Support|sla_met'           : slaMet,
-    'Company|monthly_churn'     : churn,
-    'People|yearly_attrition'   : attrition,
-]
-
-def rows = []
-dbSql.eachRow("SELECT area, kpi, target, direction, unit FROM dash_demo.kpi_targets") { target ->
-    def actual = measured[target.area + '|' + target.kpi]
-    def higherIsBetter = target.direction == 'higher_is_better'
-    def onTrack = actual == null ? null
-            : (higherIsBetter ? actual >= target.target : actual <= target.target)
-    rows << [
-        'Area'   : target.area,
-        'KPI'    : target.kpi.replace('_', ' '),
-        'Actual' : actual,
-        'Target' : target.target,
-        'Unit'   : target.unit,
-        'Status' : onTrack == null ? 'no reading' : (onTrack ? 'on track' : 'off target'),
-    ]
-}
-
-// The areas off target first: they are what the reader came for.
-rows.sort { a, b -> (a.Status == 'off target' ? 0 : 1) <=> (b.Status == 'off target' ? 0 : 1) ?: a.Area <=> b.Area }
-rows`,
+      // One row per area: the KPI the board judges it on, its target from kpi_targets, and on or off
+      // track. The ten readings are one UNION ALL, matched to their targets by area and KPI; the areas
+      // off target come first, because they are what the reader came for.
+      kind: 'sql',
+      sql: `WITH picked AS (
+  SELECT CASE WHEN count(*) = 1 THEN min(r.y)
+              ELSE (SELECT year(a.as_of) FROM dash_demo.as_of a) END AS y
+  FROM range(1, 10000) AS r(y)
+  WHERE r.y = year(CAST(\${year} AS DATE))
+),
+p AS (
+  SELECT k.y AS y, least(make_date(k.y, 12, 31), (SELECT a.as_of FROM dash_demo.as_of a)) AS cutoff
+  FROM picked k
+),
+measured AS (
+  SELECT t.region AS area, 'revenue_vs_plan' AS kpi,
+         round(100.0 * sum(o.actual) / sum(t.revenue_target), 2) AS actual
+  FROM dash_demo.sales_targets t
+  LEFT JOIN (SELECT date_trunc('month', o.order_ts) AS m, g.region AS region, sum(o.total_amount) AS actual
+             FROM dash_demo.orders o
+             JOIN dash_demo.geo_cities g USING (city_id)
+             WHERE o.status <> 'cancelled'
+             GROUP BY 1, 2) o ON o.m = t.month AND o.region = t.region
+  JOIN p ON year(t.month) = p.y
+  GROUP BY t.region
+  UNION ALL
+  SELECT 'Company', 'gross_margin',
+         round(100.0 * sum(l.line_amount - l.line_cost) / sum(l.line_amount), 2)
+  FROM dash_demo.order_lines l
+  JOIN dash_demo.orders o USING (order_id)
+  JOIN p ON year(o.order_ts) = p.y
+  WHERE o.status <> 'cancelled'
+  UNION ALL
+  SELECT 'Finance', 'days_sales_outstanding',
+         round(365.0
+           * (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i
+              WHERE i.issue_date <= p.cutoff AND (i.last_paid_date IS NULL OR i.last_paid_date > p.cutoff))
+           / (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i
+              WHERE i.issue_date > p.cutoff - INTERVAL 365 DAY AND i.issue_date <= p.cutoff), 2)
+  FROM p
+  UNION ALL
+  SELECT 'Operations', 'on_time_delivery',
+         round(100.0 * count(CASE WHEN CAST(o.delivered_ts AS DATE) <= o.promised_date THEN 1 END) / count(*), 2)
+  FROM dash_demo.orders o
+  JOIN p ON year(o.delivered_ts) = p.y
+  WHERE o.delivered_ts IS NOT NULL
+  UNION ALL
+  SELECT 'Support', 'sla_met',
+         round(100.0 * count(CASE WHEN NOT t.sla_breached THEN 1 END) / count(*), 2)
+  FROM dash_demo.support_tickets t
+  JOIN p ON year(t.opened_ts) = p.y
+  UNION ALL
+  SELECT 'Company', 'monthly_churn', round(avg(c.pct), 2)
+  FROM (SELECT 100.0 * count(*) /
+               (SELECT count(*) FROM dash_demo.subscriptions s2
+                WHERE s2.start_date < months.m AND (s2.cancel_date IS NULL OR s2.cancel_date >= months.m)) AS pct
+        FROM (SELECT DISTINCT date_trunc('month', s1.cancel_date) AS m
+              FROM dash_demo.subscriptions s1
+              JOIN p ON year(s1.cancel_date) = p.y) months
+        JOIN dash_demo.subscriptions s ON date_trunc('month', s.cancel_date) = months.m
+        GROUP BY months.m) c
+  UNION ALL
+  SELECT 'People', 'yearly_attrition',
+         round(100.0 * (SELECT count(*) FROM dash_demo.employees e
+                        WHERE e.termination_date >= p.cutoff - INTERVAL 365 DAY AND e.termination_date <= p.cutoff)
+               / (SELECT count(*) FROM dash_demo.employees e
+                  WHERE e.hire_date <= p.cutoff AND (e.termination_date IS NULL OR e.termination_date > p.cutoff)), 2)
+  FROM p
+),
+judged AS (
+  SELECT k.area AS area, k.kpi AS kpi, m.actual AS actual, k.target AS target, k.unit AS unit,
+         CASE WHEN m.actual IS NULL THEN 'no reading'
+              WHEN k.direction = 'higher_is_better'
+                   THEN CASE WHEN m.actual >= k.target THEN 'on track' ELSE 'off target' END
+              ELSE CASE WHEN m.actual <= k.target THEN 'on track' ELSE 'off target' END
+         END AS status
+  FROM dash_demo.kpi_targets k
+  LEFT JOIN measured m ON m.area = k.area AND m.kpi = k.kpi
+)
+SELECT j.area AS "Area",
+       replace(j.kpi, '_', ' ') AS "KPI",
+       j.actual AS "Actual",
+       j.target AS "Target",
+       j.unit AS "Unit",
+       j.status AS "Status"
+FROM judged j
+ORDER BY CASE WHEN j.status = 'off target' THEN 0 ELSE 1 END, j.area, j.kpi`,
       shot: {
-        title: 'The script for off target',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for off target',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
