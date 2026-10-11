@@ -457,7 +457,7 @@ test.describe('Embedding and sharing: tokens and share links', () => {
       });
       await expect(page.locator('rb-value').first()).not.toHaveText(/^\s*$/);
       await expect(
-        page.locator('.rb-widget-not-shared'),
+        page.locator('[id^="widgetNotShared-"]'),
         'and nothing in this dashboard belongs to another report',
       ).toHaveCount(0);
     } finally {

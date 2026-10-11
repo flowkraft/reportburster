@@ -84,7 +84,7 @@ export function prepareDashboardHtml(template: string, host: DashboardHostContex
     // whatever we do here, so the page says so where the tile would have been — a blank tile is
     // what sends the author looking for a bug in their template.
     if (host.embedToken && widgetReportId && widgetReportId !== host.reportId)
-      return refusalNote(tag, widgetReportId, host.reportId) + whole;
+      return refusalNote(tag, widgetReportId, host.reportId, attributeValue(attrs, 'component-id')) + whole;
 
     let next = attrs;
 
@@ -99,9 +99,10 @@ export function prepareDashboardHtml(template: string, host: DashboardHostContex
   });
 }
 
-/** What the visitor is shown instead of a tile that can never fill. */
-function refusalNote(tag: string, widgetReportId: string, dashboardReportId: string): string {
-  return '<div class="rb-widget-not-shared" role="note">'
+/** What the visitor is shown instead of a tile that can never fill: widgetNotShared-<the tile's component id>. */
+function refusalNote(tag: string, widgetReportId: string, dashboardReportId: string, componentId: string): string {
+  const id = componentId ? ' id="widgetNotShared-' + escapeAttribute(componentId) + '"' : '';
+  return '<div class="rb-widget-not-shared"' + id + ' role="note">'
     + 'This dashboard is open through a share link, which opens one report only ('
     + escapeText(dashboardReportId) + '). The widget below reads &quot;'
     + escapeText(widgetReportId) + '&quot; (' + escapeText('rb-' + tag)
