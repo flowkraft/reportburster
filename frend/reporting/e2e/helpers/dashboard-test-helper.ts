@@ -65,8 +65,8 @@ export async function assertDashboardRendersCorrectly(
   // ── 1. Header & layout (g-dashboard sample HTML template only) ──
   if (!componentIds) {
     // The page says what it is for before it says anything else (D2).
-    await expect(page.locator('.dash-title')).toHaveText(header.title, { timeout: 30000 });
-    await expect(page.locator('.dash-subtitle'))
+    await expect(page.locator('#dashTitle')).toHaveText(header.title, { timeout: 30000 });
+    await expect(page.locator('#dashSubtitle'))
       .toContainText(header.subtitle, { timeout: 10000 });
     await expect(page.locator('rb-value')).toHaveCount(4, { timeout: 15000 });
     await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 15000 });

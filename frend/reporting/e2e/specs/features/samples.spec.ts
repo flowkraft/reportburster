@@ -1085,8 +1085,8 @@ electronBeforeAfterAllTest(
 
         // Assert pivot table header and component are visible. The heading says what the page
         // is for rather than naming the data behind it (D2).
-        await expect(page.locator('.dash-title')).toHaveText('Sales Explorer', { timeout: 30000 });
-        await expect(page.locator('.dash-subtitle'))
+        await expect(page.locator('#dashTitle')).toHaveText('Sales Explorer', { timeout: 30000 });
+        await expect(page.locator('#dashSubtitle'))
           .toContainText('Ask your own question of the sales', { timeout: 10000 });
         await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 15000 });
       } finally {
@@ -1186,8 +1186,8 @@ electronBeforeAfterAllTest(
         // cube was written to answer.
         await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
         // Its own title already says what the page is for, and stays as it is (D2).
-        await expect(page.locator('.dash-title')).toHaveText('Cube Stories', { timeout: 30000 });
-        await expect(page.locator('.dash-subtitle')).toContainText('tick a field', { timeout: 10000 });
+        await expect(page.locator('#dashTitle')).toHaveText('Cube Stories', { timeout: 30000 });
+        await expect(page.locator('#dashSubtitle')).toContainText('tick a field', { timeout: 10000 });
         await expect(frame.locator('.rb-cube-stories-root .card'))
           .toHaveCount(CUBE_STORIES_PAGE_CARDS.length, { timeout: 60000 });
         for (const cubeId of CUBE_STORIES_PAGE_CARDS) {
@@ -1841,7 +1841,7 @@ electronBeforeAfterAllTest(
 
         // The page says what it is, to a reader who arrives with no sample list around them.
         await expect(page.locator('.rb-dashboard-demos-root')).toBeVisible({ timeout: 60000 });
-        await expect(page.locator('.rb-dashboard-demos-root .dash-title'))
+        await expect(page.locator('#dashTitle'))
           .toContainText('Dashboard Demos', { timeout: 30000 });
 
         // The contents list above the cards: one entry per demo, in the index's order.

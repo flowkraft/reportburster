@@ -161,8 +161,8 @@ class DashboardDemosExportParityTest {
 
 		// And the author's half is still the author's: what is outside the markers is never written
 		// by the generator, so it has to be asserted here or nothing holds it.
-		for (String own : List.of("<h1 class=\"dash-title\">Dashboard Demos</h1>",
-				"<p class=\"dash-subtitle\">One company, every department: 25 dashboards built in the"
+		for (String own : List.of("<h1 class=\"dash-title\" id=\"dashTitle\">Dashboard Demos</h1>",
+				"<p class=\"dash-subtitle\" id=\"dashSubtitle\">One company, every department: 25 dashboards built in the"
 						+ " Data Canvas</p>",
 				"<div class=\"info-bar\">", "<style>", "</style>"))
 			assertTrue(held.contains(own), "the Gallery page no longer has its own " + own);
