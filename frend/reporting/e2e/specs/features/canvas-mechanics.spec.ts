@@ -4948,4 +4948,124 @@ test('(canvas mechanics) M64 A combo chart names its series, draws each as bars 
   });
 });
 
+/** The parameters the server holds for a canvas, by id. */
+async function m65Params(page: Page, canvasId: string): Promise<Record<string, any>> {
+  const state = stateOf(await readCanvas(page, canvasId));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return Object.fromEntries(((state.parametersConfig?.parameters ?? []) as any[]).map((p) => [p.id, p]));
+}
+
+/** What the four filters of M65 hold once the author is done, as a shipped file would say them. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function m65Expect(params: Record<string, any>): void {
+  expect(Object.keys(params).sort()).toEqual(['active_only', 'channels', 'shipCountry', 'top_n']);
+  expect(params.shipCountry).toMatchObject({
+    label: 'Shipping Country',
+    defaultValue: 'DE',
+    constraints: { required: false },
+    uiHints: { control: 'select', options: [{ value: 'DE', label: 'Germany' }, { value: 'FR', label: 'France' }] },
+  });
+  expect(params.shipCountry.uiHints.widget, 'one word for the control: `control`').toBeUndefined();
+  expect(params.channels.uiHints.control).toBe('multiselect');
+  expect(params.channels.defaultValue, 'a multi-select with nothing picked starts with []').toEqual([]);
+  expect(params.top_n).toMatchObject({ type: 'Integer', defaultValue: 10, constraints: { allowedValues: [5, 10, 20] } });
+  expect(params.active_only).toMatchObject({ type: 'Boolean', defaultValue: false });
+}
+
+test('(canvas mechanics) M65 The filter form names a filter, and writes its values as the shipped files do', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M65 Filter form', async (canvasId) => {
+    await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+
+    await page.locator('#btnConfigureFilters').click();
+    await page.locator('#btnAddParameter').waitFor({ state: 'visible', timeout: 5_000 });
+
+    // A select over two countries. The id follows the label until the author types one; from then on
+    // a new label leaves it be. A select's options can show a name for each value (`DE=Germany`).
+    await page.locator('#btnAddParameter').click();
+    await page.locator('#inputParamLabel-param1').fill('Ship Country');
+    await expect(page.locator('#inputParamId-ship_country'), 'the id follows the label').toHaveValue('ship_country');
+    await page.locator('#inputParamId-ship_country').fill('ship-Country!');
+    await expect(page.locator('#inputParamId-shipCountry'), 'only letters, digits and _ are kept').toHaveValue('shipCountry');
+    await page.locator('#inputParamLabel-shipCountry').fill('Shipping Country');
+    await expect(page.locator('#inputParamId-shipCountry'), 'a typed id stays when the label changes').toHaveValue('shipCountry');
+    await page.locator('#selectParamWidget-shipCountry').selectOption('select');
+    await page.locator('#inputParamOptions-shipCountry').fill('DE=Germany, FR=France');
+    await page.locator('#inputParamDefault-shipCountry').fill('DE');
+    await page.locator('#inputParamRequired-shipCountry').check();
+    await page.locator('#inputParamRequired-shipCountry').uncheck();
+
+    // A multi-select: its default is a list. One typed value becomes a list of one, the control kept
+    // across, and an emptied box is `[]`.
+    await page.locator('#btnAddParameter').click();
+    await page.locator('#inputParamLabel-param2').fill('Channels');
+    await page.locator('#inputParamDefault-channels').fill('web');
+    await page.locator('#selectParamWidget-channels').selectOption('multiselect');
+    await expect.poll(async () => (await m65Params(page, canvasId)).channels?.defaultValue,
+      { message: 'a value becomes a list of one', timeout: 20_000, intervals: [500] }).toEqual(['web']);
+    await page.locator('#inputParamDefault-channels').fill('');
+
+    // An Integer: its default and the values it accepts are numbers, not text.
+    await page.locator('#btnAddParameter').click();
+    await page.locator('#inputParamLabel-param3').fill('Top N');
+    await page.locator('#selectParamType-top_n').selectOption('Integer');
+    await page.locator('#inputParamDefault-top_n').fill('10');
+    await page.locator('#inputParamAllowedValues-top_n').fill('5, 10, 20');
+
+    // A Boolean: `false` is a default to pick, not an empty box.
+    await page.locator('#btnAddParameter').click();
+    await page.locator('#inputParamLabel-param4').fill('Active only');
+    await page.locator('#selectParamType-active_only').selectOption('Boolean');
+    await page.locator('#selectParamDefault-active_only').selectOption('false');
+
+    await page.locator('#btnDoneFilters').click();
+    await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
+    await expect.poll(async () => (await m65Params(page, canvasId)).active_only?.defaultValue,
+      { timeout: 20_000, intervals: [500] }).toBe(false);
+    m65Expect(await m65Params(page, canvasId));
+
+    // The DSL view says the same, in the shipped files' words; saved back from it, nothing changes.
+    await page.locator('#btnConfigureFilters').click();
+    await page.locator('#btnFilterDslToggle').click();
+    const dsl = page.locator('#filterDslEditorInput');
+    await expect(dsl).toContainText('shipCountry', { timeout: 15_000 });
+    await expect(dsl).toContainText('select');
+    await expect(dsl).not.toContainText('widget');
+    await page.locator('#btnDoneFilters').click();
+    await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.waitForTimeout(2_000);
+    m65Expect(await m65Params(page, canvasId));
+
+    // + Published, the filter bar offers the countries by name with Germany picked, 10 in Top N,
+    //   and Active only unticked.
+    const published = await publishDashboard(page);
+    const dashboard = await openPublished(page, published.reportId);
+    const country = dashboard.locator('[id="shipCountry"]');
+    await expect(country).toBeVisible({ timeout: 60_000 });
+    await expect(country.locator('option')).toHaveText(['Germany', 'France']);
+    await expect(country).toHaveValue('DE');
+    await expect(dashboard.locator('[id="top_n"]')).toHaveValue('10');
+    await expect(dashboard.locator('[id="active_only"]')).not.toBeChecked();
+    await page.goBack();
+    await page.locator('#btnCanvasName').waitFor({ state: 'visible', timeout: 30_000 });
+
+    // A shipped file's own words for a control (`multi-select`) are read as the form's choice.
+    await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'regions', type: String, label: 'Regions', defaultValue: []) {
+    ui(control: 'multi-select', options: ['North', 'South'])
+  }
+}
+`);
+    await page.locator('#btnConfigureFilters').click();
+    await expect(page.locator('#selectParamWidget-regions'), 'a shipped multi-select is the multiselect choice')
+      .toHaveValue('multiselect', { timeout: 10_000 });
+    await expect(page.locator('#inputParamOptions-regions')).toHaveValue('North, South');
+    await page.locator('#btnDoneFilters').click();
+    await expect.poll(async () => (await m65Params(page, canvasId)).regions?.uiHints?.control,
+      { message: 'opening the form leaves the file as written', timeout: 20_000, intervals: [500] }).toBe('multi-select');
+  });
+});
+
 });
