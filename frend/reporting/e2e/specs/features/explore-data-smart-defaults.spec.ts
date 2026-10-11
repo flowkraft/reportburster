@@ -766,7 +766,7 @@ async function assertVisualizeAs(
   await mainGridEl.waitFor({ state: 'visible', timeout: 5_000 });
 
   const actualMainIds: string[] = await mainGridEl
-    .locator('button')
+    .locator('[id^="btnVisualizeAs-"]')
     .evaluateAll((els) => els.map((el) => el.id.replace('btnVisualizeAs-', '')));
   // mainGrid = expected recommended widgets. Assert they lead #visualizeAsGrid
   // in exact order. Sensible (non-recommended) widgets may follow — their count
@@ -784,7 +784,7 @@ async function assertVisualizeAs(
     await moreGrid.waitFor({ state: 'visible', timeout: 3_000 });
 
     const actualMoreIds: string[] = await moreGrid
-      .locator('button')
+      .locator('[id^="btnVisualizeAs-"]')
       .evaluateAll((els) => els.map((el) => el.id.replace('btnVisualizeAs-', '')));
     // moreWidgets = complement(recommended) = sensible + nonsensible.
     // #moreWidgetsGrid shows only nonsensible (sensible items appear in mainGrid).

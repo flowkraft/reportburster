@@ -626,8 +626,8 @@ test.describe('DataPallas - Dashboard Report E2E', async () => {
           // Assert page title matches report code
           await expect(page).toHaveTitle('my-dashboard');
 
-          // Assert rb-dashboard web component is present
-          await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+          // Assert the dashboard is on the page
+          await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 10000 });
 
           // Run shared dashboard assertions — default "-- All --" (unfiltered)
           await assertDashboardRendersCorrectly(page, 'my-dashboard', undefined, undefined, MY_DASHBOARD_HEADER);

@@ -131,6 +131,7 @@ import {
   clickDataTab,
   assertWidgetRenders,
   clickWidgetHeader,
+  getLastWidgetId,
   addAggregation,
   addGroupBy,
 } from '../../helpers/explore-data-test-helper';
@@ -1305,7 +1306,8 @@ test.describe('Data Canvas Visualizations', () => {
     await switchToWidget(page, 'tabulator');
 
     // Widget should be visible
-    const widgetEl = page.locator('rb-tabulator').first();
+    const widgetId = await getLastWidgetId(page);
+    const widgetEl = page.locator(`[id="widgetViz-${widgetId}"]`);
     await widgetEl.waitFor({ state: 'visible', timeout: 10_000 });
 
     // Select the widget (click on it) and press Delete
@@ -1314,9 +1316,9 @@ test.describe('Data Canvas Visualizations', () => {
     await page.keyboard.press('Delete');
     await page.waitForTimeout(1000);
 
-    // Widget should be removed from the canvas
-    const widgetCount = await page.locator('rb-tabulator').count();
-    expect(widgetCount).toBe(0);
+    // Widget should be removed from the canvas, and it was the only one
+    await expect(page.locator(`[id="widgetHeader-${widgetId}"]`)).toHaveCount(0);
+    await expect(page.locator('[id^="widgetHeader-"]')).toHaveCount(0);
     console.log('[F-1] DONE — widget deleted from canvas');
   });
 
@@ -1331,7 +1333,7 @@ test.describe('Data Canvas Visualizations', () => {
     await switchToWidget(page, 'detail');
     await assertWidgetRenders(page, 'detail');
     const canvasId = page.url().split('/').pop()!;
-    const widgetId = (await page.locator('[id^="widgetHeader-"]').first().getAttribute('id'))!.replace(/^widgetHeader-/, '');
+    const widgetId = await getLastWidgetId(page);
 
     // Where the server has the widget: its column (x) and row (y) on the 12-column grid.
     const storedPlace = async (): Promise<{ x: number; y: number; w: number }> => {
