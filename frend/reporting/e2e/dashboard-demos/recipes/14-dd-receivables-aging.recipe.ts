@@ -141,12 +141,13 @@ WHERE i.status IN ('open', 'overdue', 'partially_paid')
       },
     },
     {
-      kind: 'script',
-      script: `// DSO per month: receivables still outstanding at the end of the month, over the credit sales of
-// the year to that day, times 365 days. Two sums read at 24 different days is not one grouped query,
-// which is why this widget asks it itself. It is a company number: the page's two filters pick whom
-// to call today and do not change how long the company waits to be paid.
-dbSql.rows("""WITH months AS (
+      // DSO per month: receivables still outstanding at the end of the month, over the credit sales
+      // of the year to that day, times 365 days. One query answers it - the two sums of each of the
+      // 24 months are subqueries of its own rows - so it is SQL, as a reporting person would expect.
+      // It is a company number: the page's two filters pick whom to call today and do not change how
+      // long the company waits to be paid, so neither is bound here.
+      kind: 'sql',
+      sql: `WITH months AS (
   SELECT CAST(date_trunc('month', (SELECT a.as_of FROM dash_demo.as_of a))
               - to_months(CAST(s.i AS INTEGER)) AS DATE) AS month
   FROM generate_series(0, 23) AS s(i)
@@ -166,10 +167,10 @@ SELECT m.month AS month,
                 WHERE i.issue_date > m.read_at - to_days(365)
                   AND i.issue_date <= m.read_at), 2) AS dso_days
 FROM month_end m
-ORDER BY m.month""", [])`,
+ORDER BY m.month`,
       shot: {
-        title: 'The script for dso',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for dso',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
