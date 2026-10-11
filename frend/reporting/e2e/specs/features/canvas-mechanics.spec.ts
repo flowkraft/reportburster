@@ -767,21 +767,14 @@ async function g1Count(page: Page, id: string): Promise<string> {
   return (await page.locator(`#${id}_lblCount`).innerText()).trim();
 }
 
-/** The share-attribute rows' key (the suffix of their ids), in order. */
-async function g1AttrKeys(page: Page): Promise<string[]> {
-  const ids = await page.locator('[id^="shareAttrName-"]').evaluateAll((els) => els.map((e) => e.id));
-  return ids.map((id) => id.substring('shareAttrName-'.length));
-}
-
-/** Add an attribute row and fill its name and value. Returns the row key. */
-async function g1AddAttr(page: Page, name: string, value: string): Promise<string> {
-  const before = await g1AttrKeys(page);
+/** Add an attribute row and fill its name and value. Returns the row's position, the suffix of its ids. */
+async function g1AddAttr(page: Page, name: string, value: string): Promise<number> {
+  const n = await page.locator('[id^="shareAttrName-"]').count();
   await page.locator('#btnAddShareAttribute').click();
-  await expect(page.locator('[id^="shareAttrName-"]')).toHaveCount(before.length + 1);
-  const key = (await g1AttrKeys(page)).filter((k) => !before.includes(k))[0];
-  await page.locator(`[id="shareAttrName-${key}"]`).fill(name);
-  await page.locator(`[id="shareAttrValue-${key}"]`).fill(value);
-  return key;
+  await expect(page.locator(`[id="shareAttrName-${n}"]`)).toBeVisible();
+  await page.locator(`[id="shareAttrName-${n}"]`).fill(name);
+  await page.locator(`[id="shareAttrValue-${n}"]`).fill(value);
+  return n;
 }
 
 // ── Group G2 ─────────────────────────────────────────────────────────────────

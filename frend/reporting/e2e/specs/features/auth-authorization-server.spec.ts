@@ -5117,13 +5117,10 @@ test.describe('Auth — Server: the AI Hub door', () => {
           .waitOnElementToBecomeVisible('#shareAttributes')
           .click('#btnAddShareAttribute');
 
-        // The row ids carry the row's key, not the attribute's name — the editor keeps rows in a
-        // list precisely so a half-typed name stays editable — so the row is found by position.
-        await page.locator('#shareAttributes input[id^="shareAttrName-"]').first().fill(ATTRIBUTE);
-        await page
-          .locator('#shareAttributes input[id^="shareAttrValue-"]')
-          .first()
-          .fill(ATTRIBUTE_VALUE);
+        // The row ids carry the row's position, not the attribute's name — the editor keeps rows in
+        // a list precisely so a half-typed name stays editable — so the first row is 0.
+        await page.locator('#shareAttrName-0').fill(ATTRIBUTE);
+        await page.locator('#shareAttrValue-0').fill(ATTRIBUTE_VALUE);
 
         await page.locator('#btnCreateShareLink').click();
         await expect(page.locator('#shareNewUrl')).toBeVisible({ timeout: 60_000 });
