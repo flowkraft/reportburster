@@ -1,5 +1,5 @@
 // Auto-pick helpers — pick a sensible Summarize, measure, pivot layout, filter
-// pane field, or cube render mode from a raw table + cardinality hints.
+// slicer field, or cube render mode from a raw table + cardinality hints.
 
 import type { ColumnSchema, TableSchema } from "../types";
 import type { VisualQuery, WidgetType } from "@/lib/stores/canvas-store";
@@ -108,10 +108,10 @@ export function autoPickMeasure(
 }
 
 /**
- * Filter Pane field auto-pick. Uses cardinality when available to avoid
+ * Slicer field auto-pick. Uses cardinality when available to avoid
  * picking a 200-value column that would be unusable as a filter.
  */
-export function autoFilterPaneField(
+export function autoSlicerField(
   table: TableSchema,
   cardinality?: CardinalityMap,
 ): string | null {

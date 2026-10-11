@@ -6,7 +6,7 @@ import type { SchemaInfo, TableSchema } from "@/lib/explore-data/types";
 import { executeQuery, executeScript, fetchSchema, getConnectionType, hasConnectionsCached, ensureConnectionsLoaded } from "@/lib/explore-data/rb-api";
 import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
-import { paneFilterPlanFor, paneParamValues, wrapWithPaneFilters } from "@/lib/explore-data/pane-filters";
+import { slicerFilterPlanFor, slicerParamValues, wrapWithSlicerFilters } from "@/lib/explore-data/slicer-filters";
 import { asTableRef, findTable, tableKey, type TableRef } from "@/lib/explore-data/table-ref";
 import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
 import { LAST_EXEC, shouldReExecute, type LastExec } from "@/lib/explore-data/widget-exec-cache";
@@ -64,17 +64,17 @@ async function getTableSchema(connectionId: string, table: TableRef | string): P
  *     or a filter value changes and the SQL carries a placeholder
  *   - script: scriptExecuteVersion increments (bumped by handleRunScript), or
  *     any filter value changes
- *   - every mode but script: a value is picked or dropped in a filter pane of this canvas
- *     (`exploreSelections` / `exploreVersion`), because a pane is a slicer over the widgets built
- *     on its table (`pane-filters.ts`)
+ *   - every mode but script: a value is picked or dropped in a slicer of this canvas
+ *     (`exploreSelections` / `exploreVersion`), because a slicer applies by itself over the widgets built
+ *     on its table (`slicer-filters.ts`)
  */
 export function useWidgetData(widgetId: string) {
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const connectionId = useCanvasStore((s) => s.connectionId);
   const filterValues = useCanvasStore((s) => s.filterValues);
-  // The filter panes of this canvas and what is picked in them: a slicer, so this widget is
-  // filtered by them without its author having written anything (`pane-filters.ts`). The whole
-  // widget list is read because the panes are other widgets.
+  // The slicers of this canvas and what is picked in them: a slicer, so this widget is
+  // filtered by them without its author having written anything (`slicer-filters.ts`). The whole
+  // widget list is read because the slicers are other widgets.
   const widgets = useCanvasStore((s) => s.widgets);
   const exploreSelections = useCanvasStore((s) => s.exploreSelections);
   const exploreVersion = useCanvasStore((s) => s.exploreVersion);
@@ -156,13 +156,13 @@ export function useWidgetData(widgetId: string) {
     const mode = dataSource.mode;
     const prev = LAST_EXEC.get(widgetId);
 
-    // What the panes of this canvas do to THIS widget, and the values their fields are picked at.
-    // A pane field with nothing picked still travels (as an empty value): that is what turns its
+    // What the slicers of this canvas do to THIS widget, and the values their fields are picked at.
+    // A slicer field with nothing picked still travels (as an empty value): that is what turns its
     // condition into "every row" where the SQL is run, in the canvas and on the published
-    // dashboard alike (`pane-filters.ts`).
-    const panePlan = paneFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName));
-    const paneParams = paneParamValues(widgets, exploreSelections);
-    const askedValues = { ...(filterValues ?? {}), ...paneParams };
+    // dashboard alike (`slicer-filters.ts`).
+    const slicerPlan = slicerFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName));
+    const slicerParams = slicerParamValues(widgets, exploreSelections);
+    const askedValues = { ...(filterValues ?? {}), ...slicerParams };
 
     // Script mode — re-executed when Run is clicked, and on every dashboard
     // filter change. A script is handed the whole filter map
@@ -215,27 +215,27 @@ export function useWidgetData(widgetId: string) {
       // The declared parameter types say which bound filter is bound to a Date,
       // and a Date parameter means the whole day it names (F8).
       extractParamTypes(parametersConfig?.parameters),
-      // A Visual-tab widget takes the panes' conditions into its own WHERE, before the
+      // A Visual-tab widget takes the slicers' conditions into its own WHERE, before the
       // aggregation: that is the only place they can be right for a KPI, whose result has no
-      // column of the pane's field left to filter on.
-      panePlan.filters,
+      // column of the slicer's field left to filter on.
+      slicerPlan.filters,
     );
     if (!raw) { clearWidgetQueryLoading(widgetId); return; }
 
     // A widget whose data is pasted SQL cannot have a condition put inside it - the author's text
-    // is theirs - so its query is read as a derived table and the panes ask their fields of its
+    // is theirs - so its query is read as a derived table and the slicers ask their fields of its
     // result, for the fields that result really has a column for.
-    const asked = panePlan.wrapFields.length > 0
-      ? wrapWithPaneFilters(raw, panePlan.wrapFields, dialectFor(getConnectionType(connectionId)))
+    const asked = slicerPlan.wrapFields.length > 0
+      ? wrapWithSlicerFilters(raw, slicerPlan.wrapFields, dialectFor(getConnectionType(connectionId)))
       : raw;
 
     // The very text the published dashboard has to run, kept beside the widget's own data source
     // so the dashboard filters exactly as the canvas does (`ScriptAssembler.resolveSql` prefers
-    // it). It is written only while a pane reaches this widget and taken away again when the last
-    // one goes, so a canvas with no pane keeps the data source it has always had.
-    const paneSql = panePlan.filters.length > 0 || panePlan.wrapFields.length > 0 ? asked : undefined;
-    if ((dataSource.paneSql ?? undefined) !== paneSql)
-      updateWidgetDataSource(widgetId, { ...dataSource, paneSql });
+    // it). It is written only while a slicer reaches this widget and taken away again when the last
+    // one goes, so a canvas with no slicer keeps the data source it has always had.
+    const slicerSql = slicerPlan.filters.length > 0 || slicerPlan.wrapFields.length > 0 ? asked : undefined;
+    if ((dataSource.slicerSql ?? undefined) !== slicerSql)
+      updateWidgetDataSource(widgetId, { ...dataSource, slicerSql });
 
     // SQL / AI-SQL — re-execute when Run is clicked OR when dashboard filter
     // values change AND the SQL contains a ${param} placeholder. Without the
@@ -245,9 +245,9 @@ export function useWidgetData(widgetId: string) {
     if (mode === "sql" || mode === "ai-sql") {
       const currentVersion = dataSource.executeVersion ?? 0;
       const usesParams = asked.includes("${") || asked.includes("#{");
-      // A pane's own parameter is in this snapshot like any other value: the SQL text does not
-      // change when a value is picked in a pane, only what is bound to it does, so without the
-      // pane values here a click in a pane would change nothing at all.
+      // A slicer's own parameter is in this snapshot like any other value: the SQL text does not
+      // change when a value is picked in a slicer, only what is bound to it does, so without the
+      // slicer values here a click in a slicer would change nothing at all.
       const filterSnapshot = usesParams ? JSON.stringify(askedValues) : "";
       const next: LastExec = { mode, executeVersion: currentVersion, filterSnapshot };
       if (!shouldReExecute(prev, next)) {
@@ -292,7 +292,7 @@ export function useWidgetData(widgetId: string) {
       // the widget with no data.
       if (!settled) { LAST_EXEC.delete(widgetId); clearWidgetQueryLoading(widgetId); }
     };
-    // `exploreVersion` is to a pane what `filterVersion` is to the filter bar: the one number that
+    // `exploreVersion` is to a slicer what `filterVersion` is to the filter bar: the one number that
     // says a selection changed, so every widget asks again.
   }, [connectionId, dataSource, filterValues, filterVersion, parametersConfig, widgetId, connectionsReady, tableSchema, widgets, exploreSelections, exploreVersion, updateWidgetDataSource, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
 

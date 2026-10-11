@@ -47,8 +47,8 @@ const UI_ROOTS: Array<{ dir: string; only?: string[]; exts: string[] }> = [
     only: ['RbParameters.wc.svelte', 'RbTabulator.wc.svelte', 'RbPivotTable.wc.svelte', 'RbChart.wc.svelte', 'RbMap.wc.svelte', 'RbDetail.wc.svelte'],
   },
 ];
-/** The Filter Pane has no UI path (5h). */
-const EXCLUDED_UI = ['FilterPaneConfig.tsx', 'FilterPaneWidget.tsx'];
+/** The Slicer has no UI path (5h). */
+const EXCLUDED_UI = ['SlicerConfig.tsx', 'SlicerWidget.tsx'];
 
 /** The e2e code that reaches the Canvas: existing specs (who they are is in the row), and Phase C's. */
 const TEST_FILES = [
@@ -85,9 +85,9 @@ const APPENDED_FROM = ['helpers/explore-data-test-helper.ts', '// ── Display
 const NO_USER_PATH = new Map<string, string>([
   ['btnAddElement', 'AddElementMenu.tsx is imported by nothing: it is never rendered (the live path is btnAddElement-<type> in the Elements tab)'],
   ['overlayAddElementMenu', 'AddElementMenu.tsx is imported by nothing: it is never rendered'],
-  ['btnDetectColumnsFilterPane', 'only shown for a Filter Pane widget, which the Elements tab no longer offers'],
-  ['btnRemoveSelection-*', 'the selection bar belongs to the Filter Pane, which the Elements tab no longer offers'],
-  ['btnClearSelections', 'the selection bar belongs to the Filter Pane, which the Elements tab no longer offers'],
+  ['btnDetectColumnsSlicer', 'only shown for a Slicer widget, which the Elements tab no longer offers'],
+  ['btnRemoveSelection-*', 'the selection bar belongs to the Slicer, which the Elements tab no longer offers'],
+  ['btnClearSelections', 'the selection bar belongs to the Slicer, which the Elements tab no longer offers'],
   ['btnRetryWidget-*', 'shown only after a widget crashes, and no user action crashes one (a test-only trigger is not invented)'],
 ]);
 
@@ -98,7 +98,7 @@ const EXCEPTIONS: Array<{ token: RegExp; why: string }> = [
   { token: /^\.cm-content$/, why: 'CodeMirror\'s editable line holder, reached inside an element with an id' },
   { token: /^\.react-grid-item$/, why: 'react-grid-layout\'s item node (a library node, no id)' },
   { token: /^\.react-resizable-handle(-[a-z]+)?$/, why: 'react-grid-layout\'s resize handle (a library node, no id)' },
-  { token: /^\.leaflet-[a-z-]+$/, why: 'the map pane\'s own nodes (Leaflet, no ids)' },
+  { token: /^\.leaflet-[a-z-]+$/, why: 'the map slicer\'s own nodes (Leaflet, no ids)' },
   { token: /^body$/, why: 'the page itself' },
   { token: /^option$/, why: 'a native select\'s <option>, reached inside the select that has the id' },
   { token: /^iframe$/, why: 'the published iframe element, asserted on its attributes' },

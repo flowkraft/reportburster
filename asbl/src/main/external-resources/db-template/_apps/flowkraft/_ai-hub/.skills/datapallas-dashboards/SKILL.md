@@ -127,7 +127,7 @@ Drop more cubes/widgets and mix them — a **Number** for the headline, a **Char
 - **Dashboard-wide filtering** — one control (e.g. *Country*) that re-queries **every** widget at once — is done with **Parameters** (the `<rb-parameters>` bar; see the *Parameters* section). To scope a single widget instead, use that widget's Visual **Filter** bucket.
 - **Every change auto-saves** (the toolbar shows *Saved · just now*). Close the tab and return later, **undo/redo** any edit, or open **multiple canvases in parallel** for different exploration tracks.
 
-> **Note to self — the Filter Pane element (don't push it).** The **Add element** menu offers a **Filter Pane** ("associative exploration", a Qlik-style idea). It's **half-built and not reliably usable yet**, and it is **not** the same thing as Parameters. I don't steer users to it — for dashboard-wide filtering I use **Parameters** (`<rb-parameters>`), and for a single widget its **Filter** bucket. I never tell users it's "bad"; I just quietly reach for the components that work.
+> **Note to self — the Slicer element (don't push it).** The **Add element** menu offers a **Slicer** ("associative exploration", a Qlik-style idea). It's **half-built and not reliably usable yet**, and it is **not** the same thing as Parameters. I don't steer users to it — for dashboard-wide filtering I use **Parameters** (`<rb-parameters>`), and for a single widget its **Filter** bucket. I never tell users it's "bad"; I just quietly reach for the components that work.
 
 ### Why cubes shine on the canvas (condensed)
 
@@ -188,7 +188,7 @@ if (filterByCountry) sql += " WHERE o.ShipCountry = '${country}'"
 ctx.reportData('atomicValues', ctx.dbSql.rows(sql))
 ```
 
-**4 — How it reaches the widgets.** When the user changes any parameter, **every** component re-runs its query — and because each block is wrapped in a `componentId` guard (next section), only the affected widget re-fetches, not the whole board. *(Parameters are the real, first-class dashboard-wide filter. They are **not** the Canvas "Filter Pane" element — that's a different, half-built thing; I never conflate the two, and I keep the user clear on it too.)*
+**4 — How it reaches the widgets.** When the user changes any parameter, **every** component re-runs its query — and because each block is wrapped in a `componentId` guard (next section), only the affected widget re-fetches, not the whole board. *(Parameters are the real, first-class dashboard-wide filter. They are **not** the Canvas "Slicer" element — that's a different, half-built thing; I never conflate the two, and I keep the user clear on it too.)*
 
 ---
 
@@ -382,7 +382,7 @@ Whichever path built it (Canvas or Fully Configure), the result is identical:
 | "% of revenue from top 20% customers" | Distribution math | **Finetune Script** (Pareto) → **Number**, Format = Percent (or Hey AI) |
 | "Monthly trend" | Time-bucketed line | **Finetune SQL** `STRFTIME('%Y-%m', col/1000,'unixepoch')` → **Trend** |
 | "Compare two metrics side-by-side" | Multiple widgets | Two widgets, same cube, different measures |
-| "Let me filter the whole board by country" | Dashboard-wide filter | **Parameters** → a `<rb-parameters>` bar (Parameters tab / Hey AI) — *not* the Filter Pane element |
+| "Let me filter the whole board by country" | Dashboard-wide filter | **Parameters** → a `<rb-parameters>` bar (Parameters tab / Hey AI) — *not* the Slicer element |
 | "Which dashboards fit my data?" | Choosing what to build | Open **`datapallas-dashboard-patterns`** (read the schema, classify the tables, pick intentional dashboards), then build the chosen one here |
 | "I want this emailed to me weekly" | Publish + schedule | **Publish Dashboard** → use `${dashboard_url}` in a scheduled email |
 
@@ -410,7 +410,7 @@ I read it with `execute_shell_command` (`ls`, then `grep`/`sed` for the specific
 
 | To understand… | I read (under the path above) |
 | -------------- | ----------------------------- |
-| A widget's rendering + what data shape it expects | `components/explore-data/widgets/<Type>Widget.tsx` (Number, Chart, Trend, Tabulator, Pivot, Map, Gauge, Progress, Detail, Sankey, FilterPane) + `useWidgetData.ts` |
+| A widget's rendering + what data shape it expects | `components/explore-data/widgets/<Type>Widget.tsx` (Number, Chart, Trend, Tabulator, Pivot, Map, Gauge, Progress, Detail, Sankey, Slicer) + `useWidgetData.ts` |
 | **Exactly which knobs a widget's config exposes** | `components/explore-data/config-panels/<Type>Config.tsx` — the source of truth for every display option |
 | The Visual four-buckets + Finetune editors | `components/explore-data/query-builder/{DataStep,FilterStep,SummarizeStep,SortStep,VisualQueryBuilder,FinetuneEditor}.tsx` |
 | UI ↔ DSL bidirectional editing | `components/explore-data/config-panels/{DslCustomizer,BidirectionalDslCustomizer}.tsx` |

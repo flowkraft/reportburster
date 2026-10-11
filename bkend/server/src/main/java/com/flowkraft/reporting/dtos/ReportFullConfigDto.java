@@ -38,8 +38,8 @@ public class ReportFullConfigDto {
     /** Pivot table options parsed from {reportCode}-pivot-config.groovy */
     public Map<String, Object> pivotTableOptions;
 
-    /** Filter pane options parsed from {reportCode}-filterpane-config.groovy */
-    public Map<String, Object> filterPaneOptions;
+    /** Slicer options parsed from {reportCode}-slicer-config.groovy */
+    public Map<String, Object> slicerOptions;
 
     /** Map options parsed from {reportCode}-map-config.json.
      *  Unlike the other widget configs this is plain JSON (no DSL) — map has
@@ -62,7 +62,7 @@ public class ReportFullConfigDto {
     public String tabulatorDsl;
     public String chartDsl;
     public String pivotTableDsl;
-    public String filterPaneDsl;
+    public String slicerDsl;
     public String parametersDsl;
     /** Raw JSON source for the map config — served to UI for Configuration tab. */
     public String mapConfigJson;
@@ -77,7 +77,7 @@ public class ReportFullConfigDto {
     public Map<String, Map<String, Object>> namedTabulatorOptions;
     public Map<String, Map<String, Object>> namedChartOptions;
     public Map<String, Map<String, Object>> namedPivotTableOptions;
-    public Map<String, Map<String, Object>> namedFilterPaneOptions;
+    public Map<String, Map<String, Object>> namedSlicerOptions;
     public Map<String, Map<String, Object>> namedMapOptions;
     public Map<String, Map<String, Object>> namedSankeyOptions;
     public Map<String, Map<String, Object>> namedGaugeOptions;
@@ -98,7 +98,7 @@ public class ReportFullConfigDto {
     public boolean hasTabulator;
     public boolean hasChart;
     public boolean hasPivotTable;
-    public boolean hasFilterPane;
+    public boolean hasSlicer;
     public boolean hasParameters;
     public boolean hasMap;
     public boolean hasSankey;

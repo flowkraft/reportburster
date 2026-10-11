@@ -7,7 +7,7 @@
 
 import {
   groupWidgetsBySensibility,
-  autoFilterPaneField,
+  autoSlicerField,
 } from "@/lib/explore-data/smart-defaults";
 
 import {
@@ -90,20 +90,20 @@ describe("Nancy (sales rep) opens the Customers list to phone her German account
 
 describe("Nancy wants to add a 'filter by country' control above the customer list", () => {
   // | 5 | Nancy adds filter-by-country | Customers + cardinality |
-  // | `autoFilterPaneField` === `"Region"` | ref: manual field-pick |
+  // | `autoSlicerField` === `"Region"` | ref: manual field-pick |
   // Region (4 distinct values) beats Country (10) on cardinality — lowest-card
   // non-ID column wins.
   it("Region is auto-picked as the filter field — lowest cardinality (4 values vs Country's 10)", () => {
-    const suggestedFilterField = autoFilterPaneField(
+    const suggestedFilterField = autoSlicerField(
       customersSchema,
       customersCardinality,
     );
     expect(suggestedFilterField).toBe("Region");
   });
 
-  // | 6 | Filter-pane skips CustomerID (PK) | Customers | result !== `"CustomerID"` |
-  it("CustomerID is NOT picked — filter-pane always skips primary keys", () => {
-    const suggestedFilterField = autoFilterPaneField(
+  // | 6 | Slicer skips CustomerID (PK) | Customers | result !== `"CustomerID"` |
+  it("CustomerID is NOT picked — slicer always skips primary keys", () => {
+    const suggestedFilterField = autoSlicerField(
       customersSchema,
       customersCardinality,
     );
@@ -146,10 +146,10 @@ describe("A new hire drops the Orders table (has OrderDate, Freight measure, Shi
 
 describe("Shipping coordinator adds a 'filter by country' panel on Orders", () => {
   // | 9 | Orders filter-by-country | Orders + cardinality |
-  // | `autoFilterPaneField` === `"ShipRegion"` |
+  // | `autoSlicerField` === `"ShipRegion"` |
   // ShipRegion (4 distinct values) beats ShipCountry (10) on cardinality.
   it("ShipRegion is auto-picked — 4 regions beats 10 countries, lowest-card non-ID column wins", () => {
-    const suggestedFilterField = autoFilterPaneField(
+    const suggestedFilterField = autoSlicerField(
       ordersSchema,
       ordersCardinality,
     );
@@ -158,7 +158,7 @@ describe("Shipping coordinator adds a 'filter by country' panel on Orders", () =
 
   // | 10 | Orders filter skips IDs | Orders | result not in `[OrderID, CustomerID, EmployeeID, ShipVia]` |
   it("OrderID / CustomerID / EmployeeID / ShipVia are all skipped — IDs are poor filter material", () => {
-    const suggestedFilterField = autoFilterPaneField(
+    const suggestedFilterField = autoSlicerField(
       ordersSchema,
       ordersCardinality,
     );

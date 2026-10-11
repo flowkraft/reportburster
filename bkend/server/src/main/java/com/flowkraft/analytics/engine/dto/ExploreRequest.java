@@ -41,7 +41,7 @@ public class ExploreRequest {
 
     /**
      * Fields to compute associated/excluded states for.
-     * Typically all fields that have a FilterPane on the canvas.
+     * Typically all fields that have a Slicer on the canvas.
      */
     private List<String> fields = new ArrayList<>();
 

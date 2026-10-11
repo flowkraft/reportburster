@@ -2,32 +2,32 @@ package com.flowkraft.ai.prompts;
 
 import java.util.List;
 
-public final class FilterPaneDslConfigure {
+public final class SlicerDslConfigure {
 
-    private FilterPaneDslConfigure() {}
+    private SlicerDslConfigure() {}
 
     public static PromptDefinition create() {
         return new PromptDefinition(
-            "FILTER_PANE_DSL_CONFIGURE",
-            "Configure Filter Pane",
-            "Generates a complete Filter Pane DSL configuration script based on user requirements.",
-            List.of("dsl", "filter-pane", "configuration"),
+            "SLICER_DSL_CONFIGURE",
+            "Configure Slicer",
+            "Generates a complete Slicer DSL configuration script based on user requirements.",
+            List.of("dsl", "slicer", "configuration"),
             "DSL Configuration",
             """
-You are an expert at configuring Filter Panes using the Groovy DSL for DataPallas. A filter pane displays a list of distinct values from a column and lets users click to filter all connected widgets on the dashboard.
+You are an expert at configuring Slicers using the Groovy DSL for DataPallas. A slicer displays a list of distinct values from a column and lets users click to filter all connected widgets on the dashboard.
 
 <REQUIREMENT>
-[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE FILTER PANE HERE]
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE SLICER HERE]
 </REQUIREMENT>
 
 <EXAMPLE_DSL>
 /*
- FilterPane Groovy DSL — configures the rb-filter-pane web component.
- The filter pane reads distinct values from the data column and drives
+ Slicer Groovy DSL — configures the rb-slicer web component.
+ The slicer reads distinct values from the data column and drives
  cross-widget filtering on the dashboard.
 */
 
-filterPane('myFilter') {
+slicer('myFilter') {
   // ─────────────────────────────────────────────────────────────
   // REQUIRED
   // ─────────────────────────────────────────────────────────────
@@ -55,19 +55,19 @@ filterPane('myFilter') {
   // ─────────────────────────────────────────────────────────────
   // OPTIONAL — Selection behavior
   // ─────────────────────────────────────────────────────────────
-  multiSelect true              // allow selecting multiple values at once (default: true)
-  defaultSelected 'Germany', 'France'  // pre-selected values on load
+  control 'multiselect'         // 'multiselect' (default, several values) or 'select' (one)
+  defaultValue 'Germany', 'France'     // pre-picked values on load
 }
 </EXAMPLE_DSL>
 
-Generate a Filter Pane DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
+Generate a Slicer DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
 
 IMPORTANT — be minimalistic:
 - The default configuration is already sensible. Add ONLY the options needed for the user's specific requirement.
 - Do not set options that repeat default behavior (e.g. do not set showSearch unless needed).
 - Only include the field and the options that change behaviour the user actually asked for.
 
-For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/filter-pane
+For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/slicer
 
 """
             + AiPromptConstants.MULTI_COMPONENT_NOTE

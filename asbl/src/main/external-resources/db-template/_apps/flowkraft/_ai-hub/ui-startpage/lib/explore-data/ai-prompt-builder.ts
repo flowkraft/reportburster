@@ -136,12 +136,12 @@ const DSL_PROMPT_IDS: Record<string, string> = {
   tabulator:     "TABULATOR_DSL_CONFIGURE",
   chart:         "CHART_DSL_CONFIGURE",
   pivot:         "PIVOT_TABLE_DSL_CONFIGURE",
-  "filter-pane": "FILTER_PANE_DSL_CONFIGURE",
+  "slicer": "SLICER_DSL_CONFIGURE",
   "filter-bar":  "REPORT_PARAMS_DSL_CONFIGURE",
 };
 
 export interface BuildDslPromptOptions {
-  componentType: string;                    // "tabulator" | "chart" | "pivot" | "filter-pane"
+  componentType: string;                    // "tabulator" | "chart" | "pivot" | "slicer"
   requirement: string;                      // user's natural language description
   columns: ColumnSchema[];
   sampleData: Record<string, unknown>[];
@@ -174,7 +174,7 @@ export async function buildDslAiPrompt(opts: BuildDslPromptOptions): Promise<str
   let template = await fetchTemplate(promptId);
 
   template = template.replace(
-    /\[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE (?:TABLE|CHART|PIVOT TABLE|FILTER PANE|REPORT) HERE\]/g,
+    /\[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE (?:TABLE|CHART|PIVOT TABLE|SLICER|REPORT) HERE\]/g,
     requirement
   );
   template = template.replace(

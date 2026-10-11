@@ -10,13 +10,13 @@ import { DslExampleDialog } from "./DslExampleDialog";
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror").then((m) => m.default), { ssr: false });
 
-const DSL_TYPES_WITH_AI = ["tabulator", "chart", "pivot", "filter-pane", "filter-bar"];
+const DSL_TYPES_WITH_AI = ["tabulator", "chart", "pivot", "slicer", "filter-bar"];
 
 const DSL_TYPE_LABELS: Record<string, string> = {
   tabulator:     "Table",
   chart:         "Chart",
   pivot:         "Pivot",
-  "filter-pane": "Filter",
+  "slicer": "Filter",
   "filter-bar":  "Parameters",
 };
 

@@ -51,7 +51,7 @@ public final class AiPromptRegistry {
             JasperLegacyJrxmlTemplateGenerator.create(),
             PdfHtmlTemplateGenerator.create(),
             PdfSampleA4PayslipXslfo.create(),
-            FilterPaneDslConfigure.create(),
+            SlicerDslConfigure.create(),
             // Ask Athena — Athena's data & analytics flows
             AskAthenaAboutDataPallas.create(),
             ExploreMyData.create(),

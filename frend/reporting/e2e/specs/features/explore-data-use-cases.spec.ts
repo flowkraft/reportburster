@@ -4949,7 +4949,7 @@ return ctx.dbSql.rows(sql)`,
   //
   // The Filter step carries the choice, and `any` joins the conditions with OR
   // inside ONE pair of brackets. The brackets are the whole point: without them
-  // a condition the user adds later, or a parameter bound into the pane, would
+  // a condition the user adds later, or a parameter bound into the slicer, would
   // bind tighter than the OR and quietly answer something else.
   //
   // What the text specs cannot prove, and this does (`truths-ai-hub.out`, A39,

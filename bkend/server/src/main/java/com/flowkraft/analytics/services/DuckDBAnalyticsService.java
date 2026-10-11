@@ -187,7 +187,7 @@ public class DuckDBAnalyticsService {
 
         Map<String, ExploreResponse.FieldState> fieldStates = new LinkedHashMap<>();
 
-        // The table with its schema, each name quoted on its own: a pane on
+        // The table with its schema, each name quoted on its own: a slicer on
         // `dash_demo.orders` asked for `"dash_demo.orders"` and got the sample table of that
         // name in the default schema, whose columns are other columns
         // (`ExploreRequest.quotedTable`).
@@ -205,8 +205,8 @@ public class DuckDBAnalyticsService {
 
             List<String> allValues = executeDistinctQuery(connectionCode, allSql, field);
 
-            // What the OTHER panes allow: this field's own picks are left out, so a multi-select
-            // pane does not draw the values it has not picked yet as excluded by the one it has
+            // What the OTHER slicers allow: this field's own picks are left out, so a multi-select
+            // slicer does not draw the values it has not picked yet as excluded by the one it has
             // (`ExploreSelections`, the one place the rule lives).
             String whereClause = ExploreSelections.where(request.getSelections(), field,
                     name -> "\"" + name.replace("\"", "\"\"") + "\"");

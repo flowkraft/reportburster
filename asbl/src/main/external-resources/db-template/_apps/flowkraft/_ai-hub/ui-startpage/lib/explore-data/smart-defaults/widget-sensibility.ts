@@ -159,7 +159,7 @@ export function isSensibleWidget(
     case "text":
     case "divider":
     case "iframe":
-    case "filter-pane":
+    case "slicer":
       return false;
   }
 }

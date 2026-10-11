@@ -18,7 +18,7 @@ import { clearWidgetExecCache } from "@/lib/explore-data/widget-exec-cache";
 export type WidgetType =
   | "chart" | "tabulator" | "pivot" | "number" | "map"
   | "sankey" | "gauge" | "trend" | "progress" | "detail"
-  | "text" | "divider" | "iframe" | "filter-pane";
+  | "text" | "divider" | "iframe" | "slicer";
 
 export type DataSourceMode = "visual" | "ai-sql" | "sql" | "script";
 
@@ -161,18 +161,18 @@ export interface DataSource {
   sql?: string;
   script?: string;
   generatedSql?: string;
-  /** The SQL this widget runs while a filter pane of its canvas reaches it: its own query with one
-   *  `IN (${__pane_<field>})` condition per pane field, written by the canvas and run by the canvas
+  /** The SQL this widget runs while a slicer of its canvas reaches it: its own query with one
+   *  `IN (${__slicer_<field>})` condition per slicer field, written by the canvas and run by the canvas
    *  (`useWidgetData`) and by the published dashboard (`ScriptAssembler.resolveSql` prefers it), so
-   *  both filter identically. Absent on every canvas with no pane - which is every canvas saved
-   *  before this existed - and taken away again when the last pane goes. */
-  paneSql?: string;
-  /** A filter pane's own value list, as SQL: the vendor-safe distinct query the canvas runs for the
-   *  pane (`buildDistinctValuesSql`), kept so the published page fetches the pane's values with the
-   *  very same query. Only a filter-pane widget has it, and `paneSql` above is the other thing - the
+   *  both filter identically. Absent on every canvas with no slicer - which is every canvas saved
+   *  before this existed - and taken away again when the last slicer goes. */
+  slicerSql?: string;
+  /** A slicer's own value list, as SQL: the vendor-safe distinct query the canvas runs for the
+   *  slicer (`buildDistinctValuesSql`), kept so the published page fetches the slicer's values with the
+   *  very same query. Only a slicer widget has it, and `slicerSql` above is the other thing - the
    *  SQL a FILTERED widget runs - so the two never share a field: one effect wrote the value list
-   *  into `paneSql` while another took it away again, and the two kept each other busy. */
-  paneValuesSql?: string;
+   *  into `slicerSql` while another took it away again, and the two kept each other busy. */
+  slicerValuesSql?: string;
   executeVersion?: number;
   scriptExecuteVersion?: number;
 }
@@ -255,7 +255,7 @@ export interface CanvasState {
    *  null = never exported. Lives in its own DB column (not serialized into
    *  the state JSON). Updated by the ExportDialog after a successful export. */
   exportedReportCode: string | null;
-  // Associative exploration (activates when ≥1 filter-pane widget exists)
+  // Associative exploration (activates when ≥1 slicer widget exists)
   exploreSelections: ExploreSelection[];
   exploreFieldStates: FieldStates;
   exploreVersion: number; // bumped on selection change — widgets watch this
@@ -297,7 +297,7 @@ const WIDGET_DEFAULTS: Record<WidgetType, { w: number; h: number }> = {
   text: { w: 6, h: 2 },
   divider: { w: 12, h: 1 },
   iframe: { w: 6, h: 4 },
-  "filter-pane": { w: 3, h: 4 },
+  "slicer": { w: 3, h: 4 },
 };
 
 // --- Associative exploration types ---
@@ -371,7 +371,7 @@ interface CanvasActions {
   toggleExploreSelection: (field: string, value: string) => void;
   clearExploreSelections: () => void;
   setExploreFieldStates: (states: FieldStates) => void;
-  isExploreActive: () => boolean; // true when ≥1 filter-pane widget exists
+  isExploreActive: () => boolean; // true when ≥1 slicer widget exists
   getSerializableState: () => Omit<CanvasState, "selectedWidgetId" | "editMode" | "filterValues" | "filterVersion" | "exploreSelections" | "exploreFieldStates" | "exploreVersion" | "exportedReportCode" | "queryResults">;
 }
 
@@ -792,7 +792,7 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
   },
 
   isExploreActive: () => {
-    return get().widgets.some((w) => w.type === "filter-pane");
+    return get().widgets.some((w) => w.type === "slicer");
   },
 
   getSerializableState: () => {

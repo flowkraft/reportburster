@@ -328,13 +328,13 @@ export interface BuildSqlOptions {
    *  browser's own date when omitted; the tests and the committed case SQL pin
    *  it, so their ranges stay true tomorrow. */
   today?: string;
-  /** The conditions the canvas's filter panes add to this widget: one `in` filter per pane field
-   *  of the widget's table, each bound to that field's own parameter (`pane-filters.ts`). They are
+  /** The conditions the canvas's slicers add to this widget: one `in` filter per slicer field
+   *  of the widget's table, each bound to that field's own parameter (`slicer-filters.ts`). They are
    *  written after the query's own filters and always with AND, because a slicer narrows what the
    *  query already asks - including a query that matches ANY of its own filters, where appending
-   *  to the OR group would widen it instead. Omitted (every canvas with no pane) writes exactly
+   *  to the OR group would widen it instead. Omitted (every canvas with no slicer) writes exactly
    *  the SQL this builder has always written. */
-  paneFilters?: readonly { column: string; operator: string; value: string }[];
+  slicerFilters?: readonly { column: string; operator: string; value: string }[];
 }
 
 export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): string {
@@ -564,8 +564,8 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   const notApplied: string | null = matchAny ? null : "1=1";
   /** The SQL one filter row asks for, or null when the row is not applied at all.
    *
-   *  Shared by the query's own filters and by the filter panes' conditions (`options.paneFilters`),
-   *  so a pane's `in` list is quoted, typed, bound and vendor-written exactly as a filter row's is.
+   *  Shared by the query's own filters and by the slicers' conditions (`options.slicerFilters`),
+   *  so a slicer's `in` list is quoted, typed, bound and vendor-written exactly as a filter row's is.
    */
   const conditionFor = (f: (typeof query.filters)[number]): string | null => {
     // An empty value box means the filter is not applied (the owner,
@@ -672,18 +672,18 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     }
   }
 
-  // The filter panes' own conditions: one line each, AND-ed after whatever the query asks for
+  // The slicers' own conditions: one line each, AND-ed after whatever the query asks for
   // itself, and before the aggregation - which is the only place they can be right for a KPI,
-  // whose result has no column of the pane's field to filter afterwards. Each is bound to the
-  // field's own parameter, so an empty one (nothing picked in that pane) is a line the server
-  // does not apply and the widget answers every row (`pane-filters.ts`).
-  const paneConditions = (options.paneFilters ?? [])
+  // whose result has no column of the slicer's field to filter afterwards. Each is bound to the
+  // field's own parameter, so an empty one (nothing picked in that slicer) is a line the server
+  // does not apply and the widget answers every row (`slicer-filters.ts`).
+  const slicerConditions = (options.slicerFilters ?? [])
     .map(conditionFor)
     .filter((condition): condition is string => condition !== null);
-  if (paneConditions.length > 0) {
+  if (slicerConditions.length > 0) {
     sql += hasWhere
-      ? `\n  AND ${paneConditions.join("\n  AND ")}`
-      : `\nWHERE ${paneConditions.join("\n  AND ")}`;
+      ? `\n  AND ${slicerConditions.join("\n  AND ")}`
+      : `\nWHERE ${slicerConditions.join("\n  AND ")}`;
   }
 
   // GROUP BY (using the bucket / bin expressions when applicable)
@@ -1159,17 +1159,17 @@ function dayParamCondition(
 }
 
 /**
- * The distinct values of one column, for the filter pane's value list.
+ * The distinct values of one column, for the slicer's value list.
  *
  * A pure function of the table, the field, the row cap and the vendor, so the
- * pane runs exactly the SQL the tests read: ANSI everywhere, with the row cap
+ * slicer runs exactly the SQL the tests read: ANSI everywhere, with the row cap
  * written by `limitClause` (a `LIMIT` here was rejected by SQL Server, Oracle
- * and Db2 — the pane's list came back empty on all three).
+ * and Db2 — the slicer's list came back empty on all three).
  *
  * `narrowingLines` are whole condition lines the caller wrote (`AND "x" IN (${p})`),
- * which go in beside the IS NOT NULL. The pane on the canvas passes none: it shows every value and
- * learns which of them still answer rows from `/api/analytics/explore`. A published pane has no
- * such road open to it and passes the other panes' lines instead (`paneNarrowingLines`).
+ * which go in beside the IS NOT NULL. The slicer on the canvas passes none: it shows every value and
+ * learns which of them still answer rows from `/api/analytics/explore`. A published slicer has no
+ * such road open to it and passes the other slicers' lines instead (`slicerNarrowingLines`).
  */
 export function buildDistinctValuesSql(
   table: TableRef | string,
@@ -1200,10 +1200,10 @@ export function sqlForDataSource(
   temporalColumns?: ReadonlySet<string>,
   columnKinds?: ReadonlyMap<string, SqlLiteralKind>,
   paramTypes?: Record<string, string>,
-  paneFilters?: readonly { column: string; operator: string; value: string }[],
+  slicerFilters?: readonly { column: string; operator: string; value: string }[],
 ): string | null {
   if (ds.mode === "visual" && ds.visualQuery) {
-    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes, paneFilters });
+    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes, slicerFilters });
     if (built) return built;
     // buildSql returns "" for cube queries — fall through.
   }

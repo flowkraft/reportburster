@@ -109,7 +109,7 @@
     "oracle": "SELECT \"deal_id\", MAX(\"amount\") AS \"amount_max\"\nFROM \"cube_demo\".\"crm_deals\"\nGROUP BY \"deal_id\"\nORDER BY CASE WHEN MAX(\"amount\") IS NULL THEN 1 ELSE 0 END, MAX(\"amount\") DESC\nFETCH FIRST 2 ROWS ONLY",
     "db2": "SELECT \"deal_id\", MAX(\"amount\") AS \"amount_max\"\nFROM \"cube_demo\".\"crm_deals\"\nGROUP BY \"deal_id\"\nORDER BY CASE WHEN MAX(\"amount\") IS NULL THEN 1 ELSE 0 END, MAX(\"amount\") DESC\nFETCH FIRST 2 ROWS ONLY"
   },
-  "a8-filter-pane-stage": {
+  "a8-slicer-stage": {
     "sqlite": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nLIMIT 2",
     "duckdb": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nLIMIT 2",
     "postgres": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY",
@@ -802,7 +802,7 @@
     "oracle": "SELECT \"OrderID\", MAX(\"Freight\") AS \"Freight_max\"\nFROM \"Orders\"\nGROUP BY \"OrderID\"\nORDER BY CASE WHEN MAX(\"Freight\") IS NULL THEN 1 ELSE 0 END, MAX(\"Freight\") DESC\nFETCH FIRST 3 ROWS ONLY",
     "db2": "SELECT \"OrderID\", MAX(\"Freight\") AS \"Freight_max\"\nFROM \"Orders\"\nGROUP BY \"OrderID\"\nORDER BY CASE WHEN MAX(\"Freight\") IS NULL THEN 1 ELSE 0 END, MAX(\"Freight\") DESC\nFETCH FIRST 3 ROWS ONLY"
   },
-  "b7-filter-pane-shipcountry": {
+  "b7-slicer-shipcountry": {
     "sqlite": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nLIMIT 5",
     "duckdb": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nLIMIT 5",
     "postgres": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY",

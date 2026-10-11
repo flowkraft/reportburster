@@ -41,7 +41,7 @@ import {
   addComputedColumn,
   addCubeToCanvas,
   addFilterBarParam,
-  addFilterPane,
+  addSlicer,
   addGroupBy,
   addTableToCanvas,
   addUIElement,
@@ -468,7 +468,7 @@ async function cFirstRowCell(tabulator: Locator, field: string): Promise<number 
   }, field);
 }
 
-/** Replace the DSL in the Display tab's pane and stay there (no return to the Data tab). */
+/** Replace the DSL in the Display tab's slicer and stay there (no return to the Data tab). */
 async function cTypeDslAndStay(page: Page, dsl: string): Promise<void> {
   await page.locator('#btnDisplayTab').click();
   await page.waitForTimeout(500);
@@ -1000,11 +1000,11 @@ async function g5PublishPivot(
 // ── Group P ─────────────────────────────────────────────────────────────────
 
 /** The seeded orders — the same frozen rows the pivot group reads, and the truth these numbers
- *  come from: a pane's effect is counted in the file the database was filled from. */
+ *  come from: a slicer's effect is counted in the file the database was filled from. */
 const pOrders = g5Orders;
 const pCount = (ok: (r: Record<string, string>) => boolean): number => pOrders.filter(ok).length;
 const pChannels = g5Channels;
-/** The devices the orders really ship on (a sales_rep order has none, and a pane lists no NULL). */
+/** The devices the orders really ship on (a sales_rep order has none, and a slicer lists no NULL). */
 const pDevices = [...new Set(pOrders.map((r) => r.device))].filter((d) => d !== '').sort();
 /** The devices one channel ships on: `mobile_app` only ships on a phone, which is what makes a
  *  grey-out worth asserting - the other devices are excluded by that one pick. */
@@ -1019,16 +1019,16 @@ function pPerChannel(ok: (r: Record<string, string>) => boolean = () => true): R
   return n;
 }
 
-/** A value as `rb-filter-pane` writes it into its own ids (its `safeId`). */
+/** A value as `rb-slicer` writes it into its own ids (its `safeId`). */
 const pSafeId = (value: string): string => value.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-/** One value of one pane, by its own id (the pane's id is the widget's). */
-const pValue = (page: Page, pane: string, value: string): Locator =>
-  page.locator(`[id="paneValue-${pane}-${pSafeId(value)}"]`);
+/** One value of one slicer, by its own id (the slicer's id is the widget's). */
+const pValue = (page: Page, slicer: string, value: string): Locator =>
+  page.locator(`[id="slicerValue-${slicer}-${pSafeId(value)}"]`);
 
 /** Pick a value, or drop it again: one click on the value, the way a reader does it. */
-async function pClick(page: Page, pane: string, value: string): Promise<void> {
-  await pValue(page, pane, value).click();
+async function pClick(page: Page, slicer: string, value: string): Promise<void> {
+  await pValue(page, slicer, value).click();
   await page.waitForTimeout(500);
 }
 
@@ -1106,7 +1106,7 @@ async function pWaitCells(
   return pPublishedCells(page, componentId);
 }
 
-/** What a widget says about the pane fields that do not reach it. */
+/** What a widget says about the slicer fields that do not reach it. */
 const pNotFiltered = (page: Page, widgetId: string): Locator =>
   page.locator(`[id="widgetNotFiltered-${widgetId}"]`);
 
@@ -4117,12 +4117,12 @@ test('(canvas mechanics) M55 Published pivot: filter a field\'s values', async (
   }
 });
 
-test('(canvas mechanics) M56 A filter pane filters every widget built on its table', async () => {
+test('(canvas mechanics) M56 A slicer filters every widget built on its table', async () => {
   test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
-  await withFreshCanvas(page, 'E2E mech M56 Filter pane', async () => {
-    // The widgets first, while there is no pane yet: a KPI and a bar chart built in the Visual tab,
-    // and two pasted-SQL tables - one whose result carries the panes' own columns and one that
-    // carries neither. Each answers for the whole table here, which is what the panes then change.
+  await withFreshCanvas(page, 'E2E mech M56 Slicer', async () => {
+    // The widgets first, while there is no slicer yet: a KPI and a bar chart built in the Visual tab,
+    // and two pasted-SQL tables - one whose result carries the slicers' own columns and one that
+    // carries neither. Each answers for the whole table here, which is what the slicers then change.
     const kpi = await eNewVisualWidget(page, 'orders');
     await addAggregation(page, 0, 'COUNT', 'order_id');
     await runVisualQuery(page);
@@ -4148,20 +4148,20 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
       'SELECT COUNT(*) AS n FROM dash_demo.orders');
     await g4ScalarIs(page, sqlBlind, pOrders.length, 'the pasted count counts every order');
 
-    // Two panes on two fields of the same table. A pane is added like any other element and reads
+    // Two slicers on two fields of the same table. A slicer is added like any other element and reads
     // a table like any other widget.
-    const channelPane = await addFilterPane(page, 'orders', 'channel');
-    const devicePane = await addFilterPane(page, 'orders', 'device');
-    await expect(pValue(page, channelPane, 'web'), 'the pane lists the values of its field').toBeVisible();
+    const channelSlicer = await addSlicer(page, 'orders', 'channel');
+    const deviceSlicer = await addSlicer(page, 'orders', 'device');
+    await expect(pValue(page, channelSlicer, 'web'), 'the slicer lists the values of its field').toBeVisible();
 
-    // − a pane with nothing picked is not a filter: every widget still answers for the whole table.
+    // − a slicer with nothing picked is not a filter: every widget still answers for the whole table.
     await g4ScalarIs(page, kpi, pOrders.length, 'with nothing picked the KPI is unchanged');
     await g4ScalarIs(page, sqlBlind, pOrders.length, 'and so is the pasted count');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'and every bar is still there');
 
-    // + a value picked in the channel pane filters every widget the pane reaches - the Visual KPI,
+    // + a value picked in the channel slicer filters every widget the slicer reaches - the Visual KPI,
     //   the Visual chart and the pasted query whose result has that column - to the seeded rows.
-    await pClick(page, channelPane, 'web');
+    await pClick(page, channelSlicer, 'web');
     const web = (r: Record<string, string>) => r.channel === 'web';
     await g4ScalarIs(page, kpi, pCount(web), 'the KPI counts the web orders');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['web']), 'one bar is left');
@@ -4173,15 +4173,15 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
 
     // − the pasted query whose result has neither column is NOT filtered - a condition on a column
     //   that is not there would fail the whole query - and the widget says so itself.
-    await g4ScalarIs(page, sqlBlind, pOrders.length, 'the count a pane cannot reach still counts every order');
+    await g4ScalarIs(page, sqlBlind, pOrders.length, 'the count a slicer cannot reach still counts every order');
     await expect(pNotFiltered(page, sqlBlind), 'it names the fields that do not reach it')
       .toHaveText('not filtered by channel, device');
     for (const reached of [kpi, chart, sqlWithColumns]) {
-      await expect(pNotFiltered(page, reached), 'a widget the panes do reach says nothing').toHaveCount(0);
+      await expect(pNotFiltered(page, reached), 'a widget the slicers do reach says nothing').toHaveCount(0);
     }
 
     // + a second field ANDs with the first: one pair of values, one row, its own count.
-    await pClick(page, devicePane, 'mobile');
+    await pClick(page, deviceSlicer, 'mobile');
     const webMobile = (r: Record<string, string>) => r.channel === 'web' && r.device === 'mobile';
     await g4ScalarIs(page, kpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
     await pWaitRows(page, sqlWithColumns,
@@ -4198,41 +4198,41 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
       .toHaveCount(0);
 
     // + the grey-outs: mobile_app orders only ever ship on a phone, so with mobile_app picked the
-    //   other devices are the values that would answer no row at all, and the pane dims them.
-    await pClick(page, channelPane, 'mobile_app');
+    //   other devices are the values that would answer no row at all, and the slicer dims them.
+    await pClick(page, channelSlicer, 'mobile_app');
     for (const device of pDevicesOf('mobile_app')) {
-      await expect(pValue(page, devicePane, device), `a mobile_app order can ship on a ${device}`)
+      await expect(pValue(page, deviceSlicer, device), `a mobile_app order can ship on a ${device}`)
         .toHaveAttribute('data-state', 'associated', { timeout: 30_000 });
     }
     for (const device of pDevices.filter((d) => !pDevicesOf('mobile_app').includes(d))) {
-      await expect(pValue(page, devicePane, device), `no mobile_app order ships on a ${device}`)
+      await expect(pValue(page, deviceSlicer, device), `no mobile_app order ships on a ${device}`)
         .toHaveAttribute('data-state', 'excluded', { timeout: 30_000 });
     }
-    // − a pick does NOT dim the pane it was made in: a pane's values are a list, and a second pick
+    // − a pick does NOT dim the slicer it was made in: a slicer's values are a list, and a second pick
     //   is OR-ed into it, so every other value of that field stays live.
-    await expect(pValue(page, channelPane, 'mobile_app'), 'the picked value shows as picked')
+    await expect(pValue(page, channelSlicer, 'mobile_app'), 'the picked value shows as picked')
       .toHaveAttribute('data-state', 'selected');
-    await expect(pValue(page, channelPane, 'web'), 'and its neighbour is still worth picking')
+    await expect(pValue(page, channelSlicer, 'web'), 'and its neighbour is still worth picking')
       .toHaveAttribute('data-state', 'associated');
 
-    // + two values of one pane are counted together, not against each other.
-    await pClick(page, channelPane, 'web');
+    // + two values of one slicer are counted together, not against each other.
+    await pClick(page, channelSlicer, 'web');
     await g4ScalarIs(page, kpi, pCount((r) => r.channel === 'mobile_app' || r.channel === 'web'),
       'the KPI counts the mobile_app orders and the web orders');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['mobile_app', 'web']), 'two bars are left');
   });
 });
 
-test('(canvas mechanics) M57 The same panes on the published dashboard, and a locked link only narrows', async () => {
+test('(canvas mechanics) M57 The same slicers on the published dashboard, and a locked link only narrows', async () => {
   test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
   let reportId: string | undefined;
   let readerContext: BrowserContext | undefined;
 
   try {
-    await withFreshCanvas(page, 'E2E mech M57 Published filter pane', async (canvasId) => {
+    await withFreshCanvas(page, 'E2E mech M57 Published slicer', async (canvasId) => {
       // The same dashboard as M56, with the two things a published page adds: a filter bar, so a
       // share link has something to lock, and a pasted query that uses it. The query's result
-      // carries both pane fields, so both panes reach it - and the filter bar's own condition sits
+      // carries both slicer fields, so both slicers reach it - and the filter bar's own condition sits
       // on its own line, so "All channels" (the default) counts every order.
       await addFilterBarParam(page, B_CHANNEL_FILTER_DSL);
 
@@ -4247,26 +4247,26 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
       await pWaitRows(page, table, (rows) => rows.length === pPairs.length,
         'the pasted query answers a row per channel and device');
 
-      const channelPane = await addFilterPane(page, 'orders', 'channel');
-      const devicePane = await addFilterPane(page, 'orders', 'device');
-      await expect(pValue(page, channelPane, 'web'), 'the pane lists the values of its field').toBeVisible();
-      await expect(pValue(page, devicePane, 'mobile'), 'and so does the second one').toBeVisible();
+      const channelSlicer = await addSlicer(page, 'orders', 'channel');
+      const deviceSlicer = await addSlicer(page, 'orders', 'device');
+      await expect(pValue(page, channelSlicer, 'web'), 'the slicer lists the values of its field').toBeVisible();
+      await expect(pValue(page, deviceSlicer, 'mobile'), 'and so does the second one').toBeVisible();
 
       // The names the published dashboard calls these widgets, which is how a reader's page is read.
-      // A pane is named after the field it filters by, and that name exists once the autosave has
-      // landed the field: read a moment too early, a pane answers under `filter-pane_<its id>` and
+      // A slicer is named after the field it filters by, and that name exists once the autosave has
+      // landed the field: read a moment too early, a slicer answers under `slicer_<its id>` and
       // nothing on the published page is found by it.
       let ids: Record<string, string[]> = {};
       await expect
         .poll(async () => {
           ids = await getCanvasComponentIds(page, canvasId);
-          return (ids['filter-pane'] ?? []).join(',');
-        }, { message: 'the saved canvas names both panes after their fields', timeout: 30_000, intervals: [1_000] })
-        .toMatch(/^filter-pane_channel_[^,]+,filter-pane_device_[^,]+$/);
+          return (ids['slicer'] ?? []).join(',');
+        }, { message: 'the saved canvas names both slicers after their fields', timeout: 30_000, intervals: [1_000] })
+        .toMatch(/^slicer_channel_[^,]+,slicer_device_[^,]+$/);
       const pubKpi = ids.number[0];
       const pubTable = ids.tabulator[0];
-      const pubChannelPane = ids['filter-pane'][0];
-      const pubDevicePane = ids['filter-pane'][1];
+      const pubChannelSlicer = ids['slicer'][0];
+      const pubDeviceSlicer = ids['slicer'][1];
 
       const published = await publishDashboard(page);
       reportId = published.reportId;
@@ -4286,29 +4286,29 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
 
       // ── The same clicks, on the published page ───────────────────────────
       await openPublished(page, reportId);
-      await expect(pValue(page, pubChannelPane, 'web'), 'the published pane lists its own values')
+      await expect(pValue(page, pubChannelSlicer, 'web'), 'the published slicer lists its own values')
         .toBeVisible({ timeout: 60_000 });
 
       // − nothing picked is not a filter here either.
       await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
       await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length,
         'and the published query answers a row per channel and device');
-      await expect(page.locator('#paneSelectionBar'), 'with nothing picked there is nothing to show')
+      await expect(page.locator('#slicerSelectionBar'), 'with nothing picked there is nothing to show')
         .toHaveCount(0);
 
       // + one value picked: the same numbers the canvas gave for the same click.
-      await pClick(page, pubChannelPane, 'web');
+      await pClick(page, pubChannelSlicer, 'web');
       await pPublishedNumberIs(page, pubKpi, pCount((r) => r.channel === 'web'),
         'the published KPI counts the web orders');
       await pWaitCells(page, pubTable,
         (cells) => cells.length === pDevicesOf('web').length && cells.every((row) => row[0] === 'web'),
         'and the published query keeps its web rows only');
-      await expect(page.locator('#paneSelectionBar'), 'the chips bar says what is picked').toBeVisible();
+      await expect(page.locator('#slicerSelectionBar'), 'the chips bar says what is picked').toBeVisible();
       await expect(page.locator(`[id="btnRemoveSelection-channel-web"]`), 'one chip, for that one pick')
         .toBeVisible();
 
       // + a second field ANDs with the first, on the published page as on the canvas.
-      await pClick(page, pubDevicePane, 'mobile');
+      await pClick(page, pubDeviceSlicer, 'mobile');
       const webMobile = (r: Record<string, string>) => r.channel === 'web' && r.device === 'mobile';
       await pPublishedNumberIs(page, pubKpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
       await pWaitCells(page, pubTable,
@@ -4320,23 +4320,23 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
       await page.locator('#btnClearSelections').click();
       await pPublishedNumberIs(page, pubKpi, pOrders.length, 'Clear all brings every order back');
       await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length, 'and every pair');
-      await expect(page.locator('#paneSelectionBar'), 'and the chips bar goes with the picks')
+      await expect(page.locator('#slicerSelectionBar'), 'and the chips bar goes with the picks')
         .toHaveCount(0);
 
-      // + the grey-outs, which a published pane reads off its own list (it may not ask
+      // + the grey-outs, which a published slicer reads off its own list (it may not ask
       //   /api/analytics/explore): a mobile_app order only ever ships on a phone, so with
       //   mobile_app picked the other devices are the values that would answer no row.
-      await pClick(page, pubChannelPane, 'mobile_app');
+      await pClick(page, pubChannelSlicer, 'mobile_app');
       for (const device of pDevicesOf('mobile_app')) {
-        await expect(pValue(page, pubDevicePane, device), `a mobile_app order can ship on a ${device}`)
+        await expect(pValue(page, pubDeviceSlicer, device), `a mobile_app order can ship on a ${device}`)
           .toHaveAttribute('data-state', 'associated', { timeout: 60_000 });
       }
       for (const device of pDevices.filter((d) => !pDevicesOf('mobile_app').includes(d))) {
-        await expect(pValue(page, pubDevicePane, device), `no mobile_app order ships on a ${device}`)
+        await expect(pValue(page, pubDeviceSlicer, device), `no mobile_app order ships on a ${device}`)
           .toHaveAttribute('data-state', 'excluded', { timeout: 60_000 });
       }
-      // − and a pane's own pick leaves its own list alone: its neighbour is still worth picking.
-      await expect(pValue(page, pubChannelPane, 'web'), 'the other channels stay live')
+      // − and a slicer's own pick leaves its own list alone: its neighbour is still worth picking.
+      await expect(pValue(page, pubChannelSlicer, 'web'), 'the other channels stay live')
         .toHaveAttribute('data-state', 'associated');
 
       // ── A share link with a locked filter-bar value: a pick only narrows ──
@@ -4353,23 +4353,23 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
         cells.length > 0 && cells.every((row) => row[0] === B_CHANNEL);
       await pWaitCells(reader, pubTable, lockedRows, 'the locked link answers for its own channel only');
 
-      // + a pane pick of the locked value changes nothing: it narrows to what is already there.
-      await pClick(reader, pubChannelPane, B_CHANNEL);
+      // + a slicer pick of the locked value changes nothing: it narrows to what is already there.
+      await pClick(reader, pubChannelSlicer, B_CHANNEL);
       await pWaitCells(reader, pubTable,
         (cells) => lockedRows(cells) && cells.length === pDevicesOf(B_CHANNEL).length,
         'picking the locked channel leaves the same rows');
 
-      // − a pane pick of ANOTHER value cannot widen past the lock: it narrows to nothing.
-      await pClick(reader, pubChannelPane, B_CHANNEL);
-      await pClick(reader, pubChannelPane, 'web');
+      // − a slicer pick of ANOTHER value cannot widen past the lock: it narrows to nothing.
+      await pClick(reader, pubChannelSlicer, B_CHANNEL);
+      await pClick(reader, pubChannelSlicer, 'web');
       await pWaitCells(reader, pubTable, (cells) => cells.length === 0,
-        'a pane cannot reach rows the link locked away');
+        'a slicer cannot reach rows the link locked away');
       await expect(reader.locator(`[id="btnRemoveSelection-channel-web"]`), 'the pick itself was taken')
         .toBeVisible();
 
       // + and a device pick narrows inside the lock, as a slicer should.
       await reader.locator('#btnClearSelections').click();
-      await pClick(reader, pubDevicePane, pDevicesOf(B_CHANNEL)[0]);
+      await pClick(reader, pubDeviceSlicer, pDevicesOf(B_CHANNEL)[0]);
       await pWaitCells(reader, pubTable,
         (cells) => cells.length === 1 && cells[0][0] === B_CHANNEL
           && cells[0][1] === pDevicesOf(B_CHANNEL)[0],

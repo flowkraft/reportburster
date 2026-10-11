@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsScript;
 import com.flowkraft.reporting.dsl.common.BlockFormEmitter;
 import com.flowkraft.reporting.dsl.common.BlockFormRules;
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsScript;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptionsScript;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsScript;
 import com.flowkraft.reporting.dsl.tabulator.TabulatorOptions;
 import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsParser;
@@ -43,7 +43,7 @@ import groovy.lang.GroovyShell;
  * <p>For each widget type there are two tests:
  * <ol>
  *   <li><b>D21 simulation</b> — the exact g-dashboard DSL that exposes real production scenarios:
- *       money-formatted tabulator columns, chart color arrays, pivot sorting, full filterpane
+ *       money-formatted tabulator columns, chart color arrays, pivot sorting, full slicer
  *       surface, parameters with SQL-driven select. These are the scenarios where bugs hurt first.</li>
  *   <li><b>Parameterized over the canonical showcase file</b> — the shipped {@code *-examples-*.groovy}
  *       files that cover the full API surface of each underlying library (tabulator.info, Chart.js,
@@ -331,52 +331,89 @@ public class DslFullRoundTripTest {
     }
 
     // ═════════════════════════════════════════════════════════════════════════════
-    // FILTER PANE
+    // SLICER
     // ═════════════════════════════════════════════════════════════════════════════
 
     /**
-     * FilterPane full-surface round-trip — exercises all 8 properties in one shot.
+     * Slicer full-surface round-trip — exercises all 9 properties in one shot.
      *
-     * <p>FilterPane has a strict, fixed API (no {@code methodMissing}) — every property has an
-     * explicit setter. The key round-trip risk is the {@code defaultSelected} list: the emitter
-     * must emit it as varargs ({@code defaultSelected 'Germany', 'France'}) so the
-     * {@code defaultSelected(String...)} parser method accepts it. This test verifies every
-     * property survives, with particular focus on {@code defaultSelected} preserving all elements.
+     * <p>Slicer has a strict, fixed API (no {@code methodMissing}) — every property has an
+     * explicit setter. The key round-trip risk is the {@code defaultValue} list: the emitter
+     * must emit it as varargs ({@code defaultValue 'Germany', 'France'}) so the
+     * {@code defaultValue(String...)} parser method accepts it. This test verifies every
+     * property survives, with particular focus on {@code defaultValue} preserving all elements.
      *
-     * <p>DSL mirrors the canonical filterPane usage from the docs and the D21 g-dashboard
+     * <p>DSL mirrors the canonical slicer usage from the docs and the D21 g-dashboard
      * country parameter.
      */
     @Test
-    public void roundTrip_filterPaneFullSurface() throws Exception {
+    public void roundTrip_slicerFullSurface() throws Exception {
         String dsl =
-            "filterPane('countryFilter') {\n" +
+            "slicer('countryFilter') {\n" +
             "  field 'ShipCountry'\n" +
             "  label 'Country'\n" +
             "  sort 'asc'\n" +
             "  maxValues 500\n" +
             "  showSearch true\n" +
             "  showCount true\n" +
-            "  defaultSelected 'Germany', 'France', 'Spain'\n" +
-            "  multiSelect true\n" +
+            "  defaultValue 'Germany', 'France', 'Spain'\n" +
+            "  control 'multiselect'\n" +
             "  height '300px'\n" +
             "}";
 
-        Map<String, Map<String, Object>> namedOpts = parseFilterPaneRawNamed(dsl);
+        Map<String, Map<String, Object>> namedOpts = parseSlicerRawNamed(dsl);
         Map<String, Object> opts = namedOpts.get("countryFilter");
         assertNotNull(opts, "namedOptions must contain 'countryFilter'");
-        assertEquals(3, ((List<?>) opts.get("defaultSelected")).size(),
-            "All 3 defaultSelected values must be present after first parse");
+        assertEquals(3, ((List<?>) opts.get("defaultValue")).size(),
+            "All 3 defaultValue values must be present after first parse");
 
-        String emitted = BlockFormEmitter.emitNamed("filterPane", "countryFilter", opts,
-                                                     BlockFormRules.FILTERPANE);
+        String emitted = BlockFormEmitter.emitNamed("slicer", "countryFilter", opts,
+                                                     BlockFormRules.SLICER);
 
-        Map<String, Map<String, Object>> reparsed = parseFilterPaneRawNamed(emitted);
+        Map<String, Map<String, Object>> reparsed = parseSlicerRawNamed(emitted);
         Map<String, Object> opts2 = reparsed.get("countryFilter");
-        assertNotNull(opts2, "Re-parsed filterPane must contain 'countryFilter'");
+        assertNotNull(opts2, "Re-parsed slicer must contain 'countryFilter'");
 
-        assertEquals(opts, opts2, "All 8 filterPane properties must survive round-trip");
+        assertEquals(opts, opts2, "All 9 slicer properties must survive round-trip");
         assertDoesNotThrow(() -> new ObjectMapper().writeValueAsString(opts2),
-            "Jackson serialization failed for filterPane");
+            "Jackson serialization failed for slicer");
+    }
+
+    /**
+     * The other two shapes a slicer is written in, round-tripped (owner decisions 19 and 20):
+     * the name alone, where the name IS the field, and {@code control 'select'} for a slicer that
+     * holds one value at a time.
+     *
+     * <p>Both matter to the Display tab: the panel hands the canonical Map to {@code /serialize},
+     * the author edits the text, {@code /parse} hands a Map back, and a property that did not
+     * survive that trip is a setting the author loses by opening the editor.
+     */
+    @Test
+    public void roundTrip_slicerNameIsTheFieldAndSingleSelect() throws Exception {
+        // The name alone: no `field` line at all.
+        Map<String, Object> bare = parseSlicerRawNamed("slicer('channel')").get("channel");
+        assertNotNull(bare, "`slicer('channel')` alone is a slicer");
+        assertEquals("channel", bare.get("field"), "the name is the field");
+
+        String emittedBare = BlockFormEmitter.emitNamed("slicer", "channel", bare,
+                                                         BlockFormRules.SLICER);
+        assertEquals(bare, parseSlicerRawNamed(emittedBare).get("channel"),
+            "a name-only slicer survives the round trip");
+
+        // One value at a time, and a default to start on.
+        String dsl =
+            "slicer('stage') {\n" +
+            "  control 'select'\n" +
+            "  defaultValue 'Negotiation'\n" +
+            "}";
+        Map<String, Object> opts = parseSlicerRawNamed(dsl).get("stage");
+        assertEquals("select", opts.get("control"));
+        assertEquals(List.of("Negotiation"), opts.get("defaultValue"));
+        assertEquals("stage", opts.get("field"));
+
+        String emitted = BlockFormEmitter.emitNamed("slicer", "stage", opts, BlockFormRules.SLICER);
+        assertEquals(opts, parseSlicerRawNamed(emitted).get("stage"),
+            "`control` and a one-value `defaultValue` survive the round trip");
     }
 
     // ═════════════════════════════════════════════════════════════════════════════
@@ -451,12 +488,12 @@ public class DslFullRoundTripTest {
         return script.getNamedOptions();
     }
 
-    private static Map<String, Map<String, Object>> parseFilterPaneRawNamed(String dslCode) throws Exception {
+    private static Map<String, Map<String, Object>> parseSlicerRawNamed(String dslCode) throws Exception {
         Binding b = new Binding();
         CompilerConfiguration cfg = new CompilerConfiguration();
-        cfg.setScriptBaseClass(FilterPaneOptionsScript.class.getName());
-        GroovyShell shell = new GroovyShell(FilterPaneOptionsScript.class.getClassLoader(), b, cfg);
-        FilterPaneOptionsScript script = (FilterPaneOptionsScript) shell.parse(dslCode);
+        cfg.setScriptBaseClass(SlicerOptionsScript.class.getName());
+        GroovyShell shell = new GroovyShell(SlicerOptionsScript.class.getClassLoader(), b, cfg);
+        SlicerOptionsScript script = (SlicerOptionsScript) shell.parse(dslCode);
         script.setBinding(b);
         script.run();
         return script.getNamedOptions();

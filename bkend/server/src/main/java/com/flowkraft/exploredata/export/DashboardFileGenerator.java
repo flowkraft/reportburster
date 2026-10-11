@@ -46,7 +46,7 @@ public class DashboardFileGenerator {
         String chartConfigGroovy,
         String tabulatorConfigGroovy,
         String pivotConfigGroovy,
-        String filterPaneConfigGroovy,
+        String slicerConfigGroovy,
         String parametersSpecGroovy,
         String valueConfigJson,
         String mapConfigJson,
@@ -80,7 +80,7 @@ public class DashboardFileGenerator {
             generateChartConfig(byType(widgets, "chart")),
             generateTabulatorConfig(byType(widgets, "tabulator")),
             generatePivotConfig(byType(widgets, "pivot")),
-            generateFilterPaneConfig(byType(widgets, "filter-pane")),
+            generateSlicerConfig(byType(widgets, "slicer")),
             parametersSpec,
             generateValueConfig(byType(widgets, "number")),
             generateMapConfig(byType(widgets, "map")),
@@ -324,10 +324,10 @@ public class DashboardFileGenerator {
                     "    <div class=\"grid-item\" style=\"%s\">\n      <div class=\"text-block\">%s</div>\n    </div>",
                     style, html);
             }
-            case "filter-pane" -> {
+            case "slicer" -> {
                 yield String.format(
-                    "    <div class=\"grid-item\" style=\"%s\">\n      <rb-filter-pane %s field=\"%s\" table-name=\"%s\" connection-code=\"\"></rb-filter-pane>\n    </div>",
-                    style, attrs, escapeHtmlAttr(filterPaneField(w)), visualQueryTable(w));
+                    "    <div class=\"grid-item\" style=\"%s\">\n      <rb-slicer %s field=\"%s\" table-name=\"%s\" connection-code=\"\"></rb-slicer>\n    </div>",
+                    style, attrs, escapeHtmlAttr(slicerField(w)), visualQueryTable(w));
             }
             case "divider" ->
                 String.format(
@@ -605,11 +605,11 @@ public class DashboardFileGenerator {
         }).collect(Collectors.joining("\n\n"));
     }
 
-    // ── Filter Pane Config (Groovy DSL) ───────────────────────────────────────
+    // ── Slicer Config (Groovy DSL) ───────────────────────────────────────
 
-    private static String generateFilterPaneConfig(List<Map<String, Object>> filterPanes) {
-        if (filterPanes.isEmpty()) return "";
-        return filterPanes.stream().map(w -> {
+    private static String generateSlicerConfig(List<Map<String, Object>> slicers) {
+        if (slicers.isEmpty()) return "";
+        return slicers.stream().map(w -> {
             String id = componentId(w);
             Map<String, Object> cfg = displayConfig(w);
             // Single source of truth: displayConfig.dslConfig (Map). See
@@ -620,11 +620,11 @@ public class DashboardFileGenerator {
                 Map<String, Object> opts = (Map<String, Object>) map;
                 Object field = opts.get("field");
                 if (!(field instanceof String fs) || fs.isBlank()) {
-                    return "// filterPane('" + id + "') — no field configured";
+                    return "// slicer('" + id + "') — no field configured";
                 }
-                return BlockFormEmitter.emitNamed("filterPane", id, opts, BlockFormRules.FILTERPANE);
+                return BlockFormEmitter.emitNamed("slicer", id, opts, BlockFormRules.SLICER);
             }
-            return "// filterPane('" + id + "') — no field configured";
+            return "// slicer('" + id + "') — no field configured";
         }).collect(Collectors.joining("\n\n"));
     }
 
@@ -892,15 +892,15 @@ public class DashboardFileGenerator {
     }
 
     /**
-     * The field one filter pane filters by, from the canonical DSL Map
+     * The field one slicer filters by, from the canonical DSL Map
      * ({@code displayConfig.dslConfig}, Principle 4 of DSLPrinciplesReadme), and its label the same
-     * way. The structured {@code filterField} / {@code filterPaneLabel} this used to read were
-     * removed from the canvas, so every pane published since then named no field at all.
+     * way. The structured {@code filterField} / {@code slicerLabel} this used to read were
+     * removed from the canvas, so every slicer published since then named no field at all.
      *
-     * <p>Mirrored in {@code ScriptAssembler} - the two have to name a pane the same way, because one
+     * <p>Mirrored in {@code ScriptAssembler} - the two have to name a slicer the same way, because one
      * writes the element and the other the block that fills it.
      */
-    private static String filterPaneField(Map<String, Object> widget) {
+    private static String slicerField(Map<String, Object> widget) {
         Map<String, Object> dc = displayConfig(widget);
         Object dsl = dc.get("dslConfig");
         if (dsl instanceof Map<?, ?> map) {
@@ -910,15 +910,15 @@ public class DashboardFileGenerator {
         return strOr(dc, "filterField", "");
     }
 
-    /** The label one filter pane shows, from the same Map; "" when the author left it to the field. */
-    private static String filterPaneLabel(Map<String, Object> widget) {
+    /** The label one slicer shows, from the same Map; "" when the author left it to the field. */
+    private static String slicerLabel(Map<String, Object> widget) {
         Map<String, Object> dc = displayConfig(widget);
         Object dsl = dc.get("dslConfig");
         if (dsl instanceof Map<?, ?> map) {
             Object label = map.get("label");
             if (label instanceof String s && !s.isBlank()) return s;
         }
-        return strOr(dc, "filterPaneLabel", "");
+        return strOr(dc, "slicerLabel", "");
     }
 
     private static String inferSemanticSlug(String type, Map<String, Object> widget) {
@@ -929,7 +929,7 @@ public class DashboardFileGenerator {
             case "chart"       -> { List<String> f = listOfStr(dc, "xFields");   yield f.isEmpty() ? "" : f.get(0); }
             case "tabulator"   -> visualQueryTable(widget);
             case "pivot"       -> { List<String> r = listOfStr(dc, "pivotRows"); yield r.isEmpty() ? "" : r.get(0); }
-            case "filter-pane" -> filterPaneField(widget);
+            case "slicer" -> slicerField(widget);
             case "gauge"       -> strOr(dc, "field",        "");
             case "trend"       -> strOr(dc, "dateField",    "");
             case "sankey"      -> strOr(dc, "sourceField",  "");
@@ -940,7 +940,7 @@ public class DashboardFileGenerator {
         String label = switch (type) {
             case "number"      -> strOr(dc, "numberLabel",     "");
             case "chart"       -> strOr(dc, "chartTitle",      "");
-            case "filter-pane" -> filterPaneLabel(widget);
+            case "slicer" -> slicerLabel(widget);
             case "gauge"       -> strOr(dc, "label",           "");
             case "trend"       -> strOr(dc, "label",           "");
             default            -> "";

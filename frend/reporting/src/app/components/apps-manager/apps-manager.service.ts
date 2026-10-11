@@ -61,7 +61,7 @@ export class AppsManagerService {
         icon: 'bar-chart',
         category: 'Data & Analytics',
         type: 'docker',
-        description: 'Explore your databases visually, create stunning charts and build interactive dashboards. Connect to Oracle, SQL Server, PostgreSQL, MySQL, ClickHouse and more. Use <strong>data tables</strong>, <strong>KPI cards</strong>, <strong>charts</strong>, <strong>pivot tables</strong>, and <strong>filter panes</strong> to create BI dashboards powered by your own data. AI assistance is available (when needed).',
+        description: 'Explore your databases visually, create stunning charts and build interactive dashboards. Connect to Oracle, SQL Server, PostgreSQL, MySQL, ClickHouse and more. Use <strong>data tables</strong>, <strong>KPI cards</strong>, <strong>charts</strong>, <strong>pivot tables</strong>, and <strong>slicers</strong> to create BI dashboards powered by your own data. AI assistance is available (when needed).',
         url: 'http://localhost:8440/explore-data',
         launchLinks: [
           { label: 'Explore Data', url: 'http://localhost:8440/explore-data', icon: 'th-large' },

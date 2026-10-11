@@ -36,7 +36,7 @@ import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsParser;
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptionsParser;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
@@ -398,30 +398,32 @@ public class ReportingService {
 			log.debug("No pivot DSL file found at: " + pivotPath);
 		}
 
-		// Load Filter Pane DSL
-		Path filterPanePath = itemDir.resolve(reportCode + "-filterpane-config.groovy");
-		if (Files.exists(filterPanePath)) {
-			String dslContent = Files.readString(filterPanePath);
-			config.filterPaneDsl = dslContent;
-			var opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dslContent);
+		// Load Slicer DSL
+		Path slicerPath = itemDir.resolve(reportCode + "-slicer-config.groovy");
+		if (Files.exists(slicerPath)) {
+			String dslContent = Files.readString(slicerPath);
+			config.slicerDsl = dslContent;
+			var opts = SlicerOptionsParser.parseGroovySlicerDslCode(dslContent);
 			if (opts != null) {
-				config.filterPaneOptions = new HashMap<>();
-				if (opts.getField() != null) config.filterPaneOptions.put("field", opts.getField());
-				if (opts.getLabel() != null) config.filterPaneOptions.put("label", opts.getLabel());
-				config.filterPaneOptions.put("sort", opts.getSort());
-				config.filterPaneOptions.put("maxValues", opts.getMaxValues());
-				if (opts.getShowSearch() != null) config.filterPaneOptions.put("showSearch", opts.getShowSearch());
-				config.filterPaneOptions.put("showCount", opts.isShowCount());
-				if (opts.getDefaultSelected() != null && !opts.getDefaultSelected().isEmpty()) {
-					config.filterPaneOptions.put("defaultSelected", opts.getDefaultSelected());
+				config.slicerOptions = new HashMap<>();
+				if (opts.getField() != null) config.slicerOptions.put("field", opts.getField());
+				if (opts.getLabel() != null) config.slicerOptions.put("label", opts.getLabel());
+				config.slicerOptions.put("sort", opts.getSort());
+				config.slicerOptions.put("maxValues", opts.getMaxValues());
+				if (opts.getShowSearch() != null) config.slicerOptions.put("showSearch", opts.getShowSearch());
+				config.slicerOptions.put("showCount", opts.isShowCount());
+				// The slicer's own words, which are a parameter's words (owner decision 19); the
+				// component translates them to its props in one place (`RbSlicer`).
+				if (opts.getDefaultValue() != null && !opts.getDefaultValue().isEmpty()) {
+					config.slicerOptions.put("defaultValue", opts.getDefaultValue());
 				}
-				config.filterPaneOptions.put("multiSelect", opts.isMultiSelect());
-				config.filterPaneOptions.put("height", opts.getHeight());
+				config.slicerOptions.put("control", opts.getControl());
+				config.slicerOptions.put("height", opts.getHeight());
 
 				// Named blocks
 				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
-					config.namedFilterPaneOptions = new HashMap<>();
-					for (Map.Entry<String, com.flowkraft.reporting.dsl.filterpane.FilterPaneOptions> entry : opts.getNamedOptions().entrySet()) {
+					config.namedSlicerOptions = new HashMap<>();
+					for (Map.Entry<String, com.flowkraft.reporting.dsl.slicer.SlicerOptions> entry : opts.getNamedOptions().entrySet()) {
 						Map<String, Object> m = new HashMap<>();
 						var fo = entry.getValue();
 						if (fo.getField() != null) m.put("field", fo.getField());
@@ -430,13 +432,13 @@ public class ReportingService {
 						m.put("maxValues", fo.getMaxValues());
 						if (fo.getShowSearch() != null) m.put("showSearch", fo.getShowSearch());
 						m.put("showCount", fo.isShowCount());
-						if (fo.getDefaultSelected() != null && !fo.getDefaultSelected().isEmpty()) m.put("defaultSelected", fo.getDefaultSelected());
-						m.put("multiSelect", fo.isMultiSelect());
+						if (fo.getDefaultValue() != null && !fo.getDefaultValue().isEmpty()) m.put("defaultValue", fo.getDefaultValue());
+						m.put("control", fo.getControl());
 						m.put("height", fo.getHeight());
-						config.namedFilterPaneOptions.put(entry.getKey(), m);
+						config.namedSlicerOptions.put(entry.getKey(), m);
 					}
 				}
-				config.hasFilterPane = (opts.getField() != null) || (config.namedFilterPaneOptions != null);
+				config.hasSlicer = (opts.getField() != null) || (config.namedSlicerOptions != null);
 			}
 		}
 

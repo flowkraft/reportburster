@@ -206,7 +206,7 @@ export function SchemaBrowser({
               { type: "text",    label: "Text Block", icon: _TypeIcon,  description: "Notes, headings, captions" },
               { type: "divider", label: "Divider",    icon: _MinusIcon, description: "Visual separator" },
               { type: "iframe",  label: "iFrame",     icon: _FrameIcon, description: "Embed an external page" },
-              { type: "filter-pane", label: "Filter Pane", icon: _ListFilter, description: "Picks values; filters every widget on its table" },
+              { type: "slicer", label: "Slicer", icon: _ListFilter, description: "Picks values; filters every widget on its table" },
             ] as { type: WidgetType; label: string; icon: React.ElementType; description: string }[]
           ).map((item) => {
             const Icon = item.icon;

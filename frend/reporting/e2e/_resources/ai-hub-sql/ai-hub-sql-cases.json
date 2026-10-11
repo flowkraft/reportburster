@@ -6,7 +6,7 @@
     "GeneratedSqlAllVendorsTest runs the committed SQL of ai-hub-sql.generated.json on a throwaway",
     "database of each vendor and compares the rows with what is written here.",
     "",
-    "A case is {id, group, proves, one of query|probe|filterPane|sql, one of rows|rowCount, ordered?,",
+    "A case is {id, group, proves, one of query|probe|slicer|sql, one of rows|rowCount, ordered?,",
     "columns?, vendors?}:",
     "  group A - cube_demo, every table schema-qualified, all nine vendors;",
     "  group B - the shipped Northwind sample and its star schema in the default schema, bare names,",
@@ -207,10 +207,10 @@
       "rows": [[613, 429500], [644, 351500]]
     },
     {
-      "id": "a8-filter-pane-stage",
+      "id": "a8-slicer-stage",
       "group": "A",
-      "proves": "the filter pane's value list, capped: DISTINCT, ORDER BY and the vendor's row cap (TOP after DISTINCT on SQL Server)",
-      "filterPane": { "table": { "schema": "cube_demo", "name": "crm_deals" }, "field": "stage", "rowLimit": 2 },
+      "proves": "the slicer's value list, capped: DISTINCT, ORDER BY and the vendor's row cap (TOP after DISTINCT on SQL Server)",
+      "slicer": { "table": { "schema": "cube_demo", "name": "crm_deals" }, "field": "stage", "rowLimit": 2 },
       "ordered": true,
       "rows": [["Closed Lost"], ["Closed Won"]]
     },
@@ -1418,10 +1418,10 @@
       "rows": [[72, 98.92], [59, 97.53], [46, 96.14]]
     },
     {
-      "id": "b7-filter-pane-shipcountry",
+      "id": "b7-slicer-shipcountry",
       "group": "B",
-      "proves": "the filter pane on a mixed-case column of a bare table",
-      "filterPane": { "table": "Orders", "field": "ShipCountry", "rowLimit": 5 },
+      "proves": "the slicer on a mixed-case column of a bare table",
+      "slicer": { "table": "Orders", "field": "ShipCountry", "rowLimit": 5 },
       "ordered": true,
       "rows": [["Argentina"], ["Austria"], ["France"], ["Germany"], ["Italy"]]
     },

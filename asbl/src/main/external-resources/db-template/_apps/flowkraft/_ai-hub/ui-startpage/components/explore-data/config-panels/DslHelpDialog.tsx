@@ -10,7 +10,7 @@ const DIALOG_TITLES: Record<string, string> = {
   tabulator:     "Hey AI, Help Me Configure This Tabulator Table\u2026",
   chart:         "Hey AI, Help Me Configure This Chart\u2026",
   pivot:         "Hey AI, Help Me Configure This Pivot Table\u2026",
-  "filter-pane": "Hey AI, Help Me Configure This Filter Pane\u2026",
+  "slicer": "Hey AI, Help Me Configure This Slicer\u2026",
   "filter-bar":  "Hey AI, Help Me Configure Dashboard Filters\u2026",
 };
 

@@ -10,7 +10,7 @@ const EXAMPLE_TITLES: Record<string, string> = {
   tabulator:     "Table DSL Example",
   chart:         "Chart DSL Example",
   pivot:         "Pivot DSL Example",
-  "filter-pane": "Filter Pane DSL Example",
+  "slicer": "Slicer DSL Example",
   "filter-bar":  "Parameters DSL Example",
   number:        "Number (rb-value) — No DSL Needed",
 };

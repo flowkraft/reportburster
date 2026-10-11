@@ -3,7 +3,7 @@
 import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
-import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pane-mapping";
+import type { SlicerDslOptions } from "@/lib/explore-data/dsl-sync/slicer-mapping";
 
 /**
  * ============================================================================
@@ -14,7 +14,7 @@ import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pa
  *
  * Especially Principle 4: every UI gesture in this Display tab panel mutates
  * the canonical DSL Map at displayConfig.dslConfig — never the old structured
- * fields (filterField, filterPaneLabel, etc., now removed).
+ * fields (filterField, slicerLabel, etc., now removed).
  * ============================================================================
  */
 
@@ -26,21 +26,21 @@ const SORT_OPTIONS = [
   { value: "none",        label: "None" },
 ] as const;
 
-interface FilterPaneConfigProps {
+interface SlicerConfigProps {
   config: WidgetDisplayConfig;
   columns: ColumnSchema[];
-  /** The table this pane reads, for the one line that says what the pane filters. */
+  /** The table this slicer reads, for the one line that says what the slicer filters. */
   table?: string;
   onChange: (config: WidgetDisplayConfig) => void;
 }
 
-function readDslMap(config: WidgetDisplayConfig): FilterPaneDslOptions {
-  return (config.dslConfig as FilterPaneDslOptions) ?? {};
+function readDslMap(config: WidgetDisplayConfig): SlicerDslOptions {
+  return (config.dslConfig as SlicerDslOptions) ?? {};
 }
 
 function setDslMap(
   config: WidgetDisplayConfig,
-  next: FilterPaneDslOptions,
+  next: SlicerDslOptions,
   onChange: (c: WidgetDisplayConfig) => void,
 ): void {
   onChange({ ...config, dslConfig: next });
@@ -61,13 +61,15 @@ function parseHeightPx(h: unknown): number | undefined {
   return m ? parseInt(m[1], 10) : undefined;
 }
 
-export function FilterPaneConfig({ config, columns, table, onChange }: FilterPaneConfigProps) {
+export function SlicerConfig({ config, columns, table, onChange }: SlicerConfigProps) {
   const map = readDslMap(config);
 
   const field = (map.field as string | undefined) ?? "";
   const label = (map.label as string | undefined) ?? "";
   const sort = (map.sort as string | undefined) ?? "";
-  const multiSelect = (map.multiSelect as boolean | undefined) ?? true;
+  // The DSL says `control 'multiselect'|'select'` (a parameter's word); the checkbox is the
+  // one place that turns it into a tick.
+  const multiSelect = (map.control as string | undefined) !== "select";
   // showSearch: boolean → "on"/"off", undefined → "auto"
   const showSearch = map.showSearch === true ? "on"
                    : map.showSearch === false ? "off"
@@ -80,8 +82,8 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
   const dimensions = columns.filter((c) => getFieldKind(c) === "dimension");
   const inputCls = "w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content";
 
-  const setMap = (patch: Partial<FilterPaneDslOptions>) => {
-    const next: FilterPaneDslOptions = { ...map };
+  const setMap = (patch: Partial<SlicerDslOptions>) => {
+    const next: SlicerDslOptions = { ...map };
     for (const [k, v] of Object.entries(patch)) {
       if (v === undefined) delete (next as Record<string, unknown>)[k];
       else (next as Record<string, unknown>)[k] = v;
@@ -90,13 +92,13 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
   };
 
   return (
-    <div id="configPanel-filterPane" className="space-y-3">
+    <div id="configPanel-slicer" className="space-y-3">
       <div>
         <span className="text-xs text-base-content/60">
           Field to explore <span className="text-blue-500">(dimension)</span>
         </span>
         <select
-          id="selectFilterPaneField"
+          id="selectSlicerField"
           value={field}
           onChange={(e) => setMap({ field: e.target.value || undefined })}
           className={inputCls}
@@ -106,7 +108,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
             <option key={c.columnName} value={c.columnName}>{c.columnName}</option>
           ))}
           {columns.filter((c) => getFieldKind(c) === "measure").length > 0 && (
-            <optgroup label="Measures (less common for filter panes)">
+            <optgroup label="Measures (less common for slicers)">
               {columns.filter((c) => getFieldKind(c) === "measure").map((c) => (
                 <option key={c.columnName} value={c.columnName}>{c.columnName}</option>
               ))}
@@ -115,9 +117,9 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
         </select>
       </div>
       {/* The two filters have two jobs, and each says its own in one line, no more (no cockpit).
-          The pane is a slicer: it applies by itself. The filter bar is a parameter the author
+          The slicer applies by itself. The filter bar is a parameter the author
           places in their own SQL. */}
-      <p id="txtFilterPaneRole" className="text-[10px] text-base-content/60 leading-relaxed">
+      <p id="txtSlicerRole" className="text-[10px] text-base-content/60 leading-relaxed">
         Filters every widget built on {table || "this table"}. To put a value into your own SQL, use the filter bar.
       </p>
 
@@ -125,7 +127,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       <div>
         <span className="text-xs text-base-content/60">Label</span>
         <input
-          id="inputFilterPaneLabel"
+          id="inputSlicerLabel"
           type="text"
           value={label}
           onChange={(e) => setMap({ label: e.target.value || undefined })}
@@ -137,10 +139,10 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       <GroupHeader>Behavior</GroupHeader>
       <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
         <input
-          id="chkFilterPaneMultiSelect"
+          id="chkSlicerMultiSelect"
           type="checkbox"
           checked={multiSelect}
-          onChange={(e) => setMap({ multiSelect: e.target.checked })}
+          onChange={(e) => setMap({ control: e.target.checked ? "multiselect" : "select" })}
           className="rounded border-base-300"
         />
         <span>Multi-select</span>
@@ -151,7 +153,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       <div>
         <span className="text-xs text-base-content/60">Sort by</span>
         <select
-          id="selectFilterPaneSort"
+          id="selectSlicerSort"
           value={sort}
           onChange={(e) => setMap({ sort: e.target.value || undefined })}
           className={inputCls}
@@ -166,7 +168,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       <div>
         <span className="text-xs text-base-content/60">Show search box</span>
         <select
-          id="selectFilterPaneSearch"
+          id="selectSlicerSearch"
           value={showSearch}
           onChange={(e) => {
             const v = e.target.value;
@@ -184,7 +186,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       </div>
       <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
         <input
-          id="chkFilterPaneShowCount"
+          id="chkSlicerShowCount"
           type="checkbox"
           checked={showCount}
           onChange={(e) => setMap({ showCount: e.target.checked || undefined })}
@@ -196,7 +198,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
       <div>
         <span className="text-xs text-base-content/60">Max values</span>
         <input
-          id="inputFilterPaneMaxValues"
+          id="inputSlicerMaxValues"
           type="number"
           min={1}
           value={maxValues}
@@ -217,7 +219,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
         <div className="flex gap-1 mt-1">
           <button
             type="button"
-            id="btnFilterPaneHeightAuto"
+            id="btnSlicerHeightAuto"
             onClick={() => setMap({ height: undefined })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "auto"
@@ -229,7 +231,7 @@ export function FilterPaneConfig({ config, columns, table, onChange }: FilterPan
           </button>
           <button
             type="button"
-            id="btnFilterPaneHeightFixed"
+            id="btnSlicerHeightFixed"
             onClick={() => setMap({ height: `${heightPx ?? 240}px` })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "fixed"

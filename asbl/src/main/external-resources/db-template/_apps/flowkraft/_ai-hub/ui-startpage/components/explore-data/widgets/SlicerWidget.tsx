@@ -5,12 +5,12 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { executeQuery, exploreAssociations, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { buildDistinctValuesSql } from "@/lib/explore-data/sql-builder";
-import { paneFieldsForTable, paneNarrowingLines, paneTableKeyOf } from "@/lib/explore-data/pane-filters";
+import { slicerFieldsForTable, slicerNarrowingLines, slicerTableKeyOf } from "@/lib/explore-data/slicer-filters";
 import { asTableRef, findTable } from "@/lib/explore-data/table-ref";
-import { autoFilterPaneField, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
+import { autoSlicerField, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
 import { useRbElementReady } from "./useRbElementReady";
 import { useDslConfig } from "@/lib/hooks/use-dsl-config";
-import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pane-mapping";
+import type { SlicerDslOptions } from "@/lib/explore-data/dsl-sync/slicer-mapping";
 import { IconSparkles as Sparkles } from "@/components/shared/Icons";
 
 /**
@@ -21,20 +21,20 @@ import { IconSparkles as Sparkles } from "@/components/shared/Icons";
  *     DSLPrinciplesReadme.java
  *
  * Especially Principle 4: this widget renders FROM the DSL Map produced by
- * useDslConfig (the canonical configuration). Same Map flows to <rb-filter-pane>
+ * useDslConfig (the canonical configuration). Same Map flows to <rb-slicer>
  * here AND to the published page after DSL→parse round-trip.
  * ============================================================================
  */
 
-/** How many distinct values the pane lists. A pane is a picker, not a report:
+/** How many distinct values the slicer lists. A slicer is a picker, not a report:
  *  past a thousand values the user types instead of scrolling. */
 const DISTINCT_VALUES_LIMIT = 1000;
 
-interface FilterPaneWidgetProps {
+interface SlicerWidgetProps {
   widgetId: string;
 }
 
-export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
+export function SlicerWidget({ widgetId }: SlicerWidgetProps) {
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const connectionId = useCanvasStore((s) => s.connectionId);
   const exploreSelections = useCanvasStore((s) => s.exploreSelections);
@@ -45,14 +45,14 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const widgets = useCanvasStore((s) => s.widgets);
   const updateWidgetDataSource = useCanvasStore((s) => s.updateWidgetDataSource);
 
-  const { config: dslMap, updateConfig } = useDslConfig(widgetId, "filterpane");
+  const { config: dslMap, updateConfig } = useDslConfig(widgetId, "slicer");
 
-  // The pane element in state, not in a ref alone: a ref being filled does not re-run an effect,
+  // The slicer element in state, not in a ref alone: a ref being filled does not re-run an effect,
   // and this element appears late - the widget renders a hint, then a spinner, and only then the
-  // pane. An effect that read the ref on the first render found nothing and was never asked again,
-  // which is how a pane ended up listening to nothing (its clicks reached no canvas selection).
-  const [paneEl, setPaneEl] = useState<HTMLElement | null>(null);
-  const ready = useRbElementReady("rb-filter-pane");
+  // slicer. An effect that read the ref on the first render found nothing and was never asked again,
+  // which is how a slicer ended up listening to nothing (its clicks reached no canvas selection).
+  const [slicerEl, setSlicerEl] = useState<HTMLElement | null>(null);
+  const ready = useRbElementReady("rb-slicer");
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [autoBusy, setAutoBusy] = useState(false);
@@ -62,11 +62,11 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const table = (widget?.dataSource?.visualQuery?.table as string) || "";
   const tableSchema = widget?.dataSource?.visualQuery?.tableSchema;
   const tableRef = asTableRef(table, tableSchema);
-  // The fields the OTHER panes of this table filter by, for the published value query below.
-  // Kept as one string, not the array, so the effect runs again when a pane is added or its
+  // The fields the OTHER slicers of this table filter by, for the published value query below.
+  // Kept as one string, not the array, so the effect runs again when a slicer is added or its
   // field changes - and not on every render, which a fresh array would do.
-  const otherPaneFieldsKey = widget
-    ? paneFieldsForTable(widgets, paneTableKeyOf(widget))
+  const otherSlicerFieldsKey = widget
+    ? slicerFieldsForTable(widgets, slicerTableKeyOf(widget))
         .filter((f) => f !== field)
         .join(",")
     : "";
@@ -86,12 +86,12 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
         .filter((c) => classifyColumn(c, tbl) === "category-low")
         .map((c) => c.columnName);
       const cardinality = stringCols.length > 0 ? await probeCardinality(connectionId, tableRef, stringCols) : {};
-      const picked = autoFilterPaneField(tbl, cardinality);
+      const picked = autoSlicerField(tbl, cardinality);
       if (!picked) {
         setAutoErr("No suitable filter field found in this table.");
         return;
       }
-      updateConfig({ ...dslMap, field: picked } as FilterPaneDslOptions);
+      updateConfig({ ...dslMap, field: picked } as SlicerDslOptions);
     } catch (e) {
       setAutoErr(e instanceof Error ? e.message : "Auto-pick failed");
     } finally {
@@ -105,55 +105,55 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     // The query is `buildDistinctValuesSql`, a pure function of the table, the
     // field, the cap and the vendor: ANSI SQL, with the names quoted and the row
     // cap written by the vendor layer. The cap used to be a literal `LIMIT
-    // 1000`, which SQL Server, Oracle and Db2 reject outright — the pane's value
+    // 1000`, which SQL Server, Oracle and Db2 reject outright — the slicer's value
     // list came back empty on all three.
     const dialect = dialectFor(getConnectionType(connectionId));
     const sql = buildDistinctValuesSql(tableRef, field, DISTINCT_VALUES_LIMIT, dialect);
-    // The same query, kept on the widget, is the one the published dashboard fetches this pane's
-    // value list with (`ScriptAssembler` writes a block for it). Without it the published pane asked
+    // The same query, kept on the widget, is the one the published dashboard fetches this slicer's
+    // value list with (`ScriptAssembler` writes a block for it). Without it the published slicer asked
     // its report for the widget's own rows and counted the values of whatever came back, which is the
     // first 500 rows of the table and not its values.
     //
-    // The published one carries the other panes' conditions as well, and the pane here does not:
+    // The published one carries the other slicers' conditions as well, and the slicer here does not:
     // this one shows every value and greys them by what `/api/analytics/explore` answers, while a
-    // published pane - which may not ask that endpoint - reads its greys off this query instead
-    // (`paneNarrowingLines` says why, and `RbFilterPane` does the reading).
+    // published slicer - which may not ask that endpoint - reads its greys off this query instead
+    // (`slicerNarrowingLines` says why, and `RbSlicer` does the reading).
     const published = buildDistinctValuesSql(
       tableRef,
       field,
       DISTINCT_VALUES_LIMIT,
       dialect,
-      paneNarrowingLines(otherPaneFieldsKey ? otherPaneFieldsKey.split(",") : [], dialect),
+      slicerNarrowingLines(otherSlicerFieldsKey ? otherSlicerFieldsKey.split(",") : [], dialect),
     );
     const ds = widget?.dataSource;
-    if (ds && ds.paneValuesSql !== published)
-      updateWidgetDataSource(widgetId, { ...ds, paneValuesSql: published });
+    if (ds && ds.slicerValuesSql !== published)
+      updateWidgetDataSource(widgetId, { ...ds, slicerValuesSql: published });
     executeQuery(connectionId, sql)
       .then((res) => setRows(res.data))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectionId, field, table, tableSchema, otherPaneFieldsKey]);
+  }, [connectionId, field, table, tableSchema, otherSlicerFieldsKey]);
 
-  // Recompute associative-exploration field states. Reads filter-pane fields
+  // Recompute associative-exploration field states. Reads slicer fields
   // from each widget's dslConfig.field (canonical Map), not legacy filterField.
   useEffect(() => {
     if (!connectionId || !table || exploreSelections.length === 0) return;
 
-    const filterPaneFields = widgets
-      .filter((w) => w.type === "filter-pane")
-      .map((w) => (w.displayConfig?.dslConfig as FilterPaneDslOptions | undefined)?.field)
+    const slicerFields = widgets
+      .filter((w) => w.type === "slicer")
+      .map((w) => (w.displayConfig?.dslConfig as SlicerDslOptions | undefined)?.field)
       .filter((f): f is string => typeof f === "string" && f.length > 0);
 
-    if (filterPaneFields.length === 0) return;
+    if (slicerFields.length === 0) return;
 
-    exploreAssociations(connectionId, tableRef, exploreSelections, filterPaneFields)
+    exploreAssociations(connectionId, tableRef, exploreSelections, slicerFields)
       .then((res) => setExploreFieldStates(res.fieldStates))
       .catch((err) => console.warn("Explore failed:", err));
   }, [connectionId, table, tableSchema, exploreVersion]);
 
   useEffect(() => {
-    if (!paneEl || !field) return;
+    if (!slicerEl || !field) return;
 
     const fieldStates = exploreFieldStates[field];
     const selectedSet = exploreSelections.filter((s) => s.field === field).map((s) => s.value);
@@ -171,7 +171,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       pickedSort = looksNumeric ? "count_desc" : "asc";
     }
 
-    const el = paneEl as HTMLElement & {
+    const el = slicerEl as HTMLElement & {
       data?: unknown;
       componentId?: string;
       field?: string;
@@ -180,7 +180,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       maxValues?: number;
       showSearch?: boolean | "auto";
       showCount?: boolean;
-      multiSelect?: boolean;
+      control?: "multiselect" | "select";
       height?: string;
       selectedValues?: string[];
       associatedValues?: string[] | null;
@@ -188,7 +188,8 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     };
 
     const cfgLabel       = (dslMap.label as string | undefined) ?? "";
-    const cfgMultiSelect = (dslMap.multiSelect as boolean | undefined) ?? true;
+    const cfgControl     = ((dslMap.control as string | undefined) === "select"
+                            ? "select" : "multiselect") as "multiselect" | "select";
     const cfgShowSearchRaw = dslMap.showSearch;  // boolean | undefined
     const cfgShowCount   = (dslMap.showCount as boolean | undefined) ?? false;
     const cfgMaxValues   = (dslMap.maxValues as number | undefined) ?? 1000;
@@ -199,8 +200,8 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       : cfgShowSearchRaw === false ? false
       : "auto";
 
-    // Which pane this is, so its own ids tell it apart from a second pane on the same canvas
-    // (`paneValue-<widget>-<value>`): the widget's id, the way a published dashboard gives the pane
+    // Which slicer this is, so its own ids tell it apart from a second slicer on the same canvas
+    // (`slicerValue-<widget>-<value>`): the widget's id, the way a published dashboard gives the slicer
     // its component id.
     el.componentId = widgetId;
     el.field = field;
@@ -209,17 +210,17 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     el.maxValues = cfgMaxValues;
     el.showSearch = searchProp;
     el.showCount = cfgShowCount;
-    el.multiSelect = cfgMultiSelect;
+    el.control = cfgControl;
     el.height = cfgHeight;
     el.data = rows;
     el.selectedValues = selectedSet;
     el.associatedValues = fieldStates ? fieldStates.associated : null;
     el.excludedValues = fieldStates ? fieldStates.excluded : null;
-  }, [paneEl, rows, field, exploreSelections, exploreFieldStates, dslMap]);
+  }, [slicerEl, rows, field, exploreSelections, exploreFieldStates, dslMap]);
 
   useEffect(() => {
-    if (!paneEl) return;
-    const el = paneEl;
+    if (!slicerEl) return;
+    const el = slicerEl;
 
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { field: string; value: string };
@@ -228,9 +229,9 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       }
     };
 
-    el.addEventListener("filterPaneSelect", handler);
-    return () => el.removeEventListener("filterPaneSelect", handler);
-  }, [paneEl, toggleExploreSelection]);
+    el.addEventListener("slicerSelect", handler);
+    return () => el.removeEventListener("slicerSelect", handler);
+  }, [slicerEl, toggleExploreSelection]);
 
   if (!field) {
     if (!table) {
@@ -272,6 +273,6 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
   return (
     // @ts-expect-error - Web component custom element
-    <rb-filter-pane ref={setPaneEl} style={{ display: "block", width: "100%", height: "100%" }} />
+    <rb-slicer ref={setSlicerEl} style={{ display: "block", width: "100%", height: "100%" }} />
   );
 }

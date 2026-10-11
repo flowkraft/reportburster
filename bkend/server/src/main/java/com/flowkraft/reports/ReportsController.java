@@ -59,7 +59,7 @@ import com.flowkraft.iam.limits.ReportAccess;
 import static com.sourcekraft.documentburster.utils.Utils.resolvePathAgainstPortableDir;
 import com.flowkraft.reporting.dtos.ReportFullConfigDto;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptionsParser;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsParser;
 import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsParser;
 import com.flowkraft.reporting.services.ReportingService;

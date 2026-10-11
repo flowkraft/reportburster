@@ -85,7 +85,7 @@ export {
 export {
   autoSummarize,
   autoPickMeasure,
-  autoFilterPaneField,
+  autoSlicerField,
   autoPivotLayout,
   MAX_PIVOT_CELLS,
   suggestRenderModeForCube,

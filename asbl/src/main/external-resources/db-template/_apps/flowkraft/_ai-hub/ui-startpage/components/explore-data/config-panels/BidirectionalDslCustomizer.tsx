@@ -5,7 +5,7 @@ import { DslCustomizer } from "./DslCustomizer";
 import { useDslConfig } from "@/lib/hooks/use-dsl-config";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 
-type DslWidgetType = "chart" | "tabulator" | "pivot" | "filter-pane" | "filter-bar";
+type DslWidgetType = "chart" | "tabulator" | "pivot" | "slicer" | "filter-bar";
 
 interface BidirectionalDslCustomizerProps {
   widgetId: string;
@@ -24,7 +24,7 @@ interface BidirectionalDslCustomizerProps {
  * Per Principle 4, the DSL editor is one of three views into a widget's
  * canonical DSL Map at displayConfig.dslConfig. The other two: Display tab UI,
  * canvas widget render. All four widget types (chart, tabulator, pivot,
- * filter-pane) read/write via `useDslConfig` — Map → text on open, text → Map
+ * slicer) read/write via `useDslConfig` — Map → text on open, text → Map
  * on save. The filter-bar is canvas-level (filterDsl on CanvasState) and
  * managed by FilterBarConfigPanel — it does not flow through this component.
  * ============================================================================
@@ -37,12 +37,12 @@ export function BidirectionalDslCustomizer({
   sampleData,
 }: BidirectionalDslCustomizerProps) {
   // Map widget-type strings to the discriminated union expected by useDslConfig.
-  const dslConfigType = widgetType === "filter-pane" ? "filterpane"
+  const dslConfigType = widgetType === "slicer" ? "slicer"
                       : widgetType === "filter-bar"  ? "parameters"
                       : widgetType;
   const { config, getDslText, saveDslText, error } = useDslConfig(
     widgetId,
-    dslConfigType as "tabulator" | "chart" | "pivot" | "filterpane" | "parameters",
+    dslConfigType as "tabulator" | "chart" | "pivot" | "slicer" | "parameters",
   );
 
   const [text, setText] = useState<string>("");

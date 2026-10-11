@@ -115,7 +115,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
   }, [open, onClose]);
 
   // When the DSL editor pane is opened — derive text by serializing the
-  // canonical Map. Re-derives whenever params change while pane is open
+  // canonical Map. Re-derives whenever params change while slicer is open
   // (so external form edits flow into the visible text).
   useEffect(() => {
     if (!dslOpen) return;

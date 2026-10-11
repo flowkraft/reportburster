@@ -38,7 +38,7 @@ declare namespace JSX {
       },
       HTMLElement
     >
-    "rb-filter-pane": React.DetailedHTMLProps<
+    "rb-slicer": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
         "report-id"?: string
         "component-id"?: string

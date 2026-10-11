@@ -337,7 +337,7 @@ public class CanvasExportService {
         writeIfPresent(configDir,   reportId + "-chart-config.groovy",           files.chartConfigGroovy());
         writeIfPresent(configDir,   reportId + "-tabulator-config.groovy",       files.tabulatorConfigGroovy());
         writeIfPresent(configDir,   reportId + "-pivot-config.groovy",           files.pivotConfigGroovy());
-        writeIfPresent(configDir,   reportId + "-filterpane-config.groovy",      files.filterPaneConfigGroovy());
+        writeIfPresent(configDir,   reportId + "-slicer-config.groovy",      files.slicerConfigGroovy());
         writeIfPresent(configDir,   reportId + "-report-parameters-spec.groovy", files.parametersSpecGroovy());
         writeIfPresent(configDir,   reportId + "-value-config.json",             files.valueConfigJson());
         writeIfPresent(configDir,   reportId + "-map-config.json",               files.mapConfigJson());
