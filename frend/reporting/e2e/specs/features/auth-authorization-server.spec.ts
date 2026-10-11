@@ -5216,8 +5216,13 @@ test.describe('Auth — Server: the AI Hub door', () => {
         expect(state.widgets?.length, 'the canvas has the widget the dropped table made').toBeGreaterThan(0);
         state.widgets[0].dataSource = { mode: 'sql', sql: ATTRIBUTE_SQL };
 
+        // Back as the API holds it, a JSON string: the canvas page parses `state` as one, and an
+        // object here left the reloaded canvas on "Loading canvas..." for good.
         expect(
-          await statusAs(author, 'PUT', `/api/explorations/${canvasId}`, { ...canvas, state }),
+          await statusAs(author, 'PUT', `/api/explorations/${canvasId}`, {
+            ...canvas,
+            state: JSON.stringify(state),
+          }),
           'the canvas keeps the SQL that names the attribute',
         ).toBe(200);
 
