@@ -271,7 +271,7 @@ async function widgetDrawn(page: Page, id: string, timeout = 30_000): Promise<vo
       const widget = document.getElementById(`widget-${wid}`);
       if (!widget) return false;
       if (document.getElementById(`widgetError-${wid}`)) return true; // reported by noWidgetInError
-      if (widget.querySelector('.animate-spin')) return false;
+      if (document.getElementById(`widgetLoading-${wid}`)) return false;
       return document.getElementById(`widgetViz-${wid}`) !== null;
     },
     id,

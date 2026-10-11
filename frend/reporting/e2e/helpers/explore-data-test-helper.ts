@@ -1044,7 +1044,7 @@ export async function waitForWidgetData(
       if (errorEl) return { phase: 'error' as const, message: (errorEl.textContent || '').trim().slice(0, 300) };
       // Every widget kind names what it draws widgetViz-<id>, so one id covers them all.
       if (document.getElementById(`widgetViz-${id}`)) return { phase: 'rendered' as const };
-      if (widget.querySelector('.animate-spin')) return { phase: 'loading' as const };
+      if (document.getElementById(`widgetLoading-${id}`)) return { phase: 'loading' as const };
       return { phase: 'unknown' as const };
     }, widgetId);
     if (state.phase === 'rendered') return;
