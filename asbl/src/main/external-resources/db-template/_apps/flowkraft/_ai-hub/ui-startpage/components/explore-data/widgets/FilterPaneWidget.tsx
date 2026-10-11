@@ -125,10 +125,10 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
     if (filterPaneFields.length === 0) return;
 
-    exploreAssociations(connectionId, table, exploreSelections, filterPaneFields)
+    exploreAssociations(connectionId, tableRef, exploreSelections, filterPaneFields)
       .then((res) => setExploreFieldStates(res.fieldStates))
       .catch((err) => console.warn("Explore failed:", err));
-  }, [connectionId, table, exploreVersion]);
+  }, [connectionId, table, tableSchema, exploreVersion]);
 
   useEffect(() => {
     if (!paneEl || !field) return;
