@@ -115,6 +115,7 @@ describe('a shared dashboard hands its credential to the widgets inside it', () 
     // One link opens one report: the server refuses this widget whatever the page does, so the page
     // says why, where the tile would have been.
     assert.ok(prepared.includes('rb-widget-not-shared'), 'a blank tile explains nothing: ' + prepared);
+    assert.ok(prepared.includes('id="widgetNotShared-c"'), 'the note is named after the tile it stands for');
     assert.ok(prepared.includes('payroll-dashboard'), 'the note names the report that is not shared');
     assert.ok(prepared.includes(DASHBOARD), 'and the one that is');
     // And it is not handed a credential it could never use.
