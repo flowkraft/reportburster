@@ -461,18 +461,20 @@ export async function clickDataTab(page: Page): Promise<void> {
   await page.waitForTimeout(500);
 }
 
-/** Assert the widget's primary web component is visible in the canvas. */
+/** Assert the newest widget draws the web component of its type, visible in the canvas. */
 export async function assertWidgetRenders(page: Page, widgetType: WidgetType): Promise<void> {
-  const el = page.locator(WEB_COMPONENT[widgetType]).first();
+  const el = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
   await el.waitFor({ state: 'visible', timeout: 20_000 });
   await expect(el).toBeVisible();
+  expect(await el.evaluate((viz) => viz.tagName.toLowerCase()), `the widget draws a ${widgetType}`)
+    .toBe(WEB_COMPONENT[widgetType]);
 }
 
 /** Click the widget header strip (16px above the web component) to select the widget.
  *  Direct locator.click() fails because react-grid-drag-handle absorbs events — real
  *  OS-level mouse events via page.mouse bypass that. */
 export async function clickWidgetHeader(page: Page, widgetType: WidgetType): Promise<void> {
-  const wc = page.locator(WEB_COMPONENT[widgetType]).first();
+  const wc = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
   await wc.waitFor({ state: 'visible', timeout: 10_000 });
   const box = await wc.boundingBox();
   if (!box) throw new Error(`[clickWidgetHeader] bounding box null for ${widgetType}`);
@@ -750,9 +752,8 @@ export async function hideTabulatorColumns(
       const snapshot = await page.evaluate(() => {
         const btnDataTab = document.getElementById('btnDataTab');
         const btnDisplayTab = document.getElementById('btnDisplayTab');
-        const widgetEl = document.querySelector('[id^="widget-"][class*="ring-2"]');
-        const widgetId = widgetEl?.id ?? null;
-        const rbTab = document.querySelector('rb-tabulator');
+        const widgetId = document.getElementById('widgetActive')?.getAttribute('data-widget-id') ?? null;
+        const draws = widgetId ? document.getElementById(`widgetViz-${widgetId}`)?.tagName ?? null : null;
         const allToggleBtns = Array.from(document.querySelectorAll('[id^="btnToggleCol-"]')).map((b) => b.id);
         const visualizeAs = document.getElementById('visualizeAsSection');
         const allBtnDataTab = btnDataTab?.outerHTML?.slice(0, 200);
@@ -763,7 +764,7 @@ export async function hideTabulatorColumns(
           btnDataTabHTML: allBtnDataTab,
           btnDisplayTabHTML: allBtnDisplayTab,
           selectedWidgetId: widgetId,
-          hasRbTabulator: !!rbTab,
+          selectedWidgetDraws: draws,
           toggleBtnIds: allToggleBtns,
           hasVisualizeAsSection: !!visualizeAs,
           configPanelText: document.querySelector('#visualizeAsSection')?.parentElement?.textContent?.slice(0, 400),
@@ -898,7 +899,9 @@ async function dragWidgetsIntoPlace(
         if (!pre) return;
         const now = placeOf(pre);
         if (now.w === t.w && now.h === t.h) return;
-        const rBox = await handle.locator('.react-resizable-handle').first().boundingBox();
+        // The grip lets the mouse through to the grid's own resize handle under it.
+        const widgetId = (await handle.getAttribute('id'))!.replace(/^widgetDragHandle-/, '');
+        const rBox = await page.locator(`[id="widgetResizeGrip-${widgetId}"]`).boundingBox();
         if (!rBox) return;
         const sx = rBox.x + rBox.width  / 2;
         const sy = rBox.y + rBox.height / 2;
@@ -1016,7 +1019,7 @@ export async function addFilterBarParam(
   }
   await page.locator('#btnDoneFilters').click();
   await page.waitForTimeout(1_500);
-  await page.locator('rb-parameters').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
   await page.waitForTimeout(500);
 }
 
@@ -1026,15 +1029,15 @@ export async function addFilterBarParam(
  *  4s settle so VisualQueryBuilder and ConfigPanel fully re-mount. */
 export async function selectLastWidget(page: Page): Promise<void> {
   await page.locator('.react-grid-placeholder').waitFor({ state: 'detached', timeout: 10_000 }).catch(() => {});
-  await page.locator('[id^="widgetHeader-"]').last().click();
+  await page.locator(`[id="widgetHeader-${await getLastWidgetId(page)}"]`).click();
   await page.waitForTimeout(4_000);
 }
 
-/** Read the most recently added widget's id suffix from the DOM. */
+/** The most recently added widget's id: the grid names it (`#canvasGrid`'s data-newest-widget-id). */
 export async function getLastWidgetId(page: Page): Promise<string> {
-  const headerId = await page.locator('[id^="widgetHeader-"]').last().getAttribute('id');
-  if (!headerId) throw new Error('No widget header found in DOM');
-  return headerId.replace(/^widgetHeader-/, '');
+  const widgetId = await page.locator('#canvasGrid').getAttribute('data-newest-widget-id');
+  if (!widgetId) throw new Error('No widget on the canvas');
+  return widgetId;
 }
 
 /** Poll until the widget body contains an rb-* visualisation component. */
@@ -1771,6 +1774,6 @@ export async function addFilterBarParamsByForm(
   }
   await page.locator('#btnDoneFilters').click();
   await page.waitForTimeout(1_500);
-  await page.locator('rb-parameters').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
   await page.waitForTimeout(500);
 }
