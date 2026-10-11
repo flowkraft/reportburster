@@ -36,6 +36,8 @@ const RB_BASE = "/api/dp";
 
 const PARAM_TYPES = ["String", "Integer", "Double", "Boolean", "Date"];
 const UI_WIDGETS  = ["text", "select", "multiselect", "datepicker", "checkbox", "radio"];
+/** The shipped files' names for the dropdown's controls (the filter bar draws both the same). */
+const SHIPPED_CONTROL_NAMES: Record<string, string> = { "multi-select": "multiselect", date: "datepicker", boolean: "checkbox" };
 
 /** Slugify a label into a valid parameter ID: "Start Date" → "start_date".
  *  Uses underscores (not hyphens) because the param ID flows through:
@@ -358,34 +360,67 @@ interface ParameterRowProps {
 function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
   const constraints = (param.constraints ?? {}) as Record<string, unknown>;
   const uiHints     = (param.uiHints     ?? {}) as Record<string, unknown>;
+  const key         = param.id || param.label;
 
-  const required   = constraints.required as boolean | undefined;
-  const widgetKind = uiHints.widget as string | undefined;
-  const options    = uiHints.options;
-  const optionsStr = Array.isArray(options)
-    ? (options as unknown[]).join(", ")
-    : typeof options === "string" ? options : "";
+  const required = constraints.required as boolean | undefined;
+  // The shipped files say `control`; rows written before this dialog did too say `widget`. One setting.
+  const written  = (uiHints.control ?? uiHints.widget) as string | undefined;
+  const control  = written === undefined ? undefined : (SHIPPED_CONTROL_NAMES[written] ?? written);
+  const options  = uiHints.options;
 
-  const showOptions =
-    widgetKind === "select" || widgetKind === "multiselect" || widgetKind === "radio";
+  const showOptions = control === "select" || control === "multiselect" || control === "radio";
+  const isList      = control === "multiselect";
+
+  // What a list field shows while it is being typed: the stored value is parsed on every key, and
+  // drawing it back would swallow a trailing ", " before the next value is typed.
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const draftOr = (field: string, stored: string) => drafts[field] ?? stored;
+  const typing  = (field: string, text: string) => setDrafts((d) => ({ ...d, [field]: text }));
+  const typed   = (field: string) => setDrafts((d) => { const next = { ...d }; delete next[field]; return next; });
 
   const update = (patch: Partial<ParamMeta>) => onChange({ ...param, ...patch });
 
-  const patchConstraint = (key: string, value: unknown) =>
-    onChange({
-      ...param,
-      constraints: { ...(param.constraints ?? {}), [key]: value !== undefined ? value : undefined },
-    });
+  const patchConstraint = (name: string, value: unknown) => {
+    const next = { ...(param.constraints ?? {}) } as Record<string, unknown>;
+    if (value === undefined) delete next[name];
+    else next[name] = value;
+    onChange({ ...param, constraints: next });
+  };
 
-  const patchUiHint = (key: string, value: unknown) =>
-    onChange({
-      ...param,
-      uiHints: { ...(param.uiHints ?? {}), [key]: value || undefined },
-    });
+  const patchUiHints = (patch: Record<string, unknown>) => {
+    const next = { ...(param.uiHints ?? {}) } as Record<string, unknown>;
+    for (const [name, value] of Object.entries(patch)) {
+      if (value === undefined || value === "") delete next[name];
+      else next[name] = value;
+    }
+    onChange({ ...param, uiHints: next });
+  };
+
+  // The id follows the label while it is the label's slug; once it is typed in, it is the author's.
+  const idIsAuto = param.id === slugifyId(param.label ?? "");
 
   const handleLabelChange = (label: string) => {
-    // id is always auto-calculated from label; it's readonly in the UI
-    update({ label, id: slugifyId(label) });
+    update(idIsAuto ? { label, id: slugifyId(label) } : { label });
+  };
+
+  // A multi-select's default is a list (`[]` when nothing is picked), any other control's one value:
+  // a default kept across the change is said the way the new control holds it.
+  const handleControlChange = (next: string) => {
+    const hints = { ...(param.uiHints ?? {}) } as Record<string, unknown>;
+    delete hints.widget;
+    if (next === "") delete hints.control;
+    else hints.control = next;
+    const dv = param.defaultValue;
+    const defaultValue = next === "multiselect"
+      ? (Array.isArray(dv) ? dv : dv === undefined || dv === null || dv === "" ? [] : [dv])
+      : (Array.isArray(dv) ? dv[0] : dv);
+    typed("default");
+    onChange({ ...param, uiHints: hints, defaultValue });
+  };
+
+  const handleIdChange = (raw: string) => {
+    // A parameter id is a bind name (`:id`) and a key in the URL: letters, digits and _, not first a digit.
+    update({ id: raw.replace(/[^A-Za-z0-9_]/g, "").replace(/^[0-9]+/, "") });
   };
 
   return (
@@ -393,7 +428,7 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
       {/* Row 1: label (primary) + type + delete */}
       <div className="flex items-center gap-2">
         <input
-          id={`inputParamLabel-${param.id || param.label}`}
+          id={`inputParamLabel-${key}`}
           placeholder="Label"
           value={param.label ?? ""}
           onChange={(e) => handleLabelChange(e.target.value)}
@@ -401,15 +436,15 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
           autoFocus={!param.label}
         />
         <select
-          id={`selectParamType-${param.id || param.label}`}
+          id={`selectParamType-${key}`}
           value={param.type ?? "String"}
-          onChange={(e) => update({ type: e.target.value })}
+          onChange={(e) => update({ type: e.target.value, defaultValue: retyped(e.target.value, param.defaultValue) })}
           className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-28 shrink-0"
         >
           {PARAM_TYPES.map((t) => <option key={t}>{t}</option>)}
         </select>
         <button
-          id={`btnRemoveParam-${param.id || param.label}`}
+          id={`btnRemoveParam-${key}`}
           onClick={onRemove}
           className="p-1.5 text-base-content/60 hover:text-error transition-colors shrink-0"
           title="Remove parameter"
@@ -418,76 +453,177 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
         </button>
       </div>
 
-      {/* Row 2: auto-calculated param ID (readonly) + default value */}
+      {/* Row 2: the parameter id (follows the label until it is typed) + default value */}
       <div className="flex gap-2">
         <div className="flex-1 min-w-0">
-          <label className="text-[10px] text-base-content/60 block mb-0.5">Parameter ID (auto)</label>
+          <label className="text-[10px] text-base-content/60 block mb-0.5">
+            Parameter ID {idIsAuto && <span className="font-normal">(from the label)</span>}
+          </label>
           <input
-            id={`inputParamId-${param.id || param.label}`}
-            readOnly
+            id={`inputParamId-${key}`}
             value={param.id ?? ""}
-            className="text-xs bg-base-200/30 border border-base-300/60 rounded-md px-2 py-1.5 text-base-content/60 font-mono w-full cursor-default select-all"
-            tabIndex={-1}
+            onChange={(e) => handleIdChange(e.target.value)}
+            className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content font-mono w-full"
           />
         </div>
         <div className="w-28 shrink-0">
           <label className="text-[10px] text-base-content/60 block mb-0.5">Default</label>
-          <input
-            id={`inputParamDefault-${param.id || param.label}`}
-            placeholder="—"
-            value={(param.defaultValue as string) ?? ""}
-            onChange={(e) => update({ defaultValue: e.target.value || undefined })}
-            className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full"
-          />
+          {param.type === "Boolean" ? (
+            // A Boolean's default is a choice, so `false` is one of them and not an empty box.
+            <select
+              id={`selectParamDefault-${key}`}
+              value={param.defaultValue === true ? "true" : param.defaultValue === false ? "false" : ""}
+              onChange={(e) => update({ defaultValue: e.target.value === "" ? undefined : e.target.value === "true" })}
+              className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full"
+            >
+              <option value="">—</option>
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          ) : (
+            <input
+              id={`inputParamDefault-${key}`}
+              placeholder={isList ? "none picked" : "—"}
+              value={draftOr("default", listText(param.defaultValue))}
+              onChange={(e) => {
+                typing("default", e.target.value);
+                // A multi-select starts with a list, `[]` when nothing is picked; any other control a value.
+                update({ defaultValue: isList
+                  ? splitList(e.target.value).map((v) => typedValue(param.type, v))
+                  : (e.target.value === "" ? undefined : typedValue(param.type, e.target.value)) });
+              }}
+              onBlur={() => typed("default")}
+              className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full"
+            />
+          )}
         </div>
       </div>
 
-      {/* Row 3: widget type + required toggle */}
+      {/* Row 3: control + required toggle */}
       <div className="flex items-center gap-2">
         <select
-          id={`selectParamWidget-${param.id || param.label}`}
-          value={widgetKind ?? ""}
-          onChange={(e) => patchUiHint("widget", e.target.value)}
+          id={`selectParamWidget-${key}`}
+          value={control ?? ""}
+          onChange={(e) => handleControlChange(e.target.value)}
           className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content flex-1 min-w-0"
         >
-          <option value="">widget: auto</option>
+          <option value="">control: auto</option>
           {UI_WIDGETS.map((w) => <option key={w} value={w}>{w}</option>)}
+          {/* A control the dropdown has no word for (`integer`, `datetime`...) is shown as written. */}
+          {control && !UI_WIDGETS.includes(control) && <option value={control}>{control}</option>}
         </select>
         <label className="flex items-center gap-1.5 text-xs text-base-content cursor-pointer shrink-0">
           <input
-            id={`inputParamRequired-${param.id || param.label}`}
+            id={`inputParamRequired-${key}`}
             type="checkbox"
             checked={required === true}
-            onChange={(e) => patchConstraint("required", e.target.checked ? true : undefined)}
+            // Unticked is said, as the shipped files say it: `required: false`.
+            onChange={(e) => patchConstraint("required", e.target.checked)}
             className="w-3.5 h-3.5"
           />
           Required
         </label>
       </div>
 
-      {/* Row 4: options source — only for select-like widgets */}
+      {/* Row 4: options source — only for select-like controls */}
       {showOptions && (
         <div>
           <label className="text-[10px] text-base-content/60 block mb-0.5">
             Options
-            <span className="font-normal ml-1">(comma-separated, or a SELECT SQL query)</span>
+            <span className="font-normal ml-1">(comma-separated, value=Label to show a name, or a SELECT SQL query)</span>
           </label>
           <input
-            id={`inputParamOptions-${param.id || param.label}`}
-            placeholder="Option A, Option B  —or—  SELECT value FROM lookup"
-            value={optionsStr}
+            id={`inputParamOptions-${key}`}
+            placeholder="A, B  —or—  a=Option A, b=Option B  —or—  SELECT value, label FROM lookup"
+            value={draftOr("options", optionsText(options))}
             onChange={(e) => {
+              typing("options", e.target.value);
               const raw = e.target.value;
-              if (!raw.trim()) { patchUiHint("options", undefined); return; }
+              if (!raw.trim()) { patchUiHints({ options: undefined }); return; }
               const isSql = raw.trimStart().toUpperCase().startsWith("SELECT");
-              patchUiHint("options", isSql
-                ? raw
-                : raw.split(",").map((s) => s.trim()).filter(Boolean));
+              patchUiHints({ options: isSql ? raw : parseOptions(param.type, raw) });
             }}
+            onBlur={() => typed("options")}
             className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full font-mono"
           />
         </div>
       )}
+
+      {/* Row 5: the only values the parameter accepts (also what a control with no options offers) */}
+      <div>
+        <label className="text-[10px] text-base-content/60 block mb-0.5">
+          Allowed values
+          <span className="font-normal ml-1">(comma-separated; empty = any value)</span>
+        </label>
+        <input
+          id={`inputParamAllowedValues-${key}`}
+          placeholder="any value"
+          value={draftOr("allowed", listText(constraints.allowedValues))}
+          onChange={(e) => {
+            typing("allowed", e.target.value);
+            const values = splitList(e.target.value).map((v) => typedValue(param.type, v));
+            patchConstraint("allowedValues", values.length > 0 ? values : undefined);
+          }}
+          onBlur={() => typed("allowed")}
+          className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full"
+        />
+      </div>
     </div>
   );
+}
+
+// ── Values as the form types them and as the shipped files hold them ─────────
+
+/** "a, b ,, c" → ["a", "b", "c"]. */
+function splitList(text: string): string[] {
+  return text.split(",").map((s) => s.trim()).filter((s) => s !== "");
+}
+
+/** A value shown in a text box: a list as "a, b", anything else as itself. */
+function listText(value: unknown): string {
+  if (Array.isArray(value)) return value.map((v) => String(v)).join(", ");
+  return value === undefined || value === null ? "" : String(value);
+}
+
+/**
+ * A typed-in value as the parameter's type holds it: an Integer or a Double a number, a Boolean
+ * true or false, anything else the text. Text that is not a number stays text (a `{dataToday}`
+ * default, a half-typed "-"), so nothing typed is ever lost.
+ */
+function typedValue(type: string | undefined, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  if ((type === "Integer" && /^-?\d+$/.test(value.trim())) || (type === "Double" && /^-?\d+(\.\d+)?$/.test(value.trim())))
+    return Number(value.trim());
+  if (type === "Boolean" && (value === "true" || value === "false")) return value === "true";
+  return value;
+}
+
+/** A default kept across a change of type, as the new type holds it ("10" becomes 10 for an Integer). */
+function retyped(type: string, value: unknown): unknown {
+  if (value === undefined || value === null) return value;
+  if (Array.isArray(value)) return value.map((v) => typedValue(type, String(v)));
+  return typedValue(type, String(value));
+}
+
+/** Options as typed: plain values, or `value=Label` pairs (then every option is a pair). */
+function parseOptions(type: string | undefined, raw: string): unknown[] {
+  const items = splitList(raw);
+  if (!items.some((item) => item.includes("="))) return items.map((item) => typedValue(type, item));
+  return items.map((item) => {
+    const at = item.indexOf("=");
+    const value = at === -1 ? item : item.slice(0, at).trim();
+    const label = at === -1 ? item : item.slice(at + 1).trim();
+    return { value: typedValue(type, value), label };
+  });
+}
+
+/** Options as the box shows them: a SELECT as written, pairs as `value=Label`, values as themselves. */
+function optionsText(options: unknown): string {
+  if (typeof options === "string") return options;
+  if (!Array.isArray(options)) return "";
+  return options.map((o) => {
+    if (o && typeof o === "object" && "value" in (o as Record<string, unknown>))
+      return `${String((o as Record<string, unknown>).value ?? "")}=${String((o as Record<string, unknown>).label ?? "")}`;
+    return String(o);
+  }).join(", ");
 }
