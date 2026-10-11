@@ -1840,20 +1840,20 @@ electronBeforeAfterAllTest(
         const { expect } = await import('@playwright/test');
 
         // The page says what it is, to a reader who arrives with no sample list around them.
-        await expect(page.locator('.rb-dashboard-demos-root')).toBeVisible({ timeout: 60000 });
+        await expect(page.locator('#dashboardDemosRoot')).toBeVisible({ timeout: 60000 });
         await expect(page.locator('#dashTitle'))
           .toContainText('Dashboard Demos', { timeout: 30000 });
 
         // The contents list above the cards: one entry per demo, in the index's order.
         const contents = await page
-          .locator('.rb-dashboard-demos-root nav a[href^="#dd-"]')
+          .locator('#ddContents [id^="lnkContents-dd-"]')
           .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).hash));
         expect(contents, 'the contents list names every demo, in order')
           .toEqual(DEMOS.map((demo) => `#${demo.id}`));
 
         // And the cards themselves, each carrying its own dashboard.
         const cards = await page
-          .locator('.rb-dashboard-demos-root .card')
+          .locator('#dashboardDemosRoot > [id^="dd-"]')
           .evaluateAll((divs) => divs.map((div) => div.id));
         expect(cards, 'one card per demo, in the index\'s order')
           .toEqual(DEMOS.map((demo) => demo.id));

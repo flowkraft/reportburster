@@ -175,11 +175,11 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
   test('(dashboard demos gallery) the page holds the 25 demos the index lists', async () => {
     test.setTimeout(5 * 60_000);
 
-    await expect(page.locator('.rb-dashboard-demos-root'), 'the Gallery opens for a visitor')
+    await expect(page.locator('#dashboardDemosRoot'), 'the Gallery opens for a visitor')
       .toBeVisible({ timeout: 60_000 });
 
     // The cards, in the index's order, each carrying its own dashboard and its own two links.
-    const cardIds = await page.locator('.rb-dashboard-demos-root .card').evaluateAll((cards) =>
+    const cardIds = await page.locator('#dashboardDemosRoot > [id^="dd-"]').evaluateAll((cards) =>
       cards.map((card) => card.id));
     expect(cardIds, 'one card per demo, in the order the index lists them')
       .toEqual(DEMOS.map((demo) => demo.id));
@@ -198,7 +198,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     }
 
     // And the contents list above them says the same thing, area by area.
-    const contents = await page.locator('.rb-dashboard-demos-root nav a').evaluateAll((links) =>
+    const contents = await page.locator('#ddContents [id^="lnkContents-"]').evaluateAll((links) =>
       links.map((link) => (link as HTMLAnchorElement).getAttribute('href')));
     for (const demo of DEMOS)
       expect(contents, `the contents list names ${demo.id}`).toContain(`#${demo.id}`);

@@ -63,7 +63,8 @@ final class DashboardDemosGallery {
 			out.append("      <li><a href=\"#").append(areaId(area.getKey())).append("\">")
 					.append(html(area.getKey())).append("</a>\n        <ul>\n");
 			for (Demo demo : area.getValue())
-				out.append("          <li><a href=\"#").append(demo.id()).append("\">")
+				out.append("          <li><a id=\"lnkContents-").append(demo.id()).append("\" href=\"#")
+						.append(demo.id()).append("\">")
 						.append(html(field(demo, "title"))).append("</a></li>\n");
 			out.append("        </ul>\n      </li>\n");
 		}
