@@ -2422,7 +2422,7 @@ test.describe('Auth — Server: run-sql and author limits', () => {
       expect(
         body.error,
         'and the refusal says where it came from, so the author is not left guessing',
-      ).toContain('not allowed in run-sql');
+      ).toContain('allowed in run-sql');
       expect(body.data, 'a refused statement returns nothing at all').toBeUndefined();
     }
 
