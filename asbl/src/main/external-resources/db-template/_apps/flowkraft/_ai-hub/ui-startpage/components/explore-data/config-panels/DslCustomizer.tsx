@@ -3,10 +3,14 @@
 import { useCallback, useState } from "react";
 // lucide-react removed
 import dynamic from "next/dynamic";
+import { EditorView } from "@codemirror/view";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { fetchDslExample } from "@/lib/explore-data/ai-prompt-builder";
 import { DslHelpDialog } from "./DslHelpDialog";
 import { DslExampleDialog } from "./DslExampleDialog";
+
+// The editor's input is #dslEditorInput, as the Finetune editors' are #sqlEditorInput / #scriptEditorInput.
+const DSL_EDITOR_INPUT = [EditorView.contentAttributes.of({ id: "dslEditorInput" })];
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror").then((m) => m.default), { ssr: false });
 
@@ -99,6 +103,7 @@ export function DslCustomizer({ dsl, onChange, componentType, columns = [], samp
             {CodeMirror && (
               <CodeMirror
                 value={dsl}
+                extensions={DSL_EDITOR_INPUT}
                 onChange={onChange}
                 height="140px"
                 theme="dark"

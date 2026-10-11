@@ -123,6 +123,7 @@ import {
   selectConnection,
   addTableToCanvas,
   enterTextIntoEditor,
+  editorLines,
   runSqlQuery,
   openDslEditor,
   switchToWidget,
@@ -518,7 +519,7 @@ test.describe('Data Canvas Visualizations', () => {
       await page.waitForTimeout(300);
 
       // Write a scalar query
-      const editor = page.locator('#sqlEditorContainer .cm-content');
+      const editor = page.locator('#sqlEditorInput');
       await editor.waitFor({ state: 'visible', timeout: 5_000 });
       await editor.click();
       await page.keyboard.press('Control+a');
@@ -562,7 +563,7 @@ test.describe('Data Canvas Visualizations', () => {
       await page.waitForTimeout(300);
 
       // Script editor must render with its own container ID
-      const scriptEditor = page.locator('#scriptEditorContainer .cm-content');
+      const scriptEditor = page.locator('#scriptEditorInput');
       await scriptEditor.waitFor({ state: 'visible', timeout: 5_000 });
 
       // Valid single-widget Groovy script: queries db via ctx.dbSql.rows(), returns List<Map>.
@@ -597,7 +598,7 @@ test.describe('Data Canvas Visualizations', () => {
       await page.waitForTimeout(200);
       await page.locator('#selectQueryMode').selectOption('script');
       await page.waitForTimeout(300);
-      await expect(page.locator('#scriptEditorContainer .cm-content')).toBeVisible();
+      await expect(page.locator('#scriptEditorInput')).toBeVisible();
       console.log('[C-2] DONE — Groovy script executed, tabulator rendered with script data, editor persisted');
     });
   });
@@ -656,7 +657,7 @@ test.describe('Data Canvas Visualizations', () => {
 
     // SQL editor must contain the generated SQL — proves visual query
     // was serialised and carried to the SQL editor, not lost.
-    const sqlEditor = page.locator('#sqlEditorContainer .cm-content');
+    const sqlEditor = page.locator('#sqlEditorInput');
     await sqlEditor.waitFor({ state: 'visible', timeout: 5_000 });
     await expect(sqlEditor).toContainText('ShipCountry');
     await expect(sqlEditor).toContainText('Freight');
@@ -680,7 +681,7 @@ test.describe('Data Canvas Visualizations', () => {
     await page.locator('#selectQueryMode').selectOption('script');
     await page.waitForTimeout(300);
 
-    const scriptEditor = page.locator('#scriptEditorContainer .cm-content');
+    const scriptEditor = page.locator('#scriptEditorInput');
     await scriptEditor.waitFor({ state: 'visible', timeout: 5_000 });
 
     // Type a Groovy script — real user action, confirms editor accepts input.
@@ -1032,7 +1033,7 @@ test.describe('Data Canvas Visualizations', () => {
     // Groovy (adjacent command-chain calls like `type 'bar' data { … }` parse
     // as `type('bar').data(…)`). The line-by-line read preserves the line
     // structure, which is what we need for the paste-back round-trip.
-    const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+    const dslBeforeLines = await editorLines(page, 'dslEditorInput');
     const dslBefore = dslBeforeLines.join('\n');
     expect(dslBefore).toMatch(/type\s+'bar'/);
 
@@ -1057,7 +1058,7 @@ test.describe('Data Canvas Visualizations', () => {
     //     MutationObserver reconciler rejects (verified by no-op).
     const newDsl = dslBefore.replace(/type\s+'bar'/, "type 'line'");
     await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
-    await page.locator('#dslEditorContainer .cm-content').click();
+    await page.locator('#dslEditorInput').click();
     await page.keyboard.press('Control+A');
     await page.keyboard.press('Control+V');
 
@@ -1086,7 +1087,7 @@ test.describe('Data Canvas Visualizations', () => {
     await openDslEditor(page);
 
     // Semantic edit must survive the round-trip through auto-save + server reload
-    const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
+    const dslAfter = await page.locator('#dslEditorInput').textContent() ?? '';
     expect(dslAfter).toMatch(/type\s+'line'/);
     expect(dslAfter).not.toMatch(/type\s+'bar'/);   // no stale leftover
     console.log('[E-1] DONE — chart DSL type=line persisted through navigation');
@@ -1107,7 +1108,7 @@ test.describe('Data Canvas Visualizations', () => {
 
     // Tabulator DSL must contain the canonical seeded layout — `layout 'fitColumns'`.
     // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
-    const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+    const dslBeforeLines = await editorLines(page, 'dslEditorInput');
     const dslBefore = dslBeforeLines.join('\n');
     expect(dslBefore).toMatch(/tabulator/);
     expect(dslBefore).toMatch(/layout\s+'fitColumns'/);
@@ -1119,7 +1120,7 @@ test.describe('Data Canvas Visualizations', () => {
     // on the clipboard + Ctrl+V approach (real paste, only path that works).
     const newDsl = dslBefore.replace(/layout\s+'fitColumns'/, "layout 'fitDataStretch'");
     await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
-    await page.locator('#dslEditorContainer .cm-content').click();
+    await page.locator('#dslEditorInput').click();
     await page.keyboard.press('Control+A');
     await page.keyboard.press('Control+V');
 
@@ -1140,7 +1141,7 @@ test.describe('Data Canvas Visualizations', () => {
     await expect(page.locator('#configPanel-tabulator')).toBeVisible({ timeout: 5_000 });
     await openDslEditor(page);
 
-    const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
+    const dslAfter = await page.locator('#dslEditorInput').textContent() ?? '';
     expect(dslAfter).toMatch(/layout\s+'fitDataStretch'/);
     expect(dslAfter).not.toMatch(/layout\s+'fitColumns'/);
     console.log('[E-2] DONE — tabulator DSL layout=fitDataStretch persisted through navigation');
@@ -1164,7 +1165,7 @@ test.describe('Data Canvas Visualizations', () => {
 
     // Pivot DSL must contain the canonical seeded aggregator — `aggregatorName 'Sum'`.
     // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
-    const dslBeforeLines = await page.locator('#dslEditorContainer .cm-line').allTextContents();
+    const dslBeforeLines = await editorLines(page, 'dslEditorInput');
     const dslBefore = dslBeforeLines.join('\n');
     expect(dslBefore).toMatch(/pivotTable/);
     expect(dslBefore).toMatch(/aggregatorName\s+'Sum'/);
@@ -1175,7 +1176,7 @@ test.describe('Data Canvas Visualizations', () => {
     // (see PivotTableOptionsScript javadoc). Round-trips through parse → Map → emit.
     const newDsl = dslBefore.replace(/aggregatorName\s+'Sum'/, "aggregatorName 'Count'");
     await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
-    await page.locator('#dslEditorContainer .cm-content').click();
+    await page.locator('#dslEditorInput').click();
     await page.keyboard.press('Control+A');
     await page.keyboard.press('Control+V');
 
@@ -1196,7 +1197,7 @@ test.describe('Data Canvas Visualizations', () => {
     await expect(page.locator('#configPanel-pivot')).toBeVisible({ timeout: 5_000 });
     await openDslEditor(page);
 
-    const dslAfter = await page.locator('#dslEditorContainer .cm-content').textContent() ?? '';
+    const dslAfter = await page.locator('#dslEditorInput').textContent() ?? '';
     expect(dslAfter).toMatch(/aggregatorName\s+'Count'/);
     expect(dslAfter).not.toMatch(/aggregatorName\s+'Sum'/);
     console.log('[E-3] DONE — pivot DSL aggregatorName=Count persisted through navigation');
@@ -1227,7 +1228,7 @@ test.describe('Data Canvas Visualizations', () => {
 
     // Parameters DSL must contain the canonical block + the seeded label.
     // Line-by-line read preserves newlines for the paste-back round-trip; see E-1.
-    const dslBeforeLines = await page.locator('#filterDslEditorContainer .cm-line').allTextContents();
+    const dslBeforeLines = await editorLines(page, 'filterDslEditorInput');
     const dslBefore = dslBeforeLines.join('\n');
     expect(dslBefore).toMatch(/parameters|reportparameters/i);
     expect(dslBefore).toMatch(/label:\s*'Param1'/);
@@ -1240,7 +1241,7 @@ test.describe('Data Canvas Visualizations', () => {
     // + Ctrl+V rationale.
     const newDsl = dslBefore.replace(/label:\s*'Param1'/, "label: 'E2E_LABEL'");
     await page.evaluate(async (text) => { await navigator.clipboard.writeText(text); }, newDsl);
-    await page.locator('#filterDslEditorContainer .cm-content').click();
+    await page.locator('#filterDslEditorInput').click();
     await page.keyboard.press('Control+A');
     await page.keyboard.press('Control+V');
     await page.waitForTimeout(300);
@@ -1263,7 +1264,7 @@ test.describe('Data Canvas Visualizations', () => {
     // Re-open DSL in modal
     await openDslEditor(page, '#filterDslEditorContainer', '#btnFilterDslToggle');
 
-    const dslAfter = await page.locator('#filterDslEditorContainer .cm-content').textContent() ?? '';
+    const dslAfter = await page.locator('#filterDslEditorInput').textContent() ?? '';
     expect(dslAfter).toMatch(/label:\s*'E2E_LABEL'/);
     expect(dslAfter).not.toMatch(/label:\s*'Param1'/);
 

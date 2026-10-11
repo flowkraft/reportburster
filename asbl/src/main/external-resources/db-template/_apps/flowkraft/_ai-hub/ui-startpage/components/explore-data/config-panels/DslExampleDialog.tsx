@@ -3,6 +3,10 @@
 import { useState, useCallback } from "react";
 // lucide-react removed
 import dynamic from "next/dynamic";
+import { EditorView } from "@codemirror/view";
+
+// The editor's input is #dslExampleInput, as the Finetune editors' are #sqlEditorInput / #scriptEditorInput.
+const DSL_EXAMPLE_INPUT = [EditorView.contentAttributes.of({ id: "dslExampleInput" })];
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror").then((m) => m.default), { ssr: false });
 
@@ -57,6 +61,7 @@ export function DslExampleDialog({ open, onClose, componentType, example }: DslE
             {CodeMirror && (
               <CodeMirror
                 value={example}
+                extensions={DSL_EXAMPLE_INPUT}
                 readOnly
                 height="420px"
                 theme="dark"

@@ -476,7 +476,7 @@ async function cTypeDslAndStay(page: Page, dsl: string): Promise<void> {
   await page.locator('#btnDisplayTab').click();
   await page.waitForTimeout(500);
   await openDslEditor(page);
-  const editor = page.locator('#dslEditorContainer .cm-content');
+  const editor = page.locator('#dslEditorInput');
   await editor.click();
   await page.keyboard.press('Control+a');
   await page.keyboard.insertText(dsl);
@@ -1990,7 +1990,7 @@ test.describe('Canvas mechanics', () => {
         await page.locator('#btnDisplayTab').click();
         await openDslEditor(page);
         await page.locator('#btnShowDslExample').click();
-        await expect(page.locator('#dslExampleContainer .cm-content')).toContainText('tabulator', { timeout: 15_000 });
+        await expect(page.locator('#dslExampleInput')).toContainText('tabulator', { timeout: 15_000 });
         await page.locator('#btnCloseDslExample').click();
         await page.locator('#btnDataTab').click();
 
@@ -2057,7 +2057,7 @@ test.describe('Canvas mechanics', () => {
         await page.locator('#btnConfigureFilters').click();
         await page.locator('#btnFilterDslToggle').click();
         await page.locator('#btnShowFilterDslExample').click();
-        await expect(page.locator('#dslExampleContainer .cm-content')).toContainText('parameter', { timeout: 15_000 });
+        await expect(page.locator('#dslExampleInput')).toContainText('parameter', { timeout: 15_000 });
         await page.locator('#btnCloseDslExample').click();
         await page.locator('#btnCloseFilterConfig').click();
 
@@ -2123,7 +2123,7 @@ test('(canvas mechanics) M09 Finetune → Visual', async () => {
     // + returning to Finetune shows the query the Visual tab writes: the hand-written one went with
     //   the Switch, which is what the question was about. M60 is the test of the question itself.
     await page.locator('#btnQueryTab-finetune').click();
-    await expect(page.locator('#sqlEditorContainer .cm-content')).toContainText('channel', { timeout: 15_000 });
+    await expect(page.locator('#sqlEditorInput')).toContainText('channel', { timeout: 15_000 });
   });
 });
 
@@ -2557,7 +2557,7 @@ test('(canvas mechanics) M24 AI help prompt builders', async () => {
     await addTableToCanvas(page, 'dash_demo.orders');
     await eOpenFinetune(page, 'sql');
     await runSqlQuery(page, 'SELECT order_id, total_amount FROM dash_demo.orders LIMIT 5');
-    const sqlBefore = await page.locator('#sqlEditorContainer .cm-content').innerText();
+    const sqlBefore = await page.locator('#sqlEditorInput').innerText();
     await page.locator('#btnAiHelpSql').click();
     const sqlPrompt = await eBuildAiPrompt(page, 'Revenue by channel for completed orders');
     expect(sqlPrompt).toMatch(/"tableName":\s*"(dash_demo\.)?orders"/);
@@ -2575,7 +2575,7 @@ test('(canvas mechanics) M24 AI help prompt builders', async () => {
     // − Close leaves the widget's SQL as it was.
     await page.locator('#btnCloseAiHelp').click();
     await expect(page.locator('#txtAiRequirement')).toHaveCount(0);
-    expect(await page.locator('#sqlEditorContainer .cm-content').innerText()).toBe(sqlBefore);
+    expect(await page.locator('#sqlEditorInput').innerText()).toBe(sqlBefore);
 
     // Script.
     await eOpenFinetune(page, 'script');
@@ -2829,7 +2829,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await expect.poll(() => fWidgetIds(page), { message: 'and Ctrl+Z brings it back once more' }).toEqual([tId, bId, cId]);
       await fSelectWidget(page, bId);
       await page.locator('#btnQueryTab-finetune').click();
-      const sqlEditor = page.locator('#sqlEditorContainer .cm-content');
+      const sqlEditor = page.locator('#sqlEditorInput');
       await sqlEditor.waitFor({ state: 'visible', timeout: 5_000 });
       await sqlEditor.click();
       await page.keyboard.press('Control+Shift+Z');
@@ -3436,14 +3436,14 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       // − Dismiss on the example leaves the clipboard as it was.
       await page.evaluate(() => navigator.clipboard.writeText('g2 sentinel'));
       await page.locator('#btnShowDslExample').click();
-      await expect(page.locator('#dslExampleContainer .cm-content')).toContainText('tabulator', { timeout: 15_000 });
+      await expect(page.locator('#dslExampleInput')).toContainText('tabulator', { timeout: 15_000 });
       await page.locator('#btnDismissDslExample').click();
       await expect(page.locator('#dslExampleContainer')).toHaveCount(0);
       expect(await eClipboardText(page), 'dismiss copies nothing').toBe('g2 sentinel');
 
       // + Copy puts the example on the clipboard.
       await page.locator('#btnShowDslExample').click();
-      await expect(page.locator('#dslExampleContainer .cm-content')).toContainText('tabulator', { timeout: 15_000 });
+      await expect(page.locator('#dslExampleInput')).toContainText('tabulator', { timeout: 15_000 });
       await page.locator('#btnCopyDslExample').click();
       await expect
         .poll(() => eClipboardText(page), { message: 'the example is on the clipboard', timeout: 10_000 })
@@ -4649,7 +4649,7 @@ test('(canvas mechanics) M60 Going back to Visual asks before it drops a hand-wr
     await runVisualQuery(page);
     await expect(dRowCount(page), 'the visual query has a row per channel')
       .toContainText(`${D_ORDER_CHANNELS} rows returned`, { timeout: 30_000 });
-    const sqlEditor = page.locator('#sqlEditorContainer .cm-content');
+    const sqlEditor = page.locator('#sqlEditorInput');
 
     // − Nothing edited: the SQL tab shows the query the Visual tab wrote, and going back asks
     //   nothing - there is nothing to lose.

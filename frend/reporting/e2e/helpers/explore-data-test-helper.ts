@@ -262,6 +262,14 @@ export async function enterTextIntoEditor(
   }
 }
 
+/** The lines of a CodeMirror editor, read off its input (`#<inputId>`): CodeMirror draws each line
+ *  as one child of it. Its text content alone runs the lines together, which a DSL cannot be pasted
+ *  back from. */
+export async function editorLines(page: Page, inputId: string): Promise<string[]> {
+  return page.locator(`[id="${inputId}"]`)
+    .evaluate((el) => Array.from(el.children).map((line) => line.textContent ?? ''));
+}
+
 /** Switch to the Finetune SQL tab, select SQL mode, replace the editor content,
  *  then click Run Query. Does NOT click Detect Columns — call detectColumns() if needed. */
 export async function runSqlQuery(
@@ -273,7 +281,7 @@ export async function runSqlQuery(
   await page.waitForTimeout(500);
   await page.locator('#selectQueryMode').selectOption('sql');
   await page.waitForTimeout(300);
-  const editor = page.locator('#sqlEditorContainer .cm-content');
+  const editor = page.locator('#sqlEditorInput');
   await editor.waitFor({ state: 'visible', timeout: 5_000 });
   await editor.click();
   await page.keyboard.press('Control+a');
@@ -315,7 +323,7 @@ export async function runGroovyScript(
   await page.waitForTimeout(500);
   await page.locator('#selectQueryMode').selectOption('script');
   await page.waitForTimeout(300);
-  const editor = page.locator('#scriptEditorContainer .cm-content');
+  const editor = page.locator('#scriptEditorInput');
   await editor.waitFor({ state: 'visible', timeout: 5_000 });
   await editor.click();
   await page.keyboard.press('Control+a');
@@ -994,7 +1002,7 @@ export async function addFilterBarParam(
   await page.locator('#btnConfigureFilters').click();
   await page.locator('#btnFilterDslToggle').waitFor({ state: 'visible', timeout: 5_000 });
   await page.locator('#btnFilterDslToggle').click();
-  const dslEditor = page.locator('#filterDslEditorContainer .cm-content');
+  const dslEditor = page.locator('#filterDslEditorInput');
   await dslEditor.waitFor({ state: 'visible', timeout: 5_000 });
   await dslEditor.click();
   await page.keyboard.press('Control+a');
@@ -1186,7 +1194,7 @@ export async function setChartDsl(page: Page, dslCode: string): Promise<void> {
   await page.locator('#btnDisplayTab').click();
   await page.locator('#btnDslToggle').waitFor({ state: 'visible', timeout: 5_000 });
   await page.locator('#btnDslToggle').click();
-  const dslEditor = page.locator('#dslEditorContainer .cm-content');
+  const dslEditor = page.locator('#dslEditorInput');
   await dslEditor.waitFor({ state: 'visible', timeout: 5_000 });
   await dslEditor.click();
   await page.keyboard.press('Control+a');
@@ -1631,7 +1639,7 @@ export async function setWidgetDsl(page: Page, dsl: string): Promise<void> {
   await page.locator('#btnDisplayTab').click();
   await page.waitForTimeout(500);
   await openDslEditor(page);
-  const editor = page.locator('#dslEditorContainer .cm-content');
+  const editor = page.locator('#dslEditorInput');
   await editor.click();
   await page.keyboard.press('Control+a');
   await enterTextIntoEditor(page, dsl);
