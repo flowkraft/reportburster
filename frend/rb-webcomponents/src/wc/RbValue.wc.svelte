@@ -56,6 +56,13 @@
   export let field: string = '';
   export let format: string = '';         // 'currency', 'number', 'percent', 'date', or ''
   /**
+   * What goes immediately before and after the formatted value, as the author typed it -
+   * a currency sign the format does not cover, a unit, a percent sign. Both are shown
+   * verbatim, spaces included, so `prefix="EUR "` keeps its space.
+   */
+  export let prefix: string = '';
+  export let suffix: string = '';
+  /**
    * Which currency the `currency` format is in, as an ISO code. A cube declares it once
    * (`currency 'EUR'`) and passes it here; every other host keeps the dollars it had.
    */
@@ -174,6 +181,8 @@
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
       if (!field) field = hostEl.getAttribute('field') || '';
       if (!format) format = hostEl.getAttribute('format') || '';
+      if (!prefix) prefix = hostEl.getAttribute('prefix') || '';
+      if (!suffix) suffix = hostEl.getAttribute('suffix') || '';
       if (currency === 'USD') currency = hostEl.getAttribute('currency') || 'USD';
       if (!Object.keys(reportParams).length) {
         const rp = hostEl.getAttribute('report-params');
@@ -238,7 +247,7 @@
   {:else if error}
     <span class="rb-value-error" id={componentId ? `widgetError-${componentId}` : undefined} title={error}>--</span>
   {:else}
-    {displayValue}
+    {prefix}{displayValue}{suffix}
   {/if}
 </span>
 

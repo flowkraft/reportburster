@@ -34,6 +34,10 @@ export function NumberConfig({ config, columns, onChange }: NumberConfigProps) {
     : "number";
   const format = (config.numberFormat as string) || inferredFormat;
   const label = (config.numberLabel as string) || "";
+  // What goes around the number: the currency sign of a column no format covers, a unit, a
+  // percent sign of a number that is already a percentage. Written as typed, spaces and all.
+  const prefix = (config.numberPrefix as string) || "";
+  const suffix = (config.numberSuffix as string) || "";
 
   const measures = columns.filter((c) => getFieldKind(c) === "measure");
   const dimensions = columns.filter((c) => getFieldKind(c) === "dimension");
@@ -107,6 +111,30 @@ export function NumberConfig({ config, columns, onChange }: NumberConfigProps) {
           placeholder="Auto from field name"
           className="w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content"
         />
+      </div>
+
+      {/* Before and after the number */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <span className="text-xs text-base-content/60">Prefix</span>
+          <input
+            id="inputNumberPrefix"
+            value={prefix}
+            onChange={(e) => onChange({ ...config, numberPrefix: e.target.value })}
+            placeholder="€ "
+            className="w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content"
+          />
+        </div>
+        <div>
+          <span className="text-xs text-base-content/60">Suffix</span>
+          <input
+            id="inputNumberSuffix"
+            value={suffix}
+            onChange={(e) => onChange({ ...config, numberSuffix: e.target.value })}
+            placeholder=" %"
+            className="w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content"
+          />
+        </div>
       </div>
     </div>
   );
