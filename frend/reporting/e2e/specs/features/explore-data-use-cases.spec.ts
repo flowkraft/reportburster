@@ -19,11 +19,11 @@ import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
 import { SelfServicePortalsTestHelper } from '../../helpers/areas/self-service-portals-test-helper';
-import { getCanvasComponentIds, assertDashboardRendersCorrectly } from '../../helpers/dashboard-test-helper';
+import { getCanvasComponentIds, assertDashboardRendersCorrectly, expectPublishedTiles } from '../../helpers/dashboard-test-helper';
 import { reseedCubeDemoData, type AdminFetch } from '../../helpers/cube-stories-test-helper';
 import {
   type WidgetType,
-  WEB_COMPONENT,
+  getLastWidgetId,
   toConnectionCode,
   demoShiftDays,
   shiftedDay,
@@ -96,9 +96,9 @@ async function addFilterBarParam(page: Page, dslCode: string): Promise<void> {
   await enterTextIntoEditor(page, dslCode);
   await page.locator('#btnDoneFilters').click();
   await page.waitForTimeout(1_500); // autosave debounce
-  // Wait for rb-parameters to appear — confirms DSL parsed, parameters mounted,
+  // Wait for the filter bar's form to appear — confirms DSL parsed, parameters mounted,
   // and valueChange with default values fired into the canvas store.
-  await page.locator('rb-parameters').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
   await page.waitForTimeout(500); // let Zustand store write and React re-render complete
 }
 
@@ -120,7 +120,7 @@ async function addWidget(
   await runSqlQuery(page, sql);
   await clickDataTab(page);
   await switchToWidget(page, widgetType);
-  await expect(page.locator(WEB_COMPONENT[widgetType]).last()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`)).toBeVisible({ timeout: 20_000 });
 }
 
 /**
@@ -138,7 +138,7 @@ async function addScriptWidget(
   await runGroovyScript(page, script);
   await clickDataTab(page);
   await switchToWidget(page, widgetType);
-  await expect(page.locator(WEB_COMPONENT[widgetType]).last()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`)).toBeVisible({ timeout: 20_000 });
 }
 
 /**
@@ -160,7 +160,7 @@ async function addVisualWidget(
     await runVisualQuery(page);
   }
   await switchToWidget(page, widgetType);
-  await expect(page.locator(WEB_COMPONENT[widgetType]).last()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`)).toBeVisible({ timeout: 20_000 });
 }
 
 /** For the currently-selected widget, open the Display tab's DSL editor, replace
@@ -210,10 +210,15 @@ async function publishDashboard(page: Page): Promise<{ reportId: string; dashboa
  * confirm deletion. Leaves the page on the canvas list.
  */
 async function deleteCanvasViaUI(page: Page, canvasName: string): Promise<void> {
+  // The canvas list's delete buttons are named after the canvas id; the test knows its canvas by name.
+  const canvases: Array<{ id: string; name: string }> =
+    await (await page.request.get('http://localhost:9090/api/explorations')).json();
+  const named = canvases.filter((canvas) => canvas.name === canvasName);
+  expect(named, `one canvas is called ${canvasName}`).toHaveLength(1);
   await page.goto(DATA_CANVAS_URL);
   await page.waitForLoadState('networkidle');
   // The delete button is opacity-0 until hover; force bypasses the visibility check
-  await page.locator(`[aria-label="Delete canvas ${canvasName}"]`).click({ force: true });
+  await page.locator(`[id="btnDeleteCanvas-${named[0].id}"]`).click({ force: true });
   await page.locator('#btnConfirmDeleteCanvas').waitFor({ state: 'visible', timeout: 5_000 });
   await page.locator('#btnConfirmDeleteCanvas').click();
   await page.waitForTimeout(1_500);
@@ -389,11 +394,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d1Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d1Ids, { number: 3, trend: 1, map: 1 });
 
       // total_revenue: Northwind carries substantial revenue across all order lines
       const d1RevId = (d1Ids['number'] ?? [])[0];
@@ -484,11 +485,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d2Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d2Ids, { number: 2, chart: 2, tabulator: 1 });
 
       // total_products: Northwind ships at least 77 products
       const d2ProdId = (d2Ids['number'] ?? [])[0];
@@ -580,13 +577,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d3Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d3Ids, { number: 1, chart: 1, trend: 1, map: 1, tabulator: 1 });
 
       // Test fixture has 3 employees (see NorthwindDataGenerator.createEmployees)
       const d3NumId = (d3Ids['number'] ?? [])[0];
@@ -663,12 +654,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d4Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-sankey')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d4Ids, { number: 1, chart: 2, map: 1, sankey: 1 });
 
       // Northwind has customers across multiple countries — total is positive
       const d4NumId = (d4Ids['number'] ?? [])[0];
@@ -742,12 +728,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d5Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d5Ids, { number: 2, chart: 1, map: 1, tabulator: 1 });
 
       // total_suppliers: Northwind sources from multiple countries
       const d5SupId = (d5Ids['number'] ?? [])[0];
@@ -865,12 +846,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d6Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 2, chart: 1, trend: 1, map: 1 });
 
       // All three inline-list shippers must return distinct, positive freight totals
       const speedyData = await page.evaluate(async ({ rc, cid }) => {
@@ -968,12 +944,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d7Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d7Ids, { number: 2, chart: 3, trend: 1, pivot: 1 });
 
       // total_revenue: Northwind has substantial revenue across all order lines.
       const d7RevId = (d7Ids['number'] ?? [])[0];
@@ -1074,11 +1045,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d8Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d8Ids, { number: 2, chart: 2, tabulator: 1 });
 
       // total_stock: Northwind products carry inventory
       const d8StockId = (d8Ids['number'] ?? [])[0];
@@ -1158,12 +1125,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d9Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d9Ids, { number: 1, map: 1, chart: 1, tabulator: 1 });
 
       // Northwind ships to at least 10 countries
       const d9NumId = (d9Ids['number'] ?? [])[0];
@@ -1253,12 +1215,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d10Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 2, trend: 1, chart: 1, tabulator: 1 });
 
       // startDate=2024-01-01 → trend contains only 2024 months
       const trendData = await page.evaluate(async ({ rc, cid }) => {
@@ -1355,11 +1312,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d11Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 1, chart: 3, tabulator: 1 });
 
       // Beverages filter: all rows belong to Beverages
       const bevData = await page.evaluate(async ({ rc, cid }) => {
@@ -1456,11 +1409,7 @@ test.describe('Data Canvas Use Cases', () => {
 
       await page.goto(d12Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 1, chart: 3, tabulator: 1 });
 
       // topN=5 → 5 rows
       const data5 = await page.evaluate(async ({ rc, cid }) => {
@@ -1547,12 +1496,7 @@ return data`,
 
       await page.goto(d13Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d13Ids, { number: 1, chart: 2, tabulator: 1, map: 1 });
 
       // top_performer_freight: the best employee moved positive freight
       const d13NumId = (d13Ids['number'] ?? [])[0];
@@ -1683,10 +1627,7 @@ return data`,
 
       await page.goto(d14Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 3, chart: 2 });
 
       // 2023 total_revenue must be positive
       const revenueData = await page.evaluate(async ({ rc, cid }) => {
@@ -1794,11 +1735,7 @@ return data`,
 
       await page.goto(d15Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d15Ids, { number: 2, chart: 2, tabulator: 1 });
 
       // total_products: test fixture has exactly 20 products
       const d15NumProdId = (d15Ids['number'] ?? [])[0];
@@ -1911,12 +1848,7 @@ return data`,
 
       await page.goto(d16Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d16Ids, { number: 1, chart: 2, map: 1, tabulator: 1 });
 
       const d16NumId = (d16Ids['number'] ?? [])[0];
       const d16NumData = await page.evaluate(async ({ rc, cid }) => {
@@ -2037,12 +1969,7 @@ return data`,
 
       await page.goto(d17Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d17Ids, { number: 1, trend: 1, chart: 2, tabulator: 1 });
 
       // Busiest month KPI: exactly 1 row, month_num in 01–12, order_count positive
       const d17NumId = (d17Ids['number'] ?? [])[0];
@@ -2186,12 +2113,7 @@ return data`,
 
       await page.goto(d18Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 1, map: 1, chart: 2, tabulator: 1 });
 
       // countries_served: fixture orders ship to multiple distinct countries
       const d18NumData = await page.evaluate(async ({ rc, cid }) => {
@@ -2334,12 +2256,7 @@ return data`,
 
       await page.goto(d19Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-trend')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d19Ids, { number: 2, chart: 1, trend: 1, tabulator: 1 });
 
       // total_discount: positive impact across all order lines
       const d19NumDiscId = (d19Ids['number'] ?? [])[0];
@@ -2494,11 +2411,7 @@ return data`,
 
       await page.goto(d20Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(3, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d20Ids, { number: 3, chart: 1, map: 1 });
 
       // All three headline KPIs — exact fixture counts
       const d20RevId  = (d20Ids['number'] ?? [])[0];
@@ -2820,12 +2733,7 @@ return ctx.dbSql.rows(sql)`,
       // Published dashboard renders all expected widget types
       await page.goto(d21Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(4, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, rawIds, { number: 4, chart: 2, tabulator: 1, pivot: 1 });
 
       // Germany: deep data validation — known customer names, revenue amounts, pivot rows
       await assertDashboardRendersCorrectly(page, d21ReportCode, 'Germany', d21ComponentIds);
@@ -2897,10 +2805,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d22Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-map')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d22Ids, { pivot: 1, map: 1, number: 1 });
 
       // Total revenue KPI: the full Northwind order dataset drives a positive revenue total
       const d22NumId = (d22Ids['number'] ?? [])[0];
@@ -3030,11 +2935,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d23Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d23Ids, { number: 1, chart: 2, tabulator: 1 });
 
       // KPI — total revenue must be positive (Northwind has ~$1.3M in sales)
       const d23RevId = (d23Ids['number'] ?? [])[0];
@@ -3189,10 +3090,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d24Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d24Ids, { number: 1, tabulator: 1, chart: 1 });
 
       // 1,200 rows in cube_demo.crm_deals
       const d24CountId = (d24Ids['number'] ?? [])[0];
@@ -3735,8 +3633,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d27Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d27Ids, { number: 2 });
 
       const readCount = async (componentId: string): Promise<number> => {
         const payload = await page.evaluate(async ({ rc, cid }) => {
@@ -3845,8 +3742,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d28Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d28Ids, { tabulator: 1 });
 
       // The grid's own rows, in the order the SQL returned them: three rows, the
       // counts descending.
@@ -3935,13 +3831,9 @@ return ctx.dbSql.rows(sql)`,
 
       // The date picker is a date control and the Double is a number box - the
       // declared type reaches the parameter bar, not only the query.
-      await expect(page.locator('rb-parameters')).toBeVisible({ timeout: 10_000 });
-      const controls = await page.locator('rb-parameters').evaluate((host: Element) => {
-        const root = (host as HTMLElement & { shadowRoot: ShadowRoot | null }).shadowRoot ?? host;
-        return Array.from(root.querySelectorAll('input')).map((i) => (i as HTMLInputElement).type);
-      });
-      expect(controls).toContain('date');
-      expect(controls).toContain('number');
+      await expect(page.locator('#formReportParameters')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('#formReportParameters #to')).toHaveAttribute('type', 'date');
+      await expect(page.locator('#formReportParameters #min')).toHaveAttribute('type', 'number');
 
       // ── the deals closing on or before the date the picker holds ──
       await addWidget(page, 'cube_demo.crm_deals',
@@ -3964,8 +3856,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d29Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d29Ids, { number: 2 });
 
       // The published dashboard's own answers, from the script the publisher
       // wrote - the path that converts through ParameterTypes.typed.
@@ -4076,11 +3967,9 @@ return ctx.dbSql.rows(sql)`,
       expect(await onCanvas('')).toBe(1200);
 
       // ── and the same thing done the way a person does it: clear the picker ──
-      await expect(page.locator('rb-parameters')).toBeVisible({ timeout: 10_000 });
-      await page.locator('rb-parameters').evaluate((host: Element) => {
-        const root = (host as HTMLElement & { shadowRoot: ShadowRoot | null }).shadowRoot ?? host;
-        const box = root.querySelector('input[type="date"]') as HTMLInputElement | null;
-        if (!box) throw new Error('the date picker of the parameter bar was not found');
+      const datePicker = page.locator('#formReportParameters #to');
+      await expect(datePicker).toHaveAttribute('type', 'date', { timeout: 10_000 });
+      await datePicker.evaluate((box: HTMLInputElement) => {
         box.value = '';
         box.dispatchEvent(new Event('input', { bubbles: true }));
         box.dispatchEvent(new Event('change', { bubbles: true }));
@@ -4088,11 +3977,7 @@ return ctx.dbSql.rows(sql)`,
       // The cleared value reaches the canvas - it is not dropped as an echo of the
       // component seeding itself - so the widget asks its question again without
       // the filter.
-      const cleared = await page.locator('rb-parameters').evaluate((host: Element) => {
-        const root = (host as HTMLElement & { shadowRoot: ShadowRoot | null }).shadowRoot ?? host;
-        return (root.querySelector('input[type="date"]') as HTMLInputElement).value;
-      });
-      expect(cleared).toBe('');
+      await expect(datePicker).toHaveValue('');
 
       const d30CanvasId = page.url().split('/').pop()!;
       const { dashboardUrl: d30Url } = await publishDashboard(page);
@@ -4101,8 +3986,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d30Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value')).toHaveCount(1, { timeout: 20_000 });
+      await expectPublishedTiles(page, d30Ids, { number: 1 });
 
       // ── the published dashboard, asked both ways through its own data door ──
       const [d30WidgetId] = d30Ids['number'] ?? [];
@@ -4258,8 +4142,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d31Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(3, { timeout: 20_000 });
+      await expectPublishedTiles(page, d31Ids, { tabulator: 3 });
 
       // ── the published dashboard: the relative span and the typed dates agree ──
       const gridIds = d31Ids['tabulator'] ?? [];
@@ -4388,8 +4271,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d32Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d32Ids, { tabulator: 2 });
 
       // ── the published dashboard: three numbers, none of them the others ──
       const gridIds = d32Ids['tabulator'] ?? [];
@@ -4557,8 +4439,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d33Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d33Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       // The script it runs was never given a `to__next_day`: it declares one
@@ -4756,8 +4637,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d34Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(4, { timeout: 20_000 });
+      await expectPublishedTiles(page, d34Ids, { tabulator: 4 });
 
       // ── the published dashboard, asked through its own data door ──
       // The script it runs holds the same arithmetic the canvas showed.
@@ -4911,8 +4791,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d35Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d35Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       const gridIds = d35Ids['tabulator'] ?? [];
@@ -5062,8 +4941,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d36Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d36Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       const gridIds = d36Ids['tabulator'] ?? [];
@@ -5205,8 +5083,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d37Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d37Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       const gridIds = d37Ids['tabulator'] ?? [];
@@ -5358,8 +5235,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d38Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d38Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       const gridIds = d38Ids['tabulator'] ?? [];
@@ -5526,8 +5402,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d39Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d39Ids, { tabulator: 2 });
 
       // ── the published dashboard, asked through its own data door ──
       const gridIds = d39Ids['tabulator'] ?? [];
@@ -5738,8 +5613,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d40Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-tabulator')).toHaveCount(3, { timeout: 20_000 });
+      await expectPublishedTiles(page, d40Ids, { tabulator: 3 });
 
       // ── the published dashboard, which nobody hands any value to: the
       //    server fills the builtins in for whoever opens it ──
@@ -5926,8 +5800,7 @@ return ctx.dbSql.rows(sql)`,
 
       await page.goto(d41Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
+      await expectPublishedTiles(page, d41Ids, { number: 2 });
       await expect(page.locator('[id^="widgetCube-"]'), 'the dashboard carries one live cube')
         .toHaveCount(1, { timeout: 20_000 });
 

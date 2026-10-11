@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect, type Locator, Page } from '@playwright/test';
 
 /** Named component IDs used by the dashboard data API. */
 export interface DashboardComponentIds {
@@ -303,6 +303,47 @@ export async function getCanvasComponentIds(
     ids[w.type].push(canvasComponentId(w));
   }
   return ids;
+}
+
+/** The id a published tile of each widget type is drawn under: `<prefix>-<its component id>`. */
+export const PUBLISHED_TILE_ID: Record<string, string> = {
+  number: 'widgetValue',
+  trend: 'widgetTrend',
+  gauge: 'widgetGauge',
+  progress: 'widgetProgress',
+  chart: 'widgetChart',
+  tabulator: 'widgetTabulator',
+  pivot: 'widgetPivot',
+  map: 'widgetMap',
+  sankey: 'widgetSankey',
+  detail: 'widgetDetail',
+};
+
+/** A published tile, by the component id of the canvas widget it was published from. */
+export function publishedTile(page: Page, type: string, componentId: string): Locator {
+  return page.locator(`[id="${PUBLISHED_TILE_ID[type]}-${componentId}"]`);
+}
+
+/**
+ * The published page is up and draws the tiles it was published with: `#publishedDashboard`, then,
+ * for each widget type in `expected`, exactly that many tiles of the type on the page, each one a
+ * widget of the canvas (`ids`, from `getCanvasComponentIds`) drawn under its own id.
+ */
+export async function expectPublishedTiles(
+  page: Page,
+  ids: Record<string, string[]>,
+  expected: Record<string, number>,
+): Promise<void> {
+  await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 15_000 });
+  for (const [type, count] of Object.entries(expected)) {
+    const prefix = PUBLISHED_TILE_ID[type];
+    expect(ids[type] ?? [], `the canvas has ${count} ${type} widget(s)`).toHaveLength(count);
+    await expect(page.locator(`#publishedDashboard [id^="${prefix}-"]`), `${count} ${type} tile(s) on the page`)
+      .toHaveCount(count, { timeout: 20_000 });
+    for (const componentId of ids[type] ?? [])
+      await expect(publishedTile(page, type, componentId), `the ${type} tile ${componentId}`)
+        .toBeVisible({ timeout: 20_000 });
+  }
 }
 
 /**
