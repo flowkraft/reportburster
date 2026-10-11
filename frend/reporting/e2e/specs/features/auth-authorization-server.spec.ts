@@ -5217,11 +5217,21 @@ test.describe('Auth — Server: the AI Hub door', () => {
         // value until a credential supplies one, so an ad-hoc run has nothing to bind it to. The
         // page is reloaded so the publish that follows exports what was just written.
         const author = await login(AUTHOR.username, AUTHOR.password);
-        const canvas = await jsonAs(author, `/api/explorations/${canvasId}`);
-        const state =
-          typeof canvas.state === 'string' ? JSON.parse(canvas.state) : (canvas.state ?? {});
-
-        expect(state.widgets?.length, 'the canvas has the widget the dropped table made').toBeGreaterThan(0);
+        // The canvas saves itself 1.2 s after a change, so the widget the dropped table made reaches
+        // the server shortly after it shows its data, not with it.
+        const stored = async () => {
+          const canvas = await jsonAs(author, `/api/explorations/${canvasId}`);
+          const state =
+            typeof canvas.state === 'string' ? JSON.parse(canvas.state) : (canvas.state ?? {});
+          return { canvas, state };
+        };
+        await expect
+          .poll(async () => (await stored()).state.widgets?.length ?? 0, {
+            message: 'the canvas has the widget the dropped table made',
+            timeout: 15_000,
+          })
+          .toBeGreaterThan(0);
+        const { canvas, state } = await stored();
         state.widgets[0].dataSource = { mode: 'sql', sql: ATTRIBUTE_SQL };
 
         // Back as the API holds it, a JSON string: the canvas page parses `state` as one, and an
