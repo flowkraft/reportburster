@@ -2127,6 +2127,8 @@ test.describe('Auth — Server: groups', () => {
     const groupName = 'e2e-groups-ui-dashboards';
     const leftover = (await listGroups(admin)).find((g) => g.name === groupName);
     if (leftover) await deleteGroup(admin, leftover.id);
+    // In no group before the screen is opened: it reads its users once, so it shows this.
+    await setUserGroups(admin, VIEWER.username, []);
 
     await openApp(page);
     const ft = new FluentTester(page);
@@ -2155,15 +2157,21 @@ test.describe('Auth — Server: groups', () => {
       );
       expect(saved.defaultDashboard, 'and the one picked is where its members land').toBe(PIVOT_DASHBOARD);
 
-      await setUserGroups(admin, VIEWER.username, [saved.id]);
       // "Opens on" puts a name on the report id, so the name is read from the same catalogue the
       // screen reads rather than assumed to be the id.
       const pivotName =
         (await myDashboards(admin)).dashboards.find((d) => d.id === PIVOT_DASHBOARD)?.name ??
         PIVOT_DASHBOARD;
 
+      // Put in the group on this screen, as an administrator does: the screen reads its users once,
+      // so a change made behind its back would not be on it.
       await openUsersScreenFilteredTo(page, ft, VIEWER.username);
       await ft
+        .click(`#btnEditUser-${VIEWER.username}`)
+        .waitOnElementToBecomeVisible('#editUserDialog')
+        .click(`#userGroup-${saved.id}`)
+        .click('#btnSaveUser')
+        .waitOnElementToBecomeInvisible('#editUserDialog')
         .click(`#btnEditUser-${VIEWER.username}`)
         .waitOnElementToBecomeVisible('#editUserDialog')
         .elementShouldContainText('#editUserOpensOn', pivotName)
@@ -2240,9 +2248,15 @@ test.describe('Auth — Server: groups', () => {
         .elementCheckBoxShouldBeSelected(`#groupReport-${fileReport}`)
         .click('#btnCancelGroup');
 
-      await setUserGroups(admin, member.username, [saved.id]);
+      // Put in the group on this screen, as an administrator does: the screen reads its users once,
+      // so a change made behind its back would not be on it.
       await openUsersScreenFilteredTo(page, ft, member.username);
       await ft
+        .click(`#btnEditUser-${member.username}`)
+        .waitOnElementToBecomeVisible('#editUserDialog')
+        .click(`#userGroup-${saved.id}`)
+        .click('#btnSaveUser')
+        .waitOnElementToBecomeInvisible('#editUserDialog')
         .click(`#btnEditUser-${member.username}`)
         .waitOnElementToBecomeVisible('#editUserDialog')
         // Effective reports, by name, and not the group's grants: what this person may actually
