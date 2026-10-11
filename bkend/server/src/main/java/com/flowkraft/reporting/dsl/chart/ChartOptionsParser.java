@@ -80,6 +80,7 @@ public class ChartOptionsParser {
 		if (map.containsKey("type")) out.setType(String.valueOf(map.get("type")));
 		if (map.containsKey("options")) out.setOptions((java.util.Map<String,Object>) map.get("options"));
 		if (map.containsKey("clicksFilter")) out.setClicksFilter(Boolean.valueOf(String.valueOf(map.get("clicksFilter"))));
+		if (map.containsKey("palette")) out.setPalette(String.valueOf(map.get("palette")));
 
 		Object dataValue = map.get("data");
 		if (dataValue instanceof Map) {
