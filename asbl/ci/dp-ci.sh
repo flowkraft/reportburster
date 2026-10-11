@@ -59,7 +59,9 @@
 #                                   (`npm run custom:start-server-and-ui-web`) in frend/reporting/testground/e2e,
 #                                   from the repo as it is, in container datapallas-dev. build/e2e/junit stop it
 #                                   while they run (they rebuild the backend and reset testground/e2e) and start
-#                                   it again when they end.
+#                                   it again when they end. --live also runs the AI Hub start page as `next dev`
+#                                   from its sources, routed to https://dp-dev-aihub.bkstg.flowkraft.com
+#                                   ($DP_AIHUB_URL), so a Canvas change is looked at in seconds.
 #   bash asbl/ci/dp-ci.sh publish-demo-bkstg [TAG]
 #                                   ON DEMAND, owner only: https://dp-demo.bkstg.flowkraft.com runs
 #                                   flowkraft/datapallas-server:<TAG> (default: the <version>-<commit> tag of the newest
@@ -107,6 +109,10 @@ DEV_LOG_LINK=${DEV_CONTAINER#datapallas-}-latest.log   # datapallas-dev -> dev-l
 DEV_NETWORK=bridge_current_host_cross_containers_net  # the reverse proxy's network
 DEV_PORT=14201                                        # TCP forwarder to `ng serve` (localhost:4201) in that container
 AI_HUB_PORT=3000                                      # `next dev` for the AI Hub start page, in --live only
+# The route to that dev start page: nginx file dp-dev-aihub.subdomain.conf on this host sends it to
+# $DEV_CONTAINER:$AI_HUB_PORT, behind the same Authelia login as dp-dev itself. A private dev site
+# passes its own (DP_AIHUB_URL, and its own nginx file pointing at its own container).
+AI_HUB_URL=${DP_AIHUB_URL:-https://dp-dev-aihub.bkstg.flowkraft.com}
 PINNED_CONTAINER=datapallas-pinned                    # dp-dev-pinned; the reverse proxy reaches it by this name
 PINNED_REPO=/var/kraft-internalsystems/projects/dp-pinned/reportburster  # the pinned clone, never this checkout
 SERVER_IMAGE_REPO=flowkraft/datapallas-server
@@ -861,6 +867,7 @@ start_dev_container() {
     -e REPO="$REPO" -e TASK=dev -e SHA="$sha" -e LOG="$log" \
     "$CI_IMAGE" bash "$REPO/asbl/ci/dp-ci.sh" --inside >/dev/null || return 1
   echo "dp-dev:  $DEV_CONTAINER started, $DEV_URL answers once the backend and UI have compiled (a few minutes)"
+  echo "ai-hub:  $AI_HUB_URL - the AI Hub start page and the Canvas, from the sources, hot-reloading"
   echo "log:     $log   (also $LOG_DIR/$DEV_LOG_LINK)"
 }
 
@@ -1468,7 +1475,18 @@ HTML
     # make/g++/python3 for exactly that.
     npm install --legacy-peer-deps --no-package-lock ||
       { echo "ai-hub: npm install failed, next dev not started"; return 0; }
-    echo "ai-hub: next dev on port $AI_HUB_PORT"
+    # Where the DataPallas backend is, as seen from HERE. The shipped default names
+    # host.docker.internal, which is what a container started by an installation needs; this dev
+    # server runs in the same container as the backend, and that name resolves to nothing here, so
+    # Explore Data would not load a single table.
+    export DP_API_URL="${DP_API_URL:-http://localhost:9090/api}"
+    # Reachable from outside this container, which is what the route needs (next dev would otherwise
+    # be free to listen on the loopback only). The port stays the one package.json asks for.
+    export HOSTNAME=0.0.0.0
+    # The SQLite file the start page keeps its own state in: the production image is built with the
+    # schema already pushed, a dev run has to push it once. Idempotent, under a second afterwards.
+    npm run db:push >/dev/null 2>&1 || echo "ai-hub: db:push failed, the start page may have no state of its own"
+    echo "ai-hub: next dev on port $AI_HUB_PORT, at $AI_HUB_URL"
     npm run dev
   }
 
