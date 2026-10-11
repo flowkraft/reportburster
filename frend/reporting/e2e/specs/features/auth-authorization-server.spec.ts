@@ -2562,7 +2562,15 @@ test.describe('Auth — Server: run-sql and author limits', () => {
       expect(
         [200, 201],
         'a limited author still authors reports — that is not what limits are about',
-      ).toContain(await statusAs(author, 'POST', '/api/reports', { reportId, templateName: reportId }));
+      ).toContain(
+        // A report with a datasource is a report-generation report: only that kind has the
+        // reporting.xml the datasource endpoints read and write (the journey test below does the same).
+        await statusAs(author, 'POST', '/api/reports', {
+          reportId,
+          templateName: reportId,
+          capReportGenerationMailMerge: true,
+        }),
+      );
 
       const settings = await jsonAs(author, `/api/reports/${reportId}/datasource`);
       settings.report.datasource.sqloptions = {
