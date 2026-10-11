@@ -86,7 +86,8 @@ export function Canvas() {
       ) : (
         // The grid's own box, for anything that measures its columns: inside the area's padding it
         // is exactly as wide and as tall as the grid (react-grid-layout keeps no id of its own).
-        <div id="canvasGrid">
+        // It names the widget added last, which need not be the one selected.
+        <div id="canvasGrid" data-newest-widget-id={widgets[widgets.length - 1].id}>
         <GridLayout
           className="layout"
           layout={layout}
