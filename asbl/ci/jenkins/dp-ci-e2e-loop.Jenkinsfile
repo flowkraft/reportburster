@@ -1,5 +1,5 @@
-// Job datapallas/dp-ci-e2e-dev. The DEVELOPMENT e2e: dp-ci.sh e2e-dev. One spec file (E2E_SPEC required), web or electron-linux target, and it never rebuilds the package:
-// it runs on the package that is there (reuse) or packages only the content again (content). Not a release check: that is dp-ci-e2e.
+// Job datapallas/dp-ci-e2e-loop. The fix-and-retry LOOP: dp-ci.sh e2e-loop. One spec file (E2E_SPEC required), web or electron-linux target, and it never rebuilds the package:
+// E2E_PACKAGE says what happens to it (package-reuse-as-is, package-rsync-simple-file-changes, package-repackage). Not a release check: that is dp-ci-e2e-release.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
 // the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -26,7 +26,7 @@ pipeline {
         sh '''#!/bin/bash
 set -o pipefail
 q() { printf '%q' "$1"; }
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && E2E_SPEC=$(q "$E2E_SPEC") E2E_GREP=$(q "$E2E_GREP") E2E_PACKAGE=$(q "$E2E_PACKAGE") E2E_TARGET=$(q "$E2E_TARGET") bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e-dev"
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && E2E_SPEC=$(q "$E2E_SPEC") E2E_GREP=$(q "$E2E_GREP") E2E_PACKAGE=$(q "$E2E_PACKAGE") E2E_TARGET=$(q "$E2E_TARGET") bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e-loop"
 '''
         }
       }

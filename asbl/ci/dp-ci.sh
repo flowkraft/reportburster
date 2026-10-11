@@ -21,13 +21,20 @@
 #                                   E2E_MAX_TEST_MS (60 min per test), E2E_ACTION_TIMEOUT_MS (5 min per click),
 #                                   E2E_CLEAN_STATE_ATTEMPTS (60), E2E_FAILFAST (1), E2E_START_EVIDENCE_MS (5 min),
 #                                   E2E_STALL_MS (10 min), E2E_REPEAT_EACH (1), E2E_SLOW_MO (0 ms, the config default everywhere; 750 = watch in slow motion). 0 switches one off.
-#                                   `e2e` is the REAL e2e: the package is rebuilt whenever its stamp is not this clean commit (26-40 min), whatever E2E_PACKAGE says.
-#   E2E_SPEC=<regex> E2E_GREP=<regex> [E2E_PACKAGE=reuse|content] bash asbl/ci/dp-ci.sh e2e-dev
-#                                   the DEVELOPMENT e2e (Jenkins job dp-ci-e2e-dev): the same run as `e2e`, targeted (E2E_SPEC or E2E_GREP is required), on the web
-#                                   target (default) or electron-linux (E2E_TARGET=electron-linux), and it NEVER rebuilds the package. E2E_PACKAGE=reuse (default) = run on the package that is there; content = package
-#                                   the content again on the built jars (minutes). The jars and the UI are built from the tree on every run, so only a fix to
-#                                   db-template/config/samples/scripts needs `content`. Not a release check: the real `e2e` is. The log says which package it
-#                                   ran on: an `E2E_PACKAGE mode=... built_from=... commit_under_test=...` line.
+#                                   `e2e` is the REAL e2e, the release check (Jenkins job dp-ci-e2e-release): the package is rebuilt whenever its stamp is not this
+#                                   clean commit (26-40 min); E2E_PACKAGE does not apply to it.
+#   E2E_SPEC=<regex> E2E_GREP=<regex> [E2E_PACKAGE=<mode>] bash asbl/ci/dp-ci.sh e2e-loop
+#                                   the fix-and-retry LOOP (Jenkins job dp-ci-e2e-loop): the same run as `e2e`, targeted (E2E_SPEC or E2E_GREP is required), on the web
+#                                   target (default) or electron-linux (E2E_TARGET=electron-linux), and it NEVER rebuilds the package. The jars and the UI are built from
+#                                   the tree on every run; the package supplies the content (db-template, config, samples, scripts). E2E_PACKAGE says what happens to it:
+#                                     package-reuse-as-is (default)      run on the package exactly as it stands (a fix to specs, helpers, Java, the UI). Instant.
+#                                     package-rsync-simple-file-changes  copy the plain db-template files changed since the package was built (committed or not) into the
+#                                                                        package and the testground; stops with "use package-repackage" when one of them is not a verbatim
+#                                                                        copy (generated, transformed or named by the assembler). Seconds.
+#                                     package-repackage                  package the content again on the jars already built (AssemblerTest#refreshContentForE2E), minutes.
+#                                                                        Not a full rebuild: that is dp-ci-package (about 26 min).
+#                                   The old values reuse and content are refused, naming the new one. Not a release check: the real `e2e` is. The log says which
+#                                   package it ran on: an `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` line.
 #                                   E2E_ROTATION_DATE (YYYY-MM-DD, default today UTC): whose day's vendor rotation to run, e.g. a failed run's. Watch a run with
 #                                   bash asbl/ci/e2e-watch.sh [STALL_MIN].
 #                                   E2E_LICENSE_INSTANCE_ID (dp-ci-linux-e2e): one licence-server instance for all CI
@@ -987,25 +994,92 @@ if [ "${1:-}" = "--inside" ]; then
   # prepare_package is asbl/pack-prepare-for-e2e.bat: clean + install without tests + AssemblerTest#prepareForE2E.
   PKG_STAMP=asbl/target/package/.built-from
   package_stamp() { mkdir -p "$(dirname "$PKG_STAMP")" && printf '%s\n' "$SHA" > "$PKG_STAMP"; }
+
+  # package-rsync-simple-file-changes. The db-template files that differ between the commit the package was built from and the tree as
+  # it is (committed or not, new files included) are copied into the package and the testground, but only where a copy is all the
+  # assembler would have done with them: the package must hold the file byte for byte as it was at that commit (the assembler overlays
+  # the bkend/reporting template and rewrites many configs and samples afterwards), and the assembler code must not name it (it may
+  # generate or check it). One path that fails either test, or a deleted file, and nothing is copied: use package-repackage. A file the
+  # package already holds as it is in the tree (copied by an earlier run) is left alone and not counted.
+  PKG_RSYNC_COPIED=0
+  package_rsync() {
+    local from="$1" src=asbl/src/main/external-resources/db-template top=asbl/target/package/verified-db-noexe/DataPallas
+    local tg=frend/reporting/testground/e2e st path rel why f d
+    local -a copy=() refused=()
+    git cat-file -e "$from^{commit}" 2>/dev/null ||
+      { echo "!!! package-rsync-simple-file-changes: the package's commit '$from' is not in this clone - use package-repackage"; return 2; }
+    while IFS=$'\t' read -r st path; do
+      [ -n "$path" ] || continue
+      rel=${path#"$src"/}; why=""
+      if [ -f "$top/$rel" ] && cmp -s "$path" "$top/$rel"; then continue; fi
+      if grep -rqF -- "$(basename "$rel")" asbl/src/main/java; then why="the assembler names it"
+      else
+        case "$st" in
+          M) git show "$from:$path" 2>/dev/null | cmp -s - "$top/$rel" || why="the package does not hold it as a verbatim copy" ;;
+          A|'??') [ -e "$top/$rel" ] && why="new in the tree, but the package already has another file there" ;;
+          *) why="$st (only changed or new files are copied)" ;;
+        esac
+      fi
+      if [ -n "$why" ]; then refused+=("$rel: $why"); else copy+=("$rel"); fi
+    done < <(git diff --name-status --no-renames "$from" -- "$src"; git ls-files --others --exclude-standard -- "$src" | sed 's/^/??\t/')
+    if [ ${#refused[@]} -gt 0 ]; then
+      for f in "${refused[@]}"; do echo "refused: $f"; done
+      echo "!!! package-rsync-simple-file-changes copied nothing: ${#refused[@]} changed path(s) are not plain copies - use package-repackage"
+      return 2
+    fi
+    for rel in "${copy[@]}"; do
+      for d in "$top" "$tg"; do
+        [ -d "$d" ] || continue
+        mkdir -p "$(dirname "$d/$rel")" && cp -p "$src/$rel" "$d/$rel" || return 1
+      done
+      echo "copied: $rel"
+    done
+    PKG_RSYNC_COPIED=${#copy[@]}
+    # A package changed by a shortcut is no longer the one its first line names: the second line keeps it from ever being taken for a
+    # package built from a clean commit (the stamp rule below then rebuilds it).
+    [ "$PKG_RSYNC_COPIED" = 0 ] || printf '%s\nrsync %s files_copied=%s\n' "$from" "$SHA" "$PKG_RSYNC_COPIED" > "$PKG_STAMP"
+    return 0
+  }
+
   prepare_package() {
-    local built; built=$(cat "$PKG_STAMP" 2>/dev/null)
-    # E2E_PACKAGE (opt-in, targeted runs only; empty = the stamp rule below, unchanged). Every e2e run compiles the jars and serves the
-    # UI from the tree; the package only supplies the CONTENT (_apps, db-template, config, samples, scripts, sample databases). So a fix that
-    # changes none of that need not rebuild it:
-    #   reuse   = run on the package that is there, as it is (specs, helpers, Java, Angular UI, web components);
-    #   content = package the content again on the jars that are already built (AssemblerTest#refreshContentForE2E: minutes, not the
-    #             26 of a full rebuild) -- for a fix to db-template, config, samples or scripts.
-    # The run says which package it ran on (the E2E_PACKAGE line), so it is never mistaken for a run on this commit's own package.
+    local built from copied=0 t0; built=$(cat "$PKG_STAMP" 2>/dev/null); from=$(head -n 1 <<<"$built")
+    # E2E_PACKAGE (the loop job dp-ci-e2e-loop, targeted runs only; empty = the stamp rule below, unchanged). Every e2e run compiles the
+    # jars and serves the UI from the tree; the package only supplies the CONTENT (_apps, db-template, config, samples, scripts, sample
+    # databases). So a fix that changes none of that need not rebuild it:
+    #   package-reuse-as-is               = run on the package exactly as it stands (specs, helpers, Java, Angular UI);
+    #   package-rsync-simple-file-changes = copy in the plain db-template files changed since the package was built (package_rsync);
+    #   package-repackage                 = package the content again on the jars already built (AssemblerTest#refreshContentForE2E),
+    #                                       minutes, not the 26 of a full rebuild.
+    # Either shortcut that changes the package adds a second line to its stamp, and the run says which package it ran on (the
+    # E2E_PACKAGE line), so it is never mistaken for a run on this commit's own package.
     if [ -n "${E2E_PACKAGE:-}" ]; then
-      case "$E2E_PACKAGE" in reuse|content) ;; *) echo "!!! E2E_PACKAGE must be reuse or content (got '$E2E_PACKAGE')"; return 2 ;; esac
+      case "$E2E_PACKAGE" in
+        package-reuse-as-is|package-rsync-simple-file-changes|package-repackage) ;;
+        reuse)   echo "!!! E2E_PACKAGE=reuse is gone: use package-reuse-as-is"; return 2 ;;
+        content) echo "!!! E2E_PACKAGE=content is gone: use package-repackage"; return 2 ;;
+        *) echo "!!! E2E_PACKAGE must be package-reuse-as-is, package-rsync-simple-file-changes or package-repackage (got '$E2E_PACKAGE')"; return 2 ;;
+      esac
       if [ -z "${E2E_SPEC:-}" ] && [ -z "${E2E_GREP:-}" ]; then
         echo "!!! E2E_PACKAGE=$E2E_PACKAGE is for targeted runs: a full run always starts from a package built from its own commit"; return 2
       fi
       if [ -z "$built" ] || [ ! -d asbl/target/package/verified-db-noexe/DataPallas ]; then
         echo "package: E2E_PACKAGE=$E2E_PACKAGE asked for, but there is no stamped package to start from - building it"
       else
-        [ "$E2E_PACKAGE" = content ] && { mvn -B test -pl asbl -Dtest=AssemblerTest#refreshContentForE2E || return 1; }
-        echo "E2E_PACKAGE mode=$E2E_PACKAGE built_from=$built commit_under_test=$SHA"
+        case "$E2E_PACKAGE" in
+          package-repackage)
+            t0=$SECONDS
+            # Step 1 (maven_setup) drops the project's own artifacts from ~/.m2, so the asbl module's dependencies are installed
+            # first (no clean, no tests: what an earlier run compiled is reused), then only the content is packaged again.
+            { mvn -B install -pl asbl -am -DskipTests && mvn -B test -pl asbl -Dtest=AssemblerTest#refreshContentForE2E; } || return 1
+            # The package now holds this tree's content: a later rsync compares against this commit; the second line still rules
+            # it out as a clean build of any commit.
+            printf '%s\nrepackaged from %s\n' "${SHA%-dirty}" "$from" > "$PKG_STAMP"
+            echo "package: repackaged in $(( (SECONDS - t0) / 60 )) min $(( (SECONDS - t0) % 60 )) s" ;;
+          package-rsync-simple-file-changes)
+            package_rsync "$from" || return 2
+            copied=$PKG_RSYNC_COPIED ;;
+        esac
+        echo "E2E_PACKAGE mode=$E2E_PACKAGE built_from=$from commit_under_test=$SHA files_copied=$copied"
         return 0
       fi
     fi
@@ -1155,7 +1229,7 @@ if [ "${1:-}" = "--inside" ]; then
   }
 
   # springdoc OpenAPI + Swagger UI (J11): while the shipped server is still up at the end of a docker-server run, save its /v3/api-docs as
-  # openapi.json and build a static Swagger UI page next to it (swagger-ui-dist from npm, fetched here), in <log>-openapi, which the dp-ci-e2e
+  # openapi.json and build a static Swagger UI page next to it (swagger-ui-dist from npm, fetched here), in <log>-openapi, which the dp-ci-e2e-release
   # job pulls and publishes next to the Playwright report. Never fails the run: a missing document or an npm problem is printed and the run goes on.
   e2e_openapi() {
     local out tmp code files="swagger-ui.css swagger-ui-bundle.js swagger-ui-standalone-preset.js favicon-32x32.png"
@@ -1670,14 +1744,21 @@ fi
 # LAUNCHER (on the host)
 # -----------------------------------------------------------------------------
 TASK="${1:-}"
-# e2e-dev = the development e2e: the same run as e2e, targeted, web only, never a package rebuild (job dp-ci-e2e-dev).
-# e2e = the real e2e: E2E_PACKAGE does not apply to it, so a stray value in the environment cannot skip the package rule.
-if [ "$TASK" = e2e-dev ]; then
-  if [ -z "${E2E_SPEC:-}" ] && [ -z "${E2E_GREP:-}" ]; then echo "FAIL  e2e-dev runs one spec file: set E2E_SPEC (e.g. /variables\.spec\.ts\$) or E2E_GREP. The full suite is the real e2e (dp-ci.sh e2e)."; exit 2; fi
-  E2E_PACKAGE="${E2E_PACKAGE:-reuse}"
-  case "$E2E_PACKAGE" in reuse|content) ;; *) echo "FAIL  E2E_PACKAGE must be reuse or content (got '$E2E_PACKAGE')"; exit 2 ;; esac
+# e2e-loop = the fix-and-retry loop: the same run as e2e, targeted, web or electron-linux, never a package rebuild (job dp-ci-e2e-loop).
+# e2e = the real e2e, the release check (job dp-ci-e2e-release): E2E_PACKAGE does not apply to it, so a stray value in the environment
+# cannot skip the package rule.
+[ "$TASK" = e2e-dev ] && { echo "FAIL  e2e-dev is now e2e-loop (Jenkins job dp-ci-e2e-loop)"; exit 2; }
+if [ "$TASK" = e2e-loop ]; then
+  if [ -z "${E2E_SPEC:-}" ] && [ -z "${E2E_GREP:-}" ]; then echo "FAIL  e2e-loop runs one spec file: set E2E_SPEC (e.g. /variables\.spec\.ts\$) or E2E_GREP. The full suite is the real e2e (dp-ci.sh e2e)."; exit 2; fi
+  E2E_PACKAGE="${E2E_PACKAGE:-package-reuse-as-is}"
+  case "$E2E_PACKAGE" in
+    package-reuse-as-is|package-rsync-simple-file-changes|package-repackage) ;;
+    reuse)   echo "FAIL  E2E_PACKAGE=reuse is gone: use package-reuse-as-is"; exit 2 ;;
+    content) echo "FAIL  E2E_PACKAGE=content is gone: use package-repackage"; exit 2 ;;
+    *) echo "FAIL  E2E_PACKAGE must be package-reuse-as-is, package-rsync-simple-file-changes or package-repackage (got '$E2E_PACKAGE')"; exit 2 ;;
+  esac
   E2E_TARGET="${E2E_TARGET:-web}"
-  case "$E2E_TARGET" in web|electron) ;; electron-linux) E2E_TARGET=electron ;; *) echo "FAIL  e2e-dev runs on web or electron-linux (got '$E2E_TARGET'); docker-server and the Windows VM are release checks: dp-ci.sh e2e"; exit 2 ;; esac
+  case "$E2E_TARGET" in web|electron) ;; electron-linux) E2E_TARGET=electron ;; *) echo "FAIL  e2e-loop runs on web or electron-linux (got '$E2E_TARGET'); docker-server and the Windows VM are release checks: dp-ci.sh e2e"; exit 2 ;; esac
   export E2E_TARGET
   TASK=e2e
 elif [ "$TASK" = e2e ]; then
@@ -1686,7 +1767,7 @@ fi
 case "$TASK" in
   build|e2e|junit|quality|dev|win|publish-demo-bkstg|publish-demo-datapallas.com) ;;
   # release: reserved for the real software release (plan §3 O7)
-  *) echo "usage: $0 build|e2e|e2e-dev|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
+  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
 esac
 
 # The Windows lane runs here on the host, before any container exists: it only talks to the VM over
