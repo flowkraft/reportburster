@@ -355,24 +355,25 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
           </p>
           {attributeRows.length > 0 && (
             <div className="mb-2 flex flex-col gap-2">
-              {attributeRows.map((row) => (
+              {/* a row's ids are its position, first row 0: the key is React's, made from the clock */}
+              {attributeRows.map((row, n) => (
                 <div key={row.key} className="flex items-center gap-2">
                   <input
-                    id={`shareAttrName-${row.key}`}
+                    id={`shareAttrName-${n}`}
                     className="input input-bordered input-xs w-48 font-mono"
                     placeholder="customer_id"
                     value={row.name}
                     onChange={(e) => changeAttributeRow(row.key, "name", e.target.value)}
                   />
                   <input
-                    id={`shareAttrValue-${row.key}`}
+                    id={`shareAttrValue-${n}`}
                     className="input input-bordered input-xs grow"
                     placeholder="4711"
                     value={row.value}
                     onChange={(e) => changeAttributeRow(row.key, "value", e.target.value)}
                   />
                   <button
-                    id={`btnRemoveShareAttribute-${row.key}`}
+                    id={`btnRemoveShareAttribute-${n}`}
                     className="btn btn-ghost btn-xs text-error"
                     onClick={() => removeAttributeRow(row.key)}
                   >
