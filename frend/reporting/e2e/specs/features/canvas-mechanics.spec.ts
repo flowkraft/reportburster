@@ -4893,6 +4893,10 @@ test('(canvas mechanics) M64 A combo chart names its series, draws each as bars 
     await switchToWidget(page, 'chart');
     await setChartType(page, 'combo');
     await clickDisplayTab(page);
+    // The chart starts on the first measure; the orders count is added as the second.
+    await expect(page.locator('#selectChartYAxis-0')).toHaveValue(/total_amount/);
+    await page.locator('#btnAddChartYAxis').click();
+    await expect(page.locator('#selectChartYAxis-1')).toHaveValue(/order_id/);
     const inCanvas = page.locator(`[id="widgetViz-${combo}"]`);
 
     // Nothing set yet: the first measure as bars, the second as a line, both on the left axis.
