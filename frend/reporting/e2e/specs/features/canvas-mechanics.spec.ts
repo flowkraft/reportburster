@@ -1045,10 +1045,18 @@ async function pWaitRows(
   return eWidgetRows(page, widgetId);
 }
 
-/** A grouped-by-channel result as `channel → number`, whatever the measure's column is called. */
-function pCountsByChannel(rows: Array<Record<string, unknown>>): Record<string, number> {
-  const measure = Object.keys(rows[0] ?? {}).find((k) => k !== 'channel') ?? '';
-  return Object.fromEntries(rows.map((r) => [String(r.channel), Number(r[measure])]));
+/** What a chart grouped by channel draws, as `channel → the bar's value`. A chart is not handed
+ *  rows the way a table is (`eWidgetRows` finds nothing on `rb-chart`): its numbers live in its own
+ *  instance, which is where `cReadChart` reads the labels from too. */
+async function pChartCounts(page: Page, widgetId: string): Promise<Record<string, number>> {
+  return cViz(page, widgetId).evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chart = (el as any).getChartInstance?.();
+    if (!chart) return {};
+    const labels: string[] = (chart.data.labels ?? []).map(String);
+    const values: unknown[] = chart.data.datasets?.[0]?.data ?? [];
+    return Object.fromEntries(labels.map((label, i) => [label, Number(values[i])]));
+  });
 }
 
 /** What a widget says about the pane fields that do not reach it. */
@@ -4081,7 +4089,7 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
     await switchToWidget(page, 'chart');
     await setChartType(page, 'bar');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
-    expect(pCountsByChannel(await eWidgetRows(page, chart)), 'the bars are the seeded orders per channel')
+    expect(await pChartCounts(page, chart), 'the bars are the seeded orders per channel')
       .toEqual(pPerChannel());
 
     const sqlWithColumns = await fAddTabulator(page, 'dash_demo.orders',
@@ -4110,7 +4118,7 @@ test('(canvas mechanics) M56 A filter pane filters every widget built on its tab
     const web = (r: Record<string, string>) => r.channel === 'web';
     await g4ScalarIs(page, kpi, pCount(web), 'the KPI counts the web orders');
     await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['web']), 'one bar is left');
-    expect(pCountsByChannel(await eWidgetRows(page, chart)), 'and it is as high as the web orders are many')
+    expect(await pChartCounts(page, chart), 'and it is as high as the web orders are many')
       .toEqual(pPerChannel(web));
     await pWaitRows(page, sqlWithColumns,
       (rows) => rows.length === pDevicesOf('web').length && rows.every((r) => String(r.channel) === 'web'),
