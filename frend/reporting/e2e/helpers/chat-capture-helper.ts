@@ -6,7 +6,7 @@
 // can drive the SAME provisioned AI Hub the same way. Everything here is
 // agent-AGNOSTIC: it keys off the semantic IDs on the shared ChatAgentPage
 // component (#chat-input-textarea, #chat-thinking-indicator, #chat-user-last,
-// #chat-assistant-last, #chat-error-response, #chat-last-*, #btn-chat-clear…),
+// #chat-assistant-last, #chat-last-error / #chat-error-<msg id>, #chat-last-*, #btn-chat-clear…),
 // which every chat2<agent> page exposes — so the same ask/capture helpers work
 // for Athena (Chat2DB) AND Hephaestus/Hermes/Apollo/Pythia/Mnemosyne (their own
 // chat2<agent> pages in OUR app — no Element Web / Matrix automation).
@@ -39,6 +39,9 @@ export const VIEWPORT = { width: 1500, height: 980 };
 export const ZAI_PROVIDER_ID = process.env.ZAI_PROVIDER_ID || 'zai';
 export const ZAI_MODEL = process.env.ZAI_MODEL || 'glm-5.2';
 export const ZAI_API_KEY = process.env.ZAI_API_KEY || ''; // supply at run time; empty = skip
+
+/** Every error box of the chat: the newest answer's (#chat-last-error) and the older ones' (chat-error-<msg id>). */
+export const CHAT_ERROR_BOXES = '[id^="chat-error-"], #chat-last-error';
 
 /** `<base>` → `<base>-dp.png` (writes beside the original for review). */
 export const dp = (base: string) => `${base}-dp.png`;
@@ -296,7 +299,7 @@ export async function askAgent(page: Page, prompt: string, settle: Settle): Prom
 
 /**
  * Ask a prompt and retry (up to `maxTries`) until the answer is CLEAN — no
- * #chat-error-response, plus SQL / table when required. Backs off long on
+ * a new error box, plus SQL / table when required. Backs off long on
  * provider/rate-limit errors, short on plain errors. Skips the "failure then
  * correction" theater of the simulated demos: it just re-asks the same clean
  * question until a good answer lands. Clears the chat between tries so each
@@ -316,16 +319,16 @@ export async function askUntilClean(
 
   let clean = false;
   for (let attempt = 1; attempt <= maxTries && !clean; attempt++) {
-    const errBefore = await page.locator('#chat-error-response').count().catch(() => 0);
+    const errBefore = await page.locator(CHAT_ERROR_BOXES).count().catch(() => 0);
     await askAgent(page, prompt, settle);
-    const noError = (await page.locator('#chat-error-response').count().catch(() => 0)) <= errBefore;
+    const noError = (await page.locator(CHAT_ERROR_BOXES).count().catch(() => 0)) <= errBefore;
     const hasSql = needSql ? (await page.locator('#chat-last-sql').count().catch(() => 0)) > 0 : true;
     const hasTable = needTable ? (await page.locator('#chat-last-table').count().catch(() => 0)) > 0 : true;
     clean = noError && hasSql && hasTable;
     console.log(`[chat:${label}] try ${attempt}/${maxTries}: noError=${noError} hasSql=${hasSql} hasTable=${hasTable} → ${clean ? 'CLEAN ✔' : 'retry'}`);
     if (clean || attempt >= maxTries) break;
 
-    const errText = await page.locator('#chat-error-response').last().innerText({ timeout: 2_000 }).catch(() => '');
+    const errText = await page.locator('#chat-last-error').innerText({ timeout: 2_000 }).catch(() => '');
     const providerErr = /went wrong|too many|rate|timeout|try again|unavailable|overloaded/i.test(errText);
     const backoffMs = providerErr ? 60_000 : 8_000;
     console.log(`[chat:${label}] ${providerErr ? 'PROVIDER/rate-limit' : 'plain'} error — backing off ${backoffMs / 1000}s`);
