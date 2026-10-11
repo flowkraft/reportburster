@@ -91,7 +91,7 @@ public final class BlockFormRules {
             case "chart"            -> CHART;
             case "tabulator"        -> TABULATOR;
             case "pivot"            -> PIVOT;
-            case "slicer"       -> SLICER;
+            case "slicer"           -> SLICER;
             case "cube"             -> CUBE;
             case "reportparameters" -> REPORTPARAMETERS;
             default                 -> EMPTY;

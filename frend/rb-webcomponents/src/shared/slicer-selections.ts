@@ -135,6 +135,16 @@ export function slicerSelectionsFor(reportId: string): SlicerSelections {
 }
 
 /** The element a slicer is published as. */
+/**
+ * The event a tile fires when a click of its own makes a selection: a chart bar, a table cell, a
+ * map point, on a tile whose author ticked "Clicks filter the dashboard" (`clicksFilter`).
+ *
+ * One name for all three, and the same shape a slicer's own event carries (`{field, value}`), so
+ * the canvas and the published page each listen once and do the same thing with it. A tile that
+ * was not ticked fires nothing at all, which is why a dashboard nobody ticked cannot change.
+ */
+export const CROSS_FILTER_EVENT = 'crossFilterSelect';
+
 export const SLICER_TAG = 'rb-slicer';
 
 /**

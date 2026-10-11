@@ -19,6 +19,7 @@
 <script lang="ts">
   import { onMount, afterUpdate, onDestroy, tick, createEventDispatcher } from 'svelte';
   import { reportQuery } from '../shared/report-query';
+  import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
 
   // DEBUG: counters for lifecycle events
   let _afterUpdateCount = 0;
@@ -54,11 +55,23 @@
   let selfFetchLoading = false;
   let error: string | null = null;
   
+  // Clicks that filter the dashboard (`clicksFilter` in the chart's DSL): a bar click selects the
+  // value its label stands for, the way a slicer pick does. `crossFilterField` is which field that
+  // label is a value of - the canvas sets it from the chart's DSL Map, and a published chart reads
+  // it off its own config file (`labelField`), so neither has to guess.
+  export let clicksFilter: boolean = false;
+  export let crossFilterField: string = '';
+
   // Raw DSL source code (exposed for Configuration tab)
   export let configDsl: string = '';
   
   // Full chart configuration from DSL (type, labelField, datasets, options)
   let chartConfig: any = null;
+
+  // What a published chart is told by its own config file: the setting travels in the chart's DSL
+  // like every other display setting, so nothing else has to carry it.
+  $: if (chartConfig?.clicksFilter === true) clicksFilter = true;
+  $: if (!crossFilterField && chartConfig?.labelField) crossFilterField = chartConfig.labelField;
 
   /**
    * What the chart DSL could not make sense of in this chart's own configuration.
@@ -610,6 +623,7 @@
               index: p.index,
               element: p,
             });
+            maybeCrossFilter(p.index);
           }
         } catch (err) {
           // ignore
@@ -619,6 +633,23 @@
       console.error('rb-chart init error', err);
       dispatch('initError', { message: String(err) });
     }
+  }
+
+  /**
+   * The one click that filters: the label of the bar just clicked, as a selection of its field.
+   *
+   * Nothing is dispatched when the author did not tick the box, when no field is known (a chart
+   * whose labels are not a column's values has none to select) or when the label is empty - a
+   * selection of nothing would take every row away.
+   */
+  function maybeCrossFilter(index: number) {
+    if (!clicksFilter) return;
+    const field = crossFilterField || chartConfig?.labelField || '';
+    if (!field) return;
+    const label = chart?.data?.labels?.[index];
+    const value = label == null ? '' : String(label);
+    if (!value) return;
+    dispatch(CROSS_FILTER_EVENT, { field, value });
   }
 
   function destroyChart() {
@@ -668,6 +699,8 @@
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
       if (!embedToken) embedToken = hostEl.getAttribute('embed-token') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
+      if (hostEl.getAttribute('clicks-filter') === 'true') clicksFilter = true;
+      if (!crossFilterField) crossFilterField = hostEl.getAttribute('cross-filter-field') || '';
       if (!Object.keys(reportParams).length) {
         const rp = hostEl.getAttribute('report-params');
         if (rp) try { reportParams = JSON.parse(rp); } catch(e) {}

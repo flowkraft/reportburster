@@ -4,6 +4,7 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import { prepareDashboardHtml } from '../shared/dashboard-injection';
   import { fieldOf, SLICER_TAG, slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets,
+           CROSS_FILTER_EVENT, DATA_WIDGET_TAGS,
            type SlicerSelection } from '../shared/slicer-selections';
 
   // ============================================================================
@@ -472,7 +473,8 @@
     // the reader had already picked - an injection that runs again must not look like a slicer that
     // forgot.
     listenToSlicers();
-    if (slicerSelectionsFor(reportId).size > 0) applySlicerSelections();
+    listenToCrossFilterTiles();
+    if (slicerSelectionsFor(reportId).size > 0) applySelections();
     openHashTarget();
   }
 
@@ -610,24 +612,53 @@
     }
   }
 
+  /**
+   * Hear every tile whose own clicks make a selection: a chart bar, a table cell, a map region.
+   *
+   * Every data tile is listened to, not only the ones the author ticked: a tile that was not
+   * ticked fires nothing at all (`clicksFilter` in its own config decides that), so there is
+   * nothing to ask it about here. It has to be done again after every refresh, because a refresh
+   * replaces each tile with a copy of itself (`refreshDataWidgets`) and a copy carries no
+   * listeners - the same reason the slicers are never replaced.
+   */
+  function listenToCrossFilterTiles() {
+    if (!dashboardContainer) return;
+    dashboardContainer.querySelectorAll(DATA_WIDGET_TAGS).forEach((tile: Element) => {
+      tile.removeEventListener(CROSS_FILTER_EVENT, handleCrossFilterSelect as EventListener);
+      tile.addEventListener(CROSS_FILTER_EVENT, handleCrossFilterSelect as EventListener);
+    });
+  }
+
+  /**
+   * A click on a tile makes exactly the selection a slicer pick makes: same set, same chips, same
+   * parameters, so the dashboard answers a click and a pick the same way. A second click on the
+   * same value drops it again, and two values of one field OR together, as two slicer picks do.
+   */
+  function handleCrossFilterSelect(e: Event) {
+    const detail = (e as CustomEvent).detail as { field?: string; value?: string } | undefined;
+    if (!detail?.field || !detail.value) return;
+    slicerSelectionsFor(reportId).toggle(detail.field, detail.value, true);
+    applySelections();
+  }
+
   function handleSlicerSelect(e: Event) {
     const detail = (e as CustomEvent).detail as
       { field?: string; value?: string; multiSelect?: boolean } | undefined;
     if (!detail?.field || detail.value === undefined) return;
     slicerSelectionsFor(reportId).toggle(detail.field, detail.value, detail.multiSelect !== false);
-    applySlicerSelections();
+    applySelections();
   }
 
   /** One pick dropped, from its chip. */
   function removeSlicerSelection(field: string, value: string) {
     slicerSelectionsFor(reportId).remove(field, value);
-    applySlicerSelections();
+    applySelections();
   }
 
   /** Every pick dropped at once: the dashboard answers for everything again. */
   function clearSlicerSelections() {
     slicerSelectionsFor(reportId).clear();
-    applySlicerSelections();
+    applySelections();
   }
 
   /**
@@ -640,12 +671,20 @@
    * values the other slicers' picks have left without rows; a slicer's own pick never narrows its own
    * list, so a reader can always pick twice.
    */
-  function applySlicerSelections() {
+  function applySelections() {
     const selections = slicerSelectionsFor(reportId);
     slicerChips = selections.list();
+    // Every slicer's field, always, so a field with nothing picked still sends the empty value
+    // that turns its condition off - plus every field something IS picked in, which is how a
+    // cross-filter click reaches the tiles: its field has no slicer on the page to be found by,
+    // and a tile whose SQL mentions a parameter the request says nothing about reads it as
+    // nothing picked (the script's own `has<P> && listHasValues` guard), which is every row.
+    const picked = selections.fields();
+    const fields = [...slicerFieldsOnPage(dashboardContainer)];
+    for (const field of picked) if (!fields.includes(field)) fields.push(field);
     const values = {
       ...currentDashboardParams,
-      ...selections.paramValues(slicerFieldsOnPage(dashboardContainer)),
+      ...selections.paramValues(fields),
     };
     for (const slicer of slicersOf()) {
       const el = slicer as unknown as { selectedValues?: string[]; reportParams?: Record<string, any> };
@@ -653,6 +692,8 @@
       el.reportParams = values;
     }
     refreshDataWidgets(dashboardContainer, values);
+    // The tiles were just replaced by copies of themselves, which carry no listeners.
+    listenToCrossFilterTiles();
   }
 
   function handleDashboardParamChange(e: CustomEvent) {
@@ -791,9 +832,10 @@
 
   <!-- Dashboard Mode: Inject HTML with live web components into DOM -->
   {#if configLoaded && dashboardTemplate && !error && slicerChips.length > 0}
-    <!-- What the slicers have picked, and the one way to drop it all: the same bar the canvas shows
-         above the same dashboard. -->
-    <div class="rb-selections" id="slicerSelectionBar">
+    <!-- What the reader has picked - in a slicer, or by clicking a tile that filters - and the one
+         way to drop it all: the same bar the canvas shows above the same dashboard, with the same
+         ids. -->
+    <div class="rb-selections" id="selectionBar">
       <span class="rb-selections-label">Selections</span>
       {#each slicerChips as chip (chip.field + '=' + chip.value)}
         <span class="rb-selection-chip">

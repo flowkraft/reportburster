@@ -272,6 +272,10 @@ public class ReportingService {
 				if (opts.getData() != null && !opts.getData().isEmpty()) {
 					config.chartOptions.put("data", opts.getData());
 				}
+				// Whether a click on a bar selects its label's value, the way a slicer pick does.
+				if (opts.getClicksFilter() != null) {
+					config.chartOptions.put("clicksFilter", opts.getClicksFilter());
+				}
 				// Extract named blocks for aggregator reports
 				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
 					config.namedChartOptions = new HashMap<>();
@@ -285,6 +289,7 @@ public class ReportingService {
 						if (co.getLabels() != null && !co.getLabels().isEmpty()) m.put("labels", co.getLabels());
 						if (co.getDatasets() != null && !co.getDatasets().isEmpty()) m.put("datasets", co.getDatasets());
 						if (co.getData() != null && !co.getData().isEmpty()) m.put("data", co.getData());
+						if (co.getClicksFilter() != null) m.put("clicksFilter", co.getClicksFilter());
 						config.namedChartOptions.put(entry.getKey(), m);
 					}
 				}

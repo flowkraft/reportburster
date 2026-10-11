@@ -251,6 +251,16 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   // Stacking is two Chart.js keys, written into the same Map the published page
   // reads, so the bars stack in the Canvas and on the dashboard by one route.
   const setStacked = (on: boolean) => setDslMap(config, setStackedOption(map, on), onChange);
+  // The clicks setting lives in the canonical Map beside every other display setting, so it
+  // travels into the published config file with them (Principle 4). Unticked takes the key away
+  // again, so a dashboard that never used it reads exactly as it did.
+  const clicksFilter = (map.clicksFilter as boolean | undefined) === true;
+  const setClicksFilter = (on: boolean) => {
+    const next = { ...map } as Record<string, unknown>;
+    if (on) next.clicksFilter = true;
+    else delete next.clicksFilter;
+    setDslMap(config, next as typeof map, onChange);
+  };
 
   const setPalette = (id: string) => {
     const next: ChartDslOptions = { ...map };
@@ -544,6 +554,22 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
           })}
         </div>
       </div>
+
+      {/* A widget's one interaction setting: its clicks make a selection, exactly as a slicer's do
+          (`slicer-filters.ts`). Off until it is ticked, so no dashboard changes by itself. */}
+      <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
+        <input
+          id="chkChartClicksFilter"
+          type="checkbox"
+          checked={clicksFilter}
+          onChange={(e) => setClicksFilter(e.target.checked)}
+          className="rounded border-base-300"
+        />
+        <span>Clicks filter the dashboard</span>
+        <span className="text-[10px] text-base-content/60 ml-auto">
+          {clicksFilter ? "a click filters every widget on this table" : "clicks do nothing"}
+        </span>
+      </label>
     </div>
   );
 }

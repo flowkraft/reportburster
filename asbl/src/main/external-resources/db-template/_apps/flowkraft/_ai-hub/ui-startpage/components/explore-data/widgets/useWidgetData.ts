@@ -156,10 +156,11 @@ export function useWidgetData(widgetId: string) {
     const mode = dataSource.mode;
     const prev = LAST_EXEC.get(widgetId);
 
-    // What the slicers of this canvas do to THIS widget, and the values their fields are picked at.
-    // A slicer field with nothing picked still travels (as an empty value): that is what turns its
-    // condition into "every row" where the SQL is run, in the canvas and on the published
-    // dashboard alike (`slicer-filters.ts`).
+    // What the selections of this canvas do to THIS widget, and the values their fields are picked
+    // at. A selection is a slicer's pick or a click on a widget that filters, and both come down
+    // the same road: a field with nothing picked still travels (as an empty value), which is what
+    // turns its condition into "every row" where the SQL is run, in the canvas and on the
+    // published dashboard alike (`slicer-filters.ts`).
     const slicerPlan = slicerFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName));
     const slicerParams = slicerParamValues(widgets, exploreSelections);
     const askedValues = { ...(filterValues ?? {}), ...slicerParams };
@@ -215,9 +216,9 @@ export function useWidgetData(widgetId: string) {
       // The declared parameter types say which bound filter is bound to a Date,
       // and a Date parameter means the whole day it names (F8).
       extractParamTypes(parametersConfig?.parameters),
-      // A Visual-tab widget takes the slicers' conditions into its own WHERE, before the
+      // A Visual-tab widget takes the selections' conditions into its own WHERE, before the
       // aggregation: that is the only place they can be right for a KPI, whose result has no
-      // column of the slicer's field left to filter on.
+      // column of the field left to filter on.
       slicerPlan.filters,
     );
     if (!raw) { clearWidgetQueryLoading(widgetId); return; }
@@ -231,8 +232,9 @@ export function useWidgetData(widgetId: string) {
 
     // The very text the published dashboard has to run, kept beside the widget's own data source
     // so the dashboard filters exactly as the canvas does (`ScriptAssembler.resolveSql` prefers
-    // it). It is written only while a slicer reaches this widget and taken away again when the last
-    // one goes, so a canvas with no slicer keeps the data source it has always had.
+    // it). It is written only while a selection can reach this widget - a slicer, or another
+    // widget whose clicks filter - and taken away again when the last one goes, so a canvas with
+    // neither keeps the data source it has always had.
     const slicerSql = slicerPlan.filters.length > 0 || slicerPlan.wrapFields.length > 0 ? asked : undefined;
     if ((dataSource.slicerSql ?? undefined) !== slicerSql)
       updateWidgetDataSource(widgetId, { ...dataSource, slicerSql });
@@ -292,8 +294,9 @@ export function useWidgetData(widgetId: string) {
       // the widget with no data.
       if (!settled) { LAST_EXEC.delete(widgetId); clearWidgetQueryLoading(widgetId); }
     };
-    // `exploreVersion` is to a slicer what `filterVersion` is to the filter bar: the one number that
-    // says a selection changed, so every widget asks again.
+    // `exploreVersion` is to a selection what `filterVersion` is to the filter bar: the one number
+    // that says a selection changed - picked in a slicer or clicked on a widget - so every widget
+    // asks again.
   }, [connectionId, dataSource, filterValues, filterVersion, parametersConfig, widgetId, connectionsReady, tableSchema, widgets, exploreSelections, exploreVersion, updateWidgetDataSource, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
 
   return {

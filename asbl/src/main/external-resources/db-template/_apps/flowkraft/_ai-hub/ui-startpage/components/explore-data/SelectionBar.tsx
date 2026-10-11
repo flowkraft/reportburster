@@ -4,17 +4,17 @@
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 
 export function SelectionBar() {
-  const widgets = useCanvasStore((s) => s.widgets);
   const selections = useCanvasStore((s) => s.exploreSelections);
   const toggleSelection = useCanvasStore((s) => s.toggleExploreSelection);
   const clearSelections = useCanvasStore((s) => s.clearExploreSelections);
 
-  // Only show when ≥1 slicer exists AND there are active selections
-  const hasSlicers = widgets.some((w) => w.type === "slicer");
-  if (!hasSlicers || selections.length === 0) return null;
+  // Whenever something is picked, whatever picked it: a slicer, or a click on a widget whose
+  // author ticked "Clicks filter the dashboard". The same bar says the same thing on the
+  // published dashboard (`RbReport`), with the same ids.
+  if (selections.length === 0) return null;
 
   return (
-    <div className="shrink-0 border-b border-base-300 bg-primary/5 px-4 py-1.5 flex items-center gap-2 flex-wrap">
+    <div id="selectionBar" className="shrink-0 border-b border-base-300 bg-primary/5 px-4 py-1.5 flex items-center gap-2 flex-wrap">
       <span className="text-[10px] text-base-content/60 uppercase tracking-wider font-medium">Selections</span>
       {selections.map((s, i) => (
         <span
@@ -23,7 +23,7 @@ export function SelectionBar() {
         >
           <span className="font-medium">{s.field}:</span> {s.value}
           <button
-            id={`btnRemoveSelection-${i}`}
+            id={`btnRemoveSelection-${s.field}-${s.value}`}
             onClick={() => toggleSelection(s.field, s.value)}
             className="p-0.5 rounded-full hover:bg-primary/20 transition-colors"
           >

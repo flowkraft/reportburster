@@ -101,6 +101,7 @@
 <script lang="ts">
   import { onMount, afterUpdate, onDestroy, tick, createEventDispatcher } from "svelte";
   import { reportQuery } from '../shared/report-query';
+  import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
   import { normalizeCountryToIso2 } from "./map/country-lookup";
   import { normalizeStateToUsps } from "./map/state-lookup";
   import { findLatitudeColumn, findLongitudeColumn } from "../shared/map-column-names";
@@ -116,6 +117,12 @@
   export let componentId: string = "";
   export let reportParams: Record<string, string> = {};
   export let testMode: boolean = false;
+
+  // Clicks that filter the dashboard: a click on a region or a point selects the value its own
+  // dimension column holds for it, the way a slicer pick does. A map has no DSL of its own, so a
+  // published map is told by its `-map-config.json` entry (`clicksFilter`), and the canvas sets
+  // the prop.
+  export let clicksFilter: boolean = false;
 
   // ============================================================================
   // Props Mode — row objects + options passed by the parent (React / Angular).
@@ -136,7 +143,12 @@
     zoom?: number | null;
     center?: [number, number] | null;
     fitBounds?: boolean;
+    /** A click on a region or a point selects its dimension value (`slicer-filters.ts`). */
+    clicksFilter?: boolean;
   } = {};
+
+  // What a published map is told by its own `-map-config.json` entry.
+  $: if (options?.clicksFilter === true) clicksFilter = true;
 
   export let loading: boolean = false;
   export let width: string | number | undefined = undefined;
@@ -434,7 +446,10 @@
         weight: 1,
       });
       m.bindPopup(buildPopup(row));
-      m.on("click", () => dispatch("pointClick", { row, lat, lon }));
+      m.on("click", () => {
+        dispatch("pointClick", { row, lat, lon });
+        maybeCrossFilter(row, r.dimension);
+      });
       markers.push(m);
       layerGroup.addLayer(m);
     }
@@ -476,6 +491,21 @@
       const group = L.featureGroup(rects);
       mapInstance.fitBounds(group.getBounds().pad(0.05));
     }
+  }
+
+  /**
+   * The one click that filters: the row behind the region or the point just clicked, read at its
+   * own dimension column, as a selection of that field.
+   *
+   * Nothing is sent when the author did not tick the box, when the map has no dimension column, or
+   * when the click landed on a shape no row answers for - a region with no data is not a value.
+   */
+  function maybeCrossFilter(row: Record<string, unknown> | undefined, dimension: string) {
+    if (!clicksFilter || !row || !dimension) return;
+    const raw = row[dimension];
+    const value = raw == null ? "" : String(raw);
+    if (!value) return;
+    dispatch(CROSS_FILTER_EVENT, { field: dimension, value });
   }
 
   async function renderRegion(L: any, r: ResolvedOptions) {
@@ -527,7 +557,10 @@
         fLayer.on({
           mouseover: (e: any) => e.target.setStyle({ weight: 2, color: "#333" }),
           mouseout: (e: any) => layer.resetStyle(e.target),
-          click: () => dispatch("regionClick", { row, key: fk, feature }),
+          click: () => {
+            dispatch("regionClick", { row, key: fk, feature });
+            maybeCrossFilter(row, r.dimension);
+          },
         });
       },
     });
@@ -600,6 +633,7 @@
         if (rp) try { reportParams = JSON.parse(rp); } catch(e) {}
       }
       if (!testMode) {
+        if (hostEl.getAttribute("clicks-filter") === "true") clicksFilter = true;
         const tm = hostEl.getAttribute("test-mode");
         if (tm === "true" || tm === "") testMode = true;
       }

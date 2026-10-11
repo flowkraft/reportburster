@@ -20,6 +20,18 @@ public class ChartOptions {
 	private List<String> labels = new ArrayList<>(); // Explicit labels override
 	private List<Map<String,Object>> datasets = new ArrayList<>(); // Series/dataset configurations
 	private List<Map<String,Object>> data = new ArrayList<>(); // Optional data override
+	/**
+	 * Whether a click on a bar of this chart selects the value its label stands for, the way a
+	 * slicer pick does ({@code clicksFilter} in the chart's DSL). Null means the author never
+	 * ticked it, which is every chart until one is.
+	 *
+	 * <p>LOGIC-MIRROR of {@code clicksFilterOf} in
+	 * {@code ui-startpage/lib/explore-data/slicer-filters.ts}: the canvas writes the condition for
+	 * every field a click can select into the OTHER widgets' SQL, and this is what tells the
+	 * published chart it may make such a selection.
+	 */
+	private Boolean clicksFilter;
+
 	private Map<String, ChartOptions> namedOptions = new LinkedHashMap<>(); // Named blocks for aggregator reports
 	/**
 	 * What the parser did not recognise at chart level, each {@code {chart, block, key, level,
@@ -48,6 +60,9 @@ public class ChartOptions {
 
 	public List<Map<String, Object>> getData() { return data; }
 	public void setData(List<Map<String, Object>> data) { this.data = data; }
+
+	public Boolean getClicksFilter() { return clicksFilter; }
+	public void setClicksFilter(Boolean clicksFilter) { this.clicksFilter = clicksFilter; }
 
 	public Map<String, ChartOptions> getNamedOptions() { return namedOptions; }
 	public void setNamedOptions(Map<String, ChartOptions> namedOptions) { this.namedOptions = namedOptions; }

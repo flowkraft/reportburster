@@ -1062,6 +1062,26 @@ export async function setChartType(
   await page.waitForTimeout(500);
 }
 
+/** Open the Display tab and tick, or untick, "Clicks filter the dashboard" for the widget on
+ *  screen, then close it again. One checkbox per kind of widget: a chart's, a table's and a map's
+ *  (`ChartConfig.tsx`, `TabulatorConfig.tsx`, `MapConfig.tsx`). Ticked, a click on the widget
+ *  selects the value it points at, the way a slicer pick does. */
+export async function setClicksFilter(
+  page: Page,
+  widget: 'chart' | 'table' | 'map',
+  on: boolean,
+): Promise<void> {
+  const id = { chart: '#chkChartClicksFilter', table: '#chkTableClicksFilter', map: '#chkMapClicksFilter' }[widget];
+  await page.locator('#btnDisplayTab').click();
+  const box = page.locator(id);
+  await box.waitFor({ state: 'visible', timeout: 10_000 });
+  if (on) await box.check();
+  else await box.uncheck();
+  await page.waitForTimeout(500);
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(300);
+}
+
 /** Open Display tab, click the legend choice button (show / hide / auto), close.
  *  ChartConfig.tsx renders the buttons as `#btnChartLegend-${choice}`. */
 export async function setChartLegend(

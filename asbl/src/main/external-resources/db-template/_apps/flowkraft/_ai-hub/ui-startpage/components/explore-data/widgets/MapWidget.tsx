@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useWidgetData } from "./useWidgetData";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
+import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
 // lucide-react removed
 
 // Diagnostic counter — kept permanently (same policy as other 7 diagnostic logs).
@@ -24,8 +25,10 @@ interface MapWidgetProps {
 export function MapWidget({ widgetId }: MapWidgetProps) {
   const { result, loading, error } = useWidgetData(widgetId);
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
-  const ref = useRef<HTMLElement>(null);
+  const { ref, el: mapEl, attach: attachMap } = useRbElement();
   const ready = useRbElementReady("rb-map");
+  // This map's own clicks, when its author ticked the box in the Display tab.
+  useCrossFilterClicks(mapEl, widget);
   // Deep-equality guard: only push new options when the serialized config
   // actually changes. Prevents redundant el.options assignments that could
   // trigger rb-map's internal rendering loop and freeze the main thread.
@@ -85,6 +88,6 @@ export function MapWidget({ widgetId }: MapWidgetProps) {
 
   return (
     // @ts-expect-error — custom element
-    <rb-map ref={ref} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
+    <rb-map ref={attachMap} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
   );
 }

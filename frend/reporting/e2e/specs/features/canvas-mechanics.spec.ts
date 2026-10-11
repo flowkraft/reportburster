@@ -64,6 +64,7 @@ import {
   selectLastWidget,
   setChartAxes,
   setChartType,
+  setClicksFilter,
   setColumnTitle,
   setGaugeConfig,
   setGaugeField,
@@ -1057,6 +1058,40 @@ async function pChartCounts(page: Page, widgetId: string): Promise<Record<string
     const values: unknown[] = chart.data.datasets?.[0]?.data ?? [];
     return Object.fromEntries(labels.map((label, i) => [label, Number(values[i])]));
   });
+}
+
+/**
+ * Click the bar a label stands for, where the chart draws it.
+ *
+ * A chart is one canvas element: there is no element per bar to find by id, so Chart.js is asked
+ * which pixel its bar occupies and the mouse is clicked there. It has to be a real click - that is
+ * the only kind `rb-chart` listens for, and `intersect: true` means a click beside the bar is not a
+ * click on it. The position is polled because a published tile is replaced by a copy of itself
+ * whenever the selections change, and the copy draws its chart again from scratch.
+ */
+async function pClickBar(chart: Locator, label: string): Promise<void> {
+  let at: { x: number; y: number } | null = null;
+  await expect
+    .poll(async () => {
+      if ((await chart.count()) === 0) return false;
+      await chart.scrollIntoViewIfNeeded().catch(() => {});
+      at = await chart.evaluate((el, wanted) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const instance = (el as any).getChartInstance?.();
+        if (!instance) return null;
+        const index = (instance.data.labels ?? []).findIndex((l: unknown) => String(l) === wanted);
+        if (index < 0) return null;
+        const bar = instance.getDatasetMeta(0)?.data?.[index];
+        if (!bar) return null;
+        const point = typeof bar.getCenterPoint === 'function' ? bar.getCenterPoint() : { x: bar.x, y: bar.y };
+        const box = instance.canvas.getBoundingClientRect();
+        return { x: box.x + point.x, y: box.y + point.y };
+      }, label);
+      return at !== null;
+    }, { message: `the chart draws a bar for ${label}`, timeout: 60_000, intervals: [1_000] })
+    .toBe(true);
+  await chart.page().mouse.click(at!.x, at!.y);
+  await chart.page().waitForTimeout(500);
 }
 
 /**
@@ -4293,7 +4328,7 @@ test('(canvas mechanics) M57 The same slicers on the published dashboard, and a 
       await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
       await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length,
         'and the published query answers a row per channel and device');
-      await expect(page.locator('#slicerSelectionBar'), 'with nothing picked there is nothing to show')
+      await expect(page.locator('#selectionBar'), 'with nothing picked there is nothing to show')
         .toHaveCount(0);
 
       // + one value picked: the same numbers the canvas gave for the same click.
@@ -4303,7 +4338,7 @@ test('(canvas mechanics) M57 The same slicers on the published dashboard, and a 
       await pWaitCells(page, pubTable,
         (cells) => cells.length === pDevicesOf('web').length && cells.every((row) => row[0] === 'web'),
         'and the published query keeps its web rows only');
-      await expect(page.locator('#slicerSelectionBar'), 'the chips bar says what is picked').toBeVisible();
+      await expect(page.locator('#selectionBar'), 'the chips bar says what is picked').toBeVisible();
       await expect(page.locator(`[id="btnRemoveSelection-channel-web"]`), 'one chip, for that one pick')
         .toBeVisible();
 
@@ -4320,7 +4355,7 @@ test('(canvas mechanics) M57 The same slicers on the published dashboard, and a 
       await page.locator('#btnClearSelections').click();
       await pPublishedNumberIs(page, pubKpi, pOrders.length, 'Clear all brings every order back');
       await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length, 'and every pair');
-      await expect(page.locator('#slicerSelectionBar'), 'and the chips bar goes with the picks')
+      await expect(page.locator('#selectionBar'), 'and the chips bar goes with the picks')
         .toHaveCount(0);
 
       // + the grey-outs, which a published slicer reads off its own list (it may not ask
@@ -4377,6 +4412,111 @@ test('(canvas mechanics) M57 The same slicers on the published dashboard, and a 
     });
   } finally {
     if (readerContext) await readerContext.close();
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M58 Clicks that filter the dashboard, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M58 Cross-filter', async (canvasId) => {
+      // A KPI and a pasted-SQL table to be filtered, and the bar chart whose clicks will do the
+      // filtering. The chart is built last, so it is the widget the Display tab configures - and
+      // there is no slicer anywhere on this dashboard: a click is the only way to select here.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+
+      const table = await fAddTabulator(page, 'dash_demo.orders',
+        'SELECT channel, device, COUNT(*) AS n FROM dash_demo.orders GROUP BY channel, device');
+      await pWaitRows(page, table, (rows) => rows.length === pPairs.length,
+        'the pasted query answers a row per channel and device');
+
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
+
+      // - with the box unticked a click is just a click: nothing is selected and nothing moves, so
+      //   no dashboard made before this existed starts filtering by itself.
+      await pClickBar(cViz(page, chart), 'web');
+      await expect(page.locator('#selectionBar'), 'an unticked chart selects nothing').toHaveCount(0);
+      await g4ScalarIs(page, kpi, pOrders.length, 'and the KPI still counts every order');
+
+      // + ticked, the same click selects the value its bar stands for, and every widget on the
+      //   table answers for it - the chart itself excepted, because a widget is not filtered by
+      //   the field its own clicks select. That is also what leaves a bar to click again.
+      await setClicksFilter(page, 'chart', true);
+      await pClickBar(cViz(page, chart), 'web');
+      const web = (r: Record<string, string>) => r.channel === 'web';
+      await g4ScalarIs(page, kpi, pCount(web), 'the KPI counts the web orders');
+      await pWaitRows(page, table,
+        (rows) => rows.length === pDevicesOf('web').length && rows.every((r) => String(r.channel) === 'web'),
+        'the pasted query keeps its web rows only');
+      await expect(page.locator('#selectionBar'), 'the chips bar shows a pick with no slicer on the page')
+        .toBeVisible();
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'one chip, for that one click')
+        .toBeVisible();
+      await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels),
+        'the chart that was clicked keeps every bar');
+
+      // + a second click on the same bar takes the selection back, and the dashboard is as it was.
+      await pClickBar(cViz(page, chart), 'web');
+      await g4ScalarIs(page, kpi, pOrders.length, 'clicking again brings every order back');
+      await pWaitRows(page, table, (rows) => rows.length === pPairs.length, 'and every pair');
+      await expect(page.locator('#selectionBar'), 'and there is nothing left to show').toHaveCount(0);
+
+      // -- the same two clicks, on the published page -----------------------
+      // The names the published dashboard calls these widgets by, read once the autosave landed.
+      let ids: Record<string, string[]> = {};
+      await expect
+        .poll(async () => {
+          ids = await getCanvasComponentIds(page, canvasId);
+          return (ids.number ?? []).length === 1 && (ids.tabulator ?? []).length === 1
+            && (ids.chart ?? []).length === 1;
+        }, { message: 'the saved canvas names all three widgets', timeout: 30_000, intervals: [1_000] })
+        .toBe(true);
+      const pubKpi = ids.number[0];
+      const pubTable = ids.tabulator[0];
+      const pubChart = ids.chart[0];
+
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      // Looked up again on every click: each selection replaces the tiles with copies of themselves.
+      const pubChartEl = () => page.locator(`[component-id="${pubChart}"]`).first();
+
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
+      await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length,
+        'and the published query answers a row per channel and device');
+      await expect(page.locator('#selectionBar'), 'nothing is clicked yet').toHaveCount(0);
+
+      // + the published chart was told to filter by its own config file, and nothing else: one
+      //   click gives the same numbers the canvas gave for the same click.
+      await pClickBar(pubChartEl(), 'web');
+      await pPublishedNumberIs(page, pubKpi, pCount(web), 'the published KPI counts the web orders');
+      await pWaitCells(page, pubTable,
+        (cells) => cells.length === pDevicesOf('web').length && cells.every((row) => row[0] === 'web'),
+        'and the published query keeps its web rows only');
+      await expect(page.locator('#selectionBar'), 'the chips bar says what was clicked').toBeVisible();
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'one chip here too')
+        .toBeVisible();
+
+      // + and clicking the same bar again restores the published dashboard, as it does the canvas.
+      await pClickBar(pubChartEl(), 'web');
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'a second click brings every order back');
+      await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length, 'and every pair');
+      await expect(page.locator('#selectionBar'), 'and the chips bar goes with the click')
+        .toHaveCount(0);
+    });
+  } finally {
     if (reportId) await deleteReportAsAdmin(reportId);
   }
 });
