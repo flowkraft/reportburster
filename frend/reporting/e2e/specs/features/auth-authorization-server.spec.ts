@@ -403,7 +403,10 @@ async function openUsersScreen(page: Page, ft: FluentTester) {
 async function openUsersScreenFilteredTo(page: Page, ft: FluentTester, username: string) {
   await openUsersScreen(page, ft);
 
+  // The menu opens the screen, not a tab of it: asked from the Groups tab, it stays on Groups and
+  // the search box is on the hidden Users tab. So the Users tab is chosen, as a person would.
   await ft
+    .click('button[role="tab"]:has-text("Users")')
     .click('#userSearch')
     .typeText(username)
     .waitOnElementToBecomeVisible(`#user-${username}`);
