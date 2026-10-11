@@ -133,38 +133,34 @@ if (!componentId || componentId == 'gauge_churn_last_month_month') {
     ctx.reportData('gauge_churn_last_month_month', data)
 }
 
-// ─── Widget: chart_dd15-chart-waterfall-mrr-movement (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd15-chart-waterfall-mrr-movement (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd15-chart-waterfall-mrr-movement') {
-    def chart_dd15_chart_waterfall_mrr_movement_data = { ->
-        // What moved MRR over the last 12 months, in the order a reader follows: what came in, what grew,
-        // what came back, what shrank, what left. The plan filter arrives as the comma-separated text of the
-        // plans the viewer chose, so it is read into rows first - with nothing chosen there are no rows and
-        // every plan counts.
-        dbSql.rows("""WITH chosen AS (
-          SELECT trim(p) AS plan
-          FROM unnest(string_split(?, ',')) AS t(p)
-          WHERE trim(p) <> ''
-        )
-        SELECT CASE ch.change_type
-                 WHEN 'new' THEN 'New'
-                 WHEN 'expansion' THEN 'Expansion'
-                 WHEN 'reactivation' THEN 'Reactivation'
-                 WHEN 'contraction' THEN 'Contraction'
-                 ELSE 'Churn' END AS movement,
-               round(sum(ch.mrr_delta), 2) AS mrr_delta
-        FROM dash_demo.subscription_changes ch
-        JOIN dash_demo.subscriptions s ON s.subscription_id = ch.subscription_id
-        WHERE ch.change_date > (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 12 MONTH
-          AND (NOT EXISTS (SELECT 1 FROM chosen) OR s.plan IN (SELECT plan FROM chosen))
-        GROUP BY movement
-        ORDER BY CASE movement
-                   WHEN 'New' THEN 1
-                   WHEN 'Expansion' THEN 2
-                   WHEN 'Reactivation' THEN 3
-                   WHEN 'Contraction' THEN 4
-                   ELSE 5 END""", [plan])
-    }()
-    ctx.reportData('chart_dd15-chart-waterfall-mrr-movement', chart_dd15_chart_waterfall_mrr_movement_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT CASE ch.change_type\n'
+    sql << '         WHEN \'new\' THEN \'New\'\n'
+    sql << '         WHEN \'expansion\' THEN \'Expansion\'\n'
+    sql << '         WHEN \'reactivation\' THEN \'Reactivation\'\n'
+    sql << '         WHEN \'contraction\' THEN \'Contraction\'\n'
+    sql << '         ELSE \'Churn\' END AS movement,\n'
+    sql << '       round(sum(ch.mrr_delta), 2) AS mrr_delta\n'
+    sql << 'FROM dash_demo.subscription_changes ch\n'
+    sql << 'JOIN dash_demo.subscriptions s ON s.subscription_id = ch.subscription_id\n'
+    sql << 'WHERE ch.change_date > (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 12 MONTH\n'
+    if (hasPlan && listHasValues(plan)) {
+        addInList(sql, params, plan, 'AND s.plan IN') { asDeclaredType('plan', 'String', it) }
+    } else {
+        sql << 'AND 1=1\n'   // no values, or '*' (all): this filter is off
+    }
+    sql << 'GROUP BY movement\n'
+    sql << 'ORDER BY CASE movement\n'
+    sql << '           WHEN \'New\' THEN 1\n'
+    sql << '           WHEN \'Expansion\' THEN 2\n'
+    sql << '           WHEN \'Reactivation\' THEN 3\n'
+    sql << '           WHEN \'Contraction\' THEN 4\n'
+    sql << '           ELSE 5 END\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd15-chart-waterfall-mrr-movement', data)
 }
 
 // ─── Widget: chart_dd15-chart-churn-reasons (type=chart, dataSource=visual) ───
