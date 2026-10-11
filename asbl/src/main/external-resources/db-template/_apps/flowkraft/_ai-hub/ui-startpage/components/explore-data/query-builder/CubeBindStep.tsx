@@ -171,7 +171,7 @@ export function CubeBindStep({
               <option key={offer.id} value={offer.id}>{offer.id}</option>
             ))}
             {offers.some((offer) => offer.fromServer) && (
-              <optgroup label="Set by the server">
+              <optgroup id={`selectCubeBindParam-${i}-serverGroup`} label="Set by the server">
                 {offers.filter((offer) => offer.fromServer).map((offer) => (
                   <option key={offer.id} value={offer.id}>{offer.id}</option>
                 ))}
