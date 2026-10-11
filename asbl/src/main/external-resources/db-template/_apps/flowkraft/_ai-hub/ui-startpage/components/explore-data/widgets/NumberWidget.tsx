@@ -41,6 +41,8 @@ export function NumberWidget({ widgetId }: NumberWidgetProps) {
   const configField = (displayConfig.numberField as string) || "";
   const configFormat = (displayConfig.numberFormat as string) || "";
   const configLabel = (displayConfig.numberLabel as string) || "";
+  const configPrefix = (displayConfig.numberPrefix as string) || "";
+  const configSuffix = (displayConfig.numberSuffix as string) || "";
 
   // SINGLE TRUTH for column inference + saved-field validation lives in
   // useEffectiveField. See lib/hooks/use-effective-field.ts.
@@ -97,12 +99,16 @@ export function NumberWidget({ widgetId }: NumberWidgetProps) {
       data?: unknown;
       field?: string;
       format?: string;
+      prefix?: string;
+      suffix?: string;
     };
 
     el.field = effectiveField;
     el.format = effectiveFormat;
+    el.prefix = configPrefix;
+    el.suffix = configSuffix;
     el.data = result.data;
-  }, [ready, result, effectiveField, effectiveFormat]);
+  }, [ready, result, effectiveField, effectiveFormat, configPrefix, configSuffix]);
 
   if (showAutoSummarizePrompt) {
     return (

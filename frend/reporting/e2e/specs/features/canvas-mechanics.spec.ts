@@ -4698,4 +4698,50 @@ test('(canvas mechanics) M60 Going back to Visual asks before it drops a hand-wr
   });
 });
 
+test('(canvas mechanics) M61 What the author puts before and after a number, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M61 Prefix and suffix', async () => {
+    const orders = pOrders.length.toLocaleString('en-US');
+
+    // Two KPIs counting the same orders, so only what is around the number differs: a currency
+    // sign no format writes, and a unit after the number.
+    const money = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'number');
+    await g4ScalarIs(page, money, pOrders.length, 'the KPI counts every order');
+    await clickDisplayTab(page);
+    await page.locator('#selectNumberFormat').selectOption('number');
+    await page.locator('#inputNumberPrefix').fill('€ ');
+    await expect(page.locator(`#widgetViz-${money}`), 'the Canvas puts the sign before the number')
+      .toHaveText(`€ ${orders}`, { timeout: 15_000 });
+
+    await clickDataTab(page);
+    const unit = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'number');
+    await clickDisplayTab(page);
+    await page.locator('#selectNumberFormat').selectOption('number');
+    await page.locator('#inputNumberSuffix').fill(' %');
+    await expect(page.locator(`#widgetViz-${unit}`), 'and the unit after it')
+      .toHaveText(`${orders} %`, { timeout: 15_000 });
+
+    // − Taken out again, the number is on its own: the box is what puts them there, nothing else.
+    await page.locator('#inputNumberSuffix').fill('');
+    await expect(page.locator(`#widgetViz-${unit}`), 'an empty box adds nothing')
+      .toHaveText(orders, { timeout: 15_000 });
+    await page.locator('#inputNumberSuffix').fill(' %');
+    await expect(page.locator(`#widgetViz-${unit}`)).toHaveText(`${orders} %`, { timeout: 15_000 });
+
+    // + Published, the two tiles read the same as they do in the Canvas.
+    const published = await publishDashboard(page);
+    const body = await openPublished(page, published.reportId);
+    await expect
+      .poll(async () => (await body.locator('rb-value').allInnerTexts()).map((s) => s.trim()).sort(),
+            { message: 'the published numbers carry the sign and the unit', timeout: 60_000, intervals: [1_000] })
+      .toEqual([`€ ${orders}`, `${orders} %`].sort());
+  });
+});
+
 });

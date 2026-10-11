@@ -297,12 +297,18 @@ public class DashboardFileGenerator {
                 if (numberFormat.isEmpty())
                     numberFormat = isCurrencyFieldName(numberField) ? "currency" : "number";
                 String numberLabel  = strOr(dc, "numberLabel",  numberField);
+                // What the author typed around the number, kept out of the markup when empty so
+                // the component's own default stands.
+                String numberPrefix = strOr(dc, "numberPrefix", "");
+                String numberSuffix = strOr(dc, "numberSuffix", "");
                 yield String.format(
                     "    <div class=\"grid-item number-card\" style=\"%s\">\n" +
                     "      <p class=\"number-label\">%s</p>\n" +
-                    "      <p class=\"number-value\"><rb-value %s field=\"%s\" format=\"%s\"></rb-value></p>\n" +
+                    "      <p class=\"number-value\"><rb-value %s field=\"%s\" format=\"%s\"%s%s></rb-value></p>\n" +
                     "    </div>", style,
-                    numberLabel, attrs, numberField, numberFormat);
+                    numberLabel, attrs, numberField, numberFormat,
+                    numberPrefix.isEmpty() ? "" : " prefix=\"" + escapeHtmlAttr(numberPrefix) + "\"",
+                    numberSuffix.isEmpty() ? "" : " suffix=\"" + escapeHtmlAttr(numberSuffix) + "\"");
             }
             case "map" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-map %s></rb-map>\n    </div>", style, attrs);
