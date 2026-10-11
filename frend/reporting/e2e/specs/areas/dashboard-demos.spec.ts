@@ -186,7 +186,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
 
     for (const demo of DEMOS) {
       const card = cardOf(page, demo);
-      await expect(card.locator(`rb-dashboard[report-id="${demo.reportId}"]`),
+      await expect(card.locator(`[id="dashboard-${demo.reportId}"]`),
         `${demo.id}'s card carries its own dashboard`).toHaveCount(1);
       await expect(page.locator(`#lnkOpenAlone-${demo.id}`), `${demo.id} can be opened on its own`)
         .toHaveAttribute('href', `/dashboard/${demo.reportId}`);

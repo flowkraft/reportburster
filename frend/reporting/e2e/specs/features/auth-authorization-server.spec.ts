@@ -4799,7 +4799,7 @@ test.describe('Auth — Server: the AI Hub door', () => {
       await page.waitForURL(/\/view/, { timeout: 60_000 });
 
       await expect(
-        page.locator(`rb-dashboard[report-id="${SAMPLE_DASHBOARD}"]`),
+        page.locator(`[id="dashboard-${SAMPLE_DASHBOARD}"]`),
         'the dashboard their groups land them on, chosen by the backend',
       ).toBeVisible({ timeout: 60_000 });
 
@@ -4807,7 +4807,7 @@ test.describe('Auth — Server: the AI Hub door', () => {
       // was authorised, and an empty dashboard is exactly what a grant that did not reach the data
       // would look like.
       await expect(
-        page.locator('rb-dashboard .tabulator-row').first(),
+        page.locator(`[id="dashboard-${SAMPLE_DASHBOARD}"] [id^="tabRow-"]`).first(),
         'with real rows in it',
       ).toBeVisible({ timeout: 60_000 });
 
@@ -4859,14 +4859,14 @@ test.describe('Auth — Server: the AI Hub door', () => {
 
       await switcher.selectOption(PIVOT_DASHBOARD);
       await page.waitForURL(new RegExp(`/view\\?d=${PIVOT_DASHBOARD}`), { timeout: 60_000 });
-      await expect(page.locator(`rb-dashboard[report-id="${PIVOT_DASHBOARD}"]`)).toBeVisible({
+      await expect(page.locator(`[id="dashboard-${PIVOT_DASHBOARD}"]`)).toBeVisible({
         timeout: 60_000,
       });
 
       // The id is in the query string so that the choice survives a reload and can be sent to a
       // colleague — a switcher that forgot it on F5 would be a switcher nobody could link from.
       await page.reload();
-      await expect(page.locator(`rb-dashboard[report-id="${PIVOT_DASHBOARD}"]`)).toBeVisible({
+      await expect(page.locator(`[id="dashboard-${PIVOT_DASHBOARD}"]`)).toBeVisible({
         timeout: 60_000,
       });
       await expect(page.locator('#dashboardSwitcher')).toHaveValue(PIVOT_DASHBOARD);
@@ -4935,11 +4935,11 @@ test.describe('Auth — Server: the AI Hub door', () => {
       // better answer than a refusal they cannot act on — but it must not be the other dashboard.
       await page.goto(`${AI_HUB_URL}/view?d=${PIVOT_DASHBOARD}`);
 
-      await expect(page.locator(`rb-dashboard[report-id="${SAMPLE_DASHBOARD}"]`)).toBeVisible({
+      await expect(page.locator(`[id="dashboard-${SAMPLE_DASHBOARD}"]`)).toBeVisible({
         timeout: 60_000,
       });
       await expect(
-        page.locator(`rb-dashboard[report-id="${PIVOT_DASHBOARD}"]`),
+        page.locator(`[id="dashboard-${PIVOT_DASHBOARD}"]`),
         'the dashboard they asked for is not rendered at all',
       ).toHaveCount(0);
 
