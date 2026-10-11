@@ -290,11 +290,12 @@ ORDER BY month`,
       },
     },
     {
-      kind: 'script',
-      script: `// Where the money goes between the price on the label and the profit left: the discount given away,
-// then what the goods cost. The three steps run from the running total before them, so the level the
-// last one lands on is the gross profit the r1 tile shows.
-dbSql.rows("""WITH scope AS (
+      // Where the money goes between the price on the label and the profit left: the discount given away,
+      // then what the goods cost. The three steps run from the running total before them, so the level the
+      // last one lands on is the gross profit the r1 tile shows. With no category chosen its line is not
+      // applied and every category counts, like the tiles beside it.
+      kind: 'sql',
+      sql: `WITH scope AS (
   SELECT l.qty * l.unit_price AS list_amount,
          l.qty * l.unit_price * l.discount_pct / 100.0 AS discount_amount,
          l.line_amount AS revenue,
@@ -303,17 +304,17 @@ dbSql.rows("""WITH scope AS (
   JOIN dash_demo.orders o ON o.order_id = l.order_id
   JOIN dash_demo.products p ON p.product_id = l.product_id
   WHERE o.status <> 'cancelled'
-    AND o.order_ts >= CAST(? AS DATE)
-    AND o.order_ts < CAST(? AS DATE) + INTERVAL 1 DAY
-    AND (? = '' OR p.category = ?)
+    AND o.order_ts >= \${dateFrom}
+    AND o.order_ts < \${dateTo__next_day}
+    AND p.category = \${category}
 )
 SELECT 1 AS ord, 'Revenue at list price' AS step, round(sum(list_amount), 2) AS amount FROM scope
 UNION ALL SELECT 2, 'Discounts', -round(sum(discount_amount), 2) FROM scope
 UNION ALL SELECT 3, 'Cost of goods sold', -round(sum(cost), 2) FROM scope
-ORDER BY ord""", [dateFrom, dateTo, category, category])`,
+ORDER BY ord`,
       shot: {
-        title: 'The script for waterfall list price to gross profit',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for waterfall list price to gross profit',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
