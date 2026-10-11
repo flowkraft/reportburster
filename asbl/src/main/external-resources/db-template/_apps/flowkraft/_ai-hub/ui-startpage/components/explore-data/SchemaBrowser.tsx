@@ -36,6 +36,16 @@ interface SchemaBrowserProps {
   onClose?: () => void;
 }
 
+/**
+ * The id of an element both modes draw. The "Hey AI" table picker is this same browser, open in a
+ * dialog while the left panel's stays on the page, so its copies carry a prefix and every id on
+ * the page stays one element. Ids only one mode draws (the picker's checkboxes, the panel's
+ * "Add?" buttons) keep their names.
+ */
+function pickerId(isPicker: boolean, id: string): string {
+  return isPicker ? `aiPick-${id}` : id;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function SchemaBrowser({
@@ -261,7 +271,7 @@ export function SchemaBrowser({
             {/* Heroicon: magnifying-glass */}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-base-content/60 pointer-events-none"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
             <input
-              id="txtSchemaSearch"
+              id={pickerId(isPicker, "txtSchemaSearch")}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -270,7 +280,7 @@ export function SchemaBrowser({
             />
             {search && (
               <button
-                id="btnClearSchemaSearch"
+                id={pickerId(isPicker, "btnClearSchemaSearch")}
                 type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-base-200 text-base-content/60 hover:text-base-content"
@@ -302,7 +312,7 @@ export function SchemaBrowser({
             {filteredCubes.length > 0 && (
               <div>
                 <button
-                  id="btnToggleCubesGroup"
+                  id={pickerId(isPicker, "btnToggleCubesGroup")}
                   type="button"
                   onClick={() => setCubesOpen((v) => !v)}
                   className="w-full flex items-center gap-1 text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1 hover:text-base-content transition-colors"
@@ -392,7 +402,7 @@ export function SchemaBrowser({
             {filteredTables.length > 0 && (
               <div>
                 <button
-                  id="btnToggleTablesGroup"
+                  id={pickerId(isPicker, "btnToggleTablesGroup")}
                   type="button"
                   onClick={() => setTablesOpen((v) => !v)}
                   className="w-full flex items-center gap-1 text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1 hover:text-base-content transition-colors"
@@ -402,7 +412,7 @@ export function SchemaBrowser({
                   {searchTerm && filteredTables.length !== (schema?.tables.length ?? 0) ? ` / ${schema?.tables.length ?? 0}` : ""})
                 </button>
                 {tablesOpen && (
-                  <div id="schemaBrowserTablesList" className="space-y-0.5">
+                  <div id={pickerId(isPicker, "schemaBrowserTablesList")} className="space-y-0.5">
                     {filteredTables.map((table) => {
                       // The reference this table is keyed and quoted by: its schema
                       // only when that schema is not the connection's default one, so
@@ -446,7 +456,7 @@ export function SchemaBrowser({
               filteredTables.length === 0 &&
               filteredCubes.length === 0 &&
               ((schema?.tables.length ?? 0) > 0 || cubes.length > 0) && (
-                <div id="schemaNoMatch" className="p-3 rounded-md border border-dashed border-base-300 bg-base-100/50 text-[11px] text-base-content/60">
+                <div id={pickerId(isPicker, "schemaNoMatch")} className="p-3 rounded-md border border-dashed border-base-300 bg-base-100/50 text-[11px] text-base-content/60">
                   No tables or cubes match &ldquo;{search}&rdquo;.
                 </div>
               )}
@@ -537,7 +547,7 @@ function TableNode({
           />
         )}
         <button
-          id={`btnToggleTableColumns-${refKey}`}
+          id={pickerId(isPicker, `btnToggleTableColumns-${refKey}`)}
           type="button"
           onClick={onToggleExpand}
           className="p-0.5 text-base-content/60 hover:text-base-content"
@@ -547,7 +557,7 @@ function TableNode({
         </button>
         <button
           type="button"
-          id={`btnTable-${refKey}`}
+          id={pickerId(isPicker, `btnTable-${refKey}`)}
           onClick={onPickTable}
           className="flex-1 flex items-center gap-1.5 text-left text-xs text-base-content"
           title={isPicker ? "Toggle selection" : "Click to add this table to the canvas"}
@@ -587,7 +597,7 @@ function TableNode({
             const dotColor = kind === "measure" ? "bg-emerald-500" : "bg-blue-500";
             return (
               <div
-                id={`schemaColumn-${refKey}-${col.columnName}`}
+                id={pickerId(isPicker, `schemaColumn-${refKey}-${col.columnName}`)}
                 key={col.columnName}
                 className="flex items-center gap-1.5 px-1.5 py-0.5 text-[11px] text-base-content/60"
                 title={`${col.columnName} (${col.typeName})`}

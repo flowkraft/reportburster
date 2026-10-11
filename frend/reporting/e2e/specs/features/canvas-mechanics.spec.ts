@@ -3513,7 +3513,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await expect(page.locator('#btnPickTables')).toBeVisible();
 
       // + In the picker a cube is a checkbox: ticking and unticking it flips it.
-      const pickCube = page.locator('[id^="chkPickCube-"]').first();
+      const pickCube = page.locator('[id="chkPickCube-dd-sales"]');
       await expect(pickCube).toBeVisible({ timeout: 15_000 });
       await expect(pickCube, 'no cube is ticked to begin with').not.toBeChecked();
       await pickCube.check();
@@ -3521,12 +3521,12 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await pickCube.uncheck();
       await expect(pickCube).not.toBeChecked();
 
-      // + The picker's own Cubes group (the second one on the page, after the left panel's) folds its checkboxes away.
-      const pickerGroup = page.locator('#btnToggleCubesGroup').last();
+      // + The picker's own Cubes group (its ids carry the picker's prefix) folds its checkboxes away.
+      const pickerGroup = page.locator('#aiPick-btnToggleCubesGroup');
       await pickerGroup.click();
       await expect(page.locator('[id^="chkPickCube-"]'), 'a collapsed group lists no checkbox').toHaveCount(0);
       await pickerGroup.click();
-      await expect(page.locator('[id^="chkPickCube-"]').first()).toBeVisible();
+      await expect(pickCube).toBeVisible();
 
       // − Close (in the picker) leaves without picking: the dialog is closed and the prompt is as it was.
       await page.locator('#btnCloseSchemaBrowser').click();
