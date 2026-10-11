@@ -47,11 +47,11 @@ Pick a metric on the left and the page asks it the review's six questions: where
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -95,13 +95,12 @@ feed AS (
 SELECT date_trunc('month', f.happened_at)::DATE AS month,
        round(sum(f.value), 2) AS value
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
 GROUP BY month
-ORDER BY month""", [metric])
-`,
+ORDER BY month`,
       shot: {
-        title: 'The script for metric per month',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for metric per month',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -132,11 +131,11 @@ ORDER BY month""", [metric])
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -179,13 +178,12 @@ feed AS (
 )
 SELECT round(sum(f.value), 2) AS metric_ytd
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
   AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)""", [metric])
-`,
+  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)`,
       shot: {
-        title: 'The script for metric ytd',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for metric ytd',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -213,11 +211,11 @@ WHERE f.metric = ?
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -264,15 +262,14 @@ SELECT round(
          / sum(CASE WHEN f.happened_at < date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
                     THEN f.value END) - 1, 4) AS vs_last_year
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
   AND ((f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
   AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a))
     OR (f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a)) - INTERVAL 1 YEAR
-      AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 1 YEAR))""", [metric])
-`,
+      AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 1 YEAR))`,
       shot: {
-        title: 'The script for vs last year',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for vs last year',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -303,11 +300,11 @@ WHERE f.metric = ?
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -351,13 +348,12 @@ feed AS (
 SELECT date_trunc('month', f.happened_at)::DATE AS month,
        round(sum(f.value), 2) AS value
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
 GROUP BY month
-ORDER BY month""", [metric])
-`,
+ORDER BY month`,
       shot: {
-        title: 'The script for metric over time',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for metric over time',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -420,11 +416,11 @@ ORDER BY month""", [metric])
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -468,15 +464,14 @@ feed AS (
 SELECT f.made_of AS made_of,
        round(sum(f.value), 2) AS value
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
   AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
   AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)
 GROUP BY f.made_of
-ORDER BY value DESC""", [metric])
-`,
+ORDER BY value DESC`,
       shot: {
-        title: 'The script for what it is made of',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for what it is made of',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -539,11 +534,11 @@ ORDER BY value DESC""", [metric])
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -587,13 +582,12 @@ feed AS (
 SELECT strftime(f.happened_at, '%m %b') AS month_of_year,
        round(sum(f.value), 2) AS value
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
 GROUP BY month_of_year
-ORDER BY month_of_year""", [metric])
-`,
+ORDER BY month_of_year`,
       shot: {
-        title: 'The script for by month of year',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for by month of year',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -659,11 +653,11 @@ ORDER BY month_of_year""", [metric])
       },
     },
     {
-      kind: 'script',
-      script: `// The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-// never as SQL text, so nothing a filter can carry reaches the query itself.
-if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-return dbSql.rows("""WITH line_totals AS (
+      // The metric is one radio of five words, and the chosen one reaches the query as a value in its
+      // WHERE line, never as SQL text: the radio offers only those five, and any other word matches no
+      // row of the feed.
+      kind: 'sql',
+      sql: `WITH line_totals AS (
   SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
   FROM dash_demo.order_lines l
   GROUP BY l.order_id
@@ -707,16 +701,15 @@ feed AS (
 SELECT f.country AS country,
        round(sum(f.value), 2) AS value
 FROM feed f
-WHERE f.metric = ?
+WHERE f.metric = \${metric}
   AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
   AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)
 GROUP BY f.country
 ORDER BY value DESC
-LIMIT 10""", [metric])
-`,
+LIMIT 10`,
       shot: {
-        title: 'The script for by country top 10',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for by country top 10',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
