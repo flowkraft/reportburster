@@ -23,10 +23,16 @@ const loadJavaExtension = () => import("@codemirror/lang-java").then((m) => m.ja
 // The component body below is 100% shared — no mode forks inside it.
 //
 // Persistence contract (enforced by getValue / buildUpdate):
-//   SQL    → reads ds.sql || ds.generatedSql   / writes { sql, generatedSql }
+//   SQL    → reads ds.sql || ds.generatedSql   / writes { sql }
 //   Script → reads ds.script                   / writes { script }
 //   Each mode touches ONLY its own fields; the other mode's fields and
 //   visualQuery survive every keystroke via the dataSource spread.
+//
+// `generatedSql` is NOT written here, although it used to be: it is what the
+// Visual tab generated, and the difference between it and `sql` is the only
+// thing that says whether the author has taken the query over by hand. That
+// difference is what the Visual tab asks about before it throws the hand-written
+// query away (D3) - written over on every keystroke, nothing could ask.
 const MODE_CONFIG = {
   sql: {
     containerid:    "sqlEditorContainer",
@@ -39,7 +45,7 @@ const MODE_CONFIG = {
     loadExtension:  loadSqlExtension,
     getValue:       (ds: DataSource | null) => ds?.sql || ds?.generatedSql || "",
     buildUpdate:    (ds: DataSource | null, value: string): DataSource =>
-      ({ ...ds, mode: "sql" as const, sql: value, generatedSql: value } as DataSource),
+      ({ ...ds, mode: "sql" as const, sql: value } as DataSource),
   },
   script: {
     containerid:    "scriptEditorContainer",
@@ -103,8 +109,8 @@ export function FinetuneEditor({
   const handleChange = useCallback(
     (newValue: string) => {
       // buildUpdate spreads the full dataSource and updates ONLY the fields owned
-      // by this mode — sql+generatedSql for SQL, script for Groovy.  The other
-      // mode's fields and visualQuery are preserved untouched via the spread.
+      // by this mode — sql for SQL, script for Groovy.  The other mode's fields,
+      // `generatedSql` and visualQuery are preserved untouched via the spread.
       onChange(MODE_CONFIG[mode].buildUpdate(dataSource, newValue));
     },
     [mode, dataSource, onChange],

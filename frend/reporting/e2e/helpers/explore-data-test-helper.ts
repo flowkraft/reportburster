@@ -290,6 +290,18 @@ export async function runSqlQuery(
   await page.waitForTimeout(2_000);
 }
 
+/** Click the Visual tab, answering the question the Canvas asks when the widget's SQL was written
+ *  by hand: the Visual tab writes the query itself, so going back drops the hand-written one (D3).
+ *  Every caller here means to leave it behind, so this answers Switch. A test about the question
+ *  itself clicks the tab and the dialog's own buttons instead. */
+export async function goToVisualTab(page: Page): Promise<void> {
+  await page.locator('#btnQueryTab-visual').click();
+  await page.waitForTimeout(300);
+  const switchAnyway = page.locator('#btnSwitchToVisual');
+  if (await switchAnyway.isVisible().catch(() => false)) await switchAnyway.click();
+  await page.waitForTimeout(500);
+}
+
 /** Switch to the Finetune tab, select Script mode, replace the editor content,
  *  then click Run Script. Mirrors runSqlQuery but targets the Groovy mode IDs
  *  (scriptEditorContainer / btnRunScript / selectQueryMode='script'). The script
