@@ -103,12 +103,14 @@ const EXPLORE_TABLE = 'Orders';
  *
  * A real Northwind customer rather than the 4711 of the design, because the widget selects from
  * `Orders`: an attribute that matched no row would prove nothing, since a filter that reaches
- * nothing and a filter that reaches everything both answer without an error.
+ * nothing and a filter that reaches everything both answer without an error. Two customers the
+ * shipped sample gives orders of their own (`NorthwindDataGenerator`); its 79 orders have none for
+ * VINET or TOMSP.
  */
 const ATTRIBUTE = 'customer_id';
 const ATTRIBUTE_PARAM = 'dp_attr_customer_id';
-const ATTRIBUTE_VALUE = 'VINET';
-const OTHER_CUSTOMER = 'TOMSP';
+const ATTRIBUTE_VALUE = 'ALFKI';
+const OTHER_CUSTOMER = 'ANATR';
 const ATTRIBUTE_SQL = `SELECT * FROM ${EXPLORE_TABLE} WHERE CustomerID = \${${ATTRIBUTE_PARAM}}`;
 
 // ---------------------------------------------------------------------------
@@ -5100,7 +5102,7 @@ test.describe('Auth — Server: the AI Hub door', () => {
 
     // The attribute bag, through the product: an attribute typed into the Share dialog, stored with
     // the link, and read by the widget's SQL as ${dp_attr_customer_id}. It is a browser test for the
-    // reason a lock is: nothing in the URL the recipient holds says VINET, and nothing they can type
+    // reason a lock is: nothing in the URL the recipient holds says ALFKI, and nothing they can type
     // into it does either — the value exists only inside the link.
     await exploreAndPublishAs(
       page,
