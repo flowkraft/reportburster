@@ -26,10 +26,12 @@ import { useDpSession } from '@/components/layout/DpSession';
  * usually one password away from the thing they came to do.
  */
 export function SignInGate({ children }: { children: React.ReactNode }) {
-  const { needsSignIn, resolved, canEditReports } = useDpSession();
+  const { needsSignIn, resolved, canEditReports, dashboardsOnly } = useDpSession();
 
-  // Signed in, but not as an author. Same form, one banner more.
-  const refusedRole = resolved && !needsSignIn && !canEditReports;
+  // Signed in, but not as an author. Same form, one banner more. Not for a dashboard viewer: they
+  // have a home here (/view), and the middleware already keeps them to it and sends every other
+  // page there, so refusing them here would only hide their own dashboards behind a sign-in form.
+  const refusedRole = resolved && !needsSignIn && !canEditReports && !dashboardsOnly;
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
