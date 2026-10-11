@@ -193,17 +193,11 @@ WHERE true
       },
     },
     {
-      kind: 'script',
-      script: `// What moved MRR over the last 12 months, in the order a reader follows: what came in, what grew,
-// what came back, what shrank, what left. The plan filter arrives as the comma-separated text of the
-// plans the viewer chose, so it is read into rows first - with nothing chosen there are no rows and
-// every plan counts.
-dbSql.rows("""WITH chosen AS (
-  SELECT trim(p) AS plan
-  FROM unnest(string_split(?, ',')) AS t(p)
-  WHERE trim(p) <> ''
-)
-SELECT CASE ch.change_type
+      // What moved MRR over the last 12 months, in the order a reader follows: what came in, what grew,
+      // what came back, what shrank, what left. The plans the viewer chose are one IN line; with none
+      // chosen that line is not applied and every plan counts, like the MRR trend beside it.
+      kind: 'sql',
+      sql: `SELECT CASE ch.change_type
          WHEN 'new' THEN 'New'
          WHEN 'expansion' THEN 'Expansion'
          WHEN 'reactivation' THEN 'Reactivation'
@@ -213,17 +207,17 @@ SELECT CASE ch.change_type
 FROM dash_demo.subscription_changes ch
 JOIN dash_demo.subscriptions s ON s.subscription_id = ch.subscription_id
 WHERE ch.change_date > (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 12 MONTH
-  AND (NOT EXISTS (SELECT 1 FROM chosen) OR s.plan IN (SELECT plan FROM chosen))
+  AND s.plan IN (\${plan})
 GROUP BY movement
 ORDER BY CASE movement
            WHEN 'New' THEN 1
            WHEN 'Expansion' THEN 2
            WHEN 'Reactivation' THEN 3
            WHEN 'Contraction' THEN 4
-           ELSE 5 END""", [plan])`,
+           ELSE 5 END`,
       shot: {
-        title: 'The script for waterfall mrr movement',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for waterfall mrr movement',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
