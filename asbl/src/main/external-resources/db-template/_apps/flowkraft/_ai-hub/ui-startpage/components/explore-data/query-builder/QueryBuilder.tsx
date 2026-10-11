@@ -39,6 +39,8 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
   // Lock the AI prompt mode at click-time — don't derive from dataSource.mode,
   // which can flip back to "sql" if SqlEditor's onChange fires during unmount.
   const [aiMode, setAiMode] = useState<AiMode>("sql");
+  // Open while we ask whether a hand-written query may be thrown away (D3).
+  const [askSqlEditsLost, setAskSqlEditsLost] = useState(false);
 
   // Read the shared query-result cache from canvas-store. useWidgetData writes
   // to this entry after the single execution per Run — here we just subscribe.
@@ -57,6 +59,16 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
   const aiTableName = visualQuery?.table || undefined;
   const aiCubeId = visualQuery?.cubeId || undefined;
   const connectionType = connections.find((c) => c.connectionCode === connectionId)?.dbserver?.type || "";
+
+  // Has the author taken the query over by hand?  `generatedSql` is what the
+  // Visual tab last generated and `sql` is what the SQL editor holds: when the
+  // two differ, the Visual tab regenerating its query would throw away SQL
+  // nobody else wrote down, so we ask first instead of losing it silently.
+  const editedSql = (dataSource?.sql || "").trim();
+  const sqlEdited =
+    (mode === "sql" || mode === "ai-sql") &&
+    editedSql.length > 0 &&
+    editedSql !== (dataSource?.generatedSql || "").trim();
 
   // Load connections on mount
   useEffect(() => {
@@ -83,12 +95,14 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
     }
   }, [queryResult, executing]);
 
-  // Switch mode — carry SQL over between modes
+  // Switch mode — the mode is the only thing that changes.  The SQL editor
+  // falls back to `generatedSql` when `sql` is empty, so entering Finetune
+  // already shows the Visual tab's query without copying it anywhere; copying
+  // it into `sql` is what used to make every query look hand-written.
   const switchMode = useCallback(
     (newMode: DataSourceMode) => {
       if (newMode === mode) return;
-      const currentSql = dataSource?.sql || dataSource?.generatedSql || "";
-      onChange({ ...dataSource, mode: newMode, sql: currentSql, generatedSql: currentSql } as DataSource);
+      onChange({ ...dataSource, mode: newMode } as DataSource);
     },
     [mode, dataSource, onChange]
   );
@@ -98,10 +112,11 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
   // reset — if anything silently set mode to sql/ai-sql/script (e.g. the SQL
   // editor's onChange firing during mount/unmount), clicking Visual makes the
   // dataSource consistent with what the user is actually looking at.
+  // It also clears `sql`: from here on the Visual tab owns the query, and the
+  // SQL editor shows `generatedSql` again - what the Visual tab generates.
   const forceVisualMode = useCallback(() => {
     if (!dataSource) return;
-    const currentSql = dataSource.sql || dataSource.generatedSql || "";
-    onChange({ ...dataSource, mode: "visual", sql: currentSql, generatedSql: currentSql } as DataSource);
+    onChange({ ...dataSource, mode: "visual", sql: "" } as DataSource);
   }, [dataSource, onChange]);
 
   const switchTopTab = (tab: TopTab) => {
@@ -110,6 +125,7 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
       // clicking Visual to be a guaranteed reset point even if mode already
       // reads "visual" (which happens when something flipped mode and back
       // within one render).
+      if (sqlEdited) { setAskSqlEditsLost(true); return; }
       forceVisualMode();
     } else {
       // Enter Finetune — keep current sub-tab if already in sql/script,
@@ -128,10 +144,14 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
   const handleRun = useCallback(
     (sql: string) => {
       if (!connectionId || !sql) return;
-      onChange({ ...dataSource, sql, generatedSql: sql,
+      // Running the Visual tab's query is what generates `generatedSql`;
+      // running a hand-written one leaves it alone, so the two stay comparable.
+      const handWritten = mode === "sql" || mode === "ai-sql";
+      onChange({ ...dataSource, sql,
+                 generatedSql: handWritten ? dataSource?.generatedSql : sql,
                  executeVersion: (dataSource?.executeVersion ?? 0) + 1 } as DataSource);
     },
-    [connectionId, dataSource, onChange]
+    [connectionId, mode, dataSource, onChange]
   );
 
   // Run a Groovy script — same pattern as handleRun, bumps scriptExecuteVersion
@@ -232,6 +252,47 @@ export function QueryBuilder({ widgetId, dataSource, onChange, connectionId }: Q
             </div>
           )}
         </>
+      )}
+
+      {/* Going back to Visual throws a hand-written query away — ask first (D3) */}
+      {askSqlEditsLost && (
+        <div
+          id="overlaySqlEditsLost"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setAskSqlEditsLost(false)}
+        >
+          <div
+            id="dlgSqlEditsLost"
+            className="bg-base-100 border border-base-300 rounded-xl shadow-lg w-full max-w-sm mx-4 p-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-sm font-semibold text-base-content">Your SQL edits will be lost</h2>
+            <p id="txtSqlEditsLost" className="text-xs text-base-content/60 mt-2">
+              The Visual tab writes the query itself, so the SQL you wrote by hand goes. Keep SQL
+              leaves you here with your query.
+            </p>
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <button
+                id="btnKeepSql"
+                type="button"
+                onClick={() => setAskSqlEditsLost(false)}
+                className="px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 text-base-content hover:bg-base-200 transition-colors"
+              >
+                Keep SQL
+              </button>
+              <button
+                id="btnSwitchToVisual"
+                type="button"
+                onClick={() => { setAskSqlEditsLost(false); forceVisualMode(); }}
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-error text-error-content hover:bg-error/90 transition-colors"
+              >
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* AI Prompt Builder dialog */}

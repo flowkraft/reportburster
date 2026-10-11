@@ -365,11 +365,14 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
       );
       if (!sql) { setDetectError("Write or generate a query first"); return; }
       const nextVersion = (ds.executeVersion ?? 0) + 1;
-      // Persist sql/generatedSql for visual→SQL consistency, same as handleRun.
+      // Persist sql/generatedSql for visual→SQL consistency, same as handleRun:
+      // a hand-written query is the author's `sql`, and `generatedSql` stays what
+      // the Visual tab generated, so the Visual tab can still tell the two apart (D3).
+      const handWritten = ds.mode === "sql" || ds.mode === "ai-sql";
       updateWidgetDataSource(selectedWidget.id, {
         ...ds,
-        sql: (ds.mode === "sql" || ds.mode === "ai-sql") ? ds.sql : sql,
-        generatedSql: sql,
+        sql: handWritten ? ds.sql : sql,
+        generatedSql: handWritten ? ds.generatedSql : sql,
         executeVersion: nextVersion,
       });
     }

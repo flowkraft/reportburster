@@ -54,6 +54,7 @@ import {
   clickDisplayTab,
   createFreshCanvas,
   getLastWidgetId,
+  goToVisualTab,
   openDslEditor,
   pickVisualCube,
   pickVisualTable,
@@ -2108,17 +2109,20 @@ test('(canvas mechanics) M09 Finetune → Visual', async () => {
     await runSqlQuery(page, 'SELECT order_id FROM dash_demo.orders LIMIT 3');
     await expect(dRowCount(page), 'the edited SQL answers').toContainText('3 rows returned', { timeout: 30_000 });
 
-    // + back on Visual, the widget shows the visual query's result again.
+    // + back on Visual - which asks first, because the SQL was written by hand (D3) - the widget
+    //   shows the visual query's result again.
     await page.locator('#btnQueryTab-visual').click();
+    await page.locator('#btnSwitchToVisual').click();
     await expect(dRowCount(page), 'the visual query answers again').toContainText(`${D_ORDER_CHANNELS} rows returned`, { timeout: 30_000 });
 
     // − while on Visual, the edited SQL does not run, and has no Run button on screen.
     await expect(dRowCount(page)).not.toContainText('3 rows returned');
     await expect(page.locator('#btnRunSqlQuery')).toHaveCount(0);
 
-    // + returning to Finetune still shows the edited SQL, as the code keeps it (`sql` survives a tab switch).
+    // + returning to Finetune shows the query the Visual tab writes: the hand-written one went with
+    //   the Switch, which is what the question was about. M60 is the test of the question itself.
     await page.locator('#btnQueryTab-finetune').click();
-    await expect(page.locator('#sqlEditorContainer .cm-content')).toContainText('LIMIT 3', { timeout: 15_000 });
+    await expect(page.locator('#sqlEditorContainer .cm-content')).toContainText('channel', { timeout: 15_000 });
   });
 });
 
@@ -2580,8 +2584,9 @@ test('(canvas mechanics) M24 AI help prompt builders', async () => {
     await page.locator('#btnDismissAiHelp').click();
     await expect(page.locator('#txtAiRequirement')).toHaveCount(0);
 
-    // DSL: a chart's DSL editor.
-    await page.locator('#btnQueryTab-visual').click();
+    // DSL: a chart's DSL editor. The widget's SQL was written by hand above, so the Visual tab
+    // asks before it takes the query back (D3) - the helper answers Switch.
+    await goToVisualTab(page);
     await addGroupBy(page, 'channel');
     await addAggregation(page, 0, 'COUNT', 'order_id');
     await runVisualQuery(page);
@@ -4632,4 +4637,65 @@ test('(canvas mechanics) M59 Deleting a canvas says what goes with it, and Unpub
     if (keptReportId) await deleteReportAsAdmin(keptReportId);
   }
 });
+
+test('(canvas mechanics) M60 Going back to Visual asks before it drops a hand-written query', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M60 SQL edits', async () => {
+    // A visual query: orders per channel.
+    await addTableToCanvas(page, 'dash_demo.orders');
+    await addGroupBy(page, 'channel');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await expect(dRowCount(page), 'the visual query has a row per channel')
+      .toContainText(`${D_ORDER_CHANNELS} rows returned`, { timeout: 30_000 });
+    const sqlEditor = page.locator('#sqlEditorContainer .cm-content');
+
+    // − Nothing edited: the SQL tab shows the query the Visual tab wrote, and going back asks
+    //   nothing - there is nothing to lose.
+    await eOpenFinetune(page, 'sql');
+    await expect(sqlEditor, "the Visual tab's own query is what the SQL tab opens on")
+      .toContainText('channel', { timeout: 15_000 });
+    await page.locator('#btnQueryTab-visual').click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#dlgSqlEditsLost'), 'nothing was edited, so nothing is asked')
+      .toHaveCount(0);
+    await expect(page.locator('#btnAddAggregation'), 'and the Visual tab is what we are on')
+      .toBeVisible();
+
+    // + Written by hand: the question comes, and Keep SQL leaves the query, and the tab, alone.
+    await runSqlQuery(page, 'SELECT order_id FROM dash_demo.orders LIMIT 3');
+    await expect(dRowCount(page), 'the hand-written query answers')
+      .toContainText('3 rows returned', { timeout: 30_000 });
+    await page.locator('#btnQueryTab-visual').click();
+    await expect(page.locator('#dlgSqlEditsLost'), 'this time the Canvas asks').toBeVisible();
+    await expect(page.locator('#txtSqlEditsLost'), 'and says what going back would cost')
+      .toContainText('wrote by hand');
+    await page.locator('#btnKeepSql').click();
+    await expect(page.locator('#dlgSqlEditsLost'), 'the question is answered').toHaveCount(0);
+    await expect(sqlEditor, 'the hand-written query is still here').toContainText('LIMIT 3');
+    await expect(page.locator('#btnRunSqlQuery'), 'on the tab it was written on').toBeVisible();
+    await expect(dRowCount(page), 'answering the widget as it did')
+      .toContainText('3 rows returned');
+
+    // + Switch: the Visual tab takes the query back, and its own query answers again.
+    await page.locator('#btnQueryTab-visual').click();
+    await page.locator('#btnSwitchToVisual').click();
+    await expect(page.locator('#btnAddAggregation'), 'the Visual tab is on screen').toBeVisible();
+    await expect(dRowCount(page), 'the visual query answers again')
+      .toContainText(`${D_ORDER_CHANNELS} rows returned`, { timeout: 30_000 });
+
+    // − What the question warned about: the hand-written query is gone, and the SQL tab shows the
+    //   Visual tab's query again - so going back a second time asks nothing.
+    await page.locator('#btnQueryTab-finetune').click();
+    await expect(sqlEditor, "the Visual tab's query is back in the editor")
+      .toContainText('channel', { timeout: 15_000 });
+    const left = await sqlEditor.innerText();
+    expect(left, 'and the hand-written one went with the Switch').not.toMatch(/SELECT\s+order_id\s+FROM/i);
+    await page.locator('#btnQueryTab-visual').click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#dlgSqlEditsLost'), 'nothing is edited any more, so nothing is asked')
+      .toHaveCount(0);
+  });
+});
+
 });
