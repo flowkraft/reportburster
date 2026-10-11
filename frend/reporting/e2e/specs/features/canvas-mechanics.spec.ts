@@ -1465,6 +1465,10 @@ test.describe('Canvas mechanics', () => {
         await page.locator('#shareLockParam-channel').check();
         const lockValue = page.locator('#shareLockValue-channel');
         await lockValue.waitFor({ state: 'visible', timeout: 10_000 });
+        // The lock's control is a filter bar of its own, with its form named after it: the page's
+        // filter bar is still the one #formReportParameters.
+        await expect(page.locator('#shareLockValue-channel_formReportParameters')).toBeVisible();
+        await expect(page.locator('#formReportParameters')).toHaveCount(1);
         await lockValue.locator('#channel').selectOption(B_CHANNEL);
         await page.locator('#shareExpiry').selectOption('7');
         await page.locator('#btnCreateShareLink').click();
