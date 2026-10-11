@@ -4861,4 +4861,87 @@ test('(canvas mechanics) M63 A widget whose query fails says so, and a wait for 
   });
 });
 
+/**
+ * The series a chart draws, as Chart.js holds them: the first one's name, how each is drawn, the
+ * axis each is on (`y` the left, `y1` the right), and where the right axis stands, if there is one.
+ * `chart` is the chart's element or its box inside it (`widgetChart-<cid>`, in its shadow root).
+ */
+async function m64Series(chart: Locator): Promise<{ first: string; types: string[]; axes: string[]; right: string | null }> {
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const drawn = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datasets: any[] = drawn?.data?.datasets ?? [];
+    return {
+      first: String(datasets[0]?.label ?? ''),
+      types: datasets.map((d) => String(d.type ?? '')),
+      axes: datasets.map((d) => String(d.yAxisID ?? 'y')),
+      right: (drawn?.options?.scales?.y1?.position as string | undefined) ?? null,
+    };
+  });
+}
+
+test('(canvas mechanics) M64 A combo chart names its series, draws each as bars or a line, and puts one on a right axis', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M64 Combo series', async (canvasId) => {
+    // Sales and orders per channel: two measures of very different sizes, what a right axis is for.
+    const combo = await eNewVisualWidget(page, 'orders');
+    await addGroupBy(page, 'channel');
+    await addAggregation(page, 0, 'SUM', 'total_amount');
+    await addAggregation(page, 1, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'combo');
+    await clickDisplayTab(page);
+    const inCanvas = page.locator(`[id="widgetViz-${combo}"]`);
+
+    // Nothing set yet: the first measure as bars, the second as a line, both on the left axis.
+    await expect(page.locator('#selectChartSeriesType-0')).toHaveValue('bar');
+    await expect(page.locator('#selectChartSeriesType-1')).toHaveValue('line');
+    await expect(page.locator('#chkChartSeriesRightAxis-1')).not.toBeChecked();
+    await expect
+      .poll(async () => m64Series(inCanvas), { timeout: 20_000, intervals: [500] })
+      .toMatchObject({ types: ['bar', 'line'], axes: ['y', 'y'], right: null });
+
+    // + The author names the first series, draws it as a line and the second as bars, and puts the
+    //   second on the right axis: the chart draws exactly that, and the canvas keeps it.
+    await page.locator('#inputChartSeriesLabel-0').fill('Sales');
+    await page.locator('#selectChartSeriesType-0').selectOption('line');
+    await page.locator('#selectChartSeriesType-1').selectOption('bar');
+    await page.locator('#chkChartSeriesRightAxis-1').check();
+    const set = { first: 'Sales', types: ['line', 'bar'], axes: ['y', 'y1'], right: 'right' };
+    await expect
+      .poll(async () => m64Series(inCanvas), { message: 'the Canvas draws the series as set', timeout: 20_000, intervals: [500] })
+      .toEqual(set);
+    let stored = await eStoredWidgets(page, canvasId,
+      (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.y1?.position === 'right');
+    let datasets = stored[0].displayConfig.dslConfig.data.datasets;
+    expect(datasets[0]).toMatchObject({ label: 'Sales', type: 'line' });
+    expect(datasets[0].yAxisID).toBeUndefined();
+    expect(datasets[1]).toMatchObject({ type: 'bar', yAxisID: 'y1' });
+
+    // − Back on the left axis, the right axis goes with its last series, from the chart and the canvas.
+    await page.locator('#chkChartSeriesRightAxis-1').uncheck();
+    await expect
+      .poll(async () => m64Series(inCanvas), { timeout: 20_000, intervals: [500] })
+      .toMatchObject({ axes: ['y', 'y'], right: null });
+    stored = await eStoredWidgets(page, canvasId,
+      (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.y1 === undefined);
+    datasets = stored[0].displayConfig.dslConfig.data.datasets;
+    expect(datasets[1].yAxisID).toBeUndefined();
+    await page.locator('#chkChartSeriesRightAxis-1').check();
+    await expect
+      .poll(async () => m64Series(inCanvas), { timeout: 20_000, intervals: [500] })
+      .toEqual(set);
+
+    // + Published, the chart draws the same series the same way.
+    const published = await publishDashboard(page);
+    const dashboard = await openPublished(page, published.reportId);
+    await expect
+      .poll(async () => m64Series(dashboard.locator('[id^="widgetChart-"]')),
+            { message: 'the published chart draws the series as set', timeout: 60_000, intervals: [1_000] })
+      .toEqual(set);
+  });
+});
+
 });

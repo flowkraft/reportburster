@@ -379,11 +379,12 @@
   // Combo — first dataset = bar, rest = line. Chart.js handles mixed natively.
   // `order` makes bars render under lines (lower order = drawn later = on top).
   function buildComboConfig(normalizedData: any, mergedOptions: any) {
-    const datasets = (normalizedData?.datasets ?? []).map((ds: any, i: number) => Object.assign({}, ds, {
-      type: i === 0 ? 'bar' : 'line',
-      order: i === 0 ? 2 : 1,
-      fill: false,
-    }));
+    // Each series is drawn the way the author set it (`type`), or, when nothing is set, the first
+    // as bars and the rest as lines. Lines are drawn over the bars.
+    const datasets = (normalizedData?.datasets ?? []).map((ds: any, i: number) => {
+      const drawn = ds.type ?? (i === 0 ? 'bar' : 'line');
+      return Object.assign({}, ds, { type: drawn, order: drawn === 'bar' ? 2 : 1, fill: false });
+    });
     return {
       type: 'bar',
       data: { labels: normalizedData?.labels ?? [], datasets },
