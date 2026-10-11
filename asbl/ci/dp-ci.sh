@@ -33,6 +33,9 @@
 #                                                                        copy (generated, transformed or named by the assembler). Seconds.
 #                                     package-repackage                  package the content again on the jars already built (AssemblerTest#refreshContentForE2E), about 3.5 min.
 #                                                                        Not a full rebuild: that is dp-ci-package (about 26 min).
+#                                   The loop lane also serves the AI Hub start page from the `ui-startpage` sources (`next dev`, the Dockerfile's
+#                                   devserver stage, image ai-hub-ai-hub-frend:dev): a Canvas change needs no image build and no run can test a stale
+#                                   image. The release lane keeps the production image. Line: AI_HUB_FROM_SOURCES=<path>.
 #                                   The old values reuse and content are refused, naming the new one. Not a release check: the real `e2e` is. The log says which
 #                                   package it ran on: an `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` line.
 #                                   E2E_ROTATION_DATE (YYYY-MM-DD, default today UTC): whose day's vendor rotation to run, e.g. a failed run's. Watch a run with
@@ -1138,6 +1141,52 @@ if [ "${1:-}" = "--inside" ]; then
     return $rc
   }
 
+  # The AI Hub start page served from the ui-startpage SOURCES instead of from the
+  # ai-hub-ai-hub-frend image. What it changes, and why:
+  #   - the start page is a Next app, and `next dev` compiles the page that is asked for from the
+  #     files as they are. The sources are bind-mounted over /app, so a Canvas change costs that
+  #     page's recompile and no image build at all - and a run can no longer test an image somebody
+  #     built by hand two commits ago, which is what every Canvas change used to pay for.
+  #   - only the TESTGROUND's copy of the app's compose file is touched: the product's own file is
+  #     never changed, the service keeps its name, its port, its environment and its dependencies,
+  #     and the image it builds is tagged :dev, so this app's production :latest is left alone.
+  #   - the dev image is built here and not left to the product's `compose up` (which builds only
+  #     what is missing): it carries node_modules, and those have to match today's package.json.
+  #     With the layer cache warm it takes seconds.
+  # Docker creates the mount points of the nested mounts (config/_internal, workspace, data) inside
+  # the bind-mounted folder, so a few empty untracked directories appear under ui-startpage.
+  aihub_from_sources() {
+    local u="$REPO/asbl/src/main/external-resources/db-template/_apps/flowkraft/_ai-hub/ui-startpage"
+    local f="$REPO/frend/reporting/testground/e2e/_apps/flowkraft/_ai-hub/docker-compose.yml"
+    [ -f "$f" ] || { echo "!!! ai-hub: $f is missing - the testground has no AI Hub app to point at the sources"; return 1; }
+    echo "ai-hub: building the dev image from the sources (cached after the first time)"
+    timeout 3600 docker build --target devserver -t ai-hub-ai-hub-frend:dev "$u" >/dev/null ||
+      { echo "!!! ai-hub: docker build --target devserver failed"; return 1; }
+    python3 - "$f" "$u" <<'AIHUBPY' || { echo "!!! ai-hub: could not point the app's compose file at the sources"; return 1; }
+import sys
+f, u = sys.argv[1], sys.argv[2]
+s = open(f, newline='').read()
+i, j = s.index("\n  ai-hub-frend:\n"), s.index("\n  ai-hub-tools:\n")
+blk = s[i:j]
+def one(old, new):
+    global blk
+    assert blk.count(old) == 1, old
+    blk = blk.replace(old, new)
+# the dev stage of the app's own Dockerfile, built from the sources in this checkout
+one("      context: ./ui-startpage\n      dockerfile: Dockerfile\n",
+    "      context: %s\n      dockerfile: Dockerfile\n      target: devserver\n" % u)
+# its own tag, so the production image of this app is never overwritten
+one("    container_name: flowkraft-ai-hub-frend\n",
+    "    container_name: flowkraft-ai-hub-frend\n    image: ai-hub-ai-hub-frend:dev\n")
+# `next dev` compiles what is asked for; the modules and the build output stay in the container
+one("      - NODE_ENV=production\n", "      - NODE_ENV=development\n")
+one("    volumes:\n",
+    "    volumes:\n      - %s:/app\n      - /app/node_modules\n      - /app/.next\n" % u)
+open(f, "w", newline='').write(s[:i] + blk + s[j:])
+AIHUBPY
+    echo "AI_HUB_FROM_SOURCES=$u (image ai-hub-ai-hub-frend:dev, stage devserver)"
+  }
+
   # The owner's e2e chain, unchanged: clean testground -> gulp starts the Spring Boot server from
   # testground/e2e + `ng serve` on 4201 -> Playwright (TEST_ENV=web, or Electron) -> server killed. gulp itself
   # does not return Playwright's exit code, so the verdict is read from the line gulp prints.
@@ -1165,6 +1214,11 @@ if [ "${1:-}" = "--inside" ]; then
       # host that name belongs to dp-demo's MailHog, so the e2e runs use their own container.
       export DATAPALLAS_TEST_EMAIL_SERVER_CONTAINER="${DATAPALLAS_TEST_EMAIL_SERVER_CONTAINER:-dp-e2e-mailhog}"
       (cd frend/reporting && npm run custom:clean-testground) || return 1
+      # The loop lane serves the start page from the sources (`aihub_from_sources` above). E2E_PACKAGE
+      # is what tells the two lanes apart: the task dispatch at the bottom sets it on the loop lane and
+      # empties it on the release lane, which proves the image DataPallas ships. A failure here stops
+      # the run rather than quietly testing whatever image happens to be on the host.
+      if [ -n "${E2E_PACKAGE:-}" ]; then aihub_from_sources || return 1; fi
     fi
     # stuck tests cost tens of minutes, not hours (plan §4 D0); read by e2e/utils/constants.ts,
     # fluent-tester.ts, utils/helpers.ts and playwright.config.ts. Unset outside this script, so
