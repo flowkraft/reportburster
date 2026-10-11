@@ -5252,8 +5252,9 @@ const SHARED_REPORT = 'e2e-shared-dashboard';
 const OTHER_REPORT = 'e2e-other-dashboard';
 
 /**
- * A dashboard that really exists, with real rows behind it. The two above are only codes: the page
- * shell is served for any code, so they prove who may OPEN a link, never who may READ what it shows.
+ * A dashboard that really exists, with real rows behind it. The two above are copies of it made by
+ * the share block for itself (a link to a code with no report behind it answers 404): they prove who
+ * may OPEN a link, never who may READ what it shows.
  * g-dashboard ships in config/samples and reads the built-in rbt-sample-northwind-sqlite-4f2
  * connection (db/sample-northwind-sqlite/northwind.db) — no Docker, no starter pack.
  */
@@ -5303,12 +5304,22 @@ async function revokeAllShareLinks(session: string, reportId: string) {
 
 test.describe('Auth — Server: handing a dashboard to somebody without an account', () => {
 
+  test.beforeAll(async () => {
+    // A link to a dashboard that does not exist answers 404 (the no-longer-available page), so the
+    // two dashboards shared here are real: copies of the shipped g-dashboard.
+    const admin = await login(ADMIN.username, ADMIN.password);
+    await copySampleReport(admin, SAMPLE_DASHBOARD, SHARED_REPORT);
+    await copySampleReport(admin, SAMPLE_DASHBOARD, OTHER_REPORT);
+  });
+
   test.afterAll(async () => {
     // Nothing this block created may outlive it. A share link that survives the run is an open door
     // left open, and the next run would find links it did not make.
     const admin = await login(ADMIN.username, ADMIN.password);
     await revokeAllShareLinks(admin, SHARED_REPORT);
     await revokeAllShareLinks(admin, OTHER_REPORT);
+    for (const reportId of [SHARED_REPORT, OTHER_REPORT])
+      await statusAs(admin, 'DELETE', `/api/reports/${reportId}`);
   });
 
   test('(share) publishing puts a dashboard on the server, not on the internet', async () => {
