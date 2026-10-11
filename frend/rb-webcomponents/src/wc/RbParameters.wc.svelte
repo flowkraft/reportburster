@@ -7,6 +7,7 @@
   // Which control each declared type is filled in with lives in its own module, so `npm test`
   // can ask it directly - see src/shared/parameter-controls.test.ts.
   import { controlTypeOf, defaultForType } from '../shared/parameter-controls';
+  import { paneFieldsOnPage, paneSelectionsFor, refreshDataWidgets } from '../shared/pane-selections';
   // Starting values a link carries, and the address bar kept on the view that is on screen. This
   // component is the only one that reads or writes the URL for parameters - see
   // src/shared/url-start-values.ts for the rules.
@@ -706,36 +707,13 @@
   // Replace all sibling rb-* components with fresh elements carrying the given params
   function applyParamsToSiblings(values: { [id: string]: any }) {
     if (!hostElement) return;
-    const root = hostElement.closest('.rb-dashboard-root') || (hostElement.getRootNode() as Element | Document) || document;
-    const paramsJson = JSON.stringify(values);
-    const components = (root as Element | Document).querySelectorAll('rb-tabulator, rb-chart, rb-pivot-table, rb-value, rb-trend, rb-map, rb-sankey, rb-gauge, rb-progress, rb-detail, rb-cube-renderer');
-    components.forEach((el: Element) => {
-      const fresh = document.createElement(el.tagName.toLowerCase());
-      for (const attr of Array.from(el.attributes)) {
-        fresh.setAttribute(attr.name, attr.value);
-      }
-      fresh.setAttribute('report-params', paramsJson);
-      // A widget a person can tick things on is showing something it was not published showing,
-      // and that is not this element's to throw away: it says what it is showing, and the
-      // element that takes its place opens there.
-      const localState = localStateOf(el);
-      if (localState) fresh.setAttribute('local-state', localState);
-      el.parentNode?.replaceChild(fresh, el);
-    });
-  }
-
-  // What a widget is showing right now, if it says: a cube renderer hands over the ticks the
-  // viewer made, which nothing else knows about. A widget that offers nothing hands over nothing.
-  function localStateOf(el: Element): string {
-    const say = (el as any).rbLocalState;
-    if (typeof say !== 'function') return '';
-    try {
-      const state = say.call(el);
-      return typeof state === 'string' ? state : '';
-    } catch (e) {
-      // A widget that cannot say where it is still gets replaced: it opens on its saved view.
-      return '';
-    }
+    // The panes' picks ride along. A reload asked for in the filter bar re-fetches every tile, and a
+    // tile asked without `__pane_channel` would answer for every channel again - the reader would
+    // watch their pane selection undo itself. A pane parameter is the pane's own name and never a
+    // name the author declared, so adding them here cannot overwrite a filter-bar value, a value
+    // locked by a share link or anything an embed token fixed: the panes only ever narrow.
+    const panePicks = paneSelectionsFor(reportId).paramValues(paneFieldsOnPage(hostElement));
+    refreshDataWidgets(hostElement, { ...values, ...panePicks });
   }
 
   // Submit: user explicitly requests data refresh with current param values
