@@ -3,6 +3,8 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { prepareDashboardHtml } from '../shared/dashboard-injection';
+  import { fieldOf, PANE_TAG, paneFieldsOnPage, paneSelectionsFor, refreshDataWidgets,
+           type PaneSelection } from '../shared/pane-selections';
 
   // ============================================================================
   // Minimal Interface - Only 3 required props!
@@ -466,6 +468,11 @@
     // `toggle` does not bubble, so a panel anywhere in the dashboard is heard on the way down.
     dashboardContainer.removeEventListener('toggle', handlePanelOpened, true);
     dashboardContainer.addEventListener('toggle', handlePanelOpened, true);
+    // Every pane of the dashboard, heard on itself (the event does not bubble), and shown whatever
+    // the reader had already picked - an injection that runs again must not look like a pane that
+    // forgot.
+    listenToFilterPanes();
+    if (paneSelectionsFor(reportId).size > 0) applyPaneSelections();
     openHashTarget();
   }
 
@@ -568,6 +575,79 @@
     lastAskedId = null;
     params.reset();
     params.reloadNow();
+  }
+
+  /**
+   * An arbitrary value as characters an HTML id may hold, the way `RbParameters.safeId` and
+   * `RbFilterPane.safeId` do it, so a test reaches one chip by its own id.
+   */
+  function safeId(value: unknown): string {
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  // ── The filter panes of this dashboard ──────────────────────────────────────
+  //
+  // A pane is a slicer: the reader clicks a value and every tile built on that table answers for
+  // that value. The canvas does the same thing with the same SQL (`pane-filters.ts` wrote the
+  // condition into each widget's query, bound to `__pane_<field>`), so a dashboard answers the same
+  // question whichever side of publishing it is read on.
+  //
+  // The event comes from the pane element itself, not from the container: a web component's event
+  // is handed to the listeners of its own host element and does not travel further up.
+
+  /** What the reader has picked, for the chips bar. */
+  let paneChips: PaneSelection[] = [];
+
+  function panesOf(): Element[] {
+    return dashboardContainer ? Array.from(dashboardContainer.querySelectorAll(PANE_TAG)) : [];
+  }
+
+  /** Hear every pane of the dashboard, once each (injection may run again). */
+  function listenToFilterPanes() {
+    for (const pane of panesOf()) {
+      pane.removeEventListener('filterPaneSelect', handlePaneSelect as EventListener);
+      pane.addEventListener('filterPaneSelect', handlePaneSelect as EventListener);
+    }
+  }
+
+  function handlePaneSelect(e: Event) {
+    const detail = (e as CustomEvent).detail as
+      { field?: string; value?: string; multiSelect?: boolean } | undefined;
+    if (!detail?.field || detail.value === undefined) return;
+    paneSelectionsFor(reportId).toggle(detail.field, detail.value, detail.multiSelect !== false);
+    applyPaneSelections();
+  }
+
+  /** One pick dropped, from its chip. */
+  function removePaneSelection(field: string, value: string) {
+    paneSelectionsFor(reportId).remove(field, value);
+    applyPaneSelections();
+  }
+
+  /** Every pick dropped at once: the dashboard answers for everything again. */
+  function clearPaneSelections() {
+    paneSelectionsFor(reportId).clear();
+    applyPaneSelections();
+  }
+
+  /**
+   * What a pick changes: the panes show it, the chips bar says it, and every tile asks again with
+   * the panes' values beside the filter bar's.
+   *
+   * The panes themselves are not replaced - their value list does not change when something is
+   * picked, which is what lets a reader pick twice - so they keep their listeners and their state.
+   */
+  function applyPaneSelections() {
+    const selections = paneSelectionsFor(reportId);
+    paneChips = selections.list();
+    for (const pane of panesOf()) {
+      (pane as unknown as { selectedValues?: string[] }).selectedValues =
+        selections.valuesOf(fieldOf(pane));
+    }
+    refreshDataWidgets(dashboardContainer, {
+      ...currentDashboardParams,
+      ...selections.paramValues(paneFieldsOnPage(dashboardContainer)),
+    });
   }
 
   function handleDashboardParamChange(e: CustomEvent) {
@@ -705,6 +785,27 @@
   {/if}
 
   <!-- Dashboard Mode: Inject HTML with live web components into DOM -->
+  {#if configLoaded && dashboardTemplate && !error && paneChips.length > 0}
+    <!-- What the panes have picked, and the one way to drop it all: the same bar the canvas shows
+         above the same dashboard. -->
+    <div class="rb-selections" id="paneSelectionBar">
+      <span class="rb-selections-label">Selections</span>
+      {#each paneChips as chip (chip.field + '=' + chip.value)}
+        <span class="rb-selection-chip">
+          <span class="rb-selection-field">{chip.field}:</span> {chip.value}
+          <button
+            type="button"
+            id="btnRemoveSelection-{safeId(chip.field)}-{safeId(chip.value)}"
+            class="rb-selection-drop"
+            title="Drop this selection"
+            on:click={() => removePaneSelection(chip.field, chip.value)}>x</button>
+        </span>
+      {/each}
+      <button type="button" id="btnClearSelections" class="rb-selections-clear"
+              on:click={clearPaneSelections}>Clear all</button>
+    </div>
+  {/if}
+
   {#if configLoaded && dashboardTemplate && !error}
     <div class="rb-report-dashboard" id="widgetReport" bind:this={dashboardContainer}></div>
   {/if}
@@ -915,6 +1016,63 @@
     flex-direction: column;
     gap: 6px;
     margin: 8px 0;
+  }
+
+  /* The selections bar: the panes' picks, in the dashboard's own colours. */
+  .rb-selections {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    border: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+    border-radius: 6px;
+    background: color-mix(in oklab, currentColor 4%, transparent);
+    font-size: 12px;
+  }
+
+  .rb-selections-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10px;
+    opacity: 0.6;
+  }
+
+  .rb-selection-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid color-mix(in oklab, currentColor 20%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, currentColor 8%, transparent);
+  }
+
+  .rb-selection-field {
+    font-weight: 600;
+  }
+
+  .rb-selection-drop,
+  .rb-selections-clear {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0 2px;
+  }
+
+  .rb-selections-clear {
+    margin-left: auto;
+    opacity: 0.7;
+    font-size: 10px;
+  }
+
+  .rb-selections-clear:hover,
+  .rb-selection-drop:hover {
+    opacity: 1;
+    text-decoration: underline;
   }
 
   .rb-hint {
