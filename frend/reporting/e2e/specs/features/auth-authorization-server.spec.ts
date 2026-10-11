@@ -400,6 +400,16 @@ async function openUsersScreen(page: Page, ft: FluentTester) {
  * The search is not decoration here: the table pages at five rows, and by this point the suite has
  * created well over five users, so a row is only reliably on screen once it has been searched for.
  */
+/**
+ * Narrow Configuration -> Reports by a name, as a person does: by its search box, which the list only
+ * shows once it has a second page. A limited person's list is often a single page, and every row of
+ * it is then already on the screen.
+ */
+async function narrowReportsList(page: Page, ft: FluentTester, hint: string) {
+  if (!(await page.locator('#reportsListSearch').isVisible())) return;
+  await ft.setValue('#reportsListSearch', hint).sleep(400); // the search is debounced by 300 ms
+}
+
 async function openUsersScreenFilteredTo(page: Page, ft: FluentTester, username: string) {
   await openUsersScreen(page, ft);
 
@@ -3699,9 +3709,9 @@ test.describe('Auth — Server: the reports a caller may run', () => {
       // Closed again, or the open dropdown covers the menu the next step needs.
       .click('#selectMailMergeClassicReport')
       // Configuration -> Reports: the other list, one rung up, built from the same call.
-      .gotoConfigurationReports()
-      .setValue('#reportsListSearch', 'e2e-limits')
-      .sleep(400)
+      .gotoConfigurationReports();
+    await narrowReportsList(page, ft, 'e2e-limits');
+    await ft
       .waitOnElementToBecomeVisible(offeredRow)
       .elementShouldNotBeVisible(refusedRow)
       // And the same two screens for somebody nobody limited: the blocked report is hidden from
@@ -3718,11 +3728,9 @@ test.describe('Auth — Server: the reports a caller may run', () => {
       .waitOnElementToBecomeVisible(offeredOption)
       .waitOnElementToBecomeVisible(refusedOption)
       .click('#selectMailMergeClassicReport')
-      .gotoConfigurationReports()
-      .setValue('#reportsListSearch', 'e2e-limits')
-      .sleep(400)
-      .waitOnElementToBecomeVisible(offeredRow)
-      .waitOnElementToBecomeVisible(refusedRow);
+      .gotoConfigurationReports();
+    await narrowReportsList(page, ft, 'e2e-limits');
+    await ft.waitOnElementToBecomeVisible(offeredRow).waitOnElementToBecomeVisible(refusedRow);
   });
 
   test('(pickers) a report id typed straight into the API is refused although the UI never offered it', async () => {
