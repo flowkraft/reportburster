@@ -167,6 +167,12 @@ export interface DataSource {
    *  both filter identically. Absent on every canvas with no pane - which is every canvas saved
    *  before this existed - and taken away again when the last pane goes. */
   paneSql?: string;
+  /** A filter pane's own value list, as SQL: the vendor-safe distinct query the canvas runs for the
+   *  pane (`buildDistinctValuesSql`), kept so the published page fetches the pane's values with the
+   *  very same query. Only a filter-pane widget has it, and `paneSql` above is the other thing - the
+   *  SQL a FILTERED widget runs - so the two never share a field: one effect wrote the value list
+   *  into `paneSql` while another took it away again, and the two kept each other busy. */
+  paneValuesSql?: string;
   executeVersion?: number;
   scriptExecuteVersion?: number;
 }

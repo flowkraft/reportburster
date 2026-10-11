@@ -101,11 +101,11 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     const dialect = dialectFor(getConnectionType(connectionId));
     const sql = buildDistinctValuesSql(tableRef, field, DISTINCT_VALUES_LIMIT, dialect);
     // The same query, kept on the widget, is the one the published dashboard fetches this pane's
-    // value list with (`ScriptAssembler` writes a block for it, `resolveSql` prefers `paneSql`).
-    // Without it the published pane asked its report for the widget's own rows and counted the
-    // values of whatever came back, which is the first 500 rows of the table and not its values.
+    // value list with (`ScriptAssembler` writes a block for it). Without it the published pane asked
+    // its report for the widget's own rows and counted the values of whatever came back, which is the
+    // first 500 rows of the table and not its values.
     const ds = widget?.dataSource;
-    if (ds && ds.paneSql !== sql) updateWidgetDataSource(widgetId, { ...ds, paneSql: sql });
+    if (ds && ds.paneValuesSql !== sql) updateWidgetDataSource(widgetId, { ...ds, paneValuesSql: sql });
     executeQuery(connectionId, sql)
       .then((res) => setRows(res.data))
       .catch(() => setRows([]))
