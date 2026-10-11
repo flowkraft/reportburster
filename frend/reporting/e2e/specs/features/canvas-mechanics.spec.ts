@@ -41,6 +41,7 @@ import {
   addComputedColumn,
   addCubeToCanvas,
   addFilterBarParam,
+  addFilterPane,
   addGroupBy,
   addTableToCanvas,
   addUIElement,
@@ -995,6 +996,64 @@ async function g5PublishPivot(
     'the published pivot counts orders per status and channel');
   return { reportId: published.reportId, pivot };
 }
+
+// ── Group P ─────────────────────────────────────────────────────────────────
+
+/** The seeded orders — the same frozen rows the pivot group reads, and the truth these numbers
+ *  come from: a pane's effect is counted in the file the database was filled from. */
+const pOrders = g5Orders;
+const pCount = (ok: (r: Record<string, string>) => boolean): number => pOrders.filter(ok).length;
+const pChannels = g5Channels;
+/** The devices the orders really ship on (a sales_rep order has none, and a pane lists no NULL). */
+const pDevices = [...new Set(pOrders.map((r) => r.device))].filter((d) => d !== '').sort();
+/** The devices one channel ships on: `mobile_app` only ships on a phone, which is what makes a
+ *  grey-out worth asserting - the other devices are excluded by that one pick. */
+const pDevicesOf = (channel: string): string[] =>
+  [...new Set(pOrders.filter((r) => r.channel === channel).map((r) => r.device))].filter((d) => d !== '').sort();
+/** Every channel-and-device pair the orders hold: the rows a query grouped by both answers. */
+const pPairs = [...new Set(pOrders.map((r) => `${r.channel}/${r.device}`))];
+/** Orders per channel, for the rows a chart grouped by channel is handed. */
+function pPerChannel(ok: (r: Record<string, string>) => boolean = () => true): Record<string, number> {
+  const n: Record<string, number> = {};
+  for (const r of pOrders) if (ok(r)) n[r.channel] = (n[r.channel] ?? 0) + 1;
+  return n;
+}
+
+/** A value as `rb-filter-pane` writes it into its own ids (its `safeId`). */
+const pSafeId = (value: string): string => value.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+/** One value of one pane, by its own id (the pane's id is the widget's). */
+const pValue = (page: Page, pane: string, value: string): Locator =>
+  page.locator(`[id="paneValue-${pane}-${pSafeId(value)}"]`);
+
+/** Pick a value, or drop it again: one click on the value, the way a reader does it. */
+async function pClick(page: Page, pane: string, value: string): Promise<void> {
+  await pValue(page, pane, value).click();
+  await page.waitForTimeout(500);
+}
+
+/** Wait until the rows a widget was handed satisfy `ok`, then hand them back. */
+async function pWaitRows(
+  page: Page,
+  widgetId: string,
+  ok: (rows: Array<Record<string, unknown>>) => boolean,
+  message: string,
+): Promise<Array<Record<string, unknown>>> {
+  await expect
+    .poll(async () => ok(await eWidgetRows(page, widgetId)), { message, timeout: 30_000, intervals: [1_000] })
+    .toBe(true);
+  return eWidgetRows(page, widgetId);
+}
+
+/** A grouped-by-channel result as `channel → number`, whatever the measure's column is called. */
+function pCountsByChannel(rows: Array<Record<string, unknown>>): Record<string, number> {
+  const measure = Object.keys(rows[0] ?? {}).find((k) => k !== 'channel') ?? '';
+  return Object.fromEntries(rows.map((r) => [String(r.channel), Number(r[measure])]));
+}
+
+/** What a widget says about the pane fields that do not reach it. */
+const pNotFiltered = (page: Page, widgetId: string): Locator =>
+  page.locator(`[id="widgetNotFiltered-${widgetId}"]`);
 
 test.describe('Canvas mechanics', () => {
   let externalBrowser: Browser | null = null;
@@ -4001,5 +4060,111 @@ test('(canvas mechanics) M55 Published pivot: filter a field\'s values', async (
   } finally {
     if (reportId) await deleteReportAsAdmin(reportId);
   }
+});
+
+test('(canvas mechanics) M56 A filter pane filters every widget built on its table', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M56 Filter pane', async () => {
+    // The widgets first, while there is no pane yet: a KPI and a bar chart built in the Visual tab,
+    // and two pasted-SQL tables - one whose result carries the panes' own columns and one that
+    // carries neither. Each answers for the whole table here, which is what the panes then change.
+    const kpi = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'number');
+    await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+
+    const chart = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'bar');
+    await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
+    expect(pCountsByChannel(await eWidgetRows(page, chart)), 'the bars are the seeded orders per channel')
+      .toEqual(pPerChannel());
+
+    const sqlWithColumns = await fAddTabulator(page, 'dash_demo.orders',
+      'SELECT channel, device, COUNT(*) AS n FROM dash_demo.orders GROUP BY channel, device');
+    await pWaitRows(page, sqlWithColumns, (rows) => rows.length === pPairs.length,
+      'the pasted query answers a row per channel and device');
+
+    const sqlBlind = await fAddTabulator(page, 'dash_demo.orders',
+      'SELECT COUNT(*) AS n FROM dash_demo.orders');
+    await g4ScalarIs(page, sqlBlind, pOrders.length, 'the pasted count counts every order');
+
+    // Two panes on two fields of the same table. A pane is added like any other element and reads
+    // a table like any other widget.
+    const channelPane = await addFilterPane(page, 'orders', 'channel');
+    const devicePane = await addFilterPane(page, 'orders', 'device');
+    await expect(pValue(page, channelPane, 'web'), 'the pane lists the values of its field').toBeVisible();
+
+    // − a pane with nothing picked is not a filter: every widget still answers for the whole table.
+    await g4ScalarIs(page, kpi, pOrders.length, 'with nothing picked the KPI is unchanged');
+    await g4ScalarIs(page, sqlBlind, pOrders.length, 'and so is the pasted count');
+    await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'and every bar is still there');
+
+    // + a value picked in the channel pane filters every widget the pane reaches - the Visual KPI,
+    //   the Visual chart and the pasted query whose result has that column - to the seeded rows.
+    await pClick(page, channelPane, 'web');
+    const web = (r: Record<string, string>) => r.channel === 'web';
+    await g4ScalarIs(page, kpi, pCount(web), 'the KPI counts the web orders');
+    await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['web']), 'one bar is left');
+    expect(pCountsByChannel(await eWidgetRows(page, chart)), 'and it is as high as the web orders are many')
+      .toEqual(pPerChannel(web));
+    await pWaitRows(page, sqlWithColumns,
+      (rows) => rows.length === pDevicesOf('web').length && rows.every((r) => String(r.channel) === 'web'),
+      'the pasted query keeps its web rows only');
+
+    // − the pasted query whose result has neither column is NOT filtered - a condition on a column
+    //   that is not there would fail the whole query - and the widget says so itself.
+    await g4ScalarIs(page, sqlBlind, pOrders.length, 'the count a pane cannot reach still counts every order');
+    await expect(pNotFiltered(page, sqlBlind), 'it names the fields that do not reach it')
+      .toHaveText('not filtered by channel, device');
+    for (const reached of [kpi, chart, sqlWithColumns]) {
+      await expect(pNotFiltered(page, reached), 'a widget the panes do reach says nothing').toHaveCount(0);
+    }
+
+    // + a second field ANDs with the first: one pair of values, one row, its own count.
+    await pClick(page, devicePane, 'mobile');
+    const webMobile = (r: Record<string, string>) => r.channel === 'web' && r.device === 'mobile';
+    await g4ScalarIs(page, kpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
+    await pWaitRows(page, sqlWithColumns,
+      (rows) => rows.length === 1 && String(rows[0].channel) === 'web' && String(rows[0].device) === 'mobile'
+        && Number(rows[0].n) === pCount(webMobile),
+      'the pasted query is down to that one pair');
+
+    // + Clear all drops every pick at once, and every widget answers for the whole table again.
+    await page.locator('#btnClearSelections').click();
+    await g4ScalarIs(page, kpi, pOrders.length, 'Clear all brings every order back');
+    await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'and every bar');
+    await pWaitRows(page, sqlWithColumns, (rows) => rows.length === pPairs.length, 'and every pair');
+    await expect(page.locator('#btnClearSelections'), 'with nothing picked there is nothing to clear')
+      .toHaveCount(0);
+
+    // + the grey-outs: mobile_app orders only ever ship on a phone, so with mobile_app picked the
+    //   other devices are the values that would answer no row at all, and the pane dims them.
+    await pClick(page, channelPane, 'mobile_app');
+    for (const device of pDevicesOf('mobile_app')) {
+      await expect(pValue(page, devicePane, device), `a mobile_app order can ship on a ${device}`)
+        .toHaveAttribute('data-state', 'associated', { timeout: 30_000 });
+    }
+    for (const device of pDevices.filter((d) => !pDevicesOf('mobile_app').includes(d))) {
+      await expect(pValue(page, devicePane, device), `no mobile_app order ships on a ${device}`)
+        .toHaveAttribute('data-state', 'excluded', { timeout: 30_000 });
+    }
+    // − a pick does NOT dim the pane it was made in: a pane's values are a list, and a second pick
+    //   is OR-ed into it, so every other value of that field stays live.
+    await expect(pValue(page, channelPane, 'mobile_app'), 'the picked value shows as picked')
+      .toHaveAttribute('data-state', 'selected');
+    await expect(pValue(page, channelPane, 'web'), 'and its neighbour is still worth picking')
+      .toHaveAttribute('data-state', 'associated');
+
+    // + two values of one pane are counted together, not against each other.
+    await pClick(page, channelPane, 'web');
+    await g4ScalarIs(page, kpi, pCount((r) => r.channel === 'mobile_app' || r.channel === 'web'),
+      'the KPI counts the mobile_app orders and the web orders');
+    await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], ['mobile_app', 'web']), 'two bars are left');
+  });
 });
 });

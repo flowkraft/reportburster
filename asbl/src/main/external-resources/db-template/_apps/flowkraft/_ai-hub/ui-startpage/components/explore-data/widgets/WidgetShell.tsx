@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import type { WidgetType } from "@/lib/stores/canvas-store";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
+import { notFilteredNote, paneFilterPlanFor } from "@/lib/explore-data/pane-filters";
 import { ChartWidget } from "./ChartWidget";
 import { TabulatorWidget } from "./TabulatorWidget";
 import { PivotWidget } from "./PivotWidget";
@@ -63,6 +64,12 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
   const removeWidget = useCanvasStore((s) => s.removeWidget);
   const editMode = useCanvasStore((s) => s.editMode);
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
+  const widgets = useCanvasStore((s) => s.widgets);
+
+  // A filter pane filters every widget built on its table. A widget it cannot reach - a cube, a
+  // Groovy script, a pasted query whose result has no column of that name - says so itself, rather
+  // than leaving the reader to wonder why its numbers did not move (`pane-filters.ts`).
+  const notFilteredBy = paneFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName)).notFiltered;
 
   const isSelected = selectedWidgetId === widgetId;
   // Instant visual feedback: local state flipped on mousedown via flushSync so
@@ -142,6 +149,14 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
         <div className="flex items-center gap-2">
           <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
           <span className="text-[11px] font-semibold text-base-content">{meta.label}</span>
+          {notFilteredBy.length > 0 && (
+            <span
+              id={`widgetNotFiltered-${widgetId}`}
+              className="text-[10px] text-base-content/60 italic"
+            >
+              {notFilteredNote(notFilteredBy)}
+            </span>
+          )}
         </div>
         {editMode && isSelected && (
           <button

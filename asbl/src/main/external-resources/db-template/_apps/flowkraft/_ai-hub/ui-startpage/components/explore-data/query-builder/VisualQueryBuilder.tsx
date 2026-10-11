@@ -292,9 +292,13 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
     store.updateWidgetPosition(widgetId, { ...widget.gridPosition, h: CUBE_WIDGET_MIN_ROWS });
   }, [widgetId]);
 
-  const handlePickTable = (table: string) => {
+  // The schema of the picked table travels with it, and a table in the default schema carries
+  // none - the `tableSchema` set only when it is needed rule the whole product keys tables by
+  // (`table-ref.ts`). Without it the widget kept whatever schema it had before, so the one table
+  // the author picked was quoted, cached and filtered as another table of the same name.
+  const handlePickTable = (table: string, tableSchema?: string) => {
     setCubeSqlError(null);
-    updateQuery({ kind: "table", cubeId: undefined, table, computed: [], filters: [], summarize: [], groupBy: [], sort: [], cubeSelection: undefined, showInDashboard: undefined });
+    updateQuery({ kind: "table", cubeId: undefined, table, tableSchema, computed: [], filters: [], summarize: [], groupBy: [], sort: [], cubeSelection: undefined, showInDashboard: undefined });
   };
 
   /**
@@ -362,6 +366,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
         cubes={cubes}
         value={isCube ? (query.cubeId || "") : query.table}
         valueKind={isCube ? "cube" : "table"}
+        defaultSchema={schema.defaultSchema}
         onPickTable={handlePickTable}
         onPickCube={handlePickCube}
       />

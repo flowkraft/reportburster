@@ -29,6 +29,8 @@ const SORT_OPTIONS = [
 interface FilterPaneConfigProps {
   config: WidgetDisplayConfig;
   columns: ColumnSchema[];
+  /** The table this pane reads, for the one line that says what the pane filters. */
+  table?: string;
   onChange: (config: WidgetDisplayConfig) => void;
 }
 
@@ -59,7 +61,7 @@ function parseHeightPx(h: unknown): number | undefined {
   return m ? parseInt(m[1], 10) : undefined;
 }
 
-export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfigProps) {
+export function FilterPaneConfig({ config, columns, table, onChange }: FilterPaneConfigProps) {
   const map = readDslMap(config);
 
   const field = (map.field as string | undefined) ?? "";
@@ -88,12 +90,13 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
   };
 
   return (
-    <div className="space-y-3">
+    <div id="configPanel-filterPane" className="space-y-3">
       <div>
         <span className="text-xs text-base-content/60">
           Field to explore <span className="text-blue-500">(dimension)</span>
         </span>
         <select
+          id="selectFilterPaneField"
           value={field}
           onChange={(e) => setMap({ field: e.target.value || undefined })}
           className={inputCls}
@@ -111,14 +114,18 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
           )}
         </select>
       </div>
-      <p className="text-[10px] text-base-content/60 leading-relaxed">
-        Shows all distinct values for this field. Click a value to select it — all other widgets will highlight what&apos;s associated and dim what&apos;s excluded.
+      {/* The two filters have two jobs, and each says its own in one line, no more (no cockpit).
+          The pane is a slicer: it applies by itself. The filter bar is a parameter the author
+          places in their own SQL. */}
+      <p id="txtFilterPaneRole" className="text-[10px] text-base-content/60 leading-relaxed">
+        Filters every widget built on {table || "this table"}. To put a value into your own SQL, use the filter bar.
       </p>
 
       <GroupHeader>Display</GroupHeader>
       <div>
         <span className="text-xs text-base-content/60">Label</span>
         <input
+          id="inputFilterPaneLabel"
           type="text"
           value={label}
           onChange={(e) => setMap({ label: e.target.value || undefined })}
@@ -130,6 +137,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
       <GroupHeader>Behavior</GroupHeader>
       <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
         <input
+          id="chkFilterPaneMultiSelect"
           type="checkbox"
           checked={multiSelect}
           onChange={(e) => setMap({ multiSelect: e.target.checked })}
@@ -143,6 +151,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
       <div>
         <span className="text-xs text-base-content/60">Sort by</span>
         <select
+          id="selectFilterPaneSort"
           value={sort}
           onChange={(e) => setMap({ sort: e.target.value || undefined })}
           className={inputCls}
@@ -157,6 +166,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
       <div>
         <span className="text-xs text-base-content/60">Show search box</span>
         <select
+          id="selectFilterPaneSearch"
           value={showSearch}
           onChange={(e) => {
             const v = e.target.value;
@@ -174,6 +184,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
       </div>
       <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
         <input
+          id="chkFilterPaneShowCount"
           type="checkbox"
           checked={showCount}
           onChange={(e) => setMap({ showCount: e.target.checked || undefined })}
@@ -185,6 +196,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
       <div>
         <span className="text-xs text-base-content/60">Max values</span>
         <input
+          id="inputFilterPaneMaxValues"
           type="number"
           min={1}
           value={maxValues}
@@ -205,6 +217,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
         <div className="flex gap-1 mt-1">
           <button
             type="button"
+            id="btnFilterPaneHeightAuto"
             onClick={() => setMap({ height: undefined })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "auto"
@@ -216,6 +229,7 @@ export function FilterPaneConfig({ config, columns, onChange }: FilterPaneConfig
           </button>
           <button
             type="button"
+            id="btnFilterPaneHeightFixed"
             onClick={() => setMap({ height: `${heightPx ?? 240}px` })}
             className={`flex-1 text-xs px-2 py-1.5 rounded-md border transition-colors ${
               heightMode === "fixed"

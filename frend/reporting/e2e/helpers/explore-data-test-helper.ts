@@ -214,7 +214,7 @@ export async function selectCubeFields(
  *  `addTableToCanvas` / `addWidget` calls. */
 export async function addUIElement(
   page: Page,
-  type: 'text' | 'divider' | 'iframe',
+  type: 'text' | 'divider' | 'iframe' | 'filter-pane',
   options?: { textContent?: string },
 ): Promise<void> {
   await page.click('#btnLeftTabElements');
@@ -223,6 +223,25 @@ export async function addUIElement(
     await page.locator('#txtWidgetTextContent').fill(options.textContent);
   }
   await page.click('#btnLeftTabData');
+}
+
+/**
+ * A filter pane on one field of a table, added the way a person adds one: UI Elements, then the
+ * table in the Data tab and the field in the Display tab. Returns the pane widget's id, which is
+ * also what its own ids carry (`filterPane-<id>`, `paneValue-<id>-<value>`).
+ */
+export async function addFilterPane(page: Page, table: string, field: string): Promise<string> {
+  await addUIElement(page, 'filter-pane');
+  const id = await getLastWidgetId(page);
+  // The pane reads a table, like any other widget: the same picker, the same query builder.
+  await pickVisualTable(page, table);
+  const pick = page.locator('#selectFilterPaneField');
+  await pick.waitFor({ state: 'visible', timeout: 10_000 });
+  // The field list is the table's columns, and they arrive with the schema.
+  await pick.locator(`option[value="${field}"]`).waitFor({ state: 'attached', timeout: 30_000 });
+  await pick.selectOption(field);
+  await page.locator(`[id="filterPane-${id}"]`).waitFor({ state: 'visible', timeout: 30_000 });
+  return id;
 }
 
 // ── Editor helpers ────────────────────────────────────────────────────────────
