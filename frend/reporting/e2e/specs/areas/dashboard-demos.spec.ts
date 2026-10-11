@@ -315,10 +315,9 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     // Opened with no link, a dashboard asks who is looking: this reader is signed in.
     await Helpers.signInBrowserContext(own.context());
     try {
-      const body = await openPublished(own, DD02.reportId, {}, BASE_URL);
-      await expect(own.locator(`rb-dashboard[lazy]`), 'its own page waits for nothing')
-        .toHaveCount(0);
-      await assertDemoDashboard(body, DD02);
+      const dashboard = await openPublished(own, DD02.reportId, {}, BASE_URL);
+      await expect(dashboard, 'its own page waits for nothing').not.toHaveAttribute('lazy', /.*/);
+      await assertDemoDashboard(dashboard, DD02);
     } finally {
       await own.close();
     }
@@ -332,7 +331,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     test.setTimeout(10 * 60_000);
 
     const card = await scrollCardIntoView(page, DD02);
-    const token = await embedTokenOf(card);
+    const token = await embedTokenOf(card, DD02.reportId);
     expect(token, 'the Gallery hands its cards a credential').toBeTruthy();
 
     // Positive: the card's own tiles answer with it, which is every card above having loaded.
@@ -373,7 +372,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     try {
       await reader.goto(`${BASE_URL}/dashboard/${DD02.reportId}?token=${encodeURIComponent(token)}`,
         { timeout: 120_000, waitUntil: 'networkidle' });
-      await assertDemoDashboard(reader.locator('body'), DD02);
+      await assertDemoDashboard(reader.locator('#publishedDashboard'), DD02);
 
       // Not the Gallery it is a card of, and not the demo next to it.
       for (const reportId of [GALLERY_REPORT_ID, DD03.reportId])
@@ -383,7 +382,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
 
       // And asking under another name admits nothing: the credential says what it opens, the
       // request does not.
-      const embed = await embedTokenOf(reader.locator('body'));
+      const embed = await embedTokenOf(reader.locator('#publishedDashboard'), DD02.reportId);
       const widened = await reader.request.get(
         `${BASE_URL}/api/reports/${DD03.reportId}/config`, { headers: { 'X-Embed-Token': embed } });
       expect([401, 403], `${DD03.id} is refused to ${DD02.id}'s credential (${widened.status()})`)
@@ -413,7 +412,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
         const host = document.createElement('rb-dashboard');
         host.setAttribute('report-id', reportId);
         host.setAttribute('api-base-url', '/api');
-        const mine = document.querySelector('rb-dashboard');
+        const mine = document.getElementById('publishedDashboard');
         host.setAttribute('embed-token', mine?.getAttribute('embed-token') ?? '');
         document.body.appendChild(host);
         const answer = await fetch(`/api/reports/${reportId}/config`, {
@@ -460,9 +459,9 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     // Opened with no link, a dashboard asks who is looking: this reader is signed in.
     await Helpers.signInBrowserContext(own.context());
     try {
-      const body = await openPublished(own, DD02.reportId, {}, BASE_URL);
+      const dashboard = await openPublished(own, DD02.reportId, {}, BASE_URL);
       expect(storiesOf(DD02.id).length, `${DD02.id} ships stories`).toBeGreaterThan(0);
-      await expect(body.locator(`#stories-${DD02.reportId}`), 'and its own page offers none')
+      await expect(dashboard.locator(`#stories-${DD02.reportId}`), 'and its own page offers none')
         .toHaveCount(0);
     } finally {
       await own.close();
@@ -486,11 +485,11 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
     // Opened with no link, a dashboard asks who is looking: this reader is signed in.
     await Helpers.signInBrowserContext(own.context());
     try {
-      const body = await openPublished(own, DD02.reportId, picked, BASE_URL);
-      const standing = await readParams(body, DD02);
+      const dashboard = await openPublished(own, DD02.reportId, picked, BASE_URL);
+      const standing = await readParams(dashboard, DD02);
       for (const [name, value] of Object.entries(picked))
         expect(standing[name], `${name} started at the value the link carried`).toBe(asStanding(DD02, name, value));
-      await assertClaims(body, DD02, interaction.params, interaction.kpis, 'as the link opened it');
+      await assertClaims(dashboard, DD02, interaction.params, interaction.kpis, 'as the link opened it');
     } finally {
       await own.close();
     }
@@ -558,22 +557,22 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
           + `&${encodeURIComponent(name)}=${encodeURIComponent(String(checks.defaults[name] ?? ''))}`,
         { timeout: 120_000, waitUntil: 'networkidle' },
       );
-      const body = reader.locator('body');
-      await expect(body.locator(`#${name}`), 'a locked filter is not the reader\'s to change')
+      const dashboard = reader.locator('#publishedDashboard');
+      await expect(dashboard.locator(`#${name}`), 'a locked filter is not the reader\'s to change')
         .toBeDisabled({ timeout: 60_000 });
-      expect((await readParams(body, DD02))[name], "the bar is on the link's value")
+      expect((await readParams(dashboard, DD02))[name], "the bar is on the link's value")
         .toBe(asStanding(DD02, name, locked));
 
       // And the data is the locked answer, whatever the address asked for: the server's LockedParams.
-      await assertClaims(body, DD02, interaction.params, interaction.kpis, 'under its lock');
+      await assertClaims(dashboard, DD02, interaction.params, interaction.kpis, 'under its lock');
 
       // Never written back either: another filter changed leaves the locked name out of the URL.
       const other = declaredParams(DD02.id).find((p) => p.id !== name);
       if (other) {
         const value = interaction.changed[other.id] ?? checks.defaults[other.id];
         if (value !== undefined && !String(value).includes('{')) {
-          await setParam(body, other, value);
-          await reloadDashboard(body);
+          await setParam(dashboard, other, value);
+          await reloadDashboard(dashboard);
           expect(new URL(reader.url()).searchParams.get(name),
             'a locked filter is never written to the address bar').toBeNull();
         }
@@ -605,16 +604,16 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
             + '&notAFilterOfThisDashboard=whatever',
           { timeout: 120_000, waitUntil: 'networkidle' },
         );
-        const body = reader.locator('body');
-        await expect(body.locator('rb-dashboard'), 'the dashboard still opens')
-          .toBeVisible({ timeout: 60_000 });
-        await expect(body.locator('script#xss'), 'and nothing from the URL became script')
+        const dashboard = reader.locator('#publishedDashboard');
+        await expect(dashboard, 'the dashboard still opens').toBeVisible({ timeout: 60_000 });
+        // Anywhere on the page, not only inside the dashboard.
+        await expect(reader.locator('#xss'), 'and nothing from the URL became script')
           .toHaveCount(0);
         expect(await reader.evaluate(() => (window as any).xssRan ?? false),
           'nothing out of the URL ran').toBe(false);
 
         // The unknown key changed nothing, and the dashboard is on its own defaults.
-        await assertClaims(body, DD02, checks.defaults, checks.kpis, 'with a URL it did not accept');
+        await assertClaims(dashboard, DD02, checks.defaults, checks.kpis, 'with a URL it did not accept');
 
         // A console warning per ignored key is the component saying so, and is not an error.
         const warnings = readerWatch.messages.filter((one) => one.startsWith('console:'));
@@ -631,9 +630,9 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
             + `?${encodeURIComponent(picky)}=NotACountryThisDataHas`,
           { timeout: 120_000, waitUntil: 'networkidle' },
         );
-        expect((await readParams(reader.locator('body'), DD02))[picky],
+        expect((await readParams(reader.locator('#publishedDashboard'), DD02))[picky],
           `${picky} stayed at its own default`).toBe(asStanding(DD02, picky, checks.defaults[picky] ?? ''));
-        await assertClaims(reader.locator('body'), DD02, checks.defaults, checks.kpis,
+        await assertClaims(reader.locator('#publishedDashboard'), DD02, checks.defaults, checks.kpis,
           'with a value its filter does not offer');
 
         readerWatch.assertNone('a dashboard opened with a URL it refuses');
@@ -659,12 +658,12 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
       // Opened with no link, a dashboard asks who is looking: this reader is signed in.
       await Helpers.signInBrowserContext(context);
       try {
-        const body = await openPublished(reader, DD02.reportId, {}, BASE_URL);
+        const dashboard = await openPublished(reader, DD02.reportId, {}, BASE_URL);
         const historyBefore = await reader.evaluate(() => history.length);
 
-        await setParam(body, param as any, value);
-        await reloadDashboard(body);
-        await waitForChartsIn(body);
+        await setParam(dashboard, param as any, value);
+        await reloadDashboard(dashboard);
+        await waitForChartsIn(dashboard);
 
         expect(new URL(reader.url()).searchParams.get(name), 'the address bar holds what was picked')
           .toBe(String(value));
@@ -675,7 +674,7 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
         const again = await context.newPage();
         try {
           await again.goto(reader.url(), { timeout: 120_000, waitUntil: 'networkidle' });
-          const there = again.locator('body');
+          const there = again.locator('#publishedDashboard');
           expect((await readParams(there, DD02))[name], 'opened again, on the same value')
             .toBe(asStanding(DD02, name, value));
           await assertClaims(there, DD02, interaction.params, interaction.kpis, 'opened from its link');
@@ -686,8 +685,8 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
         // And back to the default takes the key away again.
         const back = checks.defaults[name];
         if (back !== undefined && !String(back).includes('{')) {
-          await setParam(body, param as any, back);
-          await reloadDashboard(body);
+          await setParam(dashboard, param as any, back);
+          await reloadDashboard(dashboard);
           expect(new URL(reader.url()).searchParams.get(name),
             'a filter back at its default leaves the address as it was').toBeNull();
         }
@@ -762,12 +761,11 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
         try {
           await reader.goto(`${BASE_URL}/dashboard/${copyId}`,
             { timeout: 120_000, waitUntil: 'networkidle' });
-          await expect(reader.locator('rb-dashboard'), 'the copy is published and opens')
-            .toBeVisible({ timeout: 60_000 });
+          const dashboard = reader.locator('#publishedDashboard');
+          await expect(dashboard, 'the copy is published and opens').toBeVisible({ timeout: 60_000 });
 
-          const body = reader.locator('body');
-          await setParam(body, param as any, [withComma, plain]);
-          await reloadDashboard(body);
+          await setParam(dashboard, param as any, [withComma, plain]);
+          await reloadDashboard(dashboard);
 
           // Written escaped, which is what keeps two picked values from reading back as three.
           const written = new URL(reader.url()).searchParams.get(name) ?? '';
@@ -776,12 +774,11 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
 
           // And opened again from that address, the same two are ticked - not three.
           await reader.goto(reader.url(), { timeout: 120_000, waitUntil: 'networkidle' });
-          await body.locator(`#${name}`).click();
-          await expect(body.locator(`#${name}_modal`), `${name} opens its list`)
+          await dashboard.locator(`#${name}`).click();
+          await expect(dashboard.locator(`#${name}_modal`), `${name} opens its list`)
             .toBeVisible({ timeout: 30_000 });
-          const ticked = await body.locator(`#${name}_modal`).evaluate((modal) =>
-            Array.from(modal.querySelectorAll('input[type="checkbox"]:checked'))
-              .map((box) => (box as HTMLInputElement).value));
+          const ticked = await dashboard.locator(`#${name}_modal [id^="${name}_cb_"]:checked`).evaluateAll((boxes) =>
+            boxes.map((box) => (box as HTMLInputElement).value));
           expect(ticked.slice().sort(), 'the same two options, opened again from the link')
             .toEqual([withComma, plain].slice().sort());
         } finally {
