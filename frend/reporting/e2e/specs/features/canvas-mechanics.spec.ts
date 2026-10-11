@@ -1059,42 +1059,51 @@ async function pChartCounts(page: Page, widgetId: string): Promise<Record<string
   });
 }
 
-/** The rows a PUBLISHED widget was handed, by its own component id: the `data` of its rb-* element.
- *  A published tile is replaced by a copy of itself when the parameters change
- *  (`refreshDataWidgets`), so the element is looked up again on every read, and an answer of no
- *  rows at all is one of the answers worth asserting - which is why this does not wait for rows
- *  the way `pWaitRows` does. */
-async function pPublishedRows(page: Page, componentId: string): Promise<Array<Record<string, unknown>>> {
+/**
+ * What a PUBLISHED tile shows, by its own component id.
+ *
+ * Not the `data` property the canvas's `eWidgetRows` reads: a published widget fetches its own rows
+ * and never writes them back into that property (`RbValue` keeps a `displayValue`, `RbTabulator`
+ * hands its rows to Tabulator), so what a reader sees is what there is to read. A published tile is
+ * also replaced by a copy of itself when the parameters change (`refreshDataWidgets`), so it is
+ * looked up again on every read.
+ */
+async function pPublishedText(page: Page, componentId: string): Promise<string> {
+  const tile = page.locator(`[component-id="${componentId}"]`).first();
+  if ((await tile.count()) === 0) return '';
+  return tile.innerText();
+}
+
+/** The number a published KPI has written out, commas and all. */
+async function pPublishedNumberIs(page: Page, componentId: string, want: number, message: string): Promise<void> {
+  await expect
+    .poll(async () => bDigits(await pPublishedText(page, componentId)), { message, timeout: 60_000, intervals: [1_000] })
+    .toBe(String(want));
+}
+
+/** The cells a published table shows, row by row, in its own column order. An answer of no rows at
+ *  all is one of the answers worth asserting, which is why this does not wait for rows. */
+async function pPublishedCells(page: Page, componentId: string): Promise<string[][]> {
   const tile = page.locator(`[component-id="${componentId}"]`).first();
   if ((await tile.count()) === 0) return [];
-  return tile.evaluate((el) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = (el as any).data;
-    return Array.isArray(data) ? (JSON.parse(JSON.stringify(data)) as Array<Record<string, unknown>>) : [];
-  });
+  return tile.locator('.tabulator-row').evaluateAll((rows) =>
+    rows.map((row) =>
+      Array.from(row.querySelectorAll('.tabulator-cell')).map((cell) => (cell as HTMLElement).innerText.trim()),
+    ),
+  );
 }
 
-/** Wait until what a published widget shows satisfies `ok`, then hand the rows back. */
-async function pWaitPublished(
+/** Wait until the cells a published table shows satisfy `ok`, then hand them back. */
+async function pWaitCells(
   page: Page,
   componentId: string,
-  ok: (rows: Array<Record<string, unknown>>) => boolean,
+  ok: (cells: string[][]) => boolean,
   message: string,
-): Promise<Array<Record<string, unknown>>> {
+): Promise<string[][]> {
   await expect
-    .poll(async () => ok(await pPublishedRows(page, componentId)), { message, timeout: 60_000, intervals: [1_000] })
+    .poll(async () => ok(await pPublishedCells(page, componentId)), { message, timeout: 60_000, intervals: [1_000] })
     .toBe(true);
-  return pPublishedRows(page, componentId);
-}
-
-/** The one number a published KPI shows, as the reader reads it. */
-async function pPublishedScalarIs(page: Page, componentId: string, want: number, message: string): Promise<void> {
-  await expect
-    .poll(async () => {
-      const rows = await pPublishedRows(page, componentId);
-      return rows.length > 0 ? Number(Object.values(rows[0])[0]) : null;
-    }, { message, timeout: 60_000, intervals: [1_000] })
-    .toBe(want);
+  return pPublishedCells(page, componentId);
 }
 
 /** What a widget says about the pane fields that do not reach it. */
@@ -4281,18 +4290,18 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
         .toBeVisible({ timeout: 60_000 });
 
       // − nothing picked is not a filter here either.
-      await pPublishedScalarIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
-      await pWaitPublished(page, pubTable, (rows) => rows.length === pPairs.length,
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
+      await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length,
         'and the published query answers a row per channel and device');
       await expect(page.locator('#paneSelectionBar'), 'with nothing picked there is nothing to show')
         .toHaveCount(0);
 
       // + one value picked: the same numbers the canvas gave for the same click.
       await pClick(page, pubChannelPane, 'web');
-      await pPublishedScalarIs(page, pubKpi, pCount((r) => r.channel === 'web'),
+      await pPublishedNumberIs(page, pubKpi, pCount((r) => r.channel === 'web'),
         'the published KPI counts the web orders');
-      await pWaitPublished(page, pubTable,
-        (rows) => rows.length === pDevicesOf('web').length && rows.every((r) => String(r.channel) === 'web'),
+      await pWaitCells(page, pubTable,
+        (cells) => cells.length === pDevicesOf('web').length && cells.every((row) => row[0] === 'web'),
         'and the published query keeps its web rows only');
       await expect(page.locator('#paneSelectionBar'), 'the chips bar says what is picked').toBeVisible();
       await expect(page.locator(`[id="btnRemoveSelection-channel-web"]`), 'one chip, for that one pick')
@@ -4301,16 +4310,16 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
       // + a second field ANDs with the first, on the published page as on the canvas.
       await pClick(page, pubDevicePane, 'mobile');
       const webMobile = (r: Record<string, string>) => r.channel === 'web' && r.device === 'mobile';
-      await pPublishedScalarIs(page, pubKpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
-      await pWaitPublished(page, pubTable,
-        (rows) => rows.length === 1 && String(rows[0].channel) === 'web' && String(rows[0].device) === 'mobile'
-          && Number(rows[0].n) === pCount(webMobile),
+      await pPublishedNumberIs(page, pubKpi, pCount(webMobile), 'the KPI counts the web orders on a phone');
+      await pWaitCells(page, pubTable,
+        (cells) => cells.length === 1 && cells[0][0] === 'web' && cells[0][1] === 'mobile'
+          && bDigits(cells[0][2]) === String(pCount(webMobile)),
         'and the query is down to that one pair');
 
       // + Clear all drops both picks, and the dashboard answers for everything again.
       await page.locator('#btnClearSelections').click();
-      await pPublishedScalarIs(page, pubKpi, pOrders.length, 'Clear all brings every order back');
-      await pWaitPublished(page, pubTable, (rows) => rows.length === pPairs.length, 'and every pair');
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'Clear all brings every order back');
+      await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length, 'and every pair');
       await expect(page.locator('#paneSelectionBar'), 'and the chips bar goes with the picks')
         .toHaveCount(0);
 
@@ -4340,20 +4349,20 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
         .toBeDisabled({ timeout: 30_000 });
 
       // The lock is what the reader starts from: the one channel it fixed.
-      const lockedRows = (rows: Array<Record<string, unknown>>) =>
-        rows.length > 0 && rows.every((r) => String(r.channel) === B_CHANNEL);
-      await pWaitPublished(reader, pubTable, lockedRows, 'the locked link answers for its own channel only');
+      const lockedRows = (cells: string[][]) =>
+        cells.length > 0 && cells.every((row) => row[0] === B_CHANNEL);
+      await pWaitCells(reader, pubTable, lockedRows, 'the locked link answers for its own channel only');
 
       // + a pane pick of the locked value changes nothing: it narrows to what is already there.
       await pClick(reader, pubChannelPane, B_CHANNEL);
-      await pWaitPublished(reader, pubTable,
-        (rows) => lockedRows(rows) && rows.length === pDevicesOf(B_CHANNEL).length,
+      await pWaitCells(reader, pubTable,
+        (cells) => lockedRows(cells) && cells.length === pDevicesOf(B_CHANNEL).length,
         'picking the locked channel leaves the same rows');
 
       // − a pane pick of ANOTHER value cannot widen past the lock: it narrows to nothing.
       await pClick(reader, pubChannelPane, B_CHANNEL);
       await pClick(reader, pubChannelPane, 'web');
-      await pWaitPublished(reader, pubTable, (rows) => rows.length === 0,
+      await pWaitCells(reader, pubTable, (cells) => cells.length === 0,
         'a pane cannot reach rows the link locked away');
       await expect(reader.locator(`[id="btnRemoveSelection-channel-web"]`), 'the pick itself was taken')
         .toBeVisible();
@@ -4361,9 +4370,9 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
       // + and a device pick narrows inside the lock, as a slicer should.
       await reader.locator('#btnClearSelections').click();
       await pClick(reader, pubDevicePane, pDevicesOf(B_CHANNEL)[0]);
-      await pWaitPublished(reader, pubTable,
-        (rows) => rows.length === 1 && String(rows[0].channel) === B_CHANNEL
-          && String(rows[0].device) === pDevicesOf(B_CHANNEL)[0],
+      await pWaitCells(reader, pubTable,
+        (cells) => cells.length === 1 && cells[0][0] === B_CHANNEL
+          && cells[0][1] === pDevicesOf(B_CHANNEL)[0],
         'the one pair the lock and the pick leave');
     });
   } finally {
