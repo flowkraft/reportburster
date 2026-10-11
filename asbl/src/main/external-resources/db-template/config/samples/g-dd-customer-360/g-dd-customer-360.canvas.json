@@ -36,8 +36,8 @@
           "h": 4
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// Who the account is, for the top of the call: the record itself, where it is, and who owns it.\ndbSql.rows(\"\"\"SELECT c.name AS customer,\n       c.company_name AS company,\n       c.customer_type AS type,\n       c.segment AS segment,\n       c.acquisition_channel AS acquired_through,\n       c.signup_date AS customer_since,\n       (SELECT count(*) FROM dash_demo.orders o WHERE o.customer_id = c.customer_id) AS orders,\n       g.city AS city,\n       g.country AS country,\n       c.payment_terms_days AS payment_terms_days,\n       c.credit_limit AS credit_limit,\n       e.name AS account_manager\nFROM dash_demo.customers c\nJOIN dash_demo.geo_cities g ON g.city_id = c.city_id\nLEFT JOIN dash_demo.employees e ON e.employee_id = c.account_manager_id\nWHERE c.customer_id = ?\"\"\", [customerId as Integer])"
+          "mode": "sql",
+          "sql": "SELECT c.name AS customer,\n       c.company_name AS company,\n       c.customer_type AS type,\n       c.segment AS segment,\n       c.acquisition_channel AS acquired_through,\n       c.signup_date AS customer_since,\n       (SELECT count(*) FROM dash_demo.orders o WHERE o.customer_id = c.customer_id) AS orders,\n       g.city AS city,\n       g.country AS country,\n       c.payment_terms_days AS payment_terms_days,\n       c.credit_limit AS credit_limit,\n       e.name AS account_manager\nFROM dash_demo.customers c\nJOIN dash_demo.geo_cities g ON g.city_id = c.city_id\nLEFT JOIN dash_demo.employees e ON e.employee_id = c.account_manager_id\nWHERE c.customer_id = ${customerId}"
         },
         "displayConfig": {
           "columnSettings": {
@@ -62,8 +62,8 @@
           "h": 2
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// Everything the account has bought that was not cancelled.\ndbSql.rows(\"\"\"SELECT round(sum(o.total_amount), 2) AS lifetime_revenue\nFROM dash_demo.orders o\nWHERE o.status <> 'cancelled'\n  AND o.customer_id = ?\"\"\", [customerId as Integer])"
+          "mode": "sql",
+          "sql": "SELECT round(sum(o.total_amount), 2) AS lifetime_revenue\nFROM dash_demo.orders o\nWHERE o.status <> 'cancelled'\n  AND o.customer_id = ${customerId}"
         },
         "displayConfig": {
           "numberField": "lifetime_revenue",
@@ -83,8 +83,8 @@
           "h": 2
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// The money owed: issued and not settled.\ndbSql.rows(\"\"\"SELECT count(*) AS open_invoices\nFROM dash_demo.invoices\nWHERE status IN ('open', 'overdue', 'partially_paid')\n  AND customer_id = ?\"\"\", [customerId as Integer])"
+          "mode": "sql",
+          "sql": "SELECT count(*) AS open_invoices\nFROM dash_demo.invoices\nWHERE status IN ('open', 'overdue', 'partially_paid')\n  AND customer_id = ${customerId}"
         },
         "displayConfig": {
           "numberField": "open_invoices",
@@ -104,8 +104,8 @@
           "h": 2
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// Still on the account: open, pending, or resolved and not yet closed out.\ndbSql.rows(\"\"\"SELECT count(*) AS tickets_not_closed\nFROM dash_demo.support_tickets\nWHERE status <> 'closed'\n  AND customer_id = ?\"\"\", [customerId as Integer])"
+          "mode": "sql",
+          "sql": "SELECT count(*) AS tickets_not_closed\nFROM dash_demo.support_tickets\nWHERE status <> 'closed'\n  AND customer_id = ${customerId}"
         },
         "displayConfig": {
           "numberField": "tickets_not_closed",
@@ -125,8 +125,8 @@
           "h": 2
         },
         "dataSource": {
-          "mode": "script",
-          "script": "// What the account pays every month for its care plan, if it has one.\ndbSql.rows(\"\"\"SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr\nFROM dash_demo.subscriptions\nWHERE cancel_date IS NULL\n  AND customer_id = ?\"\"\", [customerId as Integer])"
+          "mode": "sql",
+          "sql": "SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr\nFROM dash_demo.subscriptions\nWHERE cancel_date IS NULL\n  AND customer_id = ${customerId}"
         },
         "displayConfig": {
           "numberField": "care_plan_mrr",

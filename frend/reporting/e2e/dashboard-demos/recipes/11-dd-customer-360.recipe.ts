@@ -47,9 +47,9 @@ One record, read across departments: the profile and what is open at the top, ho
       },
     },
     {
-      kind: 'script',
-      script: `// Who the account is, for the top of the call: the record itself, where it is, and who owns it.
-dbSql.rows("""SELECT c.name AS customer,
+      // Who the account is, for the top of the call: the record itself, where it is, and who owns it.
+      kind: 'sql',
+      sql: `SELECT c.name AS customer,
        c.company_name AS company,
        c.customer_type AS type,
        c.segment AS segment,
@@ -64,10 +64,10 @@ dbSql.rows("""SELECT c.name AS customer,
 FROM dash_demo.customers c
 JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
 LEFT JOIN dash_demo.employees e ON e.employee_id = c.account_manager_id
-WHERE c.customer_id = ?""", [customerId as Integer])`,
+WHERE c.customer_id = \${customerId}`,
       shot: {
-        title: 'The script for customer profile',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for customer profile',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -103,15 +103,15 @@ WHERE c.customer_id = ?""", [customerId as Integer])`,
       },
     },
     {
-      kind: 'script',
-      script: `// Everything the account has bought that was not cancelled.
-dbSql.rows("""SELECT round(sum(o.total_amount), 2) AS lifetime_revenue
+      // Everything the account has bought that was not cancelled.
+      kind: 'sql',
+      sql: `SELECT round(sum(o.total_amount), 2) AS lifetime_revenue
 FROM dash_demo.orders o
 WHERE o.status <> 'cancelled'
-  AND o.customer_id = ?""", [customerId as Integer])`,
+  AND o.customer_id = \${customerId}`,
       shot: {
-        title: 'The script for lifetime revenue',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for lifetime revenue',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -142,15 +142,15 @@ WHERE o.status <> 'cancelled'
       },
     },
     {
-      kind: 'script',
-      script: `// The money owed: issued and not settled.
-dbSql.rows("""SELECT count(*) AS open_invoices
+      // The money owed: issued and not settled.
+      kind: 'sql',
+      sql: `SELECT count(*) AS open_invoices
 FROM dash_demo.invoices
 WHERE status IN ('open', 'overdue', 'partially_paid')
-  AND customer_id = ?""", [customerId as Integer])`,
+  AND customer_id = \${customerId}`,
       shot: {
-        title: 'The script for open invoices',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for open invoices',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -181,15 +181,15 @@ WHERE status IN ('open', 'overdue', 'partially_paid')
       },
     },
     {
-      kind: 'script',
-      script: `// Still on the account: open, pending, or resolved and not yet closed out.
-dbSql.rows("""SELECT count(*) AS tickets_not_closed
+      // Still on the account: open, pending, or resolved and not yet closed out.
+      kind: 'sql',
+      sql: `SELECT count(*) AS tickets_not_closed
 FROM dash_demo.support_tickets
 WHERE status <> 'closed'
-  AND customer_id = ?""", [customerId as Integer])`,
+  AND customer_id = \${customerId}`,
       shot: {
-        title: 'The script for tickets not closed',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for tickets not closed',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -224,15 +224,15 @@ WHERE status <> 'closed'
       },
     },
     {
-      kind: 'script',
-      script: `// What the account pays every month for its care plan, if it has one.
-dbSql.rows("""SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr
+      // What the account pays every month for its care plan, if it has one.
+      kind: 'sql',
+      sql: `SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr
 FROM dash_demo.subscriptions
 WHERE cancel_date IS NULL
-  AND customer_id = ?""", [customerId as Integer])`,
+  AND customer_id = \${customerId}`,
       shot: {
-        title: 'The script for care plan mrr',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for care plan mrr',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
