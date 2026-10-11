@@ -116,8 +116,8 @@ public class DashboardFileGenerator {
         // It is the tiles that say what there is to choose from, so a dashboard whose cubes show no
         // SQL draws the element and it shows nothing at all.
         String vendorHtml = sorted.stream().noneMatch(LiveCubeWidgets::isLive) ? "" :
-            "    <div class=\"rb-page-bar\">\n" +
-            "      <rb-sql-vendor></rb-sql-vendor>\n" +
+            "    <div class=\"rb-page-bar\" id=\"pageBar\">\n" +
+            "      <rb-sql-vendor id=\"pageSqlVendor\"></rb-sql-vendor>\n" +
             "    </div>";
 
         String paramsHtml = !hasParameters ? "" :
@@ -326,9 +326,10 @@ public class DashboardFileGenerator {
                 Map<String, Object> dc = displayConfig(w);
                 String markdown = strOr(dc, "textContent", "");
                 String html = MARKDOWN_RENDERER.render(MARKDOWN_PARSER.parse(markdown));
+                // A text block is a tile like the others: widgetText-<its component id>.
                 yield String.format(
-                    "    <div class=\"grid-item\" style=\"%s\">\n      <div class=\"text-block\">%s</div>\n    </div>",
-                    style, html);
+                    "    <div class=\"grid-item\" style=\"%s\">\n      <div class=\"text-block\" id=\"widgetText-%s\">%s</div>\n    </div>",
+                    style, id, html);
             }
             case "slicer" -> {
                 yield String.format(

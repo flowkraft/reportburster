@@ -113,15 +113,15 @@
     }
   </style>
 
-    <div class="rb-page-bar">
-      <rb-sql-vendor></rb-sql-vendor>
+    <div class="rb-page-bar" id="pageBar">
+      <rb-sql-vendor id="pageSqlVendor"></rb-sql-vendor>
     </div>
     <div id="parameterBarContainer" class="params-bar">
       <rb-parameters report-id="g-cube-country-sales" api-base-url="http://localhost:9090/api" show-reload="true"></rb-parameters>
     </div>
   <div class="dashboard-grid">
     <div class="grid-item" style="grid-column: 1 / span 12; grid-row: 1 / span 1;">
-      <div class="text-block"><h1>Country Sales</h1>
+      <div class="text-block" id="widgetText-text_title"><h1>Country Sales</h1>
 <p>What the country you picked sold: the money and the units, the channels its orders came through, the categories that earned it - and the shop cube itself, for the questions this page does not answer.</p>
 </div>
     </div>

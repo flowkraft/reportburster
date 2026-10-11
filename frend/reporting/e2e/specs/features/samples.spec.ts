@@ -999,9 +999,9 @@ electronBeforeAfterAllTest(
           waitUntil: 'networkidle',
         });
 
-        // Assert rb-dashboard web component is present
+        // Assert the dashboard is on the page
         const { expect } = await import('@playwright/test');
-        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('#dashboard-g-dashboard')).toBeVisible({ timeout: 10000 });
 
         // Run shared dashboard assertions — default "-- All --" (unfiltered)
         await assertDashboardRendersCorrectly(page, 'g-dashboard');
@@ -1080,15 +1080,16 @@ electronBeforeAfterAllTest(
 
         const { expect } = await import('@playwright/test');
 
-        // Assert rb-dashboard web component is present
-        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+        // Assert the dashboard is on the page
+        await expect(page.locator('#dashboard-g-pivottable')).toBeVisible({ timeout: 10000 });
 
         // Assert pivot table header and component are visible. The heading says what the page
         // is for rather than naming the data behind it (D2).
         await expect(page.locator('#dashTitle')).toHaveText('Sales Explorer', { timeout: 30000 });
         await expect(page.locator('#dashSubtitle'))
           .toContainText('Ask your own question of the sales', { timeout: 10000 });
-        await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 15000 });
+        // One pivot: the sample's pivot has no component id, so its controls carry their plain ids.
+        await expect(page.locator('#dashboard-g-pivottable #btnPivotRenderer')).toHaveCount(1, { timeout: 15000 });
       } finally {
         if (externalBrowser) {
           await SelfServicePortalsTestHelper.closeExternalBrowser(externalBrowser);
@@ -1184,7 +1185,7 @@ electronBeforeAfterAllTest(
 
         // The sample is the page: every cube DataPallas ships, each card with the questions its
         // cube was written to answer.
-        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+        await expect(page.locator('#dashboard-g-cube-stories')).toBeVisible({ timeout: 10000 });
         // Its own title already says what the page is for, and stays as it is (D2).
         await expect(page.locator('#dashTitle')).toHaveText('Cube Stories', { timeout: 30000 });
         await expect(page.locator('#dashSubtitle')).toContainText('tick a field', { timeout: 10000 });
@@ -1193,7 +1194,7 @@ electronBeforeAfterAllTest(
         for (const cubeId of CUBE_STORIES_PAGE_CARDS) {
           // A card in a closed industry panel is not visible; open its panel the way a reader does.
           await openCardsPanel(frame, cubeId);
-          await expect(frame.locator(`#cube-${cubeId} #cubeHints .rb-hint`).first())
+          await expect(frame.locator(`#cube-${cubeId} #cubeHints [id^="hint-"]`).first())
             .toBeVisible({ timeout: 60000 });
         }
 
@@ -1314,24 +1315,25 @@ electronBeforeAfterAllTest(
 
         // The page the story describes: two numbers, one chart, one table, and one country
         // parameter above them all.
-        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
-        await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 15000 });
-        await expect(page.locator('rb-chart')).toHaveCount(1, { timeout: 15000 });
-        // The live shop cube beside them draws its answer with a tabulator of its own, so the
+        const countrySales = page.locator('#dashboard-g-cube-country-sales');
+        await expect(countrySales).toBeVisible({ timeout: 10000 });
+        await expect(countrySales.locator('[id^="widgetValue-"]')).toHaveCount(2, { timeout: 15000 });
+        await expect(countrySales.locator('[id^="widgetChart-"]')).toHaveCount(1, { timeout: 15000 });
+        // The live shop cube beside them draws its answer with a table of its own, so the
         // page's one table is the tile that is bound to the categories.
-        await expect(page.locator('rb-tabulator[component-id="tabulator_net-category"]'))
-          .toHaveCount(1, { timeout: 15000 });
-        await expect(page.locator('rb-parameters')).toHaveCount(1, { timeout: 15000 });
+        await expect(page.locator('#widgetTabulator-tabulator_net-category')).toHaveCount(1, { timeout: 15000 });
+        await expect(page.locator('#formReportParameters')).toHaveCount(1, { timeout: 15000 });
 
         // The page opens with what it is: a reader who arrives by a share link has no sample
         // list around them to tell them (D2). The page is published from its canvas, which puts
         // the parameter bar above the grid, so the title is the first thing in the grid: above
         // every tile that answers.
-        await expect(page.locator('.text-block h1')).toHaveText('Country Sales', { timeout: 15000 });
-        await expect(page.locator('.text-block p'))
-          .toContainText('What the country you picked sold', { timeout: 10000 });
+        // (that the title is a heading is the exporter's own test, CubeCountrySalesDashboardTest)
+        const titleBlock = page.locator('#widgetText-text_title');
+        await expect(titleBlock).toContainText('Country Sales', { timeout: 15000 });
+        await expect(titleBlock).toContainText('What the country you picked sold', { timeout: 10000 });
         const titleAboveTiles = await page.evaluate(() => {
-          const title = document.querySelector('.text-block h1');
+          const title = document.getElementById('widgetText-text_title');
           const tiles = Array.from(document.querySelectorAll(
             '[id^="widgetValue-"], [id^="widgetChart-"], [id^="widgetTabulator-"], [id^="widgetCube-"]'));
           if (!title || tiles.length === 0) return false;
@@ -1449,7 +1451,7 @@ electronBeforeAfterAllTest(
         await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
         await page.click('#btnConfirmReload');
         await expect
-          .poll(async () => (await page.locator('rb-value').first().innerText()).replace(/[^0-9]/g, ''),
+          .poll(async () => (await page.locator('#widgetValue-number_netsales_net').innerText()).replace(/[^0-9]/g, ''),
             { timeout: 60000 })
           .toContain('859');
 
@@ -1497,16 +1499,16 @@ electronBeforeAfterAllTest(
         expect((await theOtherWay.json()).rows, 'is another set of orders').not.toEqual(liveCubeDrawn.answer.rows);
 
         // The cube says what it is, once, where the reader looks for it (D6).
-        await expect(page.locator('.rb-cube-about'))
+        await expect(page.locator('#cubeAbout'))
           .toHaveText('Orders, shipping fees and sales, by country and by product category');
-        await expect(page.locator('.rb-cube-desc'), 'not in the class of the small notes')
-          .toHaveCount(0);
+        await expect(page.locator('#cubeAbout'), 'not in the class of the small notes')
+          .not.toHaveClass(/\brb-cube-desc\b/);
 
         // ── D11: the page's database picker, and a page with nothing to pick for ──
         // The dashboard carries the picker once, at the top right of the page, and never inside a
         // tile. This tile does not show its SQL, so there is nothing to write for any database and
         // the picker shows nothing at all: the element is the page's, its contents are the cubes'.
-        await expect(page.locator('.rb-page-bar rb-sql-vendor'),
+        await expect(page.locator('#pageBar #pageSqlVendor'),
           'one database picker, in the page bar').toHaveCount(1);
         await expect(page.locator('#cubeRuntimeSqlVendor'),
           'and no select inside the cube tile').toHaveCount(0);
@@ -1520,7 +1522,7 @@ electronBeforeAfterAllTest(
         // it. The entry names them, in this order, and the order is the author's.
         await expect(page.locator('#cubeHints'), 'the tile offers its stories')
           .toHaveCount(1, { timeout: 60000 });
-        const storyIds = await page.locator('#cubeHints .rb-hint').evaluateAll((cards) =>
+        const storyIds = await page.locator('#cubeHints [id^="hint-"]').evaluateAll((cards) =>
           cards.map((card) => card.id));
         expect(storyIds, 'exactly these six ids, in this order, with their variants under them')
           .toEqual([
@@ -1561,14 +1563,14 @@ electronBeforeAfterAllTest(
 
         // D9's layout, on this tile too: the cube on one half, its stories on the other, and the
         // answer under both.
-        await expect(page.locator('.rb-cube-halves.rb-cube-split'), 'the tile is split in two')
-          .toHaveCount(1);
+        await expect(page.locator('#cubeHalves'), 'the tile is split in two')
+          .toHaveClass(/\brb-cube-split\b/);
         const twoHalves = await page.evaluate(() => {
           const box = (selector: string) => {
             const found = document.querySelector(selector);
             return found ? found.getBoundingClientRect() : null;
           };
-          return { fields: box('.rb-cube-fields'), stories: box('.rb-cube-stories'),
+          return { fields: box('#cubeFieldsHalf'), stories: box('#cubeStoriesHalf'),
             result: box('#cubeRuntimeResult') };
         });
         expect(twoHalves.fields, 'the cube has its half').not.toBeNull();
@@ -1577,7 +1579,7 @@ electronBeforeAfterAllTest(
           .toBeGreaterThanOrEqual(twoHalves.fields!.right - 1);
         expect(twoHalves.result!.top, 'and the answer is under both of them')
           .toBeGreaterThanOrEqual(Math.max(twoHalves.fields!.bottom, twoHalves.stories!.bottom) - 1);
-        await expect(page.locator('.rb-tree .rb-tree-field').first(),
+        await expect(page.locator('#cubeFieldsHalf [id^="meas-"], #cubeFieldsHalf [id^="dim-"]').first(),
           'the cube is still there to tick').toBeVisible({ timeout: 60000 });
 
         // What the live cube answers, asked the way the renderer asks it: the viewer's answer
@@ -1872,7 +1874,7 @@ electronBeforeAfterAllTest(
           await expect(built, 'and that page opens beside the Gallery, not over it')
             .toHaveAttribute('target', '_blank');
           const below = await page.evaluate((id) => {
-            const dashboard = document.querySelector(`#${id} rb-dashboard`);
+            const dashboard = document.querySelector(`#${id} [id^="dashboard-"]`);
             const link = document.querySelector(`#lnkHowBuilt-${id}`);
             if (!dashboard || !link) return false;
             return link.getBoundingClientRect().top >= dashboard.getBoundingClientRect().top;
