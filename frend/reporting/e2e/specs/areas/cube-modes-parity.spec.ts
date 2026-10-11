@@ -76,10 +76,15 @@ async function publishDashboard(page: Page): Promise<{ reportId: string; dashboa
 
 /** Delete the canvas the way a person does, so a run leaves nothing behind. */
 async function deleteCanvasViaUI(page: Page, canvasName: string): Promise<void> {
+  // The canvas list's delete buttons are named after the canvas id; the test knows its canvas by name.
+  const canvases: Array<{ id: string; name: string }> =
+    await (await page.request.get('http://localhost:9090/api/explorations')).json();
+  const named = canvases.filter((canvas) => canvas.name === canvasName);
+  expect(named, `one canvas is called ${canvasName}`).toHaveLength(1);
   await page.goto(DATA_CANVAS_URL);
   await page.waitForLoadState('networkidle');
   // The delete button is opacity-0 until hover; force bypasses the visibility check
-  await page.locator(`[aria-label="Delete canvas ${canvasName}"]`).click({ force: true });
+  await page.locator(`[id="btnDeleteCanvas-${named[0].id}"]`).click({ force: true });
   await page.locator('#btnConfirmDeleteCanvas').waitFor({ state: 'visible', timeout: 5_000 });
   await page.locator('#btnConfirmDeleteCanvas').click();
   await page.waitForTimeout(1_500);
