@@ -81,36 +81,32 @@ if (!componentId || componentId == 'gauge_current_not_overdue_overdue') {
     ctx.reportData('gauge_current_not_overdue_overdue', data)
 }
 
-// ─── Widget: trend_month_dso (type=trend, dataSource=script) ───
+// ─── Widget: trend_month_dso (type=trend, dataSource=sql) ───
 if (!componentId || componentId == 'trend_month_dso') {
-    def trend_month_dso_data = { ->
-        // DSO per month: receivables still outstanding at the end of the month, over the credit sales of
-        // the year to that day, times 365 days. Two sums read at 24 different days is not one grouped query,
-        // which is why this widget asks it itself. It is a company number: the page's two filters pick whom
-        // to call today and do not change how long the company waits to be paid.
-        dbSql.rows("""WITH months AS (
-          SELECT CAST(date_trunc('month', (SELECT a.as_of FROM dash_demo.as_of a))
-                      - to_months(CAST(s.i AS INTEGER)) AS DATE) AS month
-          FROM generate_series(0, 23) AS s(i)
-        ),
-        month_end AS (
-          SELECT month,
-                 CAST(least(month + to_months(1) - to_days(1),
-                            (SELECT a.as_of FROM dash_demo.as_of a)) AS DATE) AS read_at
-          FROM months
-        )
-        SELECT m.month AS month,
-               round(365.0
-                     * (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i
-                        WHERE i.issue_date <= m.read_at
-                          AND (i.last_paid_date IS NULL OR i.last_paid_date > m.read_at))
-                     / (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i
-                        WHERE i.issue_date > m.read_at - to_days(365)
-                          AND i.issue_date <= m.read_at), 2) AS dso_days
-        FROM month_end m
-        ORDER BY m.month""", [])
-    }()
-    ctx.reportData('trend_month_dso', trend_month_dso_data)
+    def sql = new StringBuilder()
+    sql << 'WITH months AS (\n'
+    sql << '  SELECT CAST(date_trunc(\'month\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '              - to_months(CAST(s.i AS INTEGER)) AS DATE) AS month\n'
+    sql << '  FROM generate_series(0, 23) AS s(i)\n'
+    sql << '),\n'
+    sql << 'month_end AS (\n'
+    sql << '  SELECT month,\n'
+    sql << '         CAST(least(month + to_months(1) - to_days(1),\n'
+    sql << '                    (SELECT a.as_of FROM dash_demo.as_of a)) AS DATE) AS read_at\n'
+    sql << '  FROM months\n'
+    sql << ')\n'
+    sql << 'SELECT m.month AS month,\n'
+    sql << '       round(365.0\n'
+    sql << '             * (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i\n'
+    sql << '                WHERE i.issue_date <= m.read_at\n'
+    sql << '                  AND (i.last_paid_date IS NULL OR i.last_paid_date > m.read_at))\n'
+    sql << '             / (SELECT sum(i.amount + i.tax_amount) FROM dash_demo.invoices i\n'
+    sql << '                WHERE i.issue_date > m.read_at - to_days(365)\n'
+    sql << '                  AND i.issue_date <= m.read_at), 2) AS dso_days\n'
+    sql << 'FROM month_end m\n'
+    sql << 'ORDER BY m.month\n'
+    def data = dbSql.rows(sql.toString())
+    ctx.reportData('trend_month_dso', data)
 }
 
 // ─── Widget: number_customers_overdue_overdue (type=number, dataSource=sql) ───
