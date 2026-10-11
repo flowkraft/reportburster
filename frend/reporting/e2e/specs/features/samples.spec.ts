@@ -1865,7 +1865,7 @@ electronBeforeAfterAllTest(
 
         for (const demo of DEMOS)
           await expect(
-            page.locator(`#${demo.id} rb-dashboard[report-id="${demo.reportId}"]`),
+            page.locator(`#${demo.id} [id="dashboard-${demo.reportId}"]`),
             `${demo.id}'s card carries its own dashboard`,
           ).toHaveCount(1);
 

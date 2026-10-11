@@ -796,16 +796,18 @@
   $: themedReportHtml = withThemedReportBackground(renderedHtml);
 </script>
 
-<div bind:this={container} class="rb-report">
+<!-- A page can hold several dashboards (the Gallery has one per card), so this one's ids carry
+     its report id: dashboard-<reportId>, widgetLoading-/widgetError-/widgetReport-<reportId>. -->
+<div bind:this={container} class="rb-report" id={reportId ? `dashboard-${reportId}` : undefined}>
   {#if loading}
-    <div class="rb-report-loading" id="widgetLoading">
+    <div class="rb-report-loading" id={reportId ? `widgetLoading-${reportId}` : 'widgetLoading'}>
       <div class="rb-report-spinner"></div>
       <span>Loading...</span>
     </div>
   {/if}
   
   {#if error}
-    <div class="rb-report-error" id="widgetError">
+    <div class="rb-report-error" id={reportId ? `widgetError-${reportId}` : 'widgetError'}>
       <strong>Error:</strong> {error}
     </div>
   {/if}
@@ -854,7 +856,7 @@
   {/if}
 
   {#if configLoaded && dashboardTemplate && !error}
-    <div class="rb-report-dashboard" id="widgetReport" bind:this={dashboardContainer}></div>
+    <div class="rb-report-dashboard" id={reportId ? `widgetReport-${reportId}` : 'widgetReport'} bind:this={dashboardContainer}></div>
   {/if}
 
   {#if configLoaded && !dashboardTemplate && !error}
