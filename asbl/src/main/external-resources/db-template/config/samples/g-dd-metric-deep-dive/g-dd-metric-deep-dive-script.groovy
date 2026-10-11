@@ -28,411 +28,432 @@ def asDeclaredType = { String name, String type, value ->
 def metric = userVars?.get('metric')?.toString()
 def hasMetric = (metric != null && !metric.isEmpty())
 
-// ─── Widget: trend_month_month (type=trend, dataSource=script) ───
+// ─── Widget: trend_month_month (type=trend, dataSource=sql) ───
 if (!componentId || componentId == 'trend_month_month') {
-    def trend_month_month_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT date_trunc('month', f.happened_at)::DATE AS month,
-               round(sum(f.value), 2) AS value
-        FROM feed f
-        WHERE f.metric = ?
-        GROUP BY month
-        ORDER BY month""", [metric])
-    }()
-    ctx.reportData('trend_month_month', trend_month_month_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT date_trunc(\'month\', f.happened_at)::DATE AS month,\n'
+    sql << '       round(sum(f.value), 2) AS value\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << 'GROUP BY month\n'
+    sql << 'ORDER BY month\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('trend_month_month', data)
 }
 
-// ─── Widget: number_metric_ytd_ytd (type=number, dataSource=script) ───
+// ─── Widget: number_metric_ytd_ytd (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_metric_ytd_ytd') {
-    def number_metric_ytd_ytd_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT round(sum(f.value), 2) AS metric_ytd
-        FROM feed f
-        WHERE f.metric = ?
-          AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-          AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)""", [metric])
-    }()
-    ctx.reportData('number_metric_ytd_ytd', number_metric_ytd_ytd_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT round(sum(f.value), 2) AS metric_ytd\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << '  AND f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_metric_ytd_ytd', data)
 }
 
-// ─── Widget: number_vs_last_year_year (type=number, dataSource=script) ───
+// ─── Widget: number_vs_last_year_year (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_vs_last_year_year') {
-    def number_vs_last_year_year_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT round(
-                 sum(CASE WHEN f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-                          THEN f.value END)
-                 / sum(CASE WHEN f.happened_at < date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-                            THEN f.value END) - 1, 4) AS vs_last_year
-        FROM feed f
-        WHERE f.metric = ?
-          AND ((f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-          AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a))
-            OR (f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a)) - INTERVAL 1 YEAR
-              AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 1 YEAR))""", [metric])
-    }()
-    ctx.reportData('number_vs_last_year_year', number_vs_last_year_year_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT round(\n'
+    sql << '         sum(CASE WHEN f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '                  THEN f.value END)\n'
+    sql << '         / sum(CASE WHEN f.happened_at < date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '                    THEN f.value END) - 1, 4) AS vs_last_year\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << '  AND ((f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '    OR (f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a)) - INTERVAL 1 YEAR\n'
+    sql << '      AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 1 YEAR))\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_vs_last_year_year', data)
 }
 
-// ─── Widget: chart_dd24-chart-metric-over-time (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd24-chart-metric-over-time (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd24-chart-metric-over-time') {
-    def chart_dd24_chart_metric_over_time_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT date_trunc('month', f.happened_at)::DATE AS month,
-               round(sum(f.value), 2) AS value
-        FROM feed f
-        WHERE f.metric = ?
-        GROUP BY month
-        ORDER BY month""", [metric])
-    }()
-    ctx.reportData('chart_dd24-chart-metric-over-time', chart_dd24_chart_metric_over_time_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT date_trunc(\'month\', f.happened_at)::DATE AS month,\n'
+    sql << '       round(sum(f.value), 2) AS value\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << 'GROUP BY month\n'
+    sql << 'ORDER BY month\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd24-chart-metric-over-time', data)
 }
 
-// ─── Widget: chart_dd24-chart-what-it-is-made-of (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd24-chart-what-it-is-made-of (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd24-chart-what-it-is-made-of') {
-    def chart_dd24_chart_what_it_is_made_of_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT f.made_of AS made_of,
-               round(sum(f.value), 2) AS value
-        FROM feed f
-        WHERE f.metric = ?
-          AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-          AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)
-        GROUP BY f.made_of
-        ORDER BY value DESC""", [metric])
-    }()
-    ctx.reportData('chart_dd24-chart-what-it-is-made-of', chart_dd24_chart_what_it_is_made_of_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT f.made_of AS made_of,\n'
+    sql << '       round(sum(f.value), 2) AS value\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << '  AND f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)\n'
+    sql << 'GROUP BY f.made_of\n'
+    sql << 'ORDER BY value DESC\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd24-chart-what-it-is-made-of', data)
 }
 
-// ─── Widget: chart_dd24-chart-by-month-of-year (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd24-chart-by-month-of-year (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd24-chart-by-month-of-year') {
-    def chart_dd24_chart_by_month_of_year_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT strftime(f.happened_at, '%m %b') AS month_of_year,
-               round(sum(f.value), 2) AS value
-        FROM feed f
-        WHERE f.metric = ?
-        GROUP BY month_of_year
-        ORDER BY month_of_year""", [metric])
-    }()
-    ctx.reportData('chart_dd24-chart-by-month-of-year', chart_dd24_chart_by_month_of_year_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT strftime(f.happened_at, \'%m %b\') AS month_of_year,\n'
+    sql << '       round(sum(f.value), 2) AS value\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << 'GROUP BY month_of_year\n'
+    sql << 'ORDER BY month_of_year\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd24-chart-by-month-of-year', data)
 }
 
-// ─── Widget: chart_dd24-chart-by-country-top-10 (type=chart, dataSource=script) ───
+// ─── Widget: chart_dd24-chart-by-country-top-10 (type=chart, dataSource=sql) ───
 if (!componentId || componentId == 'chart_dd24-chart-by-country-top-10') {
-    def chart_dd24_chart_by_country_top_10_data = { ->
-        // The radio's five words are the whole whitelist: the chosen one goes to the database as a value,
-        // never as SQL text, so nothing a filter can carry reaches the query itself.
-        if (!['Revenue', 'Orders', 'New customers', 'Tickets', 'Payroll cost'].contains(metric)) return []
-        return dbSql.rows("""WITH line_totals AS (
-          SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total
-          FROM dash_demo.order_lines l
-          GROUP BY l.order_id
-        ),
-        feed AS (
-          -- Revenue at line grain: each order's own total spread over its lines in proportion to what they
-          -- cost, so the categories below add up to the number above them.
-          SELECT 'Revenue' AS metric,
-                 o.order_ts AS happened_at,
-                 o.total_amount * l.line_amount / t.line_total AS value,
-                 p.category AS made_of,
-                 g.country AS country
-          FROM dash_demo.order_lines l
-          JOIN line_totals t ON t.order_id = l.order_id
-          JOIN dash_demo.orders o ON o.order_id = l.order_id
-          JOIN dash_demo.products p ON p.product_id = l.product_id
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'Orders', o.order_ts, 1, o.channel, g.country
-          FROM dash_demo.orders o
-          JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
-          WHERE o.status <> 'cancelled'
-          UNION ALL
-          SELECT 'New customers', c.signup_date, 1, c.acquisition_channel, g.country
-          FROM dash_demo.customers c
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Tickets', tk.opened_ts, 1, tk.category, g.country
-          FROM dash_demo.support_tickets tk
-          JOIN dash_demo.customers c ON c.customer_id = tk.customer_id
-          JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-          UNION ALL
-          SELECT 'Payroll cost', pl.period_month,
-                 pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country
-          FROM dash_demo.payroll_lines pl
-          JOIN dash_demo.employees e ON e.employee_id = pl.employee_id
-          JOIN dash_demo.departments d ON d.department_id = e.department_id
-          JOIN dash_demo.geo_cities g ON g.city_id = e.city_id
-        )
-        SELECT f.country AS country,
-               round(sum(f.value), 2) AS value
-        FROM feed f
-        WHERE f.metric = ?
-          AND f.happened_at >= date_trunc('year', (SELECT a.as_of FROM dash_demo.as_of a))
-          AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)
-        GROUP BY f.country
-        ORDER BY value DESC
-        LIMIT 10""", [metric])
-    }()
-    ctx.reportData('chart_dd24-chart-by-country-top-10', chart_dd24_chart_by_country_top_10_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'WITH line_totals AS (\n'
+    sql << '  SELECT l.order_id AS order_id, sum(l.line_amount) AS line_total\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  GROUP BY l.order_id\n'
+    sql << '),\n'
+    sql << 'feed AS (\n'
+    sql << '  -- Revenue at line grain: each order\'s own total spread over its lines in proportion to what they\n'
+    sql << '  -- cost, so the categories below add up to the number above them.\n'
+    sql << '  SELECT \'Revenue\' AS metric,\n'
+    sql << '         o.order_ts AS happened_at,\n'
+    sql << '         o.total_amount * l.line_amount / t.line_total AS value,\n'
+    sql << '         p.category AS made_of,\n'
+    sql << '         g.country AS country\n'
+    sql << '  FROM dash_demo.order_lines l\n'
+    sql << '  JOIN line_totals t ON t.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.orders o ON o.order_id = l.order_id\n'
+    sql << '  JOIN dash_demo.products p ON p.product_id = l.product_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Orders\', o.order_ts, 1, o.channel, g.country\n'
+    sql << '  FROM dash_demo.orders o\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+    sql << '  WHERE o.status <> \'cancelled\'\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'New customers\', c.signup_date, 1, c.acquisition_channel, g.country\n'
+    sql << '  FROM dash_demo.customers c\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Tickets\', tk.opened_ts, 1, tk.category, g.country\n'
+    sql << '  FROM dash_demo.support_tickets tk\n'
+    sql << '  JOIN dash_demo.customers c ON c.customer_id = tk.customer_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << '  UNION ALL\n'
+    sql << '  SELECT \'Payroll cost\', pl.period_month,\n'
+    sql << '         pl.gross_pay + pl.employer_taxes + pl.benefits, d.name, g.country\n'
+    sql << '  FROM dash_demo.payroll_lines pl\n'
+    sql << '  JOIN dash_demo.employees e ON e.employee_id = pl.employee_id\n'
+    sql << '  JOIN dash_demo.departments d ON d.department_id = e.department_id\n'
+    sql << '  JOIN dash_demo.geo_cities g ON g.city_id = e.city_id\n'
+    sql << ')\n'
+    sql << 'SELECT f.country AS country,\n'
+    sql << '       round(sum(f.value), 2) AS value\n'
+    sql << 'FROM feed f\n'
+    if (hasMetric) {
+        sql << 'WHERE f.metric = ?\n'
+        params << asDeclaredType('metric', 'String', metric)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    sql << '  AND f.happened_at >= date_trunc(\'year\', (SELECT a.as_of FROM dash_demo.as_of a))\n'
+    sql << '  AND f.happened_at <= (SELECT a.as_of FROM dash_demo.as_of a)\n'
+    sql << 'GROUP BY f.country\n'
+    sql << 'ORDER BY value DESC\n'
+    sql << 'LIMIT 10\n'
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('chart_dd24-chart-by-country-top-10', data)
 }
 
