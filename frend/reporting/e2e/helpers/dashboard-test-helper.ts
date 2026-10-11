@@ -240,6 +240,20 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
 
+/**
+ * One property of a filter pane, from the canonical DSL Map the canvas writes it in, falling
+ * back to the flat key older canvases used. Mirrors `ScriptAssembler.filterPaneField` and
+ * `filterPaneLabel`: a pane whose field is read from the wrong place is published under
+ * `filter-pane_<id>` and not `filter-pane_<field>_<id>`, so nothing finds it.
+ */
+function paneDsl(dc: Record<string, unknown>, key: string, legacyKey: string): string {
+  const dsl = dc.dslConfig as Record<string, unknown> | undefined;
+  const fromDsl = dsl?.[key];
+  if (typeof fromDsl === 'string' && fromDsl.trim()) return fromDsl;
+  const legacy = dc[legacyKey];
+  return typeof legacy === 'string' ? legacy : '';
+}
+
 function inferSemanticSlug(type: string, w: WidgetState): string {
   const dc = (w.displayConfig ?? {}) as Record<string, unknown>;
   // Primary: field/table name derived from data binding — most precise
@@ -249,7 +263,7 @@ function inferSemanticSlug(type: string, w: WidgetState): string {
     case 'chart':       raw = ((dc.xFields as string[]) ?? [])[0] ?? ''; break;
     case 'tabulator':   raw = w.dataSource?.visualQuery?.table ?? ''; break;
     case 'pivot':       raw = ((dc.pivotRows as string[]) ?? [])[0] ?? ''; break;
-    case 'filter-pane': raw = (dc.filterField as string) ?? ''; break;
+    case 'filter-pane': raw = paneDsl(dc, 'field', 'filterField'); break;
     case 'gauge':       raw = (dc.field as string) ?? ''; break;
     case 'trend':       raw = (dc.dateField as string) ?? ''; break;
     case 'sankey':      raw = (dc.sourceField as string) ?? ''; break;
@@ -260,7 +274,7 @@ function inferSemanticSlug(type: string, w: WidgetState): string {
   switch (type) {
     case 'number':      label = (dc.numberLabel     as string) ?? ''; break;
     case 'chart':       label = (dc.chartTitle      as string) ?? ''; break;
-    case 'filter-pane': label = (dc.filterPaneLabel as string) ?? ''; break;
+    case 'filter-pane': label = paneDsl(dc, 'label', 'filterPaneLabel'); break;
     case 'gauge':       label = (dc.label           as string) ?? ''; break;
     case 'trend':       label = (dc.label           as string) ?? ''; break;
   }
