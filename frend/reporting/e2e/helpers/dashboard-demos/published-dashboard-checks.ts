@@ -481,9 +481,9 @@ function holds(row: Record<string, unknown>, wanted: Record<string, unknown>): b
  * its label, its value and "x% vs prior"; a gauge writes its value and label inside its svg, where
  * the tile's own text does not reach; a progress bar writes "value / goal" and then a percent.
  */
-async function writtenReading(tile: Locator, tag: string): Promise<string> {
-  if (tag === 'rb-trend') return tile.locator('.rb-trend-inner > div').nth(1).innerText();
-  if (tag === 'rb-gauge') return (await tile.locator('svg text').first().textContent()) ?? '';
+async function writtenReading(tile: Locator, tag: string, componentId: string): Promise<string> {
+  if (tag === 'rb-trend') return tile.locator(`[id="trendValue-${componentId}"]`).innerText();
+  if (tag === 'rb-gauge') return (await tile.locator(`[id="gaugeValue-${componentId}"]`).textContent()) ?? '';
   if (tag === 'rb-progress') {
     const lines = (await tile.innerText()).split('\n');
     return (lines.find((line) => line.includes(' / ')) ?? '').split(' / ')[0];
@@ -510,16 +510,15 @@ function asNumber(text: string): number | null {
  * ever. The pixel probe is the same one: any non-zero alpha anywhere on the canvas.
  */
 export async function waitForChartsIn(root: Locator, timeout = 60_000): Promise<void> {
-  const charts = root.locator('rb-chart');
+  const charts = root.locator('[id^="chartCanvas-"]');
   if ((await charts.count()) === 0) return;
   await expect
     .poll(
       async () =>
         charts.evaluateAll((els) =>
           els.every((el) => {
-            const canvas = ((el as any).shadowRoot?.querySelector('canvas')
-              || el.querySelector('canvas')) as HTMLCanvasElement | null;
-            if (!canvas || !canvas.width || !canvas.height) return false;
+            const canvas = el as HTMLCanvasElement;
+            if (!canvas.width || !canvas.height) return false;
             try {
               const ctx = canvas.getContext('2d');
               if (!ctx) return false;
@@ -654,7 +653,7 @@ export async function assertClaims(
     try {
       await expect
         .poll(async () => {
-          shown = asNumber((await writtenReading(tile, tag)).trim());
+          shown = asNumber((await writtenReading(tile, tag, (widget as DemoWidget).componentId)).trim());
           return shown !== null && Math.abs(shown - want) <= near;
         }, { timeout: 20_000, intervals: [250] })
         .toBe(true);

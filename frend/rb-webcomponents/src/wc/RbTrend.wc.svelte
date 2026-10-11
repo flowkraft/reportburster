@@ -112,6 +112,7 @@
       root.appendChild(labelEl);
 
       const valueEl = document.createElement("div");
+      if (componentId) valueEl.id = `trendValue-${componentId}`;
       valueEl.style.cssText = "font-size:22px;font-weight:600;color:inherit;line-height:1.1;";
       valueEl.textContent = formatVal(current, fmt);
       root.appendChild(valueEl);
