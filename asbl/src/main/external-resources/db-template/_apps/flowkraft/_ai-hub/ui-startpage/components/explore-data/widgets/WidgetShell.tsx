@@ -175,7 +175,7 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
       {/* Content */}
       <div className="p-0 h-[calc(100%-33px)]">
         {type === "slicer" ? (
-          <WidgetErrorBoundary resetKey={`slicer:${widgetId}`}>
+          <WidgetErrorBoundary resetKey={`slicer:${widgetId}`} widgetId={widgetId}>
             <SlicerWidget widgetId={widgetId} />
           </WidgetErrorBoundary>
         ) : type === "text" ? (
@@ -212,7 +212,7 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
           )
         ) : hasData ? (
           <div className="p-2 h-full">
-            <WidgetErrorBoundary resetKey={`${showsCube ? "cube" : type}:${widgetId}`}>
+            <WidgetErrorBoundary resetKey={`${showsCube ? "cube" : type}:${widgetId}`} widgetId={widgetId}>
               {showsCube
                 ? <CubeRendererWidget widgetId={widgetId} />
                 : <LiveWidget widgetId={widgetId} type={type} />}

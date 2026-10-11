@@ -1040,7 +1040,7 @@ export async function waitForWidgetData(
     const state = await page.evaluate((id) => {
       const widget = document.getElementById(`widget-${id}`);
       if (!widget) return { phase: 'no-widget' as const };
-      const errorEl = widget.querySelector('.text-destructive');
+      const errorEl = document.getElementById(`widgetError-${id}`);
       if (errorEl) return { phase: 'error' as const, message: (errorEl.textContent || '').trim().slice(0, 300) };
       const viz = widget.querySelector(
         'rb-value, rb-trend, rb-chart, rb-tabulator, rb-pivot-table, rb-map, rb-gauge',

@@ -270,7 +270,7 @@ async function widgetDrawn(page: Page, id: string, timeout = 30_000): Promise<vo
     (wid) => {
       const widget = document.getElementById(`widget-${wid}`);
       if (!widget) return false;
-      if (widget.querySelector('.text-destructive')) return true; // reported by noWidgetInError
+      if (document.getElementById(`widgetError-${wid}`)) return true; // reported by noWidgetInError
       if (widget.querySelector('.animate-spin')) return false;
       return Array.from(widget.querySelectorAll('*')).some((el) => el.tagName.startsWith('RB-'));
     },
@@ -281,7 +281,7 @@ async function widgetDrawn(page: Page, id: string, timeout = 30_000): Promise<vo
 
 /** Errors must SCREAM: a widget showing one is never photographed. */
 async function noWidgetInError(page: Page): Promise<void> {
-  const errors = await page.locator('[id^="widget-"] .text-destructive').allTextContents();
+  const errors = await page.locator('[id^="widgetError-"]').allTextContents();
   if (errors.length > 0) throw new Error(`a widget shows an error: ${errors[0].trim().slice(0, 200)}`);
 }
 

@@ -85,7 +85,7 @@ export function ProgressWidget({ widgetId }: ProgressWidgetProps) {
   }
   if (error) {
     return (
-      <div className="text-xs text-error p-2 overflow-hidden">
+      <div id={`widgetError-${widgetId}`} className="text-xs text-error p-2 overflow-hidden">
         Query error: {error.split("\n")[0].slice(0, 200)}
       </div>
     );
