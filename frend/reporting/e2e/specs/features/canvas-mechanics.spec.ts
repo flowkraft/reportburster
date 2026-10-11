@@ -78,6 +78,7 @@ import {
   setVisualLimit,
   setWidgetDsl,
   switchToWidget,
+  waitForWidgetData,
 } from '../../helpers/explore-data-test-helper';
 import {
   AI_HUB_APP_ID,
@@ -4821,6 +4822,39 @@ test('(canvas mechanics) M62 The colours an author picks for a chart, in the Can
         };
       }, { message: 'the published charts keep the author\'s colours', timeout: 60_000, intervals: [1_000] })
       .toEqual({ bar: warm[0], pie: canvasSlices });
+  });
+});
+
+test('(canvas mechanics) M63 A widget whose query fails says so, and a wait for its data stops on the error', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M63 Widget errors', async (canvasId) => {
+    await addTableToCanvas(page, 'dash_demo.orders');
+    const id = await getLastWidgetId(page);
+    const works = "SELECT 'web' AS channel, 'Web' AS label, 3 AS orders, 5 AS target "
+      + "UNION ALL SELECT 'store', 'Store', 4, 6";
+    const fails = 'SELECT no_such_column FROM dash_demo.orders';
+
+    // Every kind of widget: drawn first from a query that works, then given one that does not.
+    for (const type of ['chart', 'number', 'tabulator', 'pivot', 'trend', 'map', 'sankey', 'gauge', 'progress', 'detail'] as const) {
+      await runSqlQuery(page, works);
+      await switchToWidget(page, type);
+      await expect
+        .poll(async () => (await dStoredWidgets(page, canvasId))[0]?.type, { message: `the widget is a ${type}`, timeout: 20_000 })
+        .toBe(type);
+      await runSqlQuery(page, fails);
+
+      // The widget shows the database's own words, under its own id.
+      await expect(page.locator(`[id="widgetError-${id}"]`), `the ${type} says its query failed`)
+        .toContainText('no_such_column', { timeout: 30_000 });
+
+      // + And a test waiting for its data stops at once, with that message, instead of timing out.
+      const waited = await waitForWidgetData(page, id, 30_000).then(() => 'drawn', (e: Error) => e.message);
+      expect(waited, `waiting on the ${type} stops on its error`).toContain('no_such_column');
+    }
+
+    // − A query that works again takes the error away.
+    await runSqlQuery(page, works);
+    await expect(page.locator(`[id="widgetError-${id}"]`), 'the error goes with the query').toHaveCount(0, { timeout: 30_000 });
   });
 });
 

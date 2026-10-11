@@ -169,7 +169,7 @@ async function getLastWidgetId(page: Page): Promise<string> {
  *  store: the widget body either contains a viz web-component (rb-value /
  *  rb-trend / rb-chart / rb-tabulator / rb-pivot-table / etc.) once data
  *  arrives, or it shows the React `<Loader2>` spinner (`.animate-spin`)
- *  while loading, or it shows a `.text-destructive` error block, or the
+ *  while loading, or it shows its `widgetError-<id>` error block, or the
  *  WidgetShell empty state ("Select to configure data"). The first signal
  *  means SUCCESS; the others diagnose the failure mode. */
 async function waitForWidgetData(
@@ -184,7 +184,7 @@ async function waitForWidgetData(
       const widget = document.getElementById(`widget-${id}`);
       if (!widget) return { phase: 'no-widget' as const };
       // Error block — surface the message immediately, no point polling.
-      const errorEl = widget.querySelector('.text-destructive');
+      const errorEl = document.getElementById(`widgetError-${id}`);
       if (errorEl) {
         return { phase: 'error' as const, message: (errorEl.textContent || '').trim().slice(0, 300) };
       }
