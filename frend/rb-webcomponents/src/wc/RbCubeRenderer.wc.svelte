@@ -2883,7 +2883,7 @@
             <div class="rb-hint-question">{ask.question}</div>
             <!-- The only place this component writes HTML: what `boldFieldNames` returns is
                  escaped text with `<strong>` in it, and nothing a hints file wrote survives as markup. -->
-            <div class="rb-hint-text">{@html boldFieldNames(ask.text)}</div>
+            <div class="rb-hint-text" id="hintText-{ask.id}">{@html boldFieldNames(ask.text)}</div>
             <button type="button" id="btnShowMe-{ask.id}" class="rb-hint-showme"
                     title="Tick what this question asks for" on:click={() => showMe(ask)}>Show Me</button>
           </div>

@@ -1357,7 +1357,7 @@ test.describe('Cube Stories — the cube demo page', () => {
       await waitForCard(theirs, shop.id);
 
       const first = asksOf(shop)[0];
-      const line = inCard(theirs, shop.id, `#hint-${first.id} .rb-hint-text`);
+      const line = inCard(theirs, shop.id, `#hintText-${first.id}`);
       await expect(line).toBeVisible({ timeout: 60_000 });
       const injected = await line.evaluate((element: Element) => ({
         shown: (element.textContent ?? '').trim(),
