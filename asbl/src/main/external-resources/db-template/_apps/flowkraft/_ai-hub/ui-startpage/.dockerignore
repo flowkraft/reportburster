@@ -1,0 +1,14 @@
+# The build context is sent to the Docker daemon whole, and these are 848 MB of it (measured
+# 2026-10-11) that no stage of the Dockerfile uses.
+#
+# node_modules is deliberate, not only for the size: the builder takes its modules from the deps
+# stage (`COPY --from=deps`), which installs them for Alpine, and a host copy landing on top of
+# them afterwards would put another platform's native binaries in the image.
+# .next is whatever was built last on the host; the builder runs `next build` itself.
+# data holds the SQLite file of a running installation and belongs to that installation only.
+node_modules
+.next
+data
+tsconfig.tsbuildinfo
+.git
+*.log
