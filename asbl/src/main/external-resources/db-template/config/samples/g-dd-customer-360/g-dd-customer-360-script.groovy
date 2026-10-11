@@ -28,76 +28,101 @@ def asDeclaredType = { String name, String type, value ->
 def customerId = userVars?.get('customerId')?.toString()
 def hasCustomerId = (customerId != null && !customerId.isEmpty())
 
-// ─── Widget: detail_dd11-detail-customer-profile (type=detail, dataSource=script) ───
+// ─── Widget: detail_dd11-detail-customer-profile (type=detail, dataSource=sql) ───
 if (!componentId || componentId == 'detail_dd11-detail-customer-profile') {
-    def detail_dd11_detail_customer_profile_data = { ->
-        // Who the account is, for the top of the call: the record itself, where it is, and who owns it.
-        dbSql.rows("""SELECT c.name AS customer,
-               c.company_name AS company,
-               c.customer_type AS type,
-               c.segment AS segment,
-               c.acquisition_channel AS acquired_through,
-               c.signup_date AS customer_since,
-               (SELECT count(*) FROM dash_demo.orders o WHERE o.customer_id = c.customer_id) AS orders,
-               g.city AS city,
-               g.country AS country,
-               c.payment_terms_days AS payment_terms_days,
-               c.credit_limit AS credit_limit,
-               e.name AS account_manager
-        FROM dash_demo.customers c
-        JOIN dash_demo.geo_cities g ON g.city_id = c.city_id
-        LEFT JOIN dash_demo.employees e ON e.employee_id = c.account_manager_id
-        WHERE c.customer_id = ?""", [customerId as Integer])
-    }()
-    ctx.reportData('detail_dd11-detail-customer-profile', detail_dd11_detail_customer_profile_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT c.name AS customer,\n'
+    sql << '       c.company_name AS company,\n'
+    sql << '       c.customer_type AS type,\n'
+    sql << '       c.segment AS segment,\n'
+    sql << '       c.acquisition_channel AS acquired_through,\n'
+    sql << '       c.signup_date AS customer_since,\n'
+    sql << '       (SELECT count(*) FROM dash_demo.orders o WHERE o.customer_id = c.customer_id) AS orders,\n'
+    sql << '       g.city AS city,\n'
+    sql << '       g.country AS country,\n'
+    sql << '       c.payment_terms_days AS payment_terms_days,\n'
+    sql << '       c.credit_limit AS credit_limit,\n'
+    sql << '       e.name AS account_manager\n'
+    sql << 'FROM dash_demo.customers c\n'
+    sql << 'JOIN dash_demo.geo_cities g ON g.city_id = c.city_id\n'
+    sql << 'LEFT JOIN dash_demo.employees e ON e.employee_id = c.account_manager_id\n'
+    if (hasCustomerId) {
+        sql << 'WHERE c.customer_id = ?\n'
+        params << asDeclaredType('customerId', 'Integer', customerId)
+    } else {
+        sql << 'WHERE 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('detail_dd11-detail-customer-profile', data)
 }
 
-// ─── Widget: number_lifetime_revenue_revenue (type=number, dataSource=script) ───
+// ─── Widget: number_lifetime_revenue_revenue (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_lifetime_revenue_revenue') {
-    def number_lifetime_revenue_revenue_data = { ->
-        // Everything the account has bought that was not cancelled.
-        dbSql.rows("""SELECT round(sum(o.total_amount), 2) AS lifetime_revenue
-        FROM dash_demo.orders o
-        WHERE o.status <> 'cancelled'
-          AND o.customer_id = ?""", [customerId as Integer])
-    }()
-    ctx.reportData('number_lifetime_revenue_revenue', number_lifetime_revenue_revenue_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT round(sum(o.total_amount), 2) AS lifetime_revenue\n'
+    sql << 'FROM dash_demo.orders o\n'
+    sql << 'WHERE o.status <> \'cancelled\'\n'
+    if (hasCustomerId) {
+        sql << '  AND o.customer_id = ?\n'
+        params << asDeclaredType('customerId', 'Integer', customerId)
+    } else {
+        sql << '  AND 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_lifetime_revenue_revenue', data)
 }
 
-// ─── Widget: number_open_invoices_invoices (type=number, dataSource=script) ───
+// ─── Widget: number_open_invoices_invoices (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_open_invoices_invoices') {
-    def number_open_invoices_invoices_data = { ->
-        // The money owed: issued and not settled.
-        dbSql.rows("""SELECT count(*) AS open_invoices
-        FROM dash_demo.invoices
-        WHERE status IN ('open', 'overdue', 'partially_paid')
-          AND customer_id = ?""", [customerId as Integer])
-    }()
-    ctx.reportData('number_open_invoices_invoices', number_open_invoices_invoices_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT count(*) AS open_invoices\n'
+    sql << 'FROM dash_demo.invoices\n'
+    sql << 'WHERE status IN (\'open\', \'overdue\', \'partially_paid\')\n'
+    if (hasCustomerId) {
+        sql << '  AND customer_id = ?\n'
+        params << asDeclaredType('customerId', 'Integer', customerId)
+    } else {
+        sql << '  AND 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_open_invoices_invoices', data)
 }
 
-// ─── Widget: number_tickets_not_closed_closed (type=number, dataSource=script) ───
+// ─── Widget: number_tickets_not_closed_closed (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_tickets_not_closed_closed') {
-    def number_tickets_not_closed_closed_data = { ->
-        // Still on the account: open, pending, or resolved and not yet closed out.
-        dbSql.rows("""SELECT count(*) AS tickets_not_closed
-        FROM dash_demo.support_tickets
-        WHERE status <> 'closed'
-          AND customer_id = ?""", [customerId as Integer])
-    }()
-    ctx.reportData('number_tickets_not_closed_closed', number_tickets_not_closed_closed_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT count(*) AS tickets_not_closed\n'
+    sql << 'FROM dash_demo.support_tickets\n'
+    sql << 'WHERE status <> \'closed\'\n'
+    if (hasCustomerId) {
+        sql << '  AND customer_id = ?\n'
+        params << asDeclaredType('customerId', 'Integer', customerId)
+    } else {
+        sql << '  AND 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_tickets_not_closed_closed', data)
 }
 
-// ─── Widget: number_care_plan_mrr_mrr (type=number, dataSource=script) ───
+// ─── Widget: number_care_plan_mrr_mrr (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_care_plan_mrr_mrr') {
-    def number_care_plan_mrr_mrr_data = { ->
-        // What the account pays every month for its care plan, if it has one.
-        dbSql.rows("""SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr
-        FROM dash_demo.subscriptions
-        WHERE cancel_date IS NULL
-          AND customer_id = ?""", [customerId as Integer])
-    }()
-    ctx.reportData('number_care_plan_mrr_mrr', number_care_plan_mrr_mrr_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT round(coalesce(sum(mrr), 0), 2) AS care_plan_mrr\n'
+    sql << 'FROM dash_demo.subscriptions\n'
+    sql << 'WHERE cancel_date IS NULL\n'
+    if (hasCustomerId) {
+        sql << '  AND customer_id = ?\n'
+        params << asDeclaredType('customerId', 'Integer', customerId)
+    } else {
+        sql << '  AND 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_care_plan_mrr_mrr', data)
 }
 
 // ─── Widget: chart_dd11-chart-orders-per-month (type=chart, dataSource=sql) ───
