@@ -83,8 +83,9 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
       ? `Bind to ${paramRefOf(offer.id)} — set by the server for whoever is looking`
       : `Bind to dashboard filter ${paramRefOf(offer.id)}`;
 
-  /** The options of the bind dropdown: two groups, and the server's said to be the server's. */
-  const offerOptions = () => {
+  /** The options of the bind dropdown: two groups, and the server's said to be the server's, as
+   *  `<selectId>-serverGroup`. */
+  const offerOptions = (selectId: string) => {
     const declared = offers.filter((offer) => !offer.fromServer);
     const server = offers.filter((offer) => offer.fromServer);
     return (
@@ -93,7 +94,7 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
           <option key={offer.id} value={offer.id}>{offer.id}</option>
         ))}
         {server.length > 0 && (
-          <optgroup label="Set by the server">
+          <optgroup id={`${selectId}-serverGroup`} label="Set by the server">
             {server.map((offer) => (
               <option key={offer.id} value={offer.id}>{offer.id}</option>
             ))}
@@ -192,7 +193,7 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
               title="Bind to a dashboard filter, or to a value the server sets"
             >
               <option value="">{'${}'}</option>
-              {offerOptions()}
+              {offerOptions(`selectBindParam${id}-${i}`)}
             </select>
           )
         )}
@@ -315,7 +316,7 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
                         title="Bind to a dashboard filter, or to a value the server sets"
                       >
                         <option value="">{'${}'}</option>
-                        {offerOptions()}
+                        {offerOptions(`selectBindParam-${i}`)}
                       </select>
                     )
                   )}

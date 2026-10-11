@@ -5658,7 +5658,7 @@ return ctx.dbSql.rows(sql)`,
         expect(declared).not.toContain('dp_user_email');
 
         // Then the server's, every one of them, in the order the server gave.
-        const group = page.locator('#selectBindParam-0 optgroup[label="Set by the server"]');
+        const group = page.locator('#selectBindParam-0-serverGroup');
         await expect(group).toHaveCount(1);
         const offered = await group.locator('option')
           .evaluateAll((els) => els.map((e) => (e as HTMLOptionElement).value));
@@ -5883,7 +5883,7 @@ return ctx.dbSql.rows(sql)`,
       expect(declared).not.toContain('dp_user_id');
 
       // Then the server's, every one of them, in the order the server gave.
-      const group = page.locator('#selectCubeBindParam-0 optgroup[label="Set by the server"]');
+      const group = page.locator('#selectCubeBindParam-0-serverGroup');
       await expect(group).toHaveCount(1);
       const offered = await group.locator('option')
         .evaluateAll((els) => els.map((e) => (e as HTMLOptionElement).value));
