@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useSaveStatusStore, type SaveStatus } from "@/lib/stores/save-status-store";
 import { usePublishStatusStore } from "@/lib/stores/publish-status-store";
+import { unpublishDashboard } from "@/lib/explore-data/rb-api";
+import { listShareLinks } from "@/lib/explore-data/share-api";
 // lucide-react removed — icons replaced with inline heroicons below
 import { ExportDialog } from "./export/ExportDialog";
 import { ShareDialog } from "./export/ShareDialog";
@@ -79,9 +81,46 @@ export function CanvasToolbar({ canvasId, onSave, onUndo, onRedo, canUndo, canRe
   const [editing, setEditing] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  // Unpublishing takes a dashboard away, so it says what goes first (D2): the dashboard's own
+  // address and how many share links open it (null while that number is not known).
+  const [showUnpublish, setShowUnpublish] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
+  const [shareLinkCount, setShareLinkCount] = useState<number | null>(null);
+  const setExportedReportCode = useCanvasStore((s) => s.setExportedReportCode);
+  const markPublishDirty = usePublishStatusStore((s) => s.markDirty);
   const router = useRouter();
 
   const saving = saveStatus === "saving";
+
+  useEffect(() => {
+    if (!showUnpublish || !exportedReportCode) return;
+    let alive = true;
+    listShareLinks(exportedReportCode)
+      .then((links) => { if (alive) setShareLinkCount(links.length); })
+      .catch(() => { if (alive) setShareLinkCount(null); });
+    return () => { alive = false; };
+  }, [showUnpublish, exportedReportCode]);
+
+  const confirmUnpublish = async () => {
+    setUnpublishing(true);
+    try {
+      await unpublishDashboard(canvasId);
+      // The dashboard is gone, so there is nothing to share and everything to publish again.
+      setExportedReportCode(null);
+      markPublishDirty();
+      setShowUnpublish(false);
+    } finally {
+      setUnpublishing(false);
+    }
+  };
+
+  // The same sentence the canvas list's delete dialog says, for the same facts.
+  const linksPhrase =
+    shareLinkCount === null
+      ? "its share links"
+      : shareLinkCount === 1
+        ? "its 1 share link"
+        : `its ${shareLinkCount} share links`;
 
   return (
     <div className="h-12 shrink-0 border-b border-base-300 bg-base-100/80 backdrop-blur-sm flex items-center justify-between px-4">
@@ -211,7 +250,67 @@ export function CanvasToolbar({ canvasId, onSave, onUndo, onRedo, canUndo, canRe
             Share
           </button>
         )}
+
+        {/* Unpublish — the one way to take a published dashboard back. There is no publish menu to
+            hide it in, so it sits next to Share, which exists under the same condition. */}
+        {exportedReportCode && (
+          <button
+            id="btnUnpublishDashboard"
+            onClick={() => setShowUnpublish(true)}
+            title="Take the published dashboard down"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-base-300 text-base-content hover:bg-base-200 transition-colors"
+          >
+            {/* Heroicon: arrow-down-tray, the mirror of Publish's arrow-up-tray */}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+            Unpublish
+          </button>
+        )}
       </div>
+
+      {showUnpublish && exportedReportCode && (
+        <div
+          id="overlayUnpublishDashboard"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => !unpublishing && setShowUnpublish(false)}
+        >
+          <div
+            id="dlgUnpublishDashboard"
+            className="bg-base-100 border border-base-300 rounded-xl shadow-lg w-full max-w-sm mx-4 p-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-sm font-semibold text-base-content">Unpublish this dashboard?</h2>
+            <p id="txtUnpublishConsequences" className="text-xs text-base-content/60 mt-2">
+              <span className="font-medium text-base-content">/dashboard/{exportedReportCode}</span>
+              {shareLinkCount === 0
+                ? " stops answering."
+                : ` and ${linksPhrase} stop answering.`}
+              {" "}This canvas stays, and you can publish it again.
+            </p>
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <button
+                id="btnCancelUnpublish"
+                type="button"
+                onClick={() => setShowUnpublish(false)}
+                disabled={unpublishing}
+                className="px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 text-base-content hover:bg-base-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                id="btnConfirmUnpublish"
+                type="button"
+                onClick={confirmUnpublish}
+                disabled={unpublishing}
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-error text-error-content hover:bg-error/90 transition-colors disabled:opacity-60"
+              >
+                {unpublishing ? "Unpublishing…" : "Unpublish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ExportDialog open={showExport} onClose={() => setShowExport(false)} />
       {exportedReportCode && (

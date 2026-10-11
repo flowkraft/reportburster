@@ -4520,4 +4520,116 @@ test('(canvas mechanics) M58 Clicks that filter the dashboard, in the Canvas and
     if (reportId) await deleteReportAsAdmin(reportId);
   }
 });
+
+/**
+ * What a signed-out visitor gets for a share link: 200 while it opens the dashboard, 404 once the
+ * link has been revoked or the dashboard taken down - `DashboardController.viewDashboard` answers
+ * the same page for both, which is the point: a link that was taken back says nothing about what
+ * it held. A context of its own, because the author's own session would answer 200 either way.
+ */
+async function shareLinkStatus(page: Page, shareUrl: string): Promise<number> {
+  const probe = await page.context().browser()!.newContext();
+  try {
+    return (await probe.request.get(shareUrl)).status();
+  } finally {
+    await probe.close();
+  }
+}
+
+/** A canvas with one KPI on it: the least a dashboard can be published from. */
+async function oneKpiCanvas(page: Page, name: string): Promise<string> {
+  await createFreshCanvas(page, CANVAS_LIST_URL, name);
+  await selectConnectionByCode(page, DASH_DEMO_CONNECTION);
+  const canvasId = canvasIdOf(page);
+  const kpi = await eNewVisualWidget(page, 'orders');
+  await addAggregation(page, 0, 'COUNT', 'order_id');
+  await runVisualQuery(page);
+  await switchToWidget(page, 'number');
+  await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+  return canvasId;
+}
+
+/** Make a plain share link for the dashboard the toolbar is showing, and hand back its URL. */
+async function createPlainShareLink(page: Page): Promise<string> {
+  await page.locator('#btnShareDashboard').click();
+  await page.locator('#shareDialog').waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#btnCreateShareLink').click();
+  await page.locator('#shareNewUrl').waitFor({ state: 'visible', timeout: 15_000 });
+  const url = await page.locator('#shareNewUrl').inputValue();
+  await page.locator('#btnShareClose').click();
+  return url;
+}
+
+test('(canvas mechanics) M59 Deleting a canvas says what goes with it, and Unpublish takes a dashboard back', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let keptReportId: string | undefined;
+
+  try {
+    // ── Keep the published dashboard ──────────────────────────────────────
+    // A canvas, published, with one share link open on it.
+    const keepCanvas = await oneKpiCanvas(page, 'E2E mech M59 Keep published');
+    const kept = await publishDashboard(page);
+    keptReportId = kept.reportId;
+    const keptLink = await createPlainShareLink(page);
+    expect(await shareLinkStatus(page, keptLink), 'the link opens the dashboard it was made for')
+      .toBe(200);
+
+    // The dialog says what goes with the canvas - it used to delete the dashboard in silence -
+    // and the checkbox is what the sentence changes with.
+    await page.goto(CANVAS_LIST_URL);
+    await page.waitForLoadState('networkidle');
+    await page.locator(`[id="btnDeleteCanvas-${keepCanvas}"]`).click({ force: true });
+    const said = page.locator('#txtDeleteCanvasPublished');
+    await expect(said, 'the dialog names the dashboard and the link').toContainText(
+      `/dashboard/${keptReportId}`);
+    await expect(said, 'and says they go too').toContainText('its 1 share link are deleted too');
+    await page.locator('#chkKeepPublished').check();
+    await expect(said, 'ticked, the same sentence says they stay')
+      .toContainText('its 1 share link keep answering');
+    await page.locator('#btnConfirmDeleteCanvas').click();
+    await page.waitForTimeout(1_500);
+
+    await expect(page.locator(`[id="canvasCard-${keepCanvas}"]`), 'the canvas is gone')
+      .toHaveCount(0);
+    expect(await shareLinkStatus(page, keptLink), 'and the link it published still answers')
+      .toBe(200);
+
+    // ── Unpublish, then delete with everything ────────────────────────────
+    const canvas = await oneKpiCanvas(page, 'E2E mech M59 Unpublish');
+    const first = await publishDashboard(page);
+    const firstLink = await createPlainShareLink(page);
+    expect(await shareLinkStatus(page, firstLink), 'that link answers too').toBe(200);
+
+    // Unpublish names the same facts, and takes the dashboard and its links away.
+    await page.locator('#btnUnpublishDashboard').click();
+    await expect(page.locator('#txtUnpublishConsequences'), 'it says what stops answering')
+      .toContainText(`/dashboard/${first.reportId}`);
+    await expect(page.locator('#txtUnpublishConsequences'), 'the link among it')
+      .toContainText('its 1 share link stop answering');
+    await page.locator('#btnConfirmUnpublish').click();
+    await expect(page.locator('#btnUnpublishDashboard'), 'there is nothing left to unpublish')
+      .toHaveCount(0, { timeout: 15_000 });
+    await expect(page.locator('#btnShareDashboard'), 'nor anything to share').toHaveCount(0);
+    await expect(page.locator('#btnPublishDashboard'), 'and the canvas can be published again')
+      .toBeEnabled();
+    expect(await shareLinkStatus(page, firstLink), 'the link of the dashboard that went is gone')
+      .toBe(404);
+
+    // Published again, the canvas has a dashboard and a link of its own once more.
+    const second = await publishDashboard(page);
+    const secondLink = await createPlainShareLink(page);
+    expect(await shareLinkStatus(page, secondLink), 'the new link answers').toBe(200);
+
+    // Deleted with the checkbox left alone, everything goes: the plain way round.
+    await deleteCanvasViaUI(page, canvas);
+    await expect(page.locator(`[id="canvasCard-${canvas}"]`), 'the canvas is gone').toHaveCount(0);
+    expect(await shareLinkStatus(page, secondLink), 'and so is the link of its dashboard')
+      .toBe(404);
+    expect(second.reportId, 'the same canvas name publishes under the same code')
+      .toBe(first.reportId);
+  } finally {
+    // The dashboard the first canvas left behind on purpose is the test's to take back.
+    if (keptReportId) await deleteReportAsAdmin(keptReportId);
+  }
+});
 });

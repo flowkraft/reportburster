@@ -211,6 +211,32 @@ public class ShareTokenService {
 		return links;
 	}
 
+	/**
+	 * Revoke every link of one report, because the report itself is going.
+	 *
+	 * A link whose report has been deleted is not harmless: it opens a page that cannot answer, and
+	 * it stays in the list of what is shared as if it still did. So unpublishing a dashboard and
+	 * deleting the canvas that published it both say what they take away, and take it away for
+	 * real (`ExploreDataService`).
+	 *
+	 * @return how many links were revoked, which is what the person was told would go.
+	 */
+	public int revokeAllFor(String reportId) {
+		if (StringUtils.isBlank(reportId))
+			return 0;
+		try (Connection conn = db.getConnection(); PreparedStatement ps = conn.prepareStatement(
+				"DELETE FROM share_token WHERE resource_type = ? AND resource_id = ?")) {
+			ps.setString(1, RESOURCE_REPORT);
+			ps.setString(2, reportId);
+			int revoked = ps.executeUpdate();
+			if (revoked > 0)
+				log.info("Revoked {} share link(s) of report '{}'", revoked, reportId);
+			return revoked;
+		} catch (SQLException e) {
+			throw new IllegalStateException("Could not revoke the share links of " + reportId, e);
+		}
+	}
+
 	/** Revocation is deletion: the link stops working on the next page load. */
 	public void revoke(long shareTokenId) {
 		try (Connection conn = db.getConnection();

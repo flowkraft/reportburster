@@ -69,13 +69,28 @@ export function canvasIdOf(page: Page): string {
   return page.url().split('/').pop()!;
 }
 
-/** Delete a canvas from the canvas list, as a person does. */
-export async function deleteCanvasViaUI(page: Page, canvasId: string): Promise<void> {
+/**
+ * Delete a canvas from the canvas list, as a person does.
+ *
+ * `keepPublished` ticks the dialog's own checkbox, which leaves the dashboard this canvas published
+ * and its share links answering (D2). The dialog offers it only for a canvas that has published
+ * something, so asking for it where there is nothing published fails here rather than quietly
+ * deleting more than the test meant.
+ */
+export async function deleteCanvasViaUI(
+  page: Page,
+  canvasId: string,
+  options: { keepPublished?: boolean } = {},
+): Promise<void> {
   await page.goto(CANVAS_LIST_URL);
   await page.waitForLoadState('networkidle');
   // The delete button is opacity-0 until hover; force bypasses the visibility check
   await page.locator(`[id="btnDeleteCanvas-${canvasId}"]`).click({ force: true });
   await page.locator('#btnConfirmDeleteCanvas').waitFor({ state: 'visible', timeout: 5_000 });
+  if (options.keepPublished) {
+    await page.locator('#chkKeepPublished').waitFor({ state: 'visible', timeout: 5_000 });
+    await page.locator('#chkKeepPublished').check();
+  }
   await page.locator('#btnConfirmDeleteCanvas').click();
   await page.waitForTimeout(1_500);
 }
