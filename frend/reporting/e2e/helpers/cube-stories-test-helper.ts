@@ -371,7 +371,7 @@ export async function openIndustry(frame: Frame, slug: string): Promise<void> {
   const panel = frame.locator(`#industry-${slug}`);
   await expect(panel, `the ${slug} panel is on the page`).toBeVisible({ timeout: 60_000 });
   if (!(await panel.evaluate((el) => (el as HTMLDetailsElement).open))) {
-    await panel.locator('summary').click();
+    await frame.locator(`#industry-${slug}-bar`).click();
   }
   await expect
     .poll(async () => panel.evaluate((el) => (el as HTMLDetailsElement).open), { timeout: 15_000 })
@@ -388,9 +388,9 @@ export async function openIndustry(frame: Frame, slug: string): Promise<void> {
  * starts with this call, so a test never has to know which panel is open.
  */
 export async function openCardsPanel(frame: Frame, cubeId: string): Promise<void> {
-  const panel = frame.locator(`.industry:has(#cube-${cubeId})`);
+  const panel = frame.locator(`#cubeStoriesRoot > [id^="industry-"]:has(#cube-${cubeId})`);
   if ((await panel.count()) === 0) return;
-  await panel.first().evaluate((el) => { (el as HTMLDetailsElement).open = true; });
+  await panel.evaluate((el) => { (el as HTMLDetailsElement).open = true; });
 }
 
 /** The card is on the page, its component has mounted and its first answer is drawn. */
@@ -743,22 +743,22 @@ export function shippedCubeCode(card: CubeCard): string {
  * industry.
  */
 export async function expectTheWholePage(frame: Frame): Promise<void> {
-  await expect(frame.locator('.rb-cube-stories-root')).toBeVisible({ timeout: 60_000 });
-  await expect(frame.locator('.rb-cube-stories-root .industry'), 'seven industries')
+  await expect(frame.locator('#cubeStoriesRoot')).toBeVisible({ timeout: 60_000 });
+  await expect(frame.locator('#cubeStoriesRoot > [id^="industry-"]'), 'seven industries')
     .toHaveCount(CUBE_STORIES_PANELS.length, { timeout: 60_000 });
-  await expect(frame.locator('.rb-cube-stories-root .card'))
+  await expect(frame.locator('#cubeStoriesRoot > [id^="industry-"] > [id^="cube-"]'))
     .toHaveCount(CUBE_STORIES_PAGE_CARDS.length, { timeout: 60_000 });
 
   // The bars, in the page's order, each saying which industry it is and how many cubes it holds.
   expect(
-    await frame.locator('.rb-cube-stories-root .industry').evaluateAll(
+    await frame.locator('#cubeStoriesRoot > [id^="industry-"]').evaluateAll(
       (panels) => panels.map((panel) => panel.id)),
     'the industries are in the order the owner asked for',
   ).toEqual(CUBE_STORIES_PANELS.map((panel) => `industry-${panel.slug}`));
   for (const panel of CUBE_STORIES_PANELS) {
-    const summary = frame.locator(`#industry-${panel.slug} > summary`);
-    await expect(summary, `the ${panel.slug} bar names its industry`).toContainText(panel.name);
-    await expect(summary.locator('.industry-count'), `and how many cubes are in it`)
+    await expect(frame.locator(`#industry-${panel.slug}-bar`), `the ${panel.slug} bar names its industry`)
+      .toContainText(panel.name);
+    await expect(frame.locator(`#industry-${panel.slug}-count`), `and how many cubes are in it`)
       .toHaveText(panel.cubes);
   }
 

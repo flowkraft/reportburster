@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<div class="rb-cube-stories-root">
+<div class="rb-cube-stories-root" id="cubeStoriesRoot">
   <style>
     .rb-cube-stories-root {
       all: initial;
@@ -179,7 +179,7 @@
   <!-- The industries: seven panels, one open at a time. Opening one closes the rest,
        which `name="industries"` asks the browser for and no script here does. -->
   <details name="industries" class="industry" id="industry-crm-sales" open>
-    <summary>CRM &amp; Sales <span class="industry-count">1 cube</span></summary>
+    <summary id="industry-crm-sales-bar">CRM &amp; Sales <span class="industry-count" id="industry-crm-sales-count">1 cube</span></summary>
 
     <div class="card" id="cube-sales-pipeline">
       <p class="card-area" id="cube-sales-pipeline-area">CRM &amp; Sales</p>
@@ -191,7 +191,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-erp-finance">
-    <summary>ERP &amp; Finance <span class="industry-count">4 cubes</span></summary>
+    <summary id="industry-erp-finance-bar">ERP &amp; Finance <span class="industry-count" id="industry-erp-finance-count">4 cubes</span></summary>
 
     <div class="card" id="cube-customer-invoices">
       <p class="card-area" id="cube-customer-invoices-area">ERP &amp; Finance</p>
@@ -227,7 +227,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-retail-ecommerce">
-    <summary>Retail &amp; E-commerce <span class="industry-count">1 cube</span></summary>
+    <summary id="industry-retail-ecommerce-bar">Retail &amp; E-commerce <span class="industry-count" id="industry-retail-ecommerce-count">1 cube</span></summary>
 
     <div class="card" id="cube-online-sales">
       <p class="card-area" id="cube-online-sales-area">Retail &amp; E-commerce</p>
@@ -239,7 +239,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-transport-logistics">
-    <summary>Transport &amp; Logistics <span class="industry-count">2 cubes</span></summary>
+    <summary id="industry-transport-logistics-bar">Transport &amp; Logistics <span class="industry-count" id="industry-transport-logistics-count">2 cubes</span></summary>
 
     <div class="card" id="cube-depot-network">
       <p class="card-area" id="cube-depot-network-area">Transport &amp; Logistics</p>
@@ -259,7 +259,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-customer-support">
-    <summary>Customer Support <span class="industry-count">1 cube</span></summary>
+    <summary id="industry-customer-support-bar">Customer Support <span class="industry-count" id="industry-customer-support-count">1 cube</span></summary>
 
     <div class="card" id="cube-support-desk">
       <p class="card-area" id="cube-support-desk-area">Customer Support</p>
@@ -272,7 +272,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-education">
-    <summary>Education <span class="industry-count">2 cubes</span></summary>
+    <summary id="industry-education-bar">Education <span class="industry-count" id="industry-education-count">2 cubes</span></summary>
 
     <div class="card" id="cube-student-enrollments">
       <p class="card-area" id="cube-student-enrollments-area">Education</p>
@@ -292,7 +292,7 @@
   </details>
 
   <details name="industries" class="industry" id="industry-northwind">
-    <summary>Northwind <span class="industry-count">5 cubes</span></summary>
+    <summary id="industry-northwind-bar">Northwind <span class="industry-count" id="industry-northwind-count">5 cubes</span></summary>
 
     <div class="card" id="cube-northwind-customers">
       <p class="card-area" id="cube-northwind-customers-area">Northwind</p>
