@@ -463,7 +463,7 @@ async function boxOf(frame: Frame, cubeId: string, member: string, kind: 'dim' |
 /** Every box this card has ticked, as the tree's own ids say it. */
 async function tickedNow(frame: Frame, cubeId: string): Promise<string[]> {
   return cardRoot(frame, cubeId).evaluate((card) =>
-    Array.from(card.querySelectorAll('input[type="checkbox"]:checked'))
+    Array.from(card.querySelectorAll('[id^="chk-"]:checked'))
       .map((box) => (box as HTMLInputElement).id)
       .filter((id) => id.startsWith('chk-dim-') || id.startsWith('chk-meas-')
         || id.startsWith('chk-seg-') || id.startsWith('chk-hier-'))
@@ -648,7 +648,7 @@ export async function expectStoriesReadAsStories(
 
   let bolded = 0;
   for (const ask of asks) {
-    const line = inCard(frame, card.id, `#hint-${ask.id} .rb-hint-text`);
+    const line = inCard(frame, card.id, `#hintText-${ask.id}`);
     const names = [...ask.text.matchAll(/\*\*([^*]+)\*\*/g)].map((pair) => pair[1]);
     if (names.length === 0) continue;
     bolded += names.length;
@@ -776,9 +776,9 @@ export async function expectTheWholePage(frame: Frame): Promise<void> {
     const card = cardOf(cubeId);
     await openCardsPanel(frame, card.id);
     await expect(cardRoot(frame, card.id), `the ${card.id} card is on the page`).toBeVisible();
-    await expect(inCard(frame, card.id, '.card-title')).toHaveText(card.title);
+    await expect(frame.locator(`#cube-${card.id}-title`)).toHaveText(card.title);
     await expect(frame.locator(`#cube-${card.id}-area`)).toHaveText(card.area);
-    await expect(inCard(frame, card.id, '.card-grain')).toContainText('Grain:');
+    await expect(frame.locator(`#cube-${card.id}-grain`)).toContainText('Grain:');
     await expect(frame.locator(`#industry-${panelOf(card.id).slug} #cube-${card.id}`),
       `and it is in the ${panelOf(card.id).name} panel`).toHaveCount(1);
 
@@ -792,13 +792,14 @@ export async function expectTheWholePage(frame: Frame): Promise<void> {
 
     // What the cube is, said once and where it is read: the component's own line, under the
     // header, and the page no longer repeats it in a small grey paragraph of its own (D6).
-    await expect(inCard(frame, card.id, '.rb-cube-about'), `what the ${card.id} cube is`)
-      .toHaveCount(1);
-    await expect(inCard(frame, card.id, '.rb-cube-about')).not.toBeEmpty();
-    await expect(inCard(frame, card.id, '.rb-cube-desc'),
-      'the description is not drawn in the class of the small notes').toHaveCount(0);
-    await expect(inCard(frame, card.id, '.card-description'),
-      `and the ${card.id} card does not say it a second time`).toHaveCount(0);
+    const about = inCard(frame, card.id, '#cubeAbout');
+    await expect(about, `what the ${card.id} cube is`).toHaveCount(1);
+    await expect(about).not.toBeEmpty();
+    await expect(about, 'the description is not drawn in the class of the small notes')
+      .not.toHaveClass(/\brb-cube-desc\b/);
+    const said = ((await about.textContent()) ?? '').trim();
+    expect(((await cardRoot(frame, card.id).textContent()) ?? '').split(said).length - 1,
+      `and the ${card.id} card does not say it a second time`).toBe(1);
   }
 }
 
