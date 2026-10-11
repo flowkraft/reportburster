@@ -1188,7 +1188,7 @@ electronBeforeAfterAllTest(
         // Its own title already says what the page is for, and stays as it is (D2).
         await expect(page.locator('#dashTitle')).toHaveText('Cube Stories', { timeout: 30000 });
         await expect(page.locator('#dashSubtitle')).toContainText('tick a field', { timeout: 10000 });
-        await expect(frame.locator('.rb-cube-stories-root .card'))
+        await expect(frame.locator('#cubeStoriesRoot > [id^="industry-"] > [id^="cube-"]'))
           .toHaveCount(CUBE_STORIES_PAGE_CARDS.length, { timeout: 60000 });
         for (const cubeId of CUBE_STORIES_PAGE_CARDS) {
           // A card in a closed industry panel is not visible; open its panel the way a reader does.
@@ -1236,7 +1236,7 @@ electronBeforeAfterAllTest(
           const resolved = getComputedStyle(probe).backgroundColor;
           probe.style.background = 'rgb(248, 250, 252)';
           const light = getComputedStyle(probe).backgroundColor;
-          const root = getComputedStyle(document.querySelector('.rb-cube-stories-root')!).backgroundColor;
+          const root = getComputedStyle(document.getElementById('cubeStoriesRoot')!).backgroundColor;
           probe.remove();
           return [root, resolved, light];
         });
