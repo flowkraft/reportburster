@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { TableSchema } from "@/lib/explore-data/types";
 import type { CubeInfo } from "@/lib/explore-data/rb-api";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
-import { findTable } from "@/lib/explore-data/table-ref";
+import { findTable, refForTable } from "@/lib/explore-data/table-ref";
 import { getColumnIcon, getColumnIconLabel } from "@/lib/explore-data/column-icons";
 import { cn } from "@/lib/utils";
 import {
@@ -28,7 +28,13 @@ interface DataStepProps {
   // The currently-selected value: either a table name or a cube id
   value: string;
   valueKind: "table" | "cube";
-  onPickTable: (table: string) => void;
+  /** The connection's default schema, so a table in it keeps its bare name. */
+  defaultSchema?: string | null;
+  /** The table the author picked, and the schema it lives in when that is not the
+   *  connection's default one (`refForTable`): a table of another schema is only itself
+   *  once its schema travels with it, in the query, in the SQL and in the pane that
+   *  filters by it. */
+  onPickTable: (table: string, tableSchema?: string) => void;
   onPickCube: (cubeId: string) => void;
 }
 
@@ -38,7 +44,7 @@ interface DataStepProps {
 const TABLE_PREFIX = "tbl:";
 const CUBE_PREFIX = "cube:";
 
-export function DataStep({ tables, cubes = [], value, valueKind, onPickTable, onPickCube }: DataStepProps) {
+export function DataStep({ tables, cubes = [], value, valueKind, defaultSchema, onPickTable, onPickCube }: DataStepProps) {
   const [open, setOpen] = useState(false);
 
   const selectedTable = valueKind === "table" ? findTable(tables, value) : undefined;
@@ -95,7 +101,7 @@ export function DataStep({ tables, cubes = [], value, valueKind, onPickTable, on
                         value={itemValue}
                         keywords={[t.tableName]}
                         onSelect={() => {
-                          onPickTable(t.tableName);
+                          onPickTable(t.tableName, refForTable(t, { notes: null, tables, defaultSchema }).schema);
                           setOpen(false);
                         }}
                       >

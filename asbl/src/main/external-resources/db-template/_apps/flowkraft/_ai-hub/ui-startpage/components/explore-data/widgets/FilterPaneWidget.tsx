@@ -42,6 +42,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const toggleExploreSelection = useCanvasStore((s) => s.toggleExploreSelection);
   const setExploreFieldStates = useCanvasStore((s) => s.setExploreFieldStates);
   const widgets = useCanvasStore((s) => s.widgets);
+  const updateWidgetDataSource = useCanvasStore((s) => s.updateWidgetDataSource);
 
   const { config: dslMap, updateConfig } = useDslConfig(widgetId, "filterpane");
 
@@ -94,13 +95,18 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     // 1000`, which SQL Server, Oracle and Db2 reject outright — the pane's value
     // list came back empty on all three.
     const dialect = dialectFor(getConnectionType(connectionId));
-    executeQuery(
-      connectionId,
-      buildDistinctValuesSql(tableRef, field, DISTINCT_VALUES_LIMIT, dialect),
-    )
+    const sql = buildDistinctValuesSql(tableRef, field, DISTINCT_VALUES_LIMIT, dialect);
+    // The same query, kept on the widget, is the one the published dashboard fetches this pane's
+    // value list with (`ScriptAssembler` writes a block for it, `resolveSql` prefers `paneSql`).
+    // Without it the published pane asked its report for the widget's own rows and counted the
+    // values of whatever came back, which is the first 500 rows of the table and not its values.
+    const ds = widget?.dataSource;
+    if (ds && ds.paneSql !== sql) updateWidgetDataSource(widgetId, { ...ds, paneSql: sql });
+    executeQuery(connectionId, sql)
       .then((res) => setRows(res.data))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectionId, field, table, tableSchema]);
 
   // Recompute associative-exploration field states. Reads filter-pane fields
@@ -141,6 +147,7 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
 
     const el = ref.current as HTMLElement & {
       data?: unknown;
+      componentId?: string;
       field?: string;
       label?: string;
       sort?: string;
@@ -166,6 +173,10 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
       : cfgShowSearchRaw === false ? false
       : "auto";
 
+    // Which pane this is, so its own ids tell it apart from a second pane on the same canvas
+    // (`paneValue-<widget>-<value>`): the widget's id, the way a published dashboard gives the pane
+    // its component id.
+    el.componentId = widgetId;
     el.field = field;
     el.label = cfgLabel || field;
     el.sort = pickedSort;

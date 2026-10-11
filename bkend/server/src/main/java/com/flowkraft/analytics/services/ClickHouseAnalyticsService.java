@@ -155,8 +155,6 @@ public class ClickHouseAnalyticsService {
         String connectionCode = request.getConnectionCode();
         int limit = request.getLimit() > 0 ? request.getLimit() : 500;
 
-        String whereClause = buildExploreWhereClause(request.getSelections());
-
         Map<String, ExploreResponse.FieldState> fieldStates = new LinkedHashMap<>();
 
         for (String field : request.getFields()) {
@@ -170,6 +168,12 @@ public class ClickHouseAnalyticsService {
                     + " LIMIT " + limit;
 
             List<String> allValues = executeDistinctQuery(connectionCode, allSql, field);
+
+            // What the OTHER panes allow: this field's own picks are left out, so a multi-select
+            // pane does not draw the values it has not picked yet as excluded by the one it has
+            // (`ExploreSelections`, the one place the rule lives).
+            String whereClause = ExploreSelections.where(request.getSelections(), field,
+                    name -> "`" + name.replace("`", "``") + "`");
 
             if (whereClause.isEmpty()) {
                 fieldStates.put(field, new ExploreResponse.FieldState(allValues, new ArrayList<>()));
@@ -210,17 +214,6 @@ public class ClickHouseAnalyticsService {
             if (val != null) values.add(String.valueOf(val));
         }
         return values;
-    }
-
-    private String buildExploreWhereClause(List<ExploreRequest.Selection> selections) {
-        if (selections == null || selections.isEmpty()) return "";
-        List<String> conditions = new ArrayList<>();
-        for (ExploreRequest.Selection sel : selections) {
-            String quotedField = "`" + sel.getField().replace("`", "``") + "`";
-            String escapedValue = sel.getValue().replace("'", "''");
-            conditions.add(quotedField + " = '" + escapedValue + "'");
-        }
-        return String.join(" AND ", conditions);
     }
 
     /**

@@ -328,6 +328,13 @@ export interface BuildSqlOptions {
    *  browser's own date when omitted; the tests and the committed case SQL pin
    *  it, so their ranges stay true tomorrow. */
   today?: string;
+  /** The conditions the canvas's filter panes add to this widget: one `in` filter per pane field
+   *  of the widget's table, each bound to that field's own parameter (`pane-filters.ts`). They are
+   *  written after the query's own filters and always with AND, because a slicer narrows what the
+   *  query already asks - including a query that matches ANY of its own filters, where appending
+   *  to the OR group would widen it instead. Omitted (every canvas with no pane) writes exactly
+   *  the SQL this builder has always written. */
+  paneFilters?: readonly { column: string; operator: string; value: string }[];
 }
 
 export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): string {
@@ -555,104 +562,128 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   // answer every row of the table, so matching any leaves the filter out
   // instead.
   const notApplied: string | null = matchAny ? null : "1=1";
-  if (query.filters.length > 0) {
-    const conditions = query.filters.map((f): string | null => {
-      // An empty value box means the filter is not applied (the owner,
-      // 2026-09-27; the rule itself is `valueBoxIsEmpty`, next to the operator
-      // lists). The filter is left out of the WHERE, so the query answers with
-      // every row while the user is still typing. `in` / `not in` keep the
-      // `1=1` they have always written: the same outcome, and their SQL text
-      // does not change.
-      if (valueBoxIsEmpty(f)) {
-        return f.operator === "in" || f.operator === "not_in" ? notApplied : null;
-      }
-      // Comparison operators use the type-aware LHS (read as a date for a
-      // temporal column); IS NULL / IS NOT NULL use the raw column ref because
-      // NULL semantics are independent of value encoding.
-      const cmp = filterLhs(f.column);
-      const raw = quote(f.column);
-      const param = isParamRef(f.value);
-      // A date filter on a temporal column means the whole day, not the instant
-      // at midnight: `created_at = '2026-01-31'` used to answer nothing at all
-      // for a row stamped 2026-01-31 14:05, and `<= '2026-01-31'` left that row
-      // out as well. The six comparisons become half-open ranges over the day
-      // (`wholeDayCondition`, below). A value that is not a plain `yyyy-mm-dd`
-      // keeps the form it had. A value bound to a dashboard parameter is not a
-      // date when the SQL is built, so `nextDay` refuses it; a parameter the
-      // dashboard declared as a *Date* is nevertheless a whole day, and
-      // `dayParamCondition` writes that day's range through a derived
-      // parameter. A parameter of any other declared type, and `equals` /
-      // `not equals` on a Date one, go on meaning the instant the parameter
-      // names, i.e. midnight on a timestamp column.
-      // A relative date filter names a span of whole days that today's date
-      // decides - "this month", "in the last 3 months" - so it is asked as that
-      // span and nothing else: a null here (a "last N" whose value box holds no
-      // usable count) leaves the filter out, the way a half-typed value does,
-      // instead of falling through to the comparisons below and asking whether
-      // the column equals the count.
-      if (isRelativeDateOp(f.operator)) {
-        return relativeDateCondition(cmp, f.operator, f.value, today, dialect);
-      }
-      if (isTemporal(f.column)) {
-        // A dashboard's Date parameter names a whole day as well, and the day
-        // after it is a date: not an expression this file may write (nine
-        // vendors, nine texts for `+ 1 day`) and not a value the browser has
-        // (the filter bar fills the parameter in later, long after this SQL
-        // was built). So the bound is a second parameter, `${to__next_day}`,
-        // whose value the backend derives where it binds the first one - one
-        // conversion for the canvas and the published dashboard alike
-        // (`date-parameters.ts` names it).
-        const bound = dayParamCondition(cmp, f.operator, f.value, paramTypes);
-        if (bound) return bound;
-        const wholeDay = wholeDayCondition(cmp, f.operator, f.value, dialect);
-        if (wholeDay) return wholeDay;
-      }
-      switch (f.operator) {
-        case "equals":          return param ? `${cmp} = ${f.value}`   : `${cmp} = ${lit(f.column, f.value)}`;
-        // `<>` is the ANSI not-equal. `!=` is accepted by every vendor this
-        // product supports, but it is not standard SQL, and the UI's label
-        // (which still reads `!=`) is not the SQL.
-        case "not_equals":      return param ? `${cmp} <> ${f.value}`  : `${cmp} <> ${lit(f.column, f.value)}`;
-        case "greater_than":    return param ? `${cmp} > ${f.value}`   : `${cmp} > ${lit(f.column, f.value)}`;
-        case "greater_or_equal":return param ? `${cmp} >= ${f.value}`  : `${cmp} >= ${lit(f.column, f.value)}`;
-        case "less_than":       return param ? `${cmp} < ${f.value}`   : `${cmp} < ${lit(f.column, f.value)}`;
-        case "less_or_equal":   return param ? `${cmp} <= ${f.value}`  : `${cmp} <= ${lit(f.column, f.value)}`;
-        // LIKE patterns are always string comparisons: the pattern is text
-        // even when the column is not, so the value goes in as a string.
-        case "contains":        return likeFilter(cmp, f.value ?? "", "contains", dialect);
-        // All three go through the same vendor-layer predicate: the wildcards in
-        // the value are escaped and both sides are folded to lower case, so the
-        // three filters differ only in where the `%` sits.
-        case "starts_with":     return likeFilter(cmp, f.value ?? "", "starts", dialect);
-        case "ends_with":       return likeFilter(cmp, f.value ?? "", "ends", dialect);
-        case "between":         return betweenCondition(cmp, f, dialect, isTemporal(f.column), lit, paramTypes);
-        case "in":
-        case "not_in": {
-          const op = f.operator === "in" ? "IN" : "NOT IN";
-          const rawList = String(f.value ?? "").trim();
-          if (!rawList) return notApplied; // empty list — the filter is simply not applied
-          if (isParamRef(rawList)) {
-            // Param-bound IN: emit bare ${name} inside parens. Backend
-            // convertToJdbiParameters detects this and rewrites to <name>;
-            // QueriesService splits the CSV value into a List for bindList.
-            return `${cmp} ${op} (${rawList})`;
-          }
-          const values = rawList.split(",").map((v) => v.trim()).filter(Boolean);
-          if (values.length === 0) return notApplied;
-          const escaped = values.map((v) => lit(f.column, v)).join(", ");
-          return `${cmp} ${op} (${escaped})`;
+  /** The SQL one filter row asks for, or null when the row is not applied at all.
+   *
+   *  Shared by the query's own filters and by the filter panes' conditions (`options.paneFilters`),
+   *  so a pane's `in` list is quoted, typed, bound and vendor-written exactly as a filter row's is.
+   */
+  const conditionFor = (f: (typeof query.filters)[number]): string | null => {
+    // An empty value box means the filter is not applied (the owner,
+    // 2026-09-27; the rule itself is `valueBoxIsEmpty`, next to the operator
+    // lists). The filter is left out of the WHERE, so the query answers with
+    // every row while the user is still typing. `in` / `not in` keep the
+    // `1=1` they have always written: the same outcome, and their SQL text
+    // does not change.
+    if (valueBoxIsEmpty(f)) {
+      return f.operator === "in" || f.operator === "not_in" ? notApplied : null;
+    }
+    // Comparison operators use the type-aware LHS (read as a date for a
+    // temporal column); IS NULL / IS NOT NULL use the raw column ref because
+    // NULL semantics are independent of value encoding.
+    const cmp = filterLhs(f.column);
+    const raw = quote(f.column);
+    const param = isParamRef(f.value);
+    // A date filter on a temporal column means the whole day, not the instant
+    // at midnight: `created_at = '2026-01-31'` used to answer nothing at all
+    // for a row stamped 2026-01-31 14:05, and `<= '2026-01-31'` left that row
+    // out as well. The six comparisons become half-open ranges over the day
+    // (`wholeDayCondition`, below). A value that is not a plain `yyyy-mm-dd`
+    // keeps the form it had. A value bound to a dashboard parameter is not a
+    // date when the SQL is built, so `nextDay` refuses it; a parameter the
+    // dashboard declared as a *Date* is nevertheless a whole day, and
+    // `dayParamCondition` writes that day's range through a derived
+    // parameter. A parameter of any other declared type, and `equals` /
+    // `not equals` on a Date one, go on meaning the instant the parameter
+    // names, i.e. midnight on a timestamp column.
+    // A relative date filter names a span of whole days that today's date
+    // decides - "this month", "in the last 3 months" - so it is asked as that
+    // span and nothing else: a null here (a "last N" whose value box holds no
+    // usable count) leaves the filter out, the way a half-typed value does,
+    // instead of falling through to the comparisons below and asking whether
+    // the column equals the count.
+    if (isRelativeDateOp(f.operator)) {
+      return relativeDateCondition(cmp, f.operator, f.value, today, dialect);
+    }
+    if (isTemporal(f.column)) {
+      // A dashboard's Date parameter names a whole day as well, and the day
+      // after it is a date: not an expression this file may write (nine
+      // vendors, nine texts for `+ 1 day`) and not a value the browser has
+      // (the filter bar fills the parameter in later, long after this SQL
+      // was built). So the bound is a second parameter, `${to__next_day}`,
+      // whose value the backend derives where it binds the first one - one
+      // conversion for the canvas and the published dashboard alike
+      // (`date-parameters.ts` names it).
+      const bound = dayParamCondition(cmp, f.operator, f.value, paramTypes);
+      if (bound) return bound;
+      const wholeDay = wholeDayCondition(cmp, f.operator, f.value, dialect);
+      if (wholeDay) return wholeDay;
+    }
+    switch (f.operator) {
+      case "equals":          return param ? `${cmp} = ${f.value}`   : `${cmp} = ${lit(f.column, f.value)}`;
+      // `<>` is the ANSI not-equal. `!=` is accepted by every vendor this
+      // product supports, but it is not standard SQL, and the UI's label
+      // (which still reads `!=`) is not the SQL.
+      case "not_equals":      return param ? `${cmp} <> ${f.value}`  : `${cmp} <> ${lit(f.column, f.value)}`;
+      case "greater_than":    return param ? `${cmp} > ${f.value}`   : `${cmp} > ${lit(f.column, f.value)}`;
+      case "greater_or_equal":return param ? `${cmp} >= ${f.value}`  : `${cmp} >= ${lit(f.column, f.value)}`;
+      case "less_than":       return param ? `${cmp} < ${f.value}`   : `${cmp} < ${lit(f.column, f.value)}`;
+      case "less_or_equal":   return param ? `${cmp} <= ${f.value}`  : `${cmp} <= ${lit(f.column, f.value)}`;
+      // LIKE patterns are always string comparisons: the pattern is text
+      // even when the column is not, so the value goes in as a string.
+      case "contains":        return likeFilter(cmp, f.value ?? "", "contains", dialect);
+      // All three go through the same vendor-layer predicate: the wildcards in
+      // the value are escaped and both sides are folded to lower case, so the
+      // three filters differ only in where the `%` sits.
+      case "starts_with":     return likeFilter(cmp, f.value ?? "", "starts", dialect);
+      case "ends_with":       return likeFilter(cmp, f.value ?? "", "ends", dialect);
+      case "between":         return betweenCondition(cmp, f, dialect, isTemporal(f.column), lit, paramTypes);
+      case "in":
+      case "not_in": {
+        const op = f.operator === "in" ? "IN" : "NOT IN";
+        const rawList = String(f.value ?? "").trim();
+        if (!rawList) return notApplied; // empty list — the filter is simply not applied
+        if (isParamRef(rawList)) {
+          // Param-bound IN: emit bare ${name} inside parens. Backend
+          // convertToJdbiParameters detects this and rewrites to <name>;
+          // QueriesService splits the CSV value into a List for bindList.
+          return `${cmp} ${op} (${rawList})`;
         }
-        case "is_null":         return `${raw} IS NULL`;
-        case "is_not_null":     return `${raw} IS NOT NULL`;
-        default:                return param ? `${cmp} = ${f.value}`   : `${cmp} = ${lit(f.column, f.value)}`;
+        const values = rawList.split(",").map((v) => v.trim()).filter(Boolean);
+        if (values.length === 0) return notApplied;
+        const escaped = values.map((v) => lit(f.column, v)).join(", ");
+        return `${cmp} ${op} (${escaped})`;
       }
-    }).filter((condition): condition is string => condition !== null);
+      case "is_null":         return `${raw} IS NULL`;
+      case "is_not_null":     return `${raw} IS NOT NULL`;
+      default:                return param ? `${cmp} = ${f.value}`   : `${cmp} = ${lit(f.column, f.value)}`;
+    }
+  };
+
+  // WHERE, the query's own filters.
+  let hasWhere = false;
+  if (query.filters.length > 0) {
+    const conditions = query.filters.map(conditionFor).filter((condition): condition is string => condition !== null);
     // Every filter left out (all of them half-typed) means no WHERE at all.
     if (conditions.length > 0) {
       sql += matchAny && conditions.length > 1
         ? `\nWHERE (${conditions.join("\n  OR ")})`
         : `\nWHERE ${conditions.join("\n  AND ")}`;
+      hasWhere = true;
     }
+  }
+
+  // The filter panes' own conditions: one line each, AND-ed after whatever the query asks for
+  // itself, and before the aggregation - which is the only place they can be right for a KPI,
+  // whose result has no column of the pane's field to filter afterwards. Each is bound to the
+  // field's own parameter, so an empty one (nothing picked in that pane) is a line the server
+  // does not apply and the widget answers every row (`pane-filters.ts`).
+  const paneConditions = (options.paneFilters ?? [])
+    .map(conditionFor)
+    .filter((condition): condition is string => condition !== null);
+  if (paneConditions.length > 0) {
+    sql += hasWhere
+      ? `\n  AND ${paneConditions.join("\n  AND ")}`
+      : `\nWHERE ${paneConditions.join("\n  AND ")}`;
   }
 
   // GROUP BY (using the bucket / bin expressions when applicable)
@@ -1162,9 +1193,10 @@ export function sqlForDataSource(
   temporalColumns?: ReadonlySet<string>,
   columnKinds?: ReadonlyMap<string, SqlLiteralKind>,
   paramTypes?: Record<string, string>,
+  paneFilters?: readonly { column: string; operator: string; value: string }[],
 ): string | null {
   if (ds.mode === "visual" && ds.visualQuery) {
-    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes });
+    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes, paneFilters });
     if (built) return built;
     // buildSql returns "" for cube queries — fall through.
   }

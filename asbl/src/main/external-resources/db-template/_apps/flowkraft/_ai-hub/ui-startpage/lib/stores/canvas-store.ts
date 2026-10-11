@@ -161,6 +161,12 @@ export interface DataSource {
   sql?: string;
   script?: string;
   generatedSql?: string;
+  /** The SQL this widget runs while a filter pane of its canvas reaches it: its own query with one
+   *  `IN (${__pane_<field>})` condition per pane field, written by the canvas and run by the canvas
+   *  (`useWidgetData`) and by the published dashboard (`ScriptAssembler.resolveSql` prefers it), so
+   *  both filter identically. Absent on every canvas with no pane - which is every canvas saved
+   *  before this existed - and taken away again when the last pane goes. */
+  paneSql?: string;
   executeVersion?: number;
   scriptExecuteVersion?: number;
 }

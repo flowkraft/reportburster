@@ -263,9 +263,17 @@
       const headers = buildHeaders();
 
       if (connectionId && tableName) {
-        // Direct mode: query distinct values via connection
+        // Direct mode: query distinct values via connection.
+        //
+        // No row cap in the SQL. `LIMIT` is rejected outright by SQL Server, Oracle and Db2 - the
+        // pane's value list came back empty on all three - and this component is handed a
+        // connection, not a vendor, so it cannot write each one's form. The list is cut to
+        // `maxValues` where it is sorted instead (`applySortAndLimit`), which answers the same for
+        // a picker. The canvas and a published dashboard do not take this path: the canvas runs the
+        // vendor's own query (`buildDistinctValuesSql`) and a published pane reads the rows its
+        // report fetched.
         const orderClause = sort === 'none' ? '' : ` ORDER BY "${field}" ${sort === 'desc' ? 'DESC' : 'ASC'}`;
-        const sql = `SELECT DISTINCT "${field}" FROM "${tableName}" WHERE "${field}" IS NOT NULL${orderClause} LIMIT ${maxValues}`;
+        const sql = `SELECT DISTINCT "${field}" FROM "${tableName}" WHERE "${field}" IS NOT NULL${orderClause}`;
 
         const res = await fetch(`${apiBaseUrl}/queries/run-sql`, {
           method: 'POST',
@@ -315,8 +323,24 @@
     return 'associated';
   }
 
+  /**
+   * An arbitrary value as characters an HTML id may hold, the way `RbParameters.safeId` does it,
+   * so a test reaches one value of one pane by its own id.
+   */
+  function safeId(value: any): string {
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  /** Which pane this is, for its ids: the component it was published as, else the field it shows. */
+  $: idBase = safeId(componentId || field);
+
   function handleClick(value: string) {
     const isSelected = selectedValues.includes(value);
+    // One event, on this element: both hosts listen on the pane itself - the canvas's
+    // `FilterPaneWidget` and a published dashboard's page, which attaches to every pane it injected
+    // (`RbReport.listenToFilterPanes`). Nothing listens further up, so the event does not need to
+    // leave the pane, and dispatching it a second time to make it bubble would have the canvas
+    // count the same click twice and toggle the value straight back.
     dispatch('filterPaneSelect', {
       field,
       value,
@@ -453,11 +477,16 @@
   }
 </style>
 
-<div class="rb-filter-pane">
+<!-- Ids, so a test clicks one value of one pane and reads what that value is showing:
+     `filterPane-<pane>`, `paneSearch-<pane>`, `paneValue-<pane>-<value>` (its `data-state` is
+     selected / associated / excluded) and `paneCount-<pane>`, where <pane> is the component id a
+     dashboard published it under, or its field. -->
+<div id="filterPane-{idBase}" class="rb-filter-pane">
   <div class="pane-header">
     <span class="pane-label">{effectiveLabel}</span>
     {#if effectiveShowSearch}
       <input
+        id="paneSearch-{idBase}"
         class="pane-search"
         type="text"
         placeholder="Search..."
@@ -467,14 +496,16 @@
   </div>
 
   {#if loading}
-    <div class="pane-loading">Loading...</div>
+    <div id="paneLoading-{idBase}" class="pane-loading">Loading...</div>
   {:else if error}
-    <div class="pane-error">{error}</div>
+    <div id="paneError-{idBase}" class="pane-error">{error}</div>
   {:else}
     <div class="pane-list" style={heightStyle}>
       {#each sortedValues as item}
         {@const state = getState(item.value)}
         <button
+          id="paneValue-{idBase}-{safeId(item.value)}"
+          data-state={state}
           class="pane-item {state}"
           on:click={() => handleClick(item.value)}
         >
@@ -486,6 +517,6 @@
         </button>
       {/each}
     </div>
-    <div class="pane-footer">{allValues.length} values</div>
+    <div id="paneCount-{idBase}" class="pane-footer">{allValues.length} values</div>
   {/if}
 </div>

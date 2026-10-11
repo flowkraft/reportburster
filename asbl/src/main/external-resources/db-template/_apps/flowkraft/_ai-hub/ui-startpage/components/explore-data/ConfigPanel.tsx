@@ -866,7 +866,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
                   )}
                 </div>
               )}
-              <FilterPaneConfig config={selectedWidget.displayConfig} columns={columns} onChange={handleDisplayChange} />
+              <FilterPaneConfig config={selectedWidget.displayConfig} columns={columns} table={selectedWidget.dataSource?.visualQuery?.table} onChange={handleDisplayChange} />
               <div className="pt-2">
                 <BidirectionalDslCustomizer
                   widgetId={selectedWidget.id}

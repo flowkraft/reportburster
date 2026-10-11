@@ -186,9 +186,6 @@ public class DuckDBAnalyticsService {
         String connectionCode = request.getConnectionCode();
         int limit = request.getLimit() > 0 ? request.getLimit() : 500;
 
-        // Build WHERE clause from selections
-        String whereClause = buildExploreWhereClause(request.getSelections());
-
         Map<String, ExploreResponse.FieldState> fieldStates = new LinkedHashMap<>();
 
         for (String field : request.getFields()) {
@@ -203,6 +200,12 @@ public class DuckDBAnalyticsService {
                     + " LIMIT " + limit;
 
             List<String> allValues = executeDistinctQuery(connectionCode, allSql, field);
+
+            // What the OTHER panes allow: this field's own picks are left out, so a multi-select
+            // pane does not draw the values it has not picked yet as excluded by the one it has
+            // (`ExploreSelections`, the one place the rule lives).
+            String whereClause = ExploreSelections.where(request.getSelections(), field,
+                    name -> "\"" + name.replace("\"", "\"\"") + "\"");
 
             if (whereClause.isEmpty()) {
                 // No selections — everything is associated
@@ -251,21 +254,6 @@ public class DuckDBAnalyticsService {
             }
         }
         return values;
-    }
-
-    /**
-     * Build a WHERE clause from explore selections (AND logic).
-     * Returns empty string if no selections.
-     */
-    private String buildExploreWhereClause(List<ExploreRequest.Selection> selections) {
-        if (selections == null || selections.isEmpty()) return "";
-        List<String> conditions = new ArrayList<>();
-        for (ExploreRequest.Selection sel : selections) {
-            String quotedField = "\"" + sel.getField().replace("\"", "\"\"") + "\"";
-            String escapedValue = sel.getValue().replace("'", "''");
-            conditions.add(quotedField + " = '" + escapedValue + "'");
-        }
-        return String.join(" AND ", conditions);
     }
 
     /**
