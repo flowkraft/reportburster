@@ -224,7 +224,7 @@ test.describe('Cube widgets — the two publishing modes', () => {
 
       await page.goto(frozen.dashboardUrl);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 15_000 });
       // Unticked, the cube is a widget like any other, drawn from frozen SQL.
       await expect(page.locator(`[id="widgetTabulator-${componentId}"]`)).toBeVisible({ timeout: 20_000 });
       await expect(page.locator(`[id="widgetCube-${componentId}"]`)).toHaveCount(0);
@@ -254,7 +254,7 @@ test.describe('Cube widgets — the two publishing modes', () => {
 
       await page.goto(live.dashboardUrl);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 15_000 });
       // Ticked, this widget IS the cube: the field tree, not a drawn result. The cube draws its own
       // answer with a table inside its renderer (#cubeRuntimeTable), so what must be gone is the
       // dashboard's own tabulator tile, the frozen-SQL one.

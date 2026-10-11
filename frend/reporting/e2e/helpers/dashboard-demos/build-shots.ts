@@ -213,7 +213,7 @@ function ringOf(page: Page, step: Step, widgetId: string): Locator | undefined {
   if (step.shot?.highlight) return page.locator(`[id="${step.shot.highlight}"]`);
   switch (step.kind) {
     case 'filters':
-      return page.locator('rb-parameters');
+      return page.locator('#parameterBarContainer');
     case 'layout':
       return page.locator('#canvasGrid');
     case 'publish':

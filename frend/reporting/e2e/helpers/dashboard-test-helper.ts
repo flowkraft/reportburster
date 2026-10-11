@@ -68,10 +68,12 @@ export async function assertDashboardRendersCorrectly(
     await expect(page.locator('#dashTitle')).toHaveText(header.title, { timeout: 30000 });
     await expect(page.locator('#dashSubtitle'))
       .toContainText(header.subtitle, { timeout: 10000 });
-    await expect(page.locator('rb-value')).toHaveCount(4, { timeout: 15000 });
-    await expect(page.locator('rb-chart')).toHaveCount(2, { timeout: 15000 });
-    await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 15000 });
-    await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 15000 });
+    // Each tile by its own id; the four numbers share one data call, so one component id.
+    await expect(page.locator('[id="widgetValue-atomicValues"]')).toHaveCount(4, { timeout: 15000 });
+    await expect(page.locator('[id="widgetChart-revenueTrend"]')).toHaveCount(1, { timeout: 15000 });
+    await expect(page.locator('[id="widgetChart-revenueByCategory"]')).toHaveCount(1, { timeout: 15000 });
+    await expect(page.locator('[id="widgetTabulator-topCustomers"]')).toHaveCount(1, { timeout: 15000 });
+    await expect(page.locator('[id="widgetPivot-orderExplorer"]')).toHaveCount(1, { timeout: 15000 });
   }
 
   // ── 2. KPI cards ──

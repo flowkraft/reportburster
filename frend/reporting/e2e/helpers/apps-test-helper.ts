@@ -87,8 +87,10 @@ export class AppsTestHelper {
     stateSel: string,
     timeout: number,
   ): Promise<void> {
+    // One apps manager shows an app at a time (each area mounts its own, for its own apps), so
+    // the state id names one element.
     const isStopped = async (): Promise<boolean> =>
-      ((await page.locator(stateSel).first().textContent().catch(() => '')) || '')
+      ((await page.locator(stateSel).textContent().catch(() => '')) || '')
         .toLowerCase()
         .includes('stopped');
 
