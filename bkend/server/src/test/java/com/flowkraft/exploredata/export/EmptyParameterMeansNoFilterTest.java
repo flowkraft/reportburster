@@ -76,6 +76,29 @@ class EmptyParameterMeansNoFilterTest {
 			+ "ORDER BY stage";
 
 	/**
+	 * The same question with the OTHER pane's pick applied, which is how a published pane greys out:
+	 * the list it gets while nothing is picked is every value it can show, and the shorter list it
+	 * gets once the other pane has a pick is the values that still answer rows - the difference is
+	 * the greys. Its own field is never in its own query, so its own pick never shortens its own
+	 * list (`paneNarrowingLines` in the canvas writes both of these).
+	 */
+	private static final String PANE_VALUES_SQL_STAGE = "SELECT DISTINCT stage\n"
+			+ "FROM cube_demo.crm_deals\n"
+			+ "WHERE stage IS NOT NULL\n"
+			+ "AND probability_pct IN (${__pane_probability_pct})\n"
+			+ "ORDER BY stage";
+
+	private static final String PANE_VALUES_SQL_PROBABILITY = "SELECT DISTINCT probability_pct\n"
+			+ "FROM cube_demo.crm_deals\n"
+			+ "WHERE probability_pct IS NOT NULL\n"
+			+ "AND stage IN (${__pane_stage})\n"
+			+ "ORDER BY probability_pct";
+
+	/** The probabilities the frozen deals sit at, one per stage: 0 Closed Lost, 10 Prospecting,
+	 *  25 Qualification, 50 Proposal, 75 Negotiation, 100 Closed Won (crm_deals.psv). */
+	private static final List<String> PROBABILITIES = List.of("0", "10", "25", "50", "75", "100");
+
+	/**
 	 * The shape the Visualize step writes: one condition per line, the first carrying the WHERE and
 	 * the rest joined with AND - a date, a number and a list, each bound to a dashboard parameter.
 	 */
@@ -154,6 +177,48 @@ class EmptyParameterMeansNoFilterTest {
 			for (String picked : List.of("", "Closed Won")) {
 				assertEquals(STAGES, paneValues(connection, picked),
 						"the pane lists every stage, with '" + picked + "' picked");
+			}
+		}
+	}
+
+	/**
+	 * Two panes on one table: each one's list is narrowed by the other's pick and never by its own.
+	 *
+	 * This is the whole of the published grey-outs. The canvas asks `/api/analytics/explore` which
+	 * values still answer rows; a published dashboard may not (that endpoint answers to report
+	 * authors, and it reads the table past the values a share link locked), so a published pane
+	 * reads it off its own list instead. The frozen deals make the answer exact: every stage sits at
+	 * one probability, so picking 100 leaves one stage, and picking Negotiation leaves one
+	 * probability.
+	 */
+	@Test
+	void ansi_two_published_panes_narrow_each_other_and_never_themselves() throws Exception {
+		for (String vendor : List.of("duckdb", "sqlite")) {
+			try (Connection connection = open(vendor)) {
+
+				// Nothing picked anywhere: each pane lists every value it can ever show, which is
+				// the list its greys are measured against.
+				assertEquals(STAGES, listedBy(connection, "filter-pane_stage_p", "", ""),
+						vendor + ": nothing picked, so the stage pane lists every stage");
+				assertEquals(PROBABILITIES, listedBy(connection, "filter-pane_probability_pct_q", "", ""),
+						vendor + ": nothing picked, so the probability pane lists every probability");
+
+				// One pane picked: the other pane's list is down to what still answers rows, and
+				// the picked pane's own list is untouched - or a reader could not pick twice.
+				assertEquals(List.of("Closed Won"), listedBy(connection, "filter-pane_stage_p", "", "100"),
+						vendor + ": 100 picked in the probability pane, so one stage still answers");
+				assertEquals(PROBABILITIES, listedBy(connection, "filter-pane_probability_pct_q", "", "100"),
+						vendor + ": a pane's own pick leaves its own list whole");
+
+				assertEquals(List.of("75"), listedBy(connection, "filter-pane_probability_pct_q", "Negotiation", ""),
+						vendor + ": Negotiation picked in the stage pane, so one probability still answers");
+				assertEquals(STAGES, listedBy(connection, "filter-pane_stage_p", "Negotiation", ""),
+						vendor + ": and the stage pane still lists every stage");
+
+				// Two values of one pane OR together here too: two stages, two probabilities.
+				assertEquals(List.of("75", "100"),
+						listedBy(connection, "filter-pane_probability_pct_q", "Negotiation,Closed Won", ""),
+						vendor + ": two stages picked, so both their probabilities still answer");
 			}
 		}
 	}
@@ -261,6 +326,49 @@ class EmptyParameterMeansNoFilterTest {
 		List<Map<String, Object>> rows = reported.get("filter-pane_stage_p");
 		if (rows == null)
 			throw new IllegalStateException("the pane reported nothing: " + reported);
+		List<String> listed = new ArrayList<>();
+		for (Map<String, Object> row : rows)
+			listed.add(String.valueOf(row.values().iterator().next()));
+		return listed;
+	}
+
+	/**
+	 * A canvas with two panes on one table, each listing its own field under the other's pick.
+	 *
+	 * @param id    the widget id, which decides the component id the published pane reports under
+	 * @param field the field the pane filters by
+	 * @param sql   the pane's own value query
+	 */
+	private static Map<String, Object> pane(String id, String field, String sql) {
+		Map<String, Object> source = new LinkedHashMap<>();
+		source.put("mode", "visual");
+		source.put("paneValuesSql", sql);
+		Map<String, Object> pane = new LinkedHashMap<>();
+		pane.put("id", id);
+		pane.put("type", "filter-pane");
+		pane.put("dataSource", source);
+		pane.put("displayConfig", Map.of("dslConfig", Map.of("field", field)));
+		return pane;
+	}
+
+	private static List<Map<String, Object>> twoPaneCanvas() {
+		List<Map<String, Object>> widgets = new ArrayList<>(paneCanvas());
+		widgets.set(1, pane("w-p", "stage", PANE_VALUES_SQL_STAGE));
+		widgets.add(pane("w-q", "probability_pct", PANE_VALUES_SQL_PROBABILITY));
+		return widgets;
+	}
+
+	/** What one pane of the two-pane dashboard listed, with these values picked in each pane. */
+	private static List<String> listedBy(Connection connection, String componentId, String stagePicked,
+			String probabilityPicked) throws Exception {
+		Map<String, Object> values = new LinkedHashMap<>();
+		values.put("__pane_stage", stagePicked);
+		values.put("__pane_probability_pct", probabilityPicked);
+		String script = ScriptAssembler.assemble(twoPaneCanvas(), List.of()).text();
+		Map<String, List<Map<String, Object>>> reported = run(connection, script, values);
+		List<Map<String, Object>> rows = reported.get(componentId);
+		if (rows == null)
+			throw new IllegalStateException(componentId + " reported nothing: " + reported);
 		List<String> listed = new ArrayList<>();
 		for (Map<String, Object> row : rows)
 			listed.add(String.valueOf(row.values().iterator().next()));

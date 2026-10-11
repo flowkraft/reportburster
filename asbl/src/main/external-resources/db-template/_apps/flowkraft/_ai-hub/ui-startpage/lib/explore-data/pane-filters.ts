@@ -216,6 +216,32 @@ export function wrapWithPaneFilters(
   return `SELECT * FROM (\n${sql}\n) pane_src\nWHERE ${conditions.join("\n  AND ")}`;
 }
 
+/**
+ * The condition lines that narrow ONE pane's value list by the OTHER panes' picks.
+ *
+ * This is how a published pane greys out. The canvas asks `/api/analytics/explore` which values of a
+ * field still answer rows; a published dashboard cannot ask that - the endpoint answers to report
+ * authors, and it reads the table directly, which is past the parameters a share link locked (a
+ * server-side pivot refuses a locked view for exactly that reason). What a published pane has
+ * instead is its own value query, which it fetches through its report, so the report's locks hold:
+ * with these lines it comes back holding the values that still answer rows, and the values missing
+ * from the list it got while nothing was picked are the greys.
+ *
+ * The pane's own field is never among `fields`: picking a value has to leave the rest of ITS list
+ * clickable, which is the whole of associative exploration.
+ *
+ * One line each, and every line is always written: an empty parameter is a line the server does not
+ * apply (`SqlParameterLines.linesThatApply`), so one SQL text answers every combination of picks.
+ */
+export function paneNarrowingLines(
+  fields: readonly string[],
+  dialect: SqlDialect,
+): string[] {
+  return fields.map(
+    (field) => `AND ${quoteIdent(field, dialect)} IN (${paramRefOf(paneParamName(field))})`,
+  );
+}
+
 /** How the widget says which pane fields do not reach it. */
 export function notFilteredNote(fields: readonly string[]): string {
   if (fields.length === 0) return "";

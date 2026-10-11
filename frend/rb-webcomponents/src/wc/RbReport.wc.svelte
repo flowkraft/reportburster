@@ -634,20 +634,25 @@
    * What a pick changes: the panes show it, the chips bar says it, and every tile asks again with
    * the panes' values beside the filter bar's.
    *
-   * The panes themselves are not replaced - their value list does not change when something is
-   * picked, which is what lets a reader pick twice - so they keep their listeners and their state.
+   * The panes themselves are never replaced - a replaced element loses the listener this page put
+   * on it and everything it had picked - so they are handed the new parameters instead and read
+   * their own list again (`RbFilterPane` watches `reportParams`). That read is what greys out the
+   * values the other panes' picks have left without rows; a pane's own pick never narrows its own
+   * list, so a reader can always pick twice.
    */
   function applyPaneSelections() {
     const selections = paneSelectionsFor(reportId);
     paneChips = selections.list();
-    for (const pane of panesOf()) {
-      (pane as unknown as { selectedValues?: string[] }).selectedValues =
-        selections.valuesOf(fieldOf(pane));
-    }
-    refreshDataWidgets(dashboardContainer, {
+    const values = {
       ...currentDashboardParams,
       ...selections.paramValues(paneFieldsOnPage(dashboardContainer)),
-    });
+    };
+    for (const pane of panesOf()) {
+      const el = pane as unknown as { selectedValues?: string[]; reportParams?: Record<string, any> };
+      el.selectedValues = selections.valuesOf(fieldOf(pane));
+      el.reportParams = values;
+    }
+    refreshDataWidgets(dashboardContainer, values);
   }
 
   function handleDashboardParamChange(e: CustomEvent) {
