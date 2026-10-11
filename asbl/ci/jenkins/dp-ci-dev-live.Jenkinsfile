@@ -22,7 +22,9 @@ pipeline {
       steps {
         sh '''#!/bin/bash
 set -o pipefail
-ssh -o BatchMode=yes "$DP_HOST" bash -s -- "$ACTION" "$DEV_MODE" "$PINNED_SHA" "$DP_REPO" <<'HOST'
+q() { printf '%q' "$1"; }
+# ssh joins its arguments into one command line: each is quoted, so an empty PINNED_SHA stays an argument
+ssh -o BatchMode=yes "$DP_HOST" "bash -s -- $(q "$ACTION") $(q "$DEV_MODE") $(q "$PINNED_SHA") $(q "$DP_REPO")" <<'HOST'
 set -u
 action=$1 mode=$2 sha=$3 repo=$4
 case "$mode" in
