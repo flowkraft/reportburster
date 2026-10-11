@@ -4244,13 +4244,20 @@ test('(canvas mechanics) M57 The same panes on the published dashboard, and a lo
       await expect(pValue(page, devicePane, 'mobile'), 'and so does the second one').toBeVisible();
 
       // The names the published dashboard calls these widgets, which is how a reader's page is read.
-      const ids = await getCanvasComponentIds(page, canvasId);
+      // A pane is named after the field it filters by, and that name exists once the autosave has
+      // landed the field: read a moment too early, a pane answers under `filter-pane_<its id>` and
+      // nothing on the published page is found by it.
+      let ids: Record<string, string[]> = {};
+      await expect
+        .poll(async () => {
+          ids = await getCanvasComponentIds(page, canvasId);
+          return (ids['filter-pane'] ?? []).join(',');
+        }, { message: 'the saved canvas names both panes after their fields', timeout: 30_000, intervals: [1_000] })
+        .toMatch(/^filter-pane_channel_[^,]+,filter-pane_device_[^,]+$/);
       const pubKpi = ids.number[0];
       const pubTable = ids.tabulator[0];
       const pubChannelPane = ids['filter-pane'][0];
       const pubDevicePane = ids['filter-pane'][1];
-      expect(pubChannelPane, 'a published pane is named after its field').toContain('filter-pane_channel_');
-      expect(pubDevicePane, 'and so is the second one').toContain('filter-pane_device_');
 
       const published = await publishDashboard(page);
       reportId = published.reportId;
