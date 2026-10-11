@@ -362,8 +362,29 @@ export async function updateCanvas(canvasId: string, body: unknown): Promise<voi
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 }
 
-export async function deleteCanvas(canvasId: string): Promise<void> {
-  await fetch(`${RB_BASE}/explorations/${encodeURIComponent(canvasId)}`, { method: "DELETE" });
+/**
+ * Delete a canvas. `keepPublished` leaves the dashboard it published, and that dashboard's share
+ * links, answering (D2): the delete dialog asks, and the server does what the answer says.
+ */
+export async function deleteCanvas(canvasId: string, keepPublished = false): Promise<void> {
+  const q = keepPublished ? "?keepPublished=true" : "";
+  await fetch(`${RB_BASE}/explorations/${encodeURIComponent(canvasId)}${q}`, { method: "DELETE" });
+}
+
+/**
+ * Unpublish: the dashboard this canvas published goes, with its share links; the canvas stays.
+ *
+ * The mirror of the publish call, which is a POST to the same path. The answer says what went -
+ * `{reportId, shareLinks}`, or nothing at all when the canvas had published nothing.
+ */
+export async function unpublishDashboard(
+  canvasId: string,
+): Promise<{ reportId?: string; shareLinks?: number }> {
+  const res = await fetch(`${RB_BASE}/explorations/${encodeURIComponent(canvasId)}/export`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json().catch(() => ({}));
 }
 
 // --- Associative exploration ---

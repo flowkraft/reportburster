@@ -1,9 +1,11 @@
 package com.flowkraft.exploredata;
 
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.embed.ShareTokenService;
 import com.sourcekraft.documentburster.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
@@ -37,6 +39,10 @@ public class ExploreDataService {
 
     /** Lazy-initialized on first canvas operation. */
     private SQLiteDataSource dataSource;
+
+    /** A published dashboard's share links go with the dashboard, so this service revokes them. */
+    @Autowired
+    private ShareTokenService shareTokens;
 
     // ── DB init ───────────────────────────────────────────────────────────────
 
@@ -171,18 +177,24 @@ public class ExploreDataService {
     }
 
     public void deleteCanvas(String id) throws SQLException {
-        // Look up the published reportId (if any) BEFORE deleting the row,
-        // so we can cascade-delete the /config/reports/{id} and
-        // /templates/reports/{id} folders on disk.
-        String exportedReportCode = null;
-        try (Connection conn = connection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "SELECT exported_report_code FROM canvases WHERE id = ?")) {
-            ps.setString(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) exportedReportCode = rs.getString(1);
-            }
-        }
+        deleteCanvas(id, false);
+    }
+
+    /**
+     * Delete a canvas, and with it the dashboard it published - unless the person said to keep it.
+     *
+     * <p>A published dashboard is a report of its own: its folders under {@code config/reports} and
+     * {@code templates/reports}, and the share links that open it. They used to go silently with
+     * the canvas; now the dialog says so and this is the switch behind the words (D2). Kept, the
+     * dashboard and its links keep answering and only the canvas that built them is gone - there is
+     * then nothing left that can change or re-publish it, which is exactly what "keep the published
+     * dashboard" means.
+     *
+     * @param keepPublished leave the dashboard's folders and its share links alone
+     */
+    public void deleteCanvas(String id, boolean keepPublished) throws SQLException {
+        // Read the published reportId BEFORE the row goes: it is the only place it is written.
+        String exportedReportCode = publishedReportCodeOf(id);
 
         try (Connection conn = connection();
              PreparedStatement ps = conn.prepareStatement(
@@ -191,9 +203,55 @@ public class ExploreDataService {
             ps.executeUpdate();
         }
 
-        if (exportedReportCode != null && !exportedReportCode.isBlank()) {
-            deletePublishedDashboardFolders(exportedReportCode);
+        if (!keepPublished) removePublished(exportedReportCode);
+    }
+
+    /**
+     * Unpublish: the dashboard a canvas published goes, the canvas stays.
+     *
+     * <p>The canvas forgets the report code, so the Canvas offers Publish again and no longer
+     * offers Share - there is nothing to share. Publishing again writes a dashboard under the same
+     * code, because the code is derived from the canvas name, and that dashboard is new: the links
+     * the old one had were revoked with it, and a link that opens a page nobody meant to publish is
+     * exactly what unpublishing is for.
+     *
+     * @return what was taken away: {@code {reportId, shareLinks}}, or an empty map when the canvas
+     *         had published nothing.
+     */
+    public Map<String, Object> unpublish(String id) throws SQLException {
+        String exportedReportCode = publishedReportCodeOf(id);
+        if (exportedReportCode == null || exportedReportCode.isBlank()) return Map.of();
+
+        int revoked = removePublished(exportedReportCode);
+
+        try (Connection conn = connection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE canvases SET exported_report_code = NULL, last_exported_at = NULL,"
+                             + " updated_at = ? WHERE id = ?")) {
+            ps.setString(1, Instant.now().toString());
+            ps.setString(2, id);
+            ps.executeUpdate();
         }
+        return Map.of("reportId", exportedReportCode, "shareLinks", revoked);
+    }
+
+    /** The report code this canvas has published, or null when it has published nothing. */
+    private String publishedReportCodeOf(String id) throws SQLException {
+        try (Connection conn = connection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT exported_report_code FROM canvases WHERE id = ?")) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
+    /** Everything one published dashboard is: its folders on disk and its share links. */
+    private int removePublished(String exportedReportCode) {
+        if (exportedReportCode == null || exportedReportCode.isBlank()) return 0;
+        deletePublishedDashboardFolders(exportedReportCode);
+        return shareTokens.revokeAllFor(exportedReportCode);
     }
 
     /**

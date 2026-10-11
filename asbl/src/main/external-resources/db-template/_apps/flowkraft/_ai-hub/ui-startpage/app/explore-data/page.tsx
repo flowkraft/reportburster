@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 // lucide-react removed — icons replaced with inline heroicons below
 import type { Canvas } from "@/lib/db/schema";
 import { listCanvases, createCanvas as apiCreateCanvas, deleteCanvas as apiDeleteCanvas } from "@/lib/explore-data/rb-api";
+import { listShareLinks } from "@/lib/explore-data/share-api";
 import { ShareDialog } from "@/components/explore-data/export/ShareDialog";
+
+/** The report code a canvas has published, read the way the editor page reads it. */
+const publishedCodeOf = (canvas: Canvas | null): string =>
+  (canvas as { exportedReportCode?: string | null } | null)?.exportedReportCode ?? "";
 
 export default function DataCanvasListPage() {
   const router = useRouter();
@@ -15,6 +20,10 @@ export default function DataCanvasListPage() {
   // The published report code to manage links for; null closes the dialog.
   const [toShare, setToShare] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // What goes with the canvas, so the dialog can say it: how many share links open the dashboard
+  // this canvas published (null while it is not known), and whether the person wants it kept.
+  const [publishedLinks, setPublishedLinks] = useState<number | null>(null);
+  const [keepPublished, setKeepPublished] = useState(false);
 
   const fetchCanvases = async () => {
     const data = await listCanvases();
@@ -33,14 +42,27 @@ export default function DataCanvasListPage() {
 
   const handleDeleteClick = (canvas: Canvas, e: React.MouseEvent) => {
     e.stopPropagation();
+    setKeepPublished(false);
+    setPublishedLinks(null);
     setToDelete(canvas);
   };
+
+  // The dialog names what else goes, and a number it cannot read is a number it does not claim.
+  useEffect(() => {
+    const code = publishedCodeOf(toDelete);
+    if (!code) return;
+    let alive = true;
+    listShareLinks(code)
+      .then((links) => { if (alive) setPublishedLinks(links.length); })
+      .catch(() => { if (alive) setPublishedLinks(null); });
+    return () => { alive = false; };
+  }, [toDelete]);
 
   const confirmDelete = async () => {
     if (!toDelete) return;
     setDeleting(true);
     try {
-      await apiDeleteCanvas(toDelete.id);
+      await apiDeleteCanvas(toDelete.id, keepPublished);
       setCanvases((prev) => prev.filter((c) => c.id !== toDelete.id));
       setToDelete(null);
     } finally {
@@ -56,6 +78,19 @@ export default function DataCanvasListPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [toDelete, deleting]);
+
+  // The second half of the delete dialog's sentence. A number that could not be read is not
+  // claimed ("its share links"), and one link is not "1 share links".
+  const linksPhrase =
+    publishedLinks === null
+      ? "its share links"
+      : publishedLinks === 1
+        ? "its 1 share link"
+        : `its ${publishedLinks} share links`;
+  const publishedConsequence =
+    publishedLinks === 0
+      ? keepPublished ? "keeps answering." : "is deleted too."
+      : `and ${linksPhrase} ${keepPublished ? "keep answering." : "are deleted too."}`;
 
   if (loading) {
     return (
@@ -183,8 +218,32 @@ export default function DataCanvasListPage() {
                   <span className="font-medium text-base-content">{toDelete.name}</span> will be
                   permanently removed. This action cannot be undone.
                 </p>
+                {/* What else goes, said out loud: a published dashboard is a report of its own and
+                    used to be deleted in silence (D2). */}
+                {publishedCodeOf(toDelete) && (
+                  <p id="txtDeleteCanvasPublished" className="text-xs text-base-content/60 mt-2">
+                    Its published dashboard{" "}
+                    <span className="font-medium text-base-content">
+                      /dashboard/{publishedCodeOf(toDelete)}
+                    </span>
+                    {` ${publishedConsequence}`}
+                  </p>
+                )}
               </div>
             </div>
+            {publishedCodeOf(toDelete) && (
+              <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer mt-3">
+                <input
+                  id="chkKeepPublished"
+                  type="checkbox"
+                  checked={keepPublished}
+                  onChange={(e) => setKeepPublished(e.target.checked)}
+                  disabled={deleting}
+                  className="rounded border-base-300"
+                />
+                <span>Keep the published dashboard</span>
+              </label>
+            )}
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 id="btnCancelDeleteCanvas"

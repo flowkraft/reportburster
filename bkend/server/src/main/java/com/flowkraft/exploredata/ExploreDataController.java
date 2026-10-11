@@ -76,11 +76,30 @@ public class ExploreDataController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** DELETE /api/explorations/{id} — delete a canvas. */
+    /**
+     * DELETE /api/explorations/{id} — delete a canvas, and with it the dashboard it published.
+     *
+     * <p>{@code keepPublished=true} leaves that dashboard and its share links answering: the
+     * delete dialog offers it, and says either way what goes (D2).
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteCanvas(@PathVariable String id) throws Exception {
-        service.deleteCanvas(id);
+    public ResponseEntity<Map<String, Object>> deleteCanvas(@PathVariable String id,
+            @RequestParam(name = "keepPublished", defaultValue = "false") boolean keepPublished)
+            throws Exception {
+        service.deleteCanvas(id, keepPublished);
         return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    /**
+     * DELETE /api/explorations/{id}/export — unpublish: the dashboard goes, the canvas stays.
+     *
+     * <p>The mirror of {@code POST /{id}/export}, under the same path for the same reason: what it
+     * takes away is what that call made. The answer says what went, so the Canvas can tell the
+     * person exactly that.
+     */
+    @DeleteMapping("/{id}/export")
+    public ResponseEntity<Map<String, Object>> unpublishCanvas(@PathVariable String id) throws Exception {
+        return ResponseEntity.ok(service.unpublish(id));
     }
 
     /**
