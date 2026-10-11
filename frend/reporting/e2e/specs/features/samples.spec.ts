@@ -1357,12 +1357,7 @@ electronBeforeAfterAllTest(
         expect(chart.options?.plugins?.title?.text, 'the chart own title')
           .toBe('Orders by Channel');
         // And it is drawn: the chart component really put a canvas on the page.
-        const drawn = await page.evaluate(() => {
-          const host = document.querySelector('rb-chart') as HTMLElement & { shadowRoot?: ShadowRoot };
-          const canvas = host?.shadowRoot?.querySelector('canvas') ?? host?.querySelector('canvas');
-          return canvas ? 1 : 0;
-        });
-        expect(drawn, 'the chart is drawn at all').toBe(1);
+        await expect(page.locator('[id^="chartCanvas-"]'), 'the chart is drawn at all').toHaveCount(1);
 
         // Every tile is bound to the same parameter, so asking the data API for a tile with and
         // without a country is asking the story's two questions.

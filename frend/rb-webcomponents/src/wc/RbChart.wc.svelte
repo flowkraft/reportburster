@@ -1007,7 +1007,7 @@
   {#if loading}
     <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
   {/if}
-  <canvas bind:this={canvas}></canvas>
+  <canvas bind:this={canvas} id={componentId ? `chartCanvas-${componentId}` : undefined}></canvas>
 </div>
 {#if chartWarnings.length > 0}
   <div class="rb-chart-warnings"

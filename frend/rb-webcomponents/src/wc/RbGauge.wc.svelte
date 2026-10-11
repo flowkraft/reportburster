@@ -154,6 +154,7 @@
 
       // Value text.
       const valueText = document.createElementNS(svgNS, "text");
+      if (componentId) valueText.setAttribute("id", `gaugeValue-${componentId}`);
       valueText.setAttribute("x", String(cx));
       valueText.setAttribute("y", String(cy - radius * 0.35));
       valueText.setAttribute("text-anchor", "middle");
