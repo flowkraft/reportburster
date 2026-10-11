@@ -6,6 +6,7 @@ import {
   isSensibleWidget,
   pickSankeyFields,
   autoPivotLayout,
+  MAX_PIVOT_CELLS,
   SANKEY_MAX_TARGET_CARDINALITY,
   defaultDisplay,
   shapeFromResult,
@@ -165,9 +166,30 @@ describe("autoPivotLayout", () => {
       { columnName: "channel", typeName: "VARCHAR", isNullable: true },
       { columnName: "revenue", typeName: "DECIMAL", isNullable: true },
     ];
+    // The four dimensions' distinct counts, because this grid has to be drawable: without them
+    // four dimensions are assumed to be 20 values each and the layout gives rows up (case 90b).
+    const cardinality = { channel: 3, q: 4, region: 5, product: 10 };
+    const layout = autoPivotLayout({ tableName: "test", tableType: "TABLE", primaryKeyColumns: [], columns: cols }, cardinality);
+    expect(layout.cols).toEqual(["channel", "q"]);
+    expect(layout.rows).toEqual(["region", "product"]);
+    expect(layout.vals).toEqual(["revenue"]);
+  });
+
+  // | 90b | Pivot layout stays drawable | 4 dims, no distinct counts | rows dropped until the grid fits |
+  it("4 dims and no distinct counts → trimmed to the cells a pivot will draw", () => {
+    const cols: ColumnSchema[] = [
+      { columnName: "q",       typeName: "VARCHAR", isNullable: true },
+      { columnName: "region",  typeName: "VARCHAR", isNullable: true },
+      { columnName: "product", typeName: "VARCHAR", isNullable: true },
+      { columnName: "channel", typeName: "VARCHAR", isNullable: true },
+      { columnName: "revenue", typeName: "DECIMAL", isNullable: true },
+    ];
     const layout = autoPivotLayout({ tableName: "test", tableType: "TABLE", primaryKeyColumns: [], columns: cols });
+    // 20 values assumed per unprobed dimension: four of them are 160,000 cells, so the
+    // dimensions with the most values are dropped until the grid fits.
     expect(layout.cols.length).toBe(2);
-    expect(layout.rows.length).toBeGreaterThanOrEqual(2);
+    expect(layout.rows.length).toBe(1);
+    expect(20 ** (layout.cols.length + layout.rows.length)).toBeLessThanOrEqual(MAX_PIVOT_CELLS);
   });
 
   // | 91 | Pivot no measures → Count | 2 dim cols | aggregator === "Count" |
