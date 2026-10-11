@@ -37,6 +37,7 @@
   // Hybrid Mode Props - when reportId is provided, component self-fetches
   // ============================================================================
   export let reportId: string = '';
+  let formId = 'formReportParameters';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   /** Short-lived token minted by the embedding page's server; unlocks only this report. */
@@ -121,6 +122,10 @@
     
     // Read attributes directly from host element (Svelte props may not be populated yet for kebab-case attributes)
     if (hostElement) {
+      // A filter bar the page places inside another control (a Share dialog's lock, a cube card) has
+      // an id of its own, and its form is named after it, so the page's own filter bar stays the one
+      // #formReportParameters: <host id>_formReportParameters.
+      if (hostElement.id) formId = `${hostElement.id}_formReportParameters`;
       if (!reportId) reportId = hostElement.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
@@ -862,7 +867,7 @@
 {:else if error}
   <div class="rb-error" id="widgetError">{error}</div>
 {:else}
-  <div bind:this={container} id="formReportParameters" class="rb-parameters-form">
+  <div bind:this={container} id={formId} class="rb-parameters-form">
     {#if parameters && parameters.length}
       <!-- Debug: rendering {parameters.length} parameters -->
       <form class="report-parameters-form" style="display: flex; flex-direction: column; gap: 1rem;">
