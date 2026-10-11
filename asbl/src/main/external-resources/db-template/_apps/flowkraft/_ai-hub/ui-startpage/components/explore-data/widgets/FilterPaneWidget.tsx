@@ -5,6 +5,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { executeQuery, exploreAssociations, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { buildDistinctValuesSql } from "@/lib/explore-data/sql-builder";
+import { paneFieldsForTable, paneNarrowingLines, paneTableKeyOf } from "@/lib/explore-data/pane-filters";
 import { asTableRef, findTable } from "@/lib/explore-data/table-ref";
 import { autoFilterPaneField, probeCardinality, classifyColumn } from "@/lib/explore-data/smart-defaults";
 import { useRbElementReady } from "./useRbElementReady";
@@ -61,6 +62,14 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
   const table = (widget?.dataSource?.visualQuery?.table as string) || "";
   const tableSchema = widget?.dataSource?.visualQuery?.tableSchema;
   const tableRef = asTableRef(table, tableSchema);
+  // The fields the OTHER panes of this table filter by, for the published value query below.
+  // Kept as one string, not the array, so the effect runs again when a pane is added or its
+  // field changes - and not on every render, which a fresh array would do.
+  const otherPaneFieldsKey = widget
+    ? paneFieldsForTable(widgets, paneTableKeyOf(widget))
+        .filter((f) => f !== field)
+        .join(",")
+    : "";
 
   const handleAutoPickField = async () => {
     if (!widget || !connectionId || !table) return;
@@ -104,14 +113,27 @@ export function FilterPaneWidget({ widgetId }: FilterPaneWidgetProps) {
     // value list with (`ScriptAssembler` writes a block for it). Without it the published pane asked
     // its report for the widget's own rows and counted the values of whatever came back, which is the
     // first 500 rows of the table and not its values.
+    //
+    // The published one carries the other panes' conditions as well, and the pane here does not:
+    // this one shows every value and greys them by what `/api/analytics/explore` answers, while a
+    // published pane - which may not ask that endpoint - reads its greys off this query instead
+    // (`paneNarrowingLines` says why, and `RbFilterPane` does the reading).
+    const published = buildDistinctValuesSql(
+      tableRef,
+      field,
+      DISTINCT_VALUES_LIMIT,
+      dialect,
+      paneNarrowingLines(otherPaneFieldsKey ? otherPaneFieldsKey.split(",") : [], dialect),
+    );
     const ds = widget?.dataSource;
-    if (ds && ds.paneValuesSql !== sql) updateWidgetDataSource(widgetId, { ...ds, paneValuesSql: sql });
+    if (ds && ds.paneValuesSql !== published)
+      updateWidgetDataSource(widgetId, { ...ds, paneValuesSql: published });
     executeQuery(connectionId, sql)
       .then((res) => setRows(res.data))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectionId, field, table, tableSchema]);
+  }, [connectionId, field, table, tableSchema, otherPaneFieldsKey]);
 
   // Recompute associative-exploration field states. Reads filter-pane fields
   // from each widget's dslConfig.field (canonical Map), not legacy filterField.

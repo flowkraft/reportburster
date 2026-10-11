@@ -19,6 +19,7 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { withCsrfHeader } from '../shared/session-request';
+  import { isPaneParamName } from '../shared/pane-selections';
 
   // ============================================================================
   // Two usage modes:
@@ -99,6 +100,12 @@
   // Internal state
   // ============================================================================
   let allValues: { value: string; count?: number }[] = [];
+  /** Every value this pane can show: the list it read while no pane had a pick (see the greys). */
+  let baselineValues: { value: string; count?: number }[] | null = null;
+  /** The parameters the last fetch was made with, so the same ones are not fetched twice. */
+  let lastParamsKey = '';
+  /** Set once the self-fetch mode has read its config and its first list. */
+  let selfFetchReady = false;
   let loading = true;
   let error: string | null = null;
   let searchQuery = '';
@@ -218,6 +225,8 @@
     }
 
     await loadDistinctValues();
+    lastParamsKey = JSON.stringify(reportParams || {});
+    selfFetchReady = Boolean(reportId && apiBaseUrl);
   });
 
   onDestroy(() => {
@@ -301,6 +310,7 @@
         const rows = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
         extractDistinctValuesFromData(rows);
+        applyPaneNarrowing();
 
         dispatch('dataFetched', {
           totalRows: allValues.length,
@@ -315,6 +325,42 @@
     } finally {
       loading = false;
     }
+  }
+
+  /**
+   * The greys on a published dashboard, read off this pane's own list.
+   *
+   * The canvas asks `/api/analytics/explore` which values still answer rows. A published pane may not:
+   * that endpoint answers to report authors, and it reads the table directly - past the parameters a
+   * share link locked, which is the same reason a server-side pivot refuses a locked view. So the
+   * pane reads it off what it is given instead. Its value query carries the OTHER panes' conditions
+   * (`paneNarrowingLines`), so the list it gets back while nothing is picked is every value it could
+   * ever show - its baseline - and the shorter list it gets once another pane has a pick is the
+   * values that still answer rows. The difference is the greys, and the baseline stays on screen:
+   * a value that answers nothing is greyed, never taken away, or the next click could not be made.
+   *
+   * Its own pick narrows nothing here, because its own field is not in its query. A pane that first
+   * loads with picks already in place has no baseline to compare against and simply shows the
+   * narrowed list; nothing is greyed until it has seen the whole one.
+   */
+  function applyPaneNarrowing() {
+    const params = reportParams || {};
+    const anyPicked = Object.keys(params)
+      .some(k => isPaneParamName(k) && String(params[k] ?? '') !== '');
+
+    if (!anyPicked) {
+      // Nothing is picked anywhere, so this list is the whole one, whatever else changed: the only
+      // parameters a pane's value query holds are the other panes' (`buildDistinctValuesSql`), so a
+      // filter bar moving cannot take a value out of it and cannot make this baseline stale.
+      baselineValues = allValues.map(v => ({ ...v }));
+      excludedValues = null;
+      return;
+    }
+    if (!baselineValues) { excludedValues = null; return; }
+
+    const stillAnswering = new Map(allValues.map(v => [v.value, v.count]));
+    allValues = baselineValues.map(v => ({ value: v.value, count: stillAnswering.get(v.value) ?? 0 }));
+    excludedValues = baselineValues.filter(v => !stillAnswering.has(v.value)).map(v => v.value);
   }
 
   function getState(value: string): 'selected' | 'associated' | 'excluded' {
@@ -351,6 +397,18 @@
 
   export function refresh() {
     loadDistinctValues();
+  }
+
+  // A pick in another pane changes which of this pane's values answer rows, and a dashboard hands
+  // the picks to its panes as parameters (`RbReport.applyPaneSelections`), so the pane reads its list
+  // again whenever those parameters change. The data-push mode (`selfFetchReady` stays false) has no
+  // list of its own to read and is left alone.
+  $: if (selfFetchReady) {
+    const paramsKey = JSON.stringify(reportParams || {});
+    if (paramsKey !== lastParamsKey) {
+      lastParamsKey = paramsKey;
+      loadDistinctValues();
+    }
   }
 
   $: filteredValues = searchQuery

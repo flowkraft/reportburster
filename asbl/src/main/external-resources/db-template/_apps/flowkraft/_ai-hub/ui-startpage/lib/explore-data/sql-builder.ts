@@ -1165,16 +1165,23 @@ function dayParamCondition(
  * pane runs exactly the SQL the tests read: ANSI everywhere, with the row cap
  * written by `limitClause` (a `LIMIT` here was rejected by SQL Server, Oracle
  * and Db2 — the pane's list came back empty on all three).
+ *
+ * `narrowingLines` are whole condition lines the caller wrote (`AND "x" IN (${p})`),
+ * which go in beside the IS NOT NULL. The pane on the canvas passes none: it shows every value and
+ * learns which of them still answer rows from `/api/analytics/explore`. A published pane has no
+ * such road open to it and passes the other panes' lines instead (`paneNarrowingLines`).
  */
 export function buildDistinctValuesSql(
   table: TableRef | string,
   field: string,
   rowLimit: number,
   dialect: SqlDialect,
+  narrowingLines: readonly string[] = [],
 ): string {
   const col = quoteIdent(field, dialect);
+  const where = [`WHERE ${col} IS NOT NULL`, ...narrowingLines].join("\n");
   const sql = `SELECT DISTINCT ${col} FROM ${quoteTableRef(asTableRef(table), dialect)}`
-    + `\nWHERE ${col} IS NOT NULL\nORDER BY ${col}`;
+    + `\n${where}\nORDER BY ${col}`;
   return limitClause(sql, rowLimit, dialect);
 }
 
