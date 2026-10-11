@@ -1484,6 +1484,17 @@
     "oracle": "SELECT count(*) AS n\nFROM cube_demo.crm_deals\nWHERE stage = 'Closed Won'",
     "db2": "SELECT count(*) AS n\nFROM cube_demo.crm_deals\nWHERE stage = 'Closed Won'"
   },
+  "d29-slicer-wrap": {
+    "sqlite": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "duckdb": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "postgres": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "mysql": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE `stage` IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "mariadb": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE `stage` IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "clickhouse": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "sqlserver": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE [stage] IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "oracle": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage",
+    "db2": "SELECT * FROM (\nSELECT stage, count(*) AS n\nFROM cube_demo.crm_deals\nGROUP BY stage\n) slicer_src\nWHERE \"stage\" IN ('Negotiation', 'Closed Won')\nORDER BY stage"
+  },
   "duckdb-pivot": {
     "sqlite": "-- this case is not asked on sqlite: it is one database's own idiom",
     "duckdb": "PIVOT (SELECT stage FROM cube_demo.crm_deals) ON stage USING count(*)",
