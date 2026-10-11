@@ -118,7 +118,7 @@
     </div>
   <div class="dashboard-grid">
     <div class="grid-item" style="grid-column: 1 / span 12; grid-row: 1 / span 1;">
-      <div class="text-block"><h2>Table Profile</h2>
+      <div class="text-block" id="widgetText-text_dd23-text-title"><h2>Table Profile</h2>
 <p>Pick any table and you know it in half a minute: support_tickets holds 14,000 rows over 15 columns, 476 of them opened in the last 30 days, and 4 columns have gaps - order_id is empty on 52.64% of tickets, because a ticket need not be about an order, and csat_score on 58.33%, because most people never answer the survey. Its priority column is 51.56% normal and 8.21% urgent. Point the same page at orders.total_amount and the chart turns into twenty ranges over 23,162 distinct amounts, 20,782 orders inside the first one.</p>
 <p>Size, freshness and gaps first, then what every column holds, then the one column you asked about. <strong>Type a table and a column</strong> - the page is the only one where the table itself is a filter, and every tile checks both names against <code>information_schema</code> before it builds a query, so a name that is not there shows nothing rather than running. <strong>Rows added in the last 30 days</strong> is empty for a table with no column that records a beginning, and the distribution chart draws twenty ranges for a numeric column and the twenty commonest values for any other.</p>
 </div>

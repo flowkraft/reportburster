@@ -2796,7 +2796,7 @@
          size of the text around it. It used to be the smallest and faintest line on the card,
          under everything, where a reader never saw it. -->
     {#if activeCube.description}
-      <p class="rb-cube-about">{activeCube.description}</p>
+      <p class="rb-cube-about" id="cubeAbout">{activeCube.description}</p>
     {/if}
 
     {#if !runtime || !panelCollapsed}
@@ -2870,11 +2870,11 @@
          front of them instead of somewhere off the screen. The stories are written first here so
          that where the halves stack - a phone, or a tile in a narrow column - the questions are
          read before the field list. -->
-    <div class="rb-cube-halves" class:rb-cube-split={offersStories}>
+    <div class="rb-cube-halves" id="cubeHalves" class:rb-cube-split={offersStories}>
 
     <!-- The questions this cube was written to answer, each one click away (design part 8) -->
     {#if offersStories}
-      <div class="rb-cube-half rb-cube-stories">
+      <div class="rb-cube-half rb-cube-stories" id="cubeStoriesHalf">
       <div id="cubeStoriesHeading" class="rb-stories-heading"
            title="Ideas for what to ask this cube: press Show Me and the fields it needs are ticked for you">Stories</div>
       <div id="cubeHints" class="rb-hints">
@@ -2894,7 +2894,7 @@
 
     <!-- read-only (W4.8): the answer without the asking - no tree, and so no icon and no grain -->
     {#if !readOnly}
-    <div class="rb-cube-half rb-cube-fields">
+    <div class="rb-cube-half rb-cube-fields" id="cubeFieldsHalf">
     <div class="rb-tree">
       {#each rows as row}
         {#if row.kind === 'folder'}
