@@ -25,9 +25,11 @@
 // SELECTORS
 //
 // Controls are reached by their id, never by class, text, role or position
-// (section 9.3). A tile is reached by `rb-<tag>[component-id="…"]`: that
-// attribute is the dashboard's own name for the tile, the one its `/data` calls
-// use, so it is the widget's identity and not its looks.
+// (section 9.3). A tile is reached by its own id, `<prefix>-<component id>`
+// (`widgetValue-…`, `widgetChart-…`): the component id is the dashboard's own
+// name for the tile, the one its `/data` calls use, so it is the widget's
+// identity and not its looks. A dashboard is `dashboard-<report id>`, and a
+// dashboard's own page is `#publishedDashboard`.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -47,22 +49,22 @@ import {
   type ParamMeta,
 } from './demo-catalog';
 
-/** The tag each widget type is drawn by, which is also how many of them a demo must show. */
-const TAG_OF: Record<string, string> = {
-  number: 'rb-value',
-  trend: 'rb-trend',
-  gauge: 'rb-gauge',
-  progress: 'rb-progress',
-  chart: 'rb-chart',
-  tabulator: 'rb-tabulator',
-  pivot: 'rb-pivot-table',
-  map: 'rb-map',
-  sankey: 'rb-sankey',
-  detail: 'rb-detail',
+/** The id prefix each widget type's tile is drawn under, which is also how many of them a demo must show. */
+const TILE_ID: Record<string, string> = {
+  number: 'widgetValue',
+  trend: 'widgetTrend',
+  gauge: 'widgetGauge',
+  progress: 'widgetProgress',
+  chart: 'widgetChart',
+  tabulator: 'widgetTabulator',
+  pivot: 'widgetPivot',
+  map: 'widgetMap',
+  sankey: 'widgetSankey',
+  detail: 'widgetDetail',
 };
 
 /** The tiles whose reading is a number or a word the reader can see written out. */
-const WRITTEN_OUT = ['rb-value', 'rb-trend', 'rb-gauge', 'rb-progress'];
+const WRITTEN_OUT = ['number', 'trend', 'gauge', 'progress'];
 
 /** What a tile says while it is still asking. */
 const STILL_ASKING = ['...', '…', ''];
@@ -91,9 +93,9 @@ export async function openPublished(
     timeout: 60_000,
     waitUntil: 'networkidle',
   });
-  const root = page.locator('rb-dashboard');
-  await expect(root, `${reportId} is published and its page opens`).toBeVisible({ timeout: 60_000 });
-  return page.locator('body');
+  const dashboard = page.locator('#publishedDashboard');
+  await expect(dashboard, `${reportId} is published and its page opens`).toBeVisible({ timeout: 60_000 });
+  return dashboard;
 }
 
 /**
@@ -119,16 +121,19 @@ export async function scrollCardIntoView(page: Page, demo: Demo): Promise<Locato
   const card = cardOf(page, demo);
   await expect(card, `the Gallery has a card for ${demo.id}`).toHaveCount(1, { timeout: 60_000 });
   await card.scrollIntoViewIfNeeded({ timeout: 30_000 });
-  await expect(card.locator('rb-dashboard'), `${demo.id} loads when it is scrolled to`)
+  await expect(card.locator(`[id="dashboard-${demo.reportId}"]`), `${demo.id} loads when it is scrolled to`)
     .toBeVisible({ timeout: 60_000 });
   return card;
 }
 
-/** The credential this dashboard was handed, if it was handed one (a share link's page is). */
-export async function embedTokenOf(root: Locator): Promise<string> {
-  const dashboard = root.locator('rb-dashboard');
+/**
+ * The credential this dashboard was handed, if it was handed one (a share link's page is): an
+ * attribute of the element that draws `dashboard-<report id>`.
+ */
+export async function embedTokenOf(root: Locator, reportId: string): Promise<string> {
+  const dashboard = root.locator(`[id="dashboard-${reportId}"]`);
   if ((await dashboard.count()) === 0) return '';
-  return (await dashboard.first().getAttribute('embed-token')) ?? '';
+  return dashboard.evaluate((box) => box.parentElement?.getAttribute('embed-token') ?? '');
 }
 
 // ── Ids ───────────────────────────────────────────────────────────────────────
@@ -222,10 +227,13 @@ export async function setParams(
   }
 }
 
-/** The reader's "ask again": the button under the filters, and the confirmation it asks for. */
+/**
+ * The reader's "ask again": the button under the filters, and the confirmation it asks for. The
+ * root is one dashboard (a card, or a dashboard's own page), so it holds one of each.
+ */
 export async function reloadDashboard(root: Locator): Promise<void> {
-  await root.locator('#btnReloadDashboard').first().click();
-  const confirm = root.locator('#btnConfirmReload').first();
+  await root.locator('#btnReloadDashboard').click();
+  const confirm = root.locator('#btnConfirmReload');
   if (await confirm.isVisible().catch(() => false)) await confirm.click();
   await expect(confirm, 'the reload was confirmed and the question is gone')
     .toBeHidden({ timeout: 30_000 });
@@ -241,7 +249,7 @@ export async function readParams(root: Locator, demo: Demo): Promise<Record<stri
   // The bar is filled after the dashboard is on the page (a Gallery card loads when it is scrolled
   // to), and a filter it has not drawn yet would be read as one it does not have.
   if (declared.length > 0)
-    await expect(root.locator(declared.map((p) => `#${p.id}`).join(', ')).first(),
+    await expect(root.locator(`#${declared[0].id}`),
       `${demo.id} has drawn its filter bar`).toBeAttached({ timeout: 60_000 });
   for (const param of declared) {
     const control = root.locator(`#${param.id}`);
@@ -250,7 +258,7 @@ export async function readParams(root: Locator, demo: Demo): Promise<Record<stri
       standing[param.id] = await tickedIn(root, param.id);
       continue;
     }
-    standing[param.id] = await control.evaluate((el) => {
+    standing[param.id] = await control.evaluate((el, id) => {
       const tag = el.tagName.toLowerCase();
       if (tag === 'select') return (el as HTMLSelectElement).value;
       if (tag === 'input') {
@@ -258,11 +266,11 @@ export async function readParams(root: Locator, demo: Demo): Promise<Record<stri
         return input.type === 'checkbox' ? String(input.checked) : input.value;
       }
       if (tag === 'div') {
-        const picked = el.querySelector('input[type="radio"]:checked') as HTMLInputElement | null;
+        const picked = el.querySelector(`[id^="${id}_rb_"]:checked`) as HTMLInputElement | null;
         return picked ? picked.value : '';
       }
       return '';
-    });
+    }, param.id);
   }
   return standing;
 }
@@ -280,9 +288,8 @@ async function tickedIn(root: Locator, id: string): Promise<string> {
     if ((await root.locator(`#${id}_lblCount`).innerText()).trim() === 'All') return '*';
     const ticked: string[] = [];
     for (let page = 1; ; page++) {
-      ticked.push(...await modal.evaluate((list) =>
-        Array.from(list.querySelectorAll('input[type="checkbox"]:checked'))
-          .map((box) => (box as HTMLInputElement).value)));
+      ticked.push(...await modal.locator(`[id^="${id}_cb_"]:checked`).evaluateAll((boxes) =>
+        boxes.map((box) => (box as HTMLInputElement).value)));
       const next = root.locator(`#${id}_btnNextPage`);
       if ((await next.count()) === 0 || await next.isDisabled()) break;
       await next.click();
@@ -332,10 +339,10 @@ function splitPicked(text: string): string[] {
 
 // ── What a tile shows ─────────────────────────────────────────────────────────
 
-/** One tile of this dashboard, by the name its own dashboard calls it. */
+/** One tile of this dashboard, by its own id: the name its own dashboard calls it. */
 export function tileOf(root: Locator, widget: DemoWidget): Locator {
-  const tag = TAG_OF[widget.type] ?? 'rb-value';
-  return root.locator(`${tag}[component-id="${widget.componentId}"]`);
+  const prefix = TILE_ID[widget.type] ?? 'widgetValue';
+  return root.locator(`[id="${prefix}-${widget.componentId}"]`);
 }
 
 /**
@@ -351,7 +358,7 @@ export async function askData(
   params: Record<string, unknown>,
   baseUrl = 'http://localhost:9090',
 ): Promise<Array<Record<string, unknown>>> {
-  const token = await embedTokenOf(root);
+  const token = await embedTokenOf(root, demo.reportId);
   const query = asQuery(paramsItDeclares(demo.id, params));
   const url = `${baseUrl}/api/reports/${demo.reportId}/data?componentId=${encodeURIComponent(widget.componentId)}`
     + (query ? `&${query}` : '');
@@ -481,10 +488,10 @@ function holds(row: Record<string, unknown>, wanted: Record<string, unknown>): b
  * its label, its value and "x% vs prior"; a gauge writes its value and label inside its svg, where
  * the tile's own text does not reach; a progress bar writes "value / goal" and then a percent.
  */
-async function writtenReading(tile: Locator, tag: string, componentId: string): Promise<string> {
-  if (tag === 'rb-trend') return tile.locator(`[id="trendValue-${componentId}"]`).innerText();
-  if (tag === 'rb-gauge') return (await tile.locator(`[id="gaugeValue-${componentId}"]`).textContent()) ?? '';
-  if (tag === 'rb-progress') {
+async function writtenReading(tile: Locator, type: string, componentId: string): Promise<string> {
+  if (type === 'trend') return tile.locator(`[id="trendValue-${componentId}"]`).innerText();
+  if (type === 'gauge') return (await tile.locator(`[id="gaugeValue-${componentId}"]`).textContent()) ?? '';
+  if (type === 'progress') {
     const lines = (await tile.innerText()).split('\n');
     return (lines.find((line) => line.includes(' / ')) ?? '').split(' / ')[0];
   }
@@ -540,9 +547,11 @@ export async function readChartOptions(
   root: Locator,
   componentId: string,
 ): Promise<Record<string, unknown>> {
-  const chart = root.locator(`rb-chart[component-id="${componentId}"]`);
+  const chart = root.locator(`[id="widgetChart-${componentId}"]`);
   await expect(chart, `${componentId} is a chart of this dashboard`).toHaveCount(1, { timeout: 30_000 });
-  return chart.evaluate((el) => {
+  return chart.evaluate((box) => {
+    // The chart's box is inside its element's shadow root; Chart.js is held by the element.
+    const el = (box.getRootNode() as ShadowRoot).host ?? box;
     const drawn = (el as any).chart ?? (el as any).chartInstance;
     return JSON.parse(JSON.stringify(drawn?.options ?? (el as any).mergedOptions ?? {}));
   });
@@ -572,16 +581,16 @@ export async function assertDemoDashboard(
  * local run's and not the page's.
  */
 export async function assertDemoDrawn(root: Locator, demo: Demo): Promise<void> {
-  const dashboard = root.locator('rb-dashboard');
+  const dashboard = root.locator(`[id="dashboard-${demo.reportId}"]`);
   await expect(dashboard, `${demo.id} is on the page`).toBeVisible({ timeout: 60_000 });
 
-  // The tiles it has, counted by tag: a widget that stopped being exported is a page with a hole
+  // The tiles it has, counted by type: a widget that stopped being exported is a page with a hole
   // in it, and no claim below would notice on its own.
   const widgets = widgetsFor(demo);
-  for (const [type, tag] of Object.entries(TAG_OF)) {
+  for (const [type, prefix] of Object.entries(TILE_ID)) {
     const expected = widgets.filter((w) => w.type === type).length;
     if (expected === 0) continue;
-    await expect(root.locator(tag), `${demo.id} shows its ${expected} ${tag} tile(s)`)
+    await expect(root.locator(`[id^="${prefix}-"]`), `${demo.id} shows its ${expected} ${type} tile(s)`)
       .toHaveCount(expected, { timeout: 60_000 });
   }
   await expect(root.locator('#parameterBarContainer'), `${demo.id} has its own filter bar`)
@@ -591,25 +600,25 @@ export async function assertDemoDrawn(root: Locator, demo: Demo): Promise<void> 
 
   // Every data tile has an answer, not a spinner and not a blank.
   for (const widget of widgets) {
-    const tag = TAG_OF[widget.type];
-    if (!tag) continue;
+    if (!TILE_ID[widget.type]) continue;
     const tile = tileOf(root, widget);
-    if (WRITTEN_OUT.includes(tag)) {
+    if (WRITTEN_OUT.includes(widget.type)) {
       await expect
         .poll(async () => (await tile.innerText()).trim(), { timeout: 60_000, intervals: [500] })
         .not.toMatch(/^(\.\.\.|…)?$/);
       continue;
     }
-    if (tag === 'rb-tabulator') {
+    if (widget.type === 'tabulator') {
+      // A table has an answer when it has drawn a row: tabRow-<component id>-<n>.
       await expect
-        .poll(async () => tile.evaluate((el) => ((el as any).data ?? []).length),
+        .poll(async () => root.locator(`[id^="tabRow-${widget.componentId}-"]`).count(),
           { timeout: 60_000, intervals: [500] })
         .toBeGreaterThan(0);
       continue;
     }
-    if (tag === 'rb-pivot-table' || tag === 'rb-map' || tag === 'rb-sankey' || tag === 'rb-detail') {
+    if (['pivot', 'map', 'sankey', 'detail'].includes(widget.type)) {
       await expect
-        .poll(async () => tile.evaluate((el) => el.innerHTML.length + (el.shadowRoot?.innerHTML.length ?? 0)),
+        .poll(async () => tile.evaluate((el) => el.innerHTML.length),
           { timeout: 60_000, intervals: [500] })
         .toBeGreaterThan(0);
     }
@@ -641,8 +650,8 @@ export async function assertClaims(
 
     // 2. And what the reader sees, wherever the tile writes its reading out. A chart, a table or a
     //    map draws its answer instead of writing it, and the claim about those is the answer above.
-    const tag = TAG_OF[(widget as DemoWidget).type];
-    if (!WRITTEN_OUT.includes(tag) || typeof kpi.value !== 'number') continue;
+    const type = (widget as DemoWidget).type;
+    if (!WRITTEN_OUT.includes(type) || typeof kpi.value !== 'number') continue;
     // The tile rounds for the reader (a currency to the penny, a percent to a digit), so what is
     // asserted is that the reader is being shown this claim's number and not another one. A tile
     // takes its new answer a moment after the filters ask for it, so the reading is asked for until
@@ -653,7 +662,7 @@ export async function assertClaims(
     try {
       await expect
         .poll(async () => {
-          shown = asNumber((await writtenReading(tile, tag, (widget as DemoWidget).componentId)).trim());
+          shown = asNumber((await writtenReading(tile, type, (widget as DemoWidget).componentId)).trim());
           return shown !== null && Math.abs(shown - want) <= near;
         }, { timeout: 20_000, intervals: [250] })
         .toBe(true);

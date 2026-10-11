@@ -2442,14 +2442,14 @@ test('(canvas mechanics) M22 Gauge, Trend and Progress settings', async () => {
       const published = await publishDashboard(page);
       reportId = published.reportId;
       const ids = await getCanvasComponentIds(page, canvasId);
-      const body = await openPublished(page, published.reportId);
-      const gauge = body.locator(`[id="widgetGauge-${ids.gauge[0]}"]`);
+      const dashboard = await openPublished(page, published.reportId);
+      const gauge = dashboard.locator(`[id="widgetGauge-${ids.gauge[0]}"]`);
       await expect(gauge).toContainText('Completed orders', { timeout: 60_000 });
       await expect(gauge).toContainText(/91\.9%|92%/);
-      const trend = body.locator(`[id="widgetTrend-${ids.trend[0]}"]`);
+      const trend = dashboard.locator(`[id="widgetTrend-${ids.trend[0]}"]`);
       await expect(trend).toContainText('Orders per month', { timeout: 60_000 });
       await expect(trend).toContainText(eNumberPattern(Number(trendRows[trendRows.length - 1].orders)));
-      const progress = body.locator(`[id="widgetProgress-${ids.progress[0]}"]`);
+      const progress = dashboard.locator(`[id="widgetProgress-${ids.progress[0]}"]`);
       await expect(progress).toContainText('Completed against all orders', { timeout: 60_000 });
       await expect(progress).toContainText(new RegExp(`${eNumberPattern(completed).source} / ${eNumberPattern(orders.length).source}`));
       await expect(progress).toContainText(`${((completed / orders.length) * 100).toFixed(1)}%`);
@@ -4740,9 +4740,9 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
 
     // + Published, the two tiles read the same as they do in the Canvas.
     const published = await publishDashboard(page);
-    const body = await openPublished(page, published.reportId);
+    const dashboard = await openPublished(page, published.reportId);
     await expect
-      .poll(async () => (await body.locator('[id^="widgetValue-"]').allInnerTexts()).map((s) => s.trim()).sort(),
+      .poll(async () => (await dashboard.locator('[id^="widgetValue-"]').allInnerTexts()).map((s) => s.trim()).sort(),
             { message: 'the published numbers carry the sign and the unit', timeout: 60_000, intervals: [1_000] })
       .toEqual([`€ ${orders}`, `${orders} %`].sort());
   });
