@@ -12,7 +12,7 @@
 import type { DataSource, VisualQuery, WidgetDisplayConfig, WidgetType } from "@/lib/stores/canvas-store";
 import type { ColumnSchema, QueryResult, TableSchema } from "./types";
 import {
-  autoFilterPaneField, autoPickMeasure, autoPivotLayout,
+  autoSlicerField, autoPickMeasure, autoPivotLayout,
   pickGaugeField, pickProgressField, pickTrendFields,
   pickSankeyFields, pickDetailDefaults, pickMapDefaults, splitDimsAndMeasures,
   rankChartSubtypes, shapeFromResult, pickDefaultAxes, type CardinalityMap,
@@ -185,7 +185,7 @@ export function seedDisplayConfigForType(
       // any existing dslConfig. A blanket `{ ...existing }` would leak fields
       // from a prior widget-type era — e.g. tabulator's `layout`/`autoColumns`
       // or pivot's `rows`/`cols`/`vals` — into the chart DSL output. Aligns
-      // chart with how pivot/tabulator/filter-pane cases below already behave
+      // chart with how pivot/tabulator/slicer cases below already behave
       // (wholesale-replace) per DSLPrinciplesReadme Principle 4.
       const dslPatch: Record<string, unknown> = {};
       if (existing.type !== undefined) dslPatch.type = existing.type;
@@ -336,14 +336,14 @@ export function seedDisplayConfigForType(
       }
       break;
     }
-    case "filter-pane": {
-      // Seed canonical filterPane DSL Map at displayConfig.dslConfig (Principle 4).
-      // Same drift class as pivot/tabulator. The strict filterPane parser
+    case "slicer": {
+      // Seed canonical slicer DSL Map at displayConfig.dslConfig (Principle 4).
+      // Same drift class as pivot/tabulator. The strict slicer parser
       // (no methodMissing) would crash on `type 'bar'`; the publisher pre-empts
-      // that by emitting `// filterPane('id') — no field configured` whenever
+      // that by emitting `// slicer('id') — no field configured` whenever
       // dslConfig lacks a `field` — so the filter SILENTLY VANISHES from the
       // published dashboard. Seed a sensible field via the existing
-      // autoFilterPaneField helper.
+      // autoSlicerField helper.
       const existing = (currentConfig.dslConfig ?? {}) as Record<string, unknown>;
       const hasCanonicalField = typeof existing.field === "string" && (existing.field as string).length > 0;
       if (!hasCanonicalField) {
@@ -353,10 +353,10 @@ export function seedDisplayConfigForType(
           columns,
           primaryKeyColumns: [],
         };
-        const field = autoFilterPaneField(stubTable, hints.cardinality);
+        const field = autoSlicerField(stubTable, hints.cardinality);
         if (field) {
           // Wholesale replace — chart-shape `type`/`data` are illegal in the
-          // filterPane DSL surface and must not be preserved across a type
+          // slicer DSL surface and must not be preserved across a type
           // switch.
           next.dslConfig = {
             field,
@@ -364,7 +364,7 @@ export function seedDisplayConfigForType(
             sort: "asc",
             maxValues: 500,
             showSearch: true,
-            multiSelect: true,
+            control: "multiselect",
           };
           changed = true;
         }

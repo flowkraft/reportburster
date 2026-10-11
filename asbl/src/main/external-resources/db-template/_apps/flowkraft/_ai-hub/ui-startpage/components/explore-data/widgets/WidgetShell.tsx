@@ -21,7 +21,7 @@ import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import type { WidgetType } from "@/lib/stores/canvas-store";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
-import { notFilteredNote, paneFilterPlanFor } from "@/lib/explore-data/pane-filters";
+import { notFilteredNote, slicerFilterPlanFor } from "@/lib/explore-data/slicer-filters";
 import { ChartWidget } from "./ChartWidget";
 import { TabulatorWidget } from "./TabulatorWidget";
 import { PivotWidget } from "./PivotWidget";
@@ -32,7 +32,7 @@ import { GaugeWidget } from "./GaugeWidget";
 import { TrendWidget } from "./TrendWidget";
 import { ProgressWidget } from "./ProgressWidget";
 import { DetailWidget } from "./DetailWidget";
-import { FilterPaneWidget } from "./FilterPaneWidget";
+import { SlicerWidget } from "./SlicerWidget";
 import { CubeRendererWidget } from "./CubeRendererWidget";
 import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 
@@ -47,7 +47,7 @@ const WIDGET_META: Record<WidgetType, { label: string; icon: React.ElementType; 
   trend: { label: "Trend", icon: _TrendingUp, color: "text-orange-500" },
   progress: { label: "Progress", icon: _BarChartH, color: "text-lime-500" },
   detail: { label: "Detail", icon: _FileText, color: "text-indigo-500" },
-  "filter-pane": { label: "Filter Pane", icon: _ListFilter, color: "text-cyan-500" },
+  "slicer": { label: "Slicer", icon: _ListFilter, color: "text-cyan-500" },
   text: { label: "Text Block", icon: _TypeIcon, color: "text-slate-500" },
   divider: { label: "Divider", icon: _MinusIcon, color: "text-slate-400" },
   iframe: { label: "iFrame", icon: _FrameIcon, color: "text-teal-500" },
@@ -66,10 +66,10 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const widgets = useCanvasStore((s) => s.widgets);
 
-  // A filter pane filters every widget built on its table. A widget it cannot reach - a cube, a
+  // A slicer filters every widget built on its table. A widget it cannot reach - a cube, a
   // Groovy script, a pasted query whose result has no column of that name - says so itself, rather
-  // than leaving the reader to wonder why its numbers did not move (`pane-filters.ts`).
-  const notFilteredBy = paneFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName)).notFiltered;
+  // than leaving the reader to wonder why its numbers did not move (`slicer-filters.ts`).
+  const notFilteredBy = slicerFilterPlanFor(widget, widgets, widget?.columns?.map((c) => c.columnName)).notFiltered;
 
   const isSelected = selectedWidgetId === widgetId;
   // Instant visual feedback: local state flipped on mousedown via flushSync so
@@ -174,9 +174,9 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
 
       {/* Content */}
       <div className="p-0 h-[calc(100%-33px)]">
-        {type === "filter-pane" ? (
-          <WidgetErrorBoundary resetKey={`filter-pane:${widgetId}`}>
-            <FilterPaneWidget widgetId={widgetId} />
+        {type === "slicer" ? (
+          <WidgetErrorBoundary resetKey={`slicer:${widgetId}`}>
+            <SlicerWidget widgetId={widgetId} />
           </WidgetErrorBoundary>
         ) : type === "text" ? (
           textContent ? (

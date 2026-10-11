@@ -2,7 +2,7 @@
 // Returns a tiny React functional component to render next to the column name.
 //
 // Consumers: QueryBuilder column list, AI-Hub table picker, Pivot row/col
-// pickers, Filter-pane target picker, DetailWidget key labels.
+// pickers, Slicer target picker, DetailWidget key labels.
 //
 // The order of checks matters — more specific wins over more generic
 // (PK > FK > geographic > temporal > boolean > semantic textual > numeric).

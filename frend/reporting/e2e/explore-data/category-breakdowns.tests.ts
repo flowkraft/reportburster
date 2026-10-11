@@ -5,7 +5,7 @@ import {
   groupWidgetsBySensibility,
   defaultDisplay,
   shapeFromResult,
-  autoFilterPaneField,
+  autoSlicerField,
   classifyColumn,
   looksLikeBoolean,
   rankChartSubtypes,
@@ -99,8 +99,8 @@ describe("Ops asks 'which shipper handles most orders?' — 3 slices (Speedy/Uni
 
 describe("Procurement wants 'filter by category' on Products", () => {
   // | 77 | Filter-by-category skips IDs | Products schema | result not in `[ProductID, CategoryID, SupplierID]` |
-  it("autoFilterPaneField skips all ID/FK columns in Products", () => {
-    const suggested = autoFilterPaneField(
+  it("autoSlicerField skips all ID/FK columns in Products", () => {
+    const suggested = autoSlicerField(
       productsSchema,
       productsCardinality,
     );

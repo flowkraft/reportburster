@@ -11,17 +11,17 @@ import java.util.function.UnaryOperator;
 import com.flowkraft.analytics.engine.dto.ExploreRequest;
 
 /**
- * What a filter pane's selections mean, in one place.
+ * What a slicer's selections mean, in one place.
  *
- * <p>A pane is a slicer and its values are a list: the values picked for ONE field are OR-ed
+ * <p>A slicer's values are a list: the values picked for ONE field are OR-ed
  * together - one {@code IN (…)} - and different fields are AND-ed, which is exactly the rule the
  * canvas writes into a widget's SQL and the published dashboard runs
- * ({@code pane-filters.ts}). Every value AND-ed to every other, as this was written first, made
- * two values of one pane answer no row at all.
+ * ({@code slicer-filters.ts}). Every value AND-ed to every other, as this was written first, made
+ * two values of one slicer answer no row at all.
  *
  * <p>For the STATE of one field - which of its values are still worth picking - that field's own
- * selections are left out: a pane shows which of its values the OTHER panes still allow, so the
- * values a multi-select pane has not picked yet stay live instead of being drawn as excluded by
+ * selections are left out: a slicer shows which of its values the OTHER slicers still allow, so the
+ * values a multi-select slicer has not picked yet stay live instead of being drawn as excluded by
  * the pick that sits beside them.
  *
  * <p>The vendors differ only in how an identifier is quoted, so the caller hands that in: DuckDB

@@ -55,43 +55,43 @@ class EmptyParameterMeansNoFilterTest {
 	private static final int DEALS_CLOSED_WON = 402;
 	private static final int DEALS_CLOSED_WON_OR_NEGOTIATION = 402 + 189;
 
-	/** The stages the frozen deals really sit at: what a pane on that field lists. */
+	/** The stages the frozen deals really sit at: what a slicer on that field lists. */
 	private static final List<String> STAGES = List.of("Closed Lost", "Closed Won", "Negotiation",
 			"Proposal", "Prospecting", "Qualification");
 
 	/**
-	 * What a filter pane does to the widget beside it, as the canvas writes it: the widget's own
-	 * query with one condition per pane field, bound to the pane's own parameter. Nothing is
-	 * declared on the parameters tab for it - a pane parameter is the pane's, not the author's - so
+	 * What a slicer does to the widget beside it, as the canvas writes it: the widget's own
+	 * query with one condition per slicer field, bound to the slicer's own parameter. Nothing is
+	 * declared on the parameters tab for it - a slicer parameter is the slicer's, not the author's - so
 	 * this is also the proof that the assembler finds it in the SQL itself.
 	 */
-	private static final String PANE_FILTERED_SQL = "SELECT COUNT(*) AS deal_count\n"
+	private static final String SLICER_FILTERED_SQL = "SELECT COUNT(*) AS deal_count\n"
 			+ "FROM cube_demo.crm_deals\n"
-			+ "WHERE stage IN (${__pane_stage})";
+			+ "WHERE stage IN (${__slicer_stage})";
 
-	/** The pane's own question: the values of its field, which is all a pane ever asks. */
-	private static final String PANE_VALUES_SQL = "SELECT DISTINCT stage\n"
+	/** The slicer's own question: the values of its field, which is all a slicer ever asks. */
+	private static final String SLICER_VALUES_SQL = "SELECT DISTINCT stage\n"
 			+ "FROM cube_demo.crm_deals\n"
 			+ "WHERE stage IS NOT NULL\n"
 			+ "ORDER BY stage";
 
 	/**
-	 * The same question with the OTHER pane's pick applied, which is how a published pane greys out:
+	 * The same question with the OTHER slicer's pick applied, which is how a published slicer greys out:
 	 * the list it gets while nothing is picked is every value it can show, and the shorter list it
-	 * gets once the other pane has a pick is the values that still answer rows - the difference is
+	 * gets once the other slicer has a pick is the values that still answer rows - the difference is
 	 * the greys. Its own field is never in its own query, so its own pick never shortens its own
-	 * list (`paneNarrowingLines` in the canvas writes both of these).
+	 * list (`slicerNarrowingLines` in the canvas writes both of these).
 	 */
-	private static final String PANE_VALUES_SQL_STAGE = "SELECT DISTINCT stage\n"
+	private static final String SLICER_VALUES_SQL_STAGE = "SELECT DISTINCT stage\n"
 			+ "FROM cube_demo.crm_deals\n"
 			+ "WHERE stage IS NOT NULL\n"
-			+ "AND probability_pct IN (${__pane_probability_pct})\n"
+			+ "AND probability_pct IN (${__slicer_probability_pct})\n"
 			+ "ORDER BY stage";
 
-	private static final String PANE_VALUES_SQL_PROBABILITY = "SELECT DISTINCT probability_pct\n"
+	private static final String SLICER_VALUES_SQL_PROBABILITY = "SELECT DISTINCT probability_pct\n"
 			+ "FROM cube_demo.crm_deals\n"
 			+ "WHERE probability_pct IS NOT NULL\n"
-			+ "AND stage IN (${__pane_stage})\n"
+			+ "AND stage IN (${__slicer_stage})\n"
 			+ "ORDER BY probability_pct";
 
 	/** The probabilities the frozen deals sit at, one per stage: 0 Closed Lost, 10 Prospecting,
@@ -150,43 +150,43 @@ class EmptyParameterMeansNoFilterTest {
 	}
 
 	/**
-	 * A filter pane is the same rule as a filter bar, on a parameter the author never declared:
+	 * A slicer is the same rule as a filter bar, on a parameter the author never declared:
 	 * nothing picked is every row, one value picked narrows to that value, two values OR together.
-	 * The pane itself lists its field's values whatever is picked - a pane that lost the values it
-	 * had just dimmed would be a pane nobody can click twice.
+	 * The slicer itself lists its field's values whatever is picked - a slicer that lost the values it
+	 * had just dimmed would be a slicer nobody can click twice.
 	 */
 	@Test
 	void ansi_a_pane_filters_the_published_dashboard_and_nothing_picked_is_every_row() throws Exception {
 		for (String vendor : List.of("duckdb", "sqlite")) {
 			try (Connection connection = open(vendor)) {
 
-				assertEquals(ALL_DEALS, underPane(connection, ""),
-						vendor + ", published: nothing picked in the pane, so every deal");
-				assertEquals(DEALS_CLOSED_WON, underPane(connection, "Closed Won"),
+				assertEquals(ALL_DEALS, underSlicer(connection, ""),
+						vendor + ", published: nothing picked in the slicer, so every deal");
+				assertEquals(DEALS_CLOSED_WON, underSlicer(connection, "Closed Won"),
 						vendor + ", published: one value picked");
-				assertEquals(DEALS_CLOSED_WON_OR_NEGOTIATION, underPane(connection, "Closed Won,Negotiation"),
-						vendor + ", published: two values of one pane OR together");
+				assertEquals(DEALS_CLOSED_WON_OR_NEGOTIATION, underSlicer(connection, "Closed Won,Negotiation"),
+						vendor + ", published: two values of one slicer OR together");
 			}
 		}
 	}
 
-	/** The pane's own value list is its field's values, whatever is picked in it. */
+	/** The slicer's own value list is its field's values, whatever is picked in it. */
 	@Test
 	void ansi_a_published_pane_lists_its_values_whatever_is_picked() throws Exception {
 		try (Connection connection = open("duckdb")) {
 			for (String picked : List.of("", "Closed Won")) {
-				assertEquals(STAGES, paneValues(connection, picked),
-						"the pane lists every stage, with '" + picked + "' picked");
+				assertEquals(STAGES, slicerValues(connection, picked),
+						"the slicer lists every stage, with '" + picked + "' picked");
 			}
 		}
 	}
 
 	/**
-	 * Two panes on one table: each one's list is narrowed by the other's pick and never by its own.
+	 * Two slicers on one table: each one's list is narrowed by the other's pick and never by its own.
 	 *
 	 * This is the whole of the published grey-outs. The canvas asks `/api/analytics/explore` which
 	 * values still answer rows; a published dashboard may not (that endpoint answers to report
-	 * authors, and it reads the table past the values a share link locked), so a published pane
+	 * authors, and it reads the table past the values a share link locked), so a published slicer
 	 * reads it off its own list instead. The frozen deals make the answer exact: every stage sits at
 	 * one probability, so picking 100 leaves one stage, and picking Negotiation leaves one
 	 * probability.
@@ -196,40 +196,40 @@ class EmptyParameterMeansNoFilterTest {
 		for (String vendor : List.of("duckdb", "sqlite")) {
 			try (Connection connection = open(vendor)) {
 
-				// Nothing picked anywhere: each pane lists every value it can ever show, which is
+				// Nothing picked anywhere: each slicer lists every value it can ever show, which is
 				// the list its greys are measured against.
-				assertEquals(STAGES, listedBy(connection, "filter-pane_stage_p", "", ""),
-						vendor + ": nothing picked, so the stage pane lists every stage");
-				assertEquals(PROBABILITIES, listedBy(connection, "filter-pane_probability_pct_q", "", ""),
-						vendor + ": nothing picked, so the probability pane lists every probability");
+				assertEquals(STAGES, listedBy(connection, "slicer_stage_p", "", ""),
+						vendor + ": nothing picked, so the stage slicer lists every stage");
+				assertEquals(PROBABILITIES, listedBy(connection, "slicer_probability_pct_q", "", ""),
+						vendor + ": nothing picked, so the probability slicer lists every probability");
 
-				// One pane picked: the other pane's list is down to what still answers rows, and
-				// the picked pane's own list is untouched - or a reader could not pick twice.
-				assertEquals(List.of("Closed Won"), listedBy(connection, "filter-pane_stage_p", "", "100"),
-						vendor + ": 100 picked in the probability pane, so one stage still answers");
-				assertEquals(PROBABILITIES, listedBy(connection, "filter-pane_probability_pct_q", "", "100"),
-						vendor + ": a pane's own pick leaves its own list whole");
+				// One slicer picked: the other slicer's list is down to what still answers rows, and
+				// the picked slicer's own list is untouched - or a reader could not pick twice.
+				assertEquals(List.of("Closed Won"), listedBy(connection, "slicer_stage_p", "", "100"),
+						vendor + ": 100 picked in the probability slicer, so one stage still answers");
+				assertEquals(PROBABILITIES, listedBy(connection, "slicer_probability_pct_q", "", "100"),
+						vendor + ": a slicer's own pick leaves its own list whole");
 
-				assertEquals(List.of("75"), listedBy(connection, "filter-pane_probability_pct_q", "Negotiation", ""),
-						vendor + ": Negotiation picked in the stage pane, so one probability still answers");
-				assertEquals(STAGES, listedBy(connection, "filter-pane_stage_p", "Negotiation", ""),
-						vendor + ": and the stage pane still lists every stage");
+				assertEquals(List.of("75"), listedBy(connection, "slicer_probability_pct_q", "Negotiation", ""),
+						vendor + ": Negotiation picked in the stage slicer, so one probability still answers");
+				assertEquals(STAGES, listedBy(connection, "slicer_stage_p", "Negotiation", ""),
+						vendor + ": and the stage slicer still lists every stage");
 
-				// Two values of one pane OR together here too: two stages, two probabilities.
+				// Two values of one slicer OR together here too: two stages, two probabilities.
 				assertEquals(List.of("75", "100"),
-						listedBy(connection, "filter-pane_probability_pct_q", "Negotiation,Closed Won", ""),
+						listedBy(connection, "slicer_probability_pct_q", "Negotiation,Closed Won", ""),
 						vendor + ": two stages picked, so both their probabilities still answer");
 			}
 		}
 	}
 
-	/** The assembled script declares the pane's parameter and guards the line it sits on. */
+	/** The assembled script declares the slicer's parameter and guards the line it sits on. */
 	@Test
 	void the_assembled_script_declares_the_pane_parameter_nobody_declared() throws Exception {
-		String script = ScriptAssembler.assemble(paneCanvas(), List.of()).text();
-		assertTrue(script.contains("def __pane_stage = userVars?.get('__pane_stage')?.toString()"),
-				"the pane's parameter is read from the request like any other filter value:\n" + script);
-		assertTrue(script.contains("if (has__pane_stage && listHasValues(__pane_stage))"),
+		String script = ScriptAssembler.assemble(slicerCanvas(), List.of()).text();
+		assertTrue(script.contains("def __slicer_stage = userVars?.get('__slicer_stage')?.toString()"),
+				"the slicer's parameter is read from the request like any other filter value:\n" + script);
+		assertTrue(script.contains("if (has__slicer_stage && listHasValues(__slicer_stage))"),
 				"and the line it sits on is only written when something is picked:\n" + script);
 		assertTrue(script.contains("WHERE 1=1"),
 				"with nothing picked the query keeps asking a whole question:\n" + script);
@@ -281,36 +281,36 @@ class EmptyParameterMeansNoFilterTest {
 		return ((Number) rows.get(0).values().iterator().next()).longValue();
 	}
 
-	/** The canvas a pane makes: a KPI on a table and a pane on one of its fields. */
-	private static List<Map<String, Object>> paneCanvas() {
+	/** The canvas a slicer makes: a KPI on a table and a slicer on one of its fields. */
+	private static List<Map<String, Object>> slicerCanvas() {
 
 		Map<String, Object> filteredSource = new LinkedHashMap<>();
 		filteredSource.put("mode", "visual");
-		// What the widget ran before any pane was added - left in on purpose: a pane must not be
-		// able to change what a widget asks except through paneSql.
+		// What the widget ran before any slicer was added - left in on purpose: a slicer must not be
+		// able to change what a widget asks except through slicerSql.
 		filteredSource.put("generatedSql", "SELECT COUNT(*) AS deal_count\nFROM cube_demo.crm_deals");
-		filteredSource.put("paneSql", PANE_FILTERED_SQL);
+		filteredSource.put("slicerSql", SLICER_FILTERED_SQL);
 		Map<String, Object> kpi = new LinkedHashMap<>();
 		kpi.put("id", "w-a");
 		kpi.put("type", "number");
 		kpi.put("dataSource", filteredSource);
 
-		Map<String, Object> paneSource = new LinkedHashMap<>();
-		paneSource.put("mode", "visual");
-		paneSource.put("paneValuesSql", PANE_VALUES_SQL);
-		Map<String, Object> pane = new LinkedHashMap<>();
-		pane.put("id", "w-p");
-		pane.put("type", "filter-pane");
-		pane.put("dataSource", paneSource);
-		pane.put("displayConfig", Map.of("dslConfig", Map.of("field", "stage")));
+		Map<String, Object> slicerSource = new LinkedHashMap<>();
+		slicerSource.put("mode", "visual");
+		slicerSource.put("slicerValuesSql", SLICER_VALUES_SQL);
+		Map<String, Object> slicer = new LinkedHashMap<>();
+		slicer.put("id", "w-p");
+		slicer.put("type", "slicer");
+		slicer.put("dataSource", slicerSource);
+		slicer.put("displayConfig", Map.of("dslConfig", Map.of("field", "stage")));
 
-		return List.of(kpi, pane);
+		return List.of(kpi, slicer);
 	}
 
-	/** The KPI's number on a published dashboard whose pane is picked at these values. */
-	private static long underPane(Connection connection, String picked) throws Exception {
+	/** The KPI's number on a published dashboard whose slicer is picked at these values. */
+	private static long underSlicer(Connection connection, String picked) throws Exception {
 		Map<String, Object> values = new LinkedHashMap<>();
-		values.put("__pane_stage", picked);
+		values.put("__slicer_stage", picked);
 		Map<String, List<Map<String, Object>>> reported = runPublished(connection, values);
 		List<Map<String, Object>> rows = reported.get("number_a");
 		if (rows == null || rows.isEmpty())
@@ -318,14 +318,14 @@ class EmptyParameterMeansNoFilterTest {
 		return ((Number) rows.get(0).values().iterator().next()).longValue();
 	}
 
-	/** The values the published pane itself was handed, in the order it got them. */
-	private static List<String> paneValues(Connection connection, String picked) throws Exception {
+	/** The values the published slicer itself was handed, in the order it got them. */
+	private static List<String> slicerValues(Connection connection, String picked) throws Exception {
 		Map<String, Object> values = new LinkedHashMap<>();
-		values.put("__pane_stage", picked);
+		values.put("__slicer_stage", picked);
 		Map<String, List<Map<String, Object>>> reported = runPublished(connection, values);
-		List<Map<String, Object>> rows = reported.get("filter-pane_stage_p");
+		List<Map<String, Object>> rows = reported.get("slicer_stage_p");
 		if (rows == null)
-			throw new IllegalStateException("the pane reported nothing: " + reported);
+			throw new IllegalStateException("the slicer reported nothing: " + reported);
 		List<String> listed = new ArrayList<>();
 		for (Map<String, Object> row : rows)
 			listed.add(String.valueOf(row.values().iterator().next()));
@@ -333,38 +333,38 @@ class EmptyParameterMeansNoFilterTest {
 	}
 
 	/**
-	 * A canvas with two panes on one table, each listing its own field under the other's pick.
+	 * A canvas with two slicers on one table, each listing its own field under the other's pick.
 	 *
-	 * @param id    the widget id, which decides the component id the published pane reports under
-	 * @param field the field the pane filters by
-	 * @param sql   the pane's own value query
+	 * @param id    the widget id, which decides the component id the published slicer reports under
+	 * @param field the field the slicer filters by
+	 * @param sql   the slicer's own value query
 	 */
-	private static Map<String, Object> pane(String id, String field, String sql) {
+	private static Map<String, Object> slicer(String id, String field, String sql) {
 		Map<String, Object> source = new LinkedHashMap<>();
 		source.put("mode", "visual");
-		source.put("paneValuesSql", sql);
-		Map<String, Object> pane = new LinkedHashMap<>();
-		pane.put("id", id);
-		pane.put("type", "filter-pane");
-		pane.put("dataSource", source);
-		pane.put("displayConfig", Map.of("dslConfig", Map.of("field", field)));
-		return pane;
+		source.put("slicerValuesSql", sql);
+		Map<String, Object> slicer = new LinkedHashMap<>();
+		slicer.put("id", id);
+		slicer.put("type", "slicer");
+		slicer.put("dataSource", source);
+		slicer.put("displayConfig", Map.of("dslConfig", Map.of("field", field)));
+		return slicer;
 	}
 
-	private static List<Map<String, Object>> twoPaneCanvas() {
-		List<Map<String, Object>> widgets = new ArrayList<>(paneCanvas());
-		widgets.set(1, pane("w-p", "stage", PANE_VALUES_SQL_STAGE));
-		widgets.add(pane("w-q", "probability_pct", PANE_VALUES_SQL_PROBABILITY));
+	private static List<Map<String, Object>> twoSlicerCanvas() {
+		List<Map<String, Object>> widgets = new ArrayList<>(slicerCanvas());
+		widgets.set(1, slicer("w-p", "stage", SLICER_VALUES_SQL_STAGE));
+		widgets.add(slicer("w-q", "probability_pct", SLICER_VALUES_SQL_PROBABILITY));
 		return widgets;
 	}
 
-	/** What one pane of the two-pane dashboard listed, with these values picked in each pane. */
+	/** What one slicer of the two-slicer dashboard listed, with these values picked in each slicer. */
 	private static List<String> listedBy(Connection connection, String componentId, String stagePicked,
 			String probabilityPicked) throws Exception {
 		Map<String, Object> values = new LinkedHashMap<>();
-		values.put("__pane_stage", stagePicked);
-		values.put("__pane_probability_pct", probabilityPicked);
-		String script = ScriptAssembler.assemble(twoPaneCanvas(), List.of()).text();
+		values.put("__slicer_stage", stagePicked);
+		values.put("__slicer_probability_pct", probabilityPicked);
+		String script = ScriptAssembler.assemble(twoSlicerCanvas(), List.of()).text();
 		Map<String, List<Map<String, Object>>> reported = run(connection, script, values);
 		List<Map<String, Object>> rows = reported.get(componentId);
 		if (rows == null)
@@ -375,10 +375,10 @@ class EmptyParameterMeansNoFilterTest {
 		return listed;
 	}
 
-	/** The pane canvas published and run: what each of its widgets reported. */
+	/** The slicer canvas published and run: what each of its widgets reported. */
 	private static Map<String, List<Map<String, Object>>> runPublished(Connection connection,
 			Map<String, Object> values) throws Exception {
-		String script = ScriptAssembler.assemble(paneCanvas(), List.of()).text();
+		String script = ScriptAssembler.assemble(slicerCanvas(), List.of()).text();
 		return run(connection, script, values);
 	}
 

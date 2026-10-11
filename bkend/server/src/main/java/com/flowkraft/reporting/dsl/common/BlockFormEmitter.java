@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * <p>Emits an options Map back into Groovy DSL text in <b>block form</b> style
  * — idiomatic Groovy / Gradle-flavoured output. Used by every DSL surface:
- * chart, tabulator, pivot, filter-pane, cube, reportparameters.
+ * chart, tabulator, pivot, slicer, cube, reportparameters.
  *
  * <p>Output conventions (in priority order):
  * <ul>

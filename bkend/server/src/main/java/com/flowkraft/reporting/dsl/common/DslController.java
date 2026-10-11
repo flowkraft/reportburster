@@ -23,7 +23,7 @@ import com.flowkraft.reporting.services.ReportingService;
 
 import com.flowkraft.reporting.dsl.chart.ChartOptionsScript;
 import com.flowkraft.reporting.dsl.cube.CubeOptionsScript;
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsScript;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptionsScript;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsScript;
 import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsScript;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
@@ -46,7 +46,7 @@ import groovy.lang.Script;
  *   POST /api/dsl/{type}/parse       body: { dslCode }            → { options }
  *   POST /api/dsl/{type}/serialize   body: { options }            → { dslCode }
  *
- * {type} ∈ {chart, tabulator, pivot, filterpane, cube, reportparameters}
+ * {type} ∈ {chart, tabulator, pivot, slicer, cube, reportparameters}
  *
  * Parse bypasses the typed DTOs and returns the raw {@code script.getOptions()}
  * Map directly. This matches the pattern in ReportingService and avoids three
@@ -60,11 +60,11 @@ import groovy.lang.Script;
  * Serialize receives the options map back from the UI and emits Groovy DSL
  * via {@link BlockFormEmitter} with widget-specific {@link BlockFormRules}.
  * Output is canonical block form across ALL DSL types (chart, tabulator, pivot,
- * filterpane, cube, reportparameters) — single quotes, command-chain syntax,
+ * slicer, cube, reportparameters) — single quotes, command-chain syntax,
  * builder blocks for list-of-maps where applicable. {@code priorDslCode} is
  * accepted in the payload for future AST-preserving emission; today it's
  * ignored since the parsers already capture unknown keys via methodMissing
- * (chart/tabulator/cube) and the strict schemas (filterpane/pivot) expose
+ * (chart/tabulator/cube) and the strict schemas (slicer/pivot) expose
  * every accepted key via the UI.
  */
 @RestController
@@ -154,7 +154,7 @@ public class DslController {
             }
             String rootKeyword = rootKeywordFor(type);
             // Single canonical block-form output for ALL DSL types (chart, tabulator,
-            // pivot, filterpane, cube, reportparameters): command-chain syntax for
+            // pivot, slicer, cube, reportparameters): command-chain syntax for
             // scalars, builder blocks for list-of-maps where applicable, single-quoted
             // strings, 2-space indent. Per-type plural-key rules in BlockFormRules.
             String dslCode = BlockFormEmitter.emit(
@@ -198,7 +198,7 @@ public class DslController {
 
     private static Class<? extends Script> scriptBaseFor(String type) {
         return switch (type) {
-            case "filterpane" -> FilterPaneOptionsScript.class;
+            case "slicer" -> SlicerOptionsScript.class;
             case "chart"      -> ChartOptionsScript.class;
             case "tabulator"  -> TabulatorOptionsScript.class;
             case "pivot"      -> PivotTableOptionsScript.class;
@@ -209,7 +209,7 @@ public class DslController {
 
     private static String rootKeywordFor(String type) {
         return switch (type) {
-            case "filterpane"        -> "filterPane";
+            case "slicer"        -> "slicer";
             case "chart"             -> "chart";
             case "tabulator"         -> "tabulator";
             case "pivot"             -> "pivotTable";

@@ -402,7 +402,7 @@ export async function exploreAssociations(
   // a pair: the server quotes each name on its own (`ExploreRequest.quotedTable`). Sent as one
   // string, `dash_demo.orders` asked for a table of that exact name and the sample table of the
   // same name in the default schema answered instead - with other columns, so every grey-out
-  // request came back a 500 and no pane ever dimmed a value.
+  // request came back a 500 and no slicer ever dimmed a value.
   const ref = asTableRef(table);
   const res = await fetch(`${RB_BASE}/analytics/explore`, {
     method: "POST",

@@ -16,7 +16,7 @@ without user value. The visual config panel is the single source of truth.
 or computed fields for any of these widgets, the widget graduates to its
 own `dsl/{widget}/` sibling package with `Options` + `OptionsScript` +
 `OptionsParser` — same layout as `chart/`, `tabulator/`, `pivottable/`,
-`filterpane/`, `cube/`. The JSON DTO here becomes the Options DTO there;
+`slicer/`, `cube/`. The JSON DTO here becomes the Options DTO there;
 nothing else is lost. Promotion is additive, not breaking.
 
 **Contract invariant.** The fields in each `*Options.java` MUST match the

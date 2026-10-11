@@ -22,7 +22,7 @@ package com.flowkraft.reporting.dsl.common;
  *       No parallel/drifted alternative form is allowed.</li>
  *
  *   <li><b>DRY.</b> {@link BlockFormEmitter} is THE emitter for every DSL
- *       surface (chart, tabulator, pivot, filterpane, cube, reportparameters).
+ *       surface (chart, tabulator, pivot, slicer, cube, reportparameters).
  *       Per-widget rules live in {@link BlockFormRules}. Bidirectional
  *       UI↔DSL flows through ONE controller endpoint, {@link DslController}.
  *       Do not create parallel emitter classes; do not hand-roll
@@ -32,7 +32,7 @@ package com.flowkraft.reporting.dsl.common;
  *   <li><b>UI ↔ DSL round-trip is contractual.</b> The bidirectional sync
  *       (TypeScript mappers in {@code lib/explore-data/dsl-sync/*-mapping.ts}
  *       + {@link DslController}) MUST stay round-trip-clean for all five UI
- *       widget types: Chart, Tabulator, Pivot, FilterPane, Parameters. A
+ *       widget types: Chart, Tabulator, Pivot, Slicer, Parameters. A
  *       breakage anywhere in this loop must fail loud (test) — never be
  *       papered over with a "backward-compat fallback".
  * <pre>
@@ -45,7 +45,7 @@ package com.flowkraft.reporting.dsl.common;
  *   </li>
  *
  *   <li><b>The DSL Map IS the canvas's render input — for all five DSL widgets.</b>
- *       The canvas widget for Chart / Tabulator / Pivot / FilterPane / Parameters
+ *       The canvas widget for Chart / Tabulator / Pivot / Slicer / Parameters
  *       MUST render from the Map produced by {@code uiToXxxDsl(displayConfig)}.
  *       The same Map that the publisher consumes (after DSL → parse round-trip)
  *       is the same Map that drives {@code <rb-XXX>} on the canvas. Concretely:
@@ -140,21 +140,21 @@ package com.flowkraft.reporting.dsl.common;
  *     }
  * </pre>
  *
- * <h3>FilterPane</h3>
+ * <h3>Slicer</h3>
  * <pre>
- * ✅ GOOD — flat block, single-quoted scalars (8-property fixed surface):
- *     filterPane('countryFilter') {
+ * ✅ GOOD — flat block, single-quoted scalars (9-property fixed surface):
+ *     slicer('countryFilter') {
  *       field 'ShipCountry'
  *       label 'Country'
  *       sort 'asc'
  *       maxValues 500
  *       showSearch true
- *       multiSelect true
- *       defaultSelected 'Germany', 'France'
+ *       control 'multiselect'
+ *       defaultValue 'Germany', 'France'
  *     }
  *
  * ❌ BAD — parens form:
- *     filterPane('countryFilter') {
+ *     slicer('countryFilter') {
  *       field('ShipCountry')
  *       label('Country')
  *     }
@@ -256,7 +256,7 @@ public final class DSLPrinciplesReadme {
         //    NO parallel/drifted alternative form is allowed.
         //
         // 2. DRY. BlockFormEmitter is THE emitter for every DSL surface
-        //    (chart, tabulator, pivot, filterpane, cube, reportparameters).
+        //    (chart, tabulator, pivot, slicer, cube, reportparameters).
         //    Per-widget rules live in BlockFormRules. Bidirectional UI↔DSL
         //    flows through ONE controller, DslController. Do not create
         //    parallel emitter classes; do not hand-roll sb.append DSL.
@@ -266,7 +266,7 @@ public final class DSLPrinciplesReadme {
         // 3. UI ↔ DSL ROUND-TRIP IS CONTRACTUAL. The bidirectional sync (TS
         //    mappers in lib/explore-data/dsl-sync/*-mapping.ts + DslController)
         //    MUST stay round-trip-clean for all five UI widget types:
-        //    Chart, Tabulator, Pivot, FilterPane, Parameters.
+        //    Chart, Tabulator, Pivot, Slicer, Parameters.
         //
         //        displayConfig
         //          ─ uiToXxxDsl ──────►  Map (canonical shape)
@@ -278,7 +278,7 @@ public final class DSLPrinciplesReadme {
         //    be papered over with a "backward-compat fallback".
         //
         // 4. THE DSL MAP IS THE CANVAS'S RENDER INPUT — for all five DSL widgets.
-        //    The canvas widget for Chart / Tabulator / Pivot / FilterPane /
+        //    The canvas widget for Chart / Tabulator / Pivot / Slicer /
         //    Parameters MUST render from the Map produced by uiToXxxDsl(displayConfig).
         //    The same Map that the publisher consumes (after DSL→parse round-trip)
         //    is the same Map that drives <rb-XXX> on the canvas. Concretely: each
@@ -369,20 +369,20 @@ public final class DSLPrinciplesReadme {
         //         cols(['productLine'])
         //       }
         //
-        // FILTER PANE
-        //   ✅ GOOD — flat block, single-quoted scalars (8-property surface):
-        //       filterPane('countryFilter') {
+        // SLICER
+        //   ✅ GOOD — flat block, single-quoted scalars (9-property surface):
+        //       slicer('countryFilter') {
         //         field 'ShipCountry'
         //         label 'Country'
         //         sort 'asc'
         //         maxValues 500
         //         showSearch true
-        //         multiSelect true
-        //         defaultSelected 'Germany', 'France'
+        //         control 'multiselect'
+        //         defaultValue 'Germany', 'France'
         //       }
         //
         //   ❌ BAD — parens form:
-        //       filterPane('countryFilter') {
+        //       slicer('countryFilter') {
         //         field('ShipCountry')
         //         label('Country')
         //       }

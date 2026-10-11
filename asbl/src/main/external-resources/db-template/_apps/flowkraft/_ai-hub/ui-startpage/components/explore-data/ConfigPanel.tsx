@@ -39,7 +39,7 @@ import { GaugeConfig } from "./config-panels/GaugeConfig";
 import { TrendConfig } from "./config-panels/TrendConfig";
 import { ProgressConfig } from "./config-panels/ProgressConfig";
 import { DetailConfig } from "./config-panels/DetailConfig";
-import { FilterPaneConfig } from "./config-panels/FilterPaneConfig";
+import { SlicerConfig } from "./config-panels/SlicerConfig";
 import { BidirectionalDslCustomizer } from "./config-panels/BidirectionalDslCustomizer";
 
 // Auto-switch helpers (`seedDisplayConfigForType`, `inferColumnsFromRow`)
@@ -341,7 +341,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
   const widgetQueryError = widgetQR?.error ?? null;
 
   // Manually trigger a detection — used only when the user clicks the
-  // "Detect columns from query" button in the Display / FilterPane tabs.
+  // "Detect columns from query" button in the Display / Slicer tabs.
   // Bumps the appropriate version on dataSource so useWidgetData does a single
   // execution (which then populates the store entry the effect below watches).
   // Keeps the button meaningful for the "wrote SQL but hasn't clicked Run yet"
@@ -475,7 +475,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
   }
 
   const isDataWidget = ["chart", "tabulator", "pivot", "number", "map", "sankey", "gauge", "trend", "progress", "detail"].includes(selectedWidget.type);
-  const isFilterPane = selectedWidget.type === "filter-pane";
+  const isSlicer = selectedWidget.type === "slicer";
   const isText = selectedWidget.type === "text";
   const isDivider = selectedWidget.type === "divider";
   const isIframe = selectedWidget.type === "iframe";
@@ -509,7 +509,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
             trend: { label: "Trend", Icon: _TrendingUpIcon },
             progress: { label: "Progress", Icon: _BarChartHorizontalIcon },
             detail: { label: "Detail", Icon: _FileTextIcon },
-            text: undefined, divider: undefined, iframe: undefined, "filter-pane": undefined,
+            text: undefined, divider: undefined, iframe: undefined, "slicer": undefined,
           };
 
           // Only the #1 pick (first in the recommended array) gets the star —
@@ -833,8 +833,8 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
           </div>
         )}
 
-        {/* Filter Pane config — needs data source (for table) + display (for field) */}
-        {isFilterPane && (
+        {/* Slicer config — needs data source (for table) + display (for field) */}
+        {isSlicer && (
           <div className="space-y-4">
             <QueryBuilder
               widgetId={selectedWidget.id}
@@ -849,7 +849,7 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
                     No columns yet. Pick a table in the Data tab, or click Run to load the columns.
                   </p>
                   <button
-                    id="btnDetectColumnsFilterPane"
+                    id="btnDetectColumnsSlicer"
                     type="button"
                     onClick={detectColumnsFromQuery}
                     disabled={widgetQueryLoading || !connectionId || !selectedWidget.dataSource}
@@ -866,11 +866,11 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
                   )}
                 </div>
               )}
-              <FilterPaneConfig config={selectedWidget.displayConfig} columns={columns} table={selectedWidget.dataSource?.visualQuery?.table} onChange={handleDisplayChange} />
+              <SlicerConfig config={selectedWidget.displayConfig} columns={columns} table={selectedWidget.dataSource?.visualQuery?.table} onChange={handleDisplayChange} />
               <div className="pt-2">
                 <BidirectionalDslCustomizer
                   widgetId={selectedWidget.id}
-                  widgetType="filter-pane"
+                  widgetType="slicer"
                   columns={columns}
                   sampleData={sampleData}
                 />

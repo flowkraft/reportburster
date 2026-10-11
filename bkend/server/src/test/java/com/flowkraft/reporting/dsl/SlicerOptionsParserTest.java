@@ -9,12 +9,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptions;
-import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptions;
+import com.flowkraft.reporting.dsl.slicer.SlicerOptionsParser;
 
 /**
- * Tests for FilterPaneOptionsParser — validates Groovy DSL parsing
- * for the rb-filter-pane web component configuration.
+ * Tests for SlicerOptionsParser — validates Groovy DSL parsing
+ * for the rb-slicer web component configuration.
  *
  * <p><b>📖 Tests are the regression net for the DSL syntax contract.</b>
  * Every test fixture uses canonical block form. Adding a test that uses the
@@ -23,7 +23,7 @@ import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
  * {@link com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme#iAmImportantReadme()}
  * for the full principles.
  */
-class FilterPaneOptionsParserTest {
+class SlicerOptionsParserTest {
 
     static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
 
@@ -35,12 +35,12 @@ class FilterPaneOptionsParserTest {
         @Test
         @DisplayName("Empty/null input returns default options")
         void emptyInput() throws Exception {
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode("");
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode("");
             assertNotNull(opts);
             assertNull(opts.getField());
             assertEquals("asc", opts.getSort());
             assertEquals(500, opts.getMaxValues());
-            assertTrue(opts.isMultiSelect());
+            assertEquals(SlicerOptions.CONTROL_MULTISELECT, opts.getControl());
             assertFalse(opts.isShowCount());
             assertEquals("auto", opts.getHeight());
         }
@@ -49,32 +49,67 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Minimal — field only (unnamed block)")
         void minimalFieldOnly() throws Exception {
             String dsl = """
-                filterPane {
+                slicer {
                     field 'ShipCountry'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             assertEquals("ShipCountry", opts.getField());
             assertNull(opts.getLabel()); // defaults to field name in frontend
             assertEquals("asc", opts.getSort());
             assertEquals(500, opts.getMaxValues());
-            assertTrue(opts.isMultiSelect());
+            assertEquals(SlicerOptions.CONTROL_MULTISELECT, opts.getControl());
         }
 
         @Test
         @DisplayName("Minimal — field only (named block)")
         void minimalNamedBlock() throws Exception {
             String dsl = """
-                filterPane('countryFilter') {
+                slicer('countryFilter') {
                     field 'ShipCountry'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             assertNotNull(opts.getNamedOptions());
             assertTrue(opts.getNamedOptions().containsKey("countryFilter"));
 
-            FilterPaneOptions named = opts.getNamedOptions().get("countryFilter");
+            SlicerOptions named = opts.getNamedOptions().get("countryFilter");
             assertEquals("ShipCountry", named.getField());
+        }
+
+        @Test
+        @DisplayName("The name is the field — `slicer('channel')` alone is a whole slicer")
+        void nameIsTheField() throws Exception {
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode("slicer('channel')")
+                    .getNamedOptions().get("channel");
+            assertNotNull(named, "a bare `slicer('channel')` is a slicer of its own");
+            assertEquals("channel", named.getField());
+            assertEquals(SlicerOptions.CONTROL_MULTISELECT, named.getControl());
+        }
+
+        @Test
+        @DisplayName("The name is the field — an empty block says the same")
+        void nameIsTheFieldEmptyBlock() throws Exception {
+            String dsl = """
+                slicer('channel') {
+                }
+                """;
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
+                    .getNamedOptions().get("channel");
+            assertEquals("channel", named.getField());
+        }
+
+        @Test
+        @DisplayName("`field` wins over the name when the column differs")
+        void fieldOverridesTheName() throws Exception {
+            String dsl = """
+                slicer('channel') {
+                    field 'sales_channel'
+                }
+                """;
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
+                    .getNamedOptions().get("channel");
+            assertEquals("sales_channel", named.getField());
         }
     }
 
@@ -86,20 +121,20 @@ class FilterPaneOptionsParserTest {
         @DisplayName("All options set explicitly")
         void allOptions() throws Exception {
             String dsl = """
-                filterPane('countryFilter') {
+                slicer('countryFilter') {
                     field 'ShipCountry'
                     label 'Country'
                     sort 'desc'
                     maxValues 100
                     showSearch true
                     showCount true
-                    defaultSelected 'Germany', 'France'
-                    multiSelect false
+                    defaultValue 'Germany', 'France'
+                    control 'select'
                     height '250px'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
-            FilterPaneOptions named = opts.getNamedOptions().get("countryFilter");
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
+            SlicerOptions named = opts.getNamedOptions().get("countryFilter");
 
             assertEquals("ShipCountry", named.getField());
             assertEquals("Country", named.getLabel());
@@ -107,8 +142,8 @@ class FilterPaneOptionsParserTest {
             assertEquals(100, named.getMaxValues());
             assertTrue(named.getShowSearch());
             assertTrue(named.isShowCount());
-            assertEquals(List.of("Germany", "France"), named.getDefaultSelected());
-            assertFalse(named.isMultiSelect());
+            assertEquals(List.of("Germany", "France"), named.getDefaultValue());
+            assertEquals(SlicerOptions.CONTROL_SELECT, named.getControl());
             assertEquals("250px", named.getHeight());
         }
     }
@@ -121,12 +156,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Sort ascending (default)")
         void sortAsc() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     sort 'asc'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("asc", named.getSort());
         }
@@ -135,12 +170,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Sort descending")
         void sortDesc() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     sort 'desc'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("desc", named.getSort());
         }
@@ -149,12 +184,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Sort by count descending (most frequent first)")
         void sortCountDesc() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     sort 'count_desc'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("count_desc", named.getSort());
         }
@@ -163,47 +198,47 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Sort none (preserve database order)")
         void sortNone() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     sort 'none'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("none", named.getSort());
         }
     }
 
     @Nested
-    @DisplayName("MULTI-COMPONENT — multiple named filter panes in one DSL file")
+    @DisplayName("MULTI-COMPONENT — multiple named slicers in one DSL file")
     class MultiComponent {
 
         @Test
-        @DisplayName("Two named filter panes in same DSL")
-        void twoNamedPanes() throws Exception {
+        @DisplayName("Two named slicers in same DSL")
+        void twoNamedSlicers() throws Exception {
             String dsl = """
-                filterPane('countryFilter') {
+                slicer('countryFilter') {
                     field 'ShipCountry'
                     label 'Country'
                 }
 
-                filterPane('categoryFilter') {
+                slicer('categoryFilter') {
                     field 'CategoryName'
                     label 'Category'
                     showCount true
                     sort 'count_desc'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
-            Map<String, FilterPaneOptions> named = opts.getNamedOptions();
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
+            Map<String, SlicerOptions> named = opts.getNamedOptions();
 
             assertEquals(2, named.size());
 
-            FilterPaneOptions country = named.get("countryFilter");
+            SlicerOptions country = named.get("countryFilter");
             assertEquals("ShipCountry", country.getField());
             assertEquals("Country", country.getLabel());
 
-            FilterPaneOptions category = named.get("categoryFilter");
+            SlicerOptions category = named.get("categoryFilter");
             assertEquals("CategoryName", category.getField());
             assertEquals("Category", category.getLabel());
             assertTrue(category.isShowCount());
@@ -211,25 +246,25 @@ class FilterPaneOptionsParserTest {
         }
 
         @Test
-        @DisplayName("Three filter panes — country, year, product")
-        void threeNamedPanes() throws Exception {
+        @DisplayName("Three slicers — country, year, product")
+        void threeNamedSlicers() throws Exception {
             String dsl = """
-                filterPane('country') {
+                slicer('country') {
                     field 'ShipCountry'
                 }
 
-                filterPane('year') {
+                slicer('year') {
                     field 'OrderYear'
                     sort 'desc'
                 }
 
-                filterPane('product') {
+                slicer('product') {
                     field 'ProductName'
                     maxValues 50
                     showSearch true
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             assertEquals(3, opts.getNamedOptions().size());
 
             assertEquals("desc", opts.getNamedOptions().get("year").getSort());
@@ -239,48 +274,48 @@ class FilterPaneOptionsParserTest {
     }
 
     @Nested
-    @DisplayName("DEFAULT SELECTED — pre-selected values on load")
-    class DefaultSelected {
+    @DisplayName("DEFAULT VALUE — pre-picked values on load")
+    class DefaultValue {
 
         @Test
-        @DisplayName("Single default selected value")
+        @DisplayName("Single default value")
         void singleDefault() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Country'
-                    defaultSelected 'Germany'
+                    defaultValue 'Germany'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
-            assertEquals(List.of("Germany"), named.getDefaultSelected());
+            assertEquals(List.of("Germany"), named.getDefaultValue());
         }
 
         @Test
-        @DisplayName("Multiple default selected values (varargs)")
+        @DisplayName("Multiple default values (varargs)")
         void multipleDefaults() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Country'
-                    defaultSelected 'Germany', 'France', 'Spain'
+                    defaultValue 'Germany', 'France', 'Spain'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
-            assertEquals(List.of("Germany", "France", "Spain"), named.getDefaultSelected());
+            assertEquals(List.of("Germany", "France", "Spain"), named.getDefaultValue());
         }
 
         @Test
-        @DisplayName("No default selected (empty list)")
+        @DisplayName("No default value (empty list)")
         void noDefaults() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Country'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
-            assertTrue(named.getDefaultSelected().isEmpty());
+            assertTrue(named.getDefaultValue().isEmpty());
         }
     }
 
@@ -292,32 +327,32 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Invalid sort value throws IllegalArgumentException")
         void invalidSortValue() {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     sort 'banana'
                 }
                 """;
             assertThrows(Exception.class, () ->
-                FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl));
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl));
         }
 
         @Test
         @DisplayName("Invalid sort value in unnamed block throws")
         void invalidSortUnnamed() {
             String dsl = """
-                filterPane {
+                slicer {
                     field 'Category'
                     sort 'invalid_mode'
                 }
                 """;
             assertThrows(Exception.class, () ->
-                FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl));
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl));
         }
 
         @Test
         @DisplayName("Null input returns default options")
         void nullInput() throws Exception {
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(null);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(null);
             assertNotNull(opts);
             assertNull(opts.getField());
         }
@@ -325,34 +360,74 @@ class FilterPaneOptionsParserTest {
         @Test
         @DisplayName("Groovy syntax error throws exception")
         void groovySyntaxError() {
-            String dsl = "filterPane('f') { field $$$ }";
+            String dsl = "slicer('f') { field $$$ }";
             assertThrows(Exception.class, () ->
-                FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl));
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl));
         }
 
         @Test
-        @DisplayName("Empty closure produces defaults")
+        @DisplayName("Empty closure — the name is the field, the rest defaults")
         void emptyClosure() throws Exception {
             String dsl = """
-                filterPane('empty') {
+                slicer('empty') {
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
-            FilterPaneOptions named = opts.getNamedOptions().get("empty");
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
+            SlicerOptions named = opts.getNamedOptions().get("empty");
             assertNotNull(named);
-            assertNull(named.getField());
+            assertEquals("empty", named.getField()); // the name is the field (owner decision 19)
             assertEquals("asc", named.getSort());
             assertEquals(500, named.getMaxValues());
         }
 
         @Test
-        @DisplayName("No filterPane block — returns empty defaults")
-        void noFilterPaneBlock() throws Exception {
-            String dsl = "// just a comment, no filterPane block";
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+        @DisplayName("No slicer block — returns empty defaults")
+        void noSlicerBlock() throws Exception {
+            String dsl = "// just a comment, no slicer block";
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             assertNotNull(opts);
             assertNull(opts.getField());
             assertTrue(opts.getNamedOptions().isEmpty());
+        }
+
+        @Test
+        @DisplayName("`defaultSelected` — the word it replaced — throws (no alias)")
+        void oldDefaultSelectedThrows() {
+            String dsl = """
+                slicer('f') {
+                    field 'Country'
+                    defaultSelected 'Germany'
+                }
+                """;
+            assertThrows(Exception.class, () ->
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl),
+                "one canonical form: the parser is strict, so the old word is a typo");
+        }
+
+        @Test
+        @DisplayName("`multiSelect` — the word it replaced — throws (no alias)")
+        void oldMultiSelectThrows() {
+            String dsl = """
+                slicer('f') {
+                    field 'Country'
+                    multiSelect false
+                }
+                """;
+            assertThrows(Exception.class, () ->
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl));
+        }
+
+        @Test
+        @DisplayName("Invalid control value throws")
+        void invalidControlValue() {
+            String dsl = """
+                slicer('f') {
+                    field 'Country'
+                    control 'dropdown'
+                }
+                """;
+            assertThrows(Exception.class, () ->
+                SlicerOptionsParser.parseGroovySlicerDslCode(dsl));
         }
     }
 
@@ -364,11 +439,11 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Field with spaces is preserved")
         void fieldWithSpaces() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Ship Country'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("Ship Country", named.getField());
         }
@@ -377,12 +452,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("maxValues zero is accepted")
         void maxValuesZero() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     maxValues 0
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals(0, named.getMaxValues());
         }
@@ -391,12 +466,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("maxValues very large number")
         void maxValuesLarge() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Category'
                     maxValues 100000
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals(100000, named.getMaxValues());
         }
@@ -405,11 +480,11 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Empty string field is stored as empty")
         void emptyStringField() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field ''
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("", named.getField());
         }
@@ -418,12 +493,12 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Label with special characters")
         void labelSpecialChars() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'col1'
                     label 'Revenue ($)'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("Revenue ($)", named.getLabel());
         }
@@ -437,45 +512,45 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Calling field twice — last value wins")
         void fieldCalledTwice() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'FirstField'
                     field 'SecondField'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
             assertEquals("SecondField", named.getField());
         }
 
         @Test
-        @DisplayName("Calling defaultSelected twice — values accumulate (append)")
-        void defaultSelectedCalledTwice() throws Exception {
+        @DisplayName("Calling defaultValue twice — values accumulate (append)")
+        void defaultValueCalledTwice() throws Exception {
             String dsl = """
-                filterPane('f') {
+                slicer('f') {
                     field 'Country'
-                    defaultSelected 'Germany'
-                    defaultSelected 'France'
+                    defaultValue 'Germany'
+                    defaultValue 'France'
                 }
                 """;
-            FilterPaneOptions named = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl)
+            SlicerOptions named = SlicerOptionsParser.parseGroovySlicerDslCode(dsl)
                     .getNamedOptions().get("f");
-            assertEquals(List.of("Germany", "France"), named.getDefaultSelected());
+            assertEquals(List.of("Germany", "France"), named.getDefaultValue());
         }
 
         @Test
         @DisplayName("Same named block ID used twice — second overwrites first")
         void duplicateNamedBlockId() throws Exception {
             String dsl = """
-                filterPane('dup') {
+                slicer('dup') {
                     field 'FirstField'
                     label 'First'
                 }
-                filterPane('dup') {
+                slicer('dup') {
                     field 'SecondField'
                     label 'Second'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             assertEquals(1, opts.getNamedOptions().size());
             assertEquals("SecondField", opts.getNamedOptions().get("dup").getField());
             assertEquals("Second", opts.getNamedOptions().get("dup").getLabel());
@@ -485,16 +560,16 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Mixed named and unnamed blocks coexist")
         void mixedNamedAndUnnamed() throws Exception {
             String dsl = """
-                filterPane {
+                slicer {
                     field 'UnnamedField'
                     label 'Unnamed'
                 }
-                filterPane('named1') {
+                slicer('named1') {
                     field 'NamedField'
                     label 'Named'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
             // Unnamed block
             assertEquals("UnnamedField", opts.getField());
             assertEquals("Unnamed", opts.getLabel());
@@ -509,31 +584,31 @@ class FilterPaneOptionsParserTest {
     class RealWorld {
 
         @Test
-        @DisplayName("Northwind dashboard — country + category filter panes")
+        @DisplayName("Northwind dashboard — country + category slicers")
         void northwindDashboard() throws Exception {
             String dsl = """
-                filterPane('countryFilter') {
+                slicer('countryFilter') {
                     field 'ShipCountry'
                     label 'Ship Country'
                     showCount true
                     sort 'count_desc'
                 }
 
-                filterPane('categoryFilter') {
+                slicer('categoryFilter') {
                     field 'CategoryName'
                     label 'Product Category'
                     sort 'asc'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
 
-            FilterPaneOptions country = opts.getNamedOptions().get("countryFilter");
+            SlicerOptions country = opts.getNamedOptions().get("countryFilter");
             assertEquals("ShipCountry", country.getField());
             assertEquals("Ship Country", country.getLabel());
             assertTrue(country.isShowCount());
             assertEquals("count_desc", country.getSort());
 
-            FilterPaneOptions category = opts.getNamedOptions().get("categoryFilter");
+            SlicerOptions category = opts.getNamedOptions().get("categoryFilter");
             assertEquals("CategoryName", category.getField());
             assertEquals("Product Category", category.getLabel());
             assertEquals("asc", category.getSort());
@@ -543,30 +618,30 @@ class FilterPaneOptionsParserTest {
         @DisplayName("Sales dashboard — year with descending sort + region with defaults")
         void salesDashboard() throws Exception {
             String dsl = """
-                filterPane('yearFilter') {
+                slicer('yearFilter') {
                     field 'OrderYear'
                     label 'Year'
                     sort 'desc'
-                    defaultSelected '2024'
-                    multiSelect false
+                    defaultValue '2024'
+                    control 'select'
                 }
 
-                filterPane('regionFilter') {
+                slicer('regionFilter') {
                     field 'Region'
                     label 'Region'
                     height '200px'
                 }
                 """;
-            FilterPaneOptions opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dsl);
+            SlicerOptions opts = SlicerOptionsParser.parseGroovySlicerDslCode(dsl);
 
-            FilterPaneOptions year = opts.getNamedOptions().get("yearFilter");
+            SlicerOptions year = opts.getNamedOptions().get("yearFilter");
             assertEquals("desc", year.getSort());
-            assertEquals(List.of("2024"), year.getDefaultSelected());
-            assertFalse(year.isMultiSelect());
+            assertEquals(List.of("2024"), year.getDefaultValue());
+            assertEquals(SlicerOptions.CONTROL_SELECT, year.getControl());
 
-            FilterPaneOptions region = opts.getNamedOptions().get("regionFilter");
+            SlicerOptions region = opts.getNamedOptions().get("regionFilter");
             assertEquals("200px", region.getHeight());
-            assertTrue(region.isMultiSelect()); // default
+            assertEquals(SlicerOptions.CONTROL_MULTISELECT, region.getControl()); // default
         }
     }
 }

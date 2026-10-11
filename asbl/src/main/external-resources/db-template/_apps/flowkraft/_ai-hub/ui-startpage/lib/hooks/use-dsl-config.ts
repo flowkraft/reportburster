@@ -35,7 +35,7 @@ import {
  *
  * `getDslText()` and `saveDslText()` call the existing Java DSL serialize/parse
  * endpoints. The DSL text is a derived view — never stored, always re-derived
- * when the editor opens (or on toggle between Visual/Code panes).
+ * when the editor opens (or on toggle between Visual/Code slicers).
  */
 
 // Same-origin proxy — see app/api/dp/[...path]/route.ts.

@@ -174,7 +174,7 @@
 //
 // Two output layers:
 //   1. ColumnKind — a coarse shape classification.  Used everywhere:
-//      SummarizeShape dims, autoSummarize candidate filtering, filter-pane
+//      SummarizeShape dims, autoSummarize candidate filtering, slicer
 //      auto-pick, widget-picker.  One answer per column, via `classifyColumn`.
 //   2. Semantic predicates (isState / isCountry / isLatLon / isCurrency / …)
 //      — finer-grained yes/no flags layered on top of ColumnKind.  One
@@ -203,7 +203,7 @@
 //       `probes.probeCardinality` (SQL `COUNT(DISTINCT col)`, 5-min cache).
 //       Splits string columns into `boolean` (n=2), `category-low`
 //       (n < CATEGORY_LOW_MAX=50), and `category-high`.  Also narrows
-//       filter-pane candidate selection and palette ranking.
+//       slicer candidate selection and palette ranking.
 //
 //   (d) Value fingerprinting — `probes.probeSemanticType` samples up to
 //       200 rows and runs per-type value matchers (state-name list,

@@ -1,7 +1,7 @@
 import type { TabulatorDslOptions } from "@/lib/explore-data/dsl-sync/tabulator-mapping";
 import type { ChartDslOptions } from "@/lib/explore-data/dsl-sync/chart-mapping";
 import type { PivotDslOptions } from "@/lib/explore-data/dsl-sync/pivot-mapping";
-import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pane-mapping";
+import type { SlicerDslOptions } from "@/lib/explore-data/dsl-sync/slicer-mapping";
 
 /**
  * ============================================================================
@@ -18,7 +18,7 @@ import type { FilterPaneDslOptions } from "@/lib/explore-data/dsl-sync/filter-pa
  */
 
 /** The 5 widget types that use the bidirectional DSL system. */
-export type DslWidgetType = "tabulator" | "chart" | "pivot" | "filterpane" | "parameters";
+export type DslWidgetType = "tabulator" | "chart" | "pivot" | "slicer" | "parameters";
 
 /** Shape of the canonical DSL Map per widget type. The Map stored at
  *  displayConfig.dslConfig has this type for the corresponding widget. */
@@ -26,7 +26,7 @@ export interface DslMapByWidgetType {
   tabulator: TabulatorDslOptions;
   chart: ChartDslOptions;
   pivot: PivotDslOptions;
-  filterpane: FilterPaneDslOptions;
+  slicer: SlicerDslOptions;
   parameters: Record<string, unknown>;
 }
 

@@ -9,9 +9,9 @@ export function SelectionBar() {
   const toggleSelection = useCanvasStore((s) => s.toggleExploreSelection);
   const clearSelections = useCanvasStore((s) => s.clearExploreSelections);
 
-  // Only show when ≥1 filter-pane exists AND there are active selections
-  const hasFilterPanes = widgets.some((w) => w.type === "filter-pane");
-  if (!hasFilterPanes || selections.length === 0) return null;
+  // Only show when ≥1 slicer exists AND there are active selections
+  const hasSlicers = widgets.some((w) => w.type === "slicer");
+  if (!hasSlicers || selections.length === 0) return null;
 
   return (
     <div className="shrink-0 border-b border-base-300 bg-primary/5 px-4 py-1.5 flex items-center gap-2 flex-wrap">

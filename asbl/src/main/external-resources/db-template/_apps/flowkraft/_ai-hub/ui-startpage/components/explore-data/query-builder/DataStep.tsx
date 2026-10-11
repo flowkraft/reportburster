@@ -32,7 +32,7 @@ interface DataStepProps {
   defaultSchema?: string | null;
   /** The table the author picked, and the schema it lives in when that is not the
    *  connection's default one (`refForTable`): a table of another schema is only itself
-   *  once its schema travels with it, in the query, in the SQL and in the pane that
+   *  once its schema travels with it, in the query, in the SQL and in the slicer that
    *  filters by it. */
   onPickTable: (table: string, tableSchema?: string) => void;
   onPickCube: (cubeId: string) => void;

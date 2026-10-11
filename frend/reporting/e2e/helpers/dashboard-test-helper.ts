@@ -241,12 +241,12 @@ function slugify(s: string): string {
 }
 
 /**
- * One property of a filter pane, from the canonical DSL Map the canvas writes it in, falling
- * back to the flat key older canvases used. Mirrors `ScriptAssembler.filterPaneField` and
- * `filterPaneLabel`: a pane whose field is read from the wrong place is published under
- * `filter-pane_<id>` and not `filter-pane_<field>_<id>`, so nothing finds it.
+ * One property of a slicer, from the canonical DSL Map the canvas writes it in, falling
+ * back to the flat key older canvases used. Mirrors `ScriptAssembler.slicerField` and
+ * `slicerLabel`: a slicer whose field is read from the wrong place is published under
+ * `slicer_<id>` and not `slicer_<field>_<id>`, so nothing finds it.
  */
-function paneDsl(dc: Record<string, unknown>, key: string, legacyKey: string): string {
+function slicerDsl(dc: Record<string, unknown>, key: string, legacyKey: string): string {
   const dsl = dc.dslConfig as Record<string, unknown> | undefined;
   const fromDsl = dsl?.[key];
   if (typeof fromDsl === 'string' && fromDsl.trim()) return fromDsl;
@@ -263,7 +263,7 @@ function inferSemanticSlug(type: string, w: WidgetState): string {
     case 'chart':       raw = ((dc.xFields as string[]) ?? [])[0] ?? ''; break;
     case 'tabulator':   raw = w.dataSource?.visualQuery?.table ?? ''; break;
     case 'pivot':       raw = ((dc.pivotRows as string[]) ?? [])[0] ?? ''; break;
-    case 'filter-pane': raw = paneDsl(dc, 'field', 'filterField'); break;
+    case 'slicer': raw = slicerDsl(dc, 'field', 'filterField'); break;
     case 'gauge':       raw = (dc.field as string) ?? ''; break;
     case 'trend':       raw = (dc.dateField as string) ?? ''; break;
     case 'sankey':      raw = (dc.sourceField as string) ?? ''; break;
@@ -274,7 +274,7 @@ function inferSemanticSlug(type: string, w: WidgetState): string {
   switch (type) {
     case 'number':      label = (dc.numberLabel     as string) ?? ''; break;
     case 'chart':       label = (dc.chartTitle      as string) ?? ''; break;
-    case 'filter-pane': label = paneDsl(dc, 'label', 'filterPaneLabel'); break;
+    case 'slicer': label = slicerDsl(dc, 'label', 'slicerLabel'); break;
     case 'gauge':       label = (dc.label           as string) ?? ''; break;
     case 'trend':       label = (dc.label           as string) ?? ''; break;
   }

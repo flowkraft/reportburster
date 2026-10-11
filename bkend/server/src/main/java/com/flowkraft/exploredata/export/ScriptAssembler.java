@@ -48,26 +48,26 @@ public class ScriptAssembler {
     private static final Set<String> DATA_TYPES = Set.of(
             "chart", "tabulator", "pivot", "number", "map",
             "sankey", "gauge", "trend", "progress", "detail",
-            // A filter pane produces rows too: the values of its field, which is what it lists for
+            // A slicer produces rows too: the values of its field, which is what it lists for
             // the reader to pick from. Its block runs the very query the canvas ran for it
-            // (`paneValuesSql`), so the published pane lists the values the author saw.
-            "filter-pane"
+            // (`slicerValuesSql`), so the published slicer lists the values the author saw.
+            "slicer"
     );
 
     /**
-     * The prefix of a filter pane's own parameter, {@code __pane_<field>}.
+     * The prefix of a slicer's own parameter, {@code __slicer_<field>}.
      *
-     * <p>LOGIC-MIRROR of {@code PANE_PARAM_PREFIX} in
-     * {@code ui-startpage/lib/explore-data/pane-filters.ts}: the canvas writes the condition
-     * {@code AND "channel" IN (${__pane_channel})} into the widget's SQL, and the dashboard this
-     * script belongs to runs that same SQL. A pane parameter is not declared on the parameters tab -
-     * it is the pane's, not the author's - so the assembler finds it in the SQL itself.
+     * <p>LOGIC-MIRROR of {@code SLICER_PARAM_PREFIX} in
+     * {@code ui-startpage/lib/explore-data/slicer-filters.ts}: the canvas writes the condition
+     * {@code AND "channel" IN (${__slicer_channel})} into the widget's SQL, and the dashboard this
+     * script belongs to runs that same SQL. A slicer parameter is not declared on the parameters tab -
+     * it is the slicer's, not the author's - so the assembler finds it in the SQL itself.
      */
-    private static final String PANE_PARAM_PREFIX = "__pane_";
+    private static final String SLICER_PARAM_PREFIX = "__slicer_";
 
-    /** A pane parameter as it stands in the SQL the canvas wrote. */
-    private static final Pattern PANE_TOKEN = Pattern.compile(
-            "\\$\\{(" + PANE_PARAM_PREFIX + "[A-Za-z0-9_]+)\\}");
+    /** A slicer parameter as it stands in the SQL the canvas wrote. */
+    private static final Pattern SLICER_TOKEN = Pattern.compile(
+            "\\$\\{(" + SLICER_PARAM_PREFIX + "[A-Za-z0-9_]+)\\}");
 
     /** Matches a full import statement on its own line. */
     private static final Pattern IMPORT_PATTERN = Pattern.compile(
@@ -241,23 +241,23 @@ public class ScriptAssembler {
             paramNames = withBuiltins;
         }
 
-        // ── The panes' parameters ─────────────────────────────────────────────
-        // A pane's values ride in a parameter of the pane's own (`__pane_<field>`), which no one
+        // ── The slicers' parameters ─────────────────────────────────────────────
+        // A slicer's values ride in a parameter of the slicer's own (`__slicer_<field>`), which no one
         // declared on the parameters tab: the canvas wrote it into the widget's SQL and the page
         // sends its value with the request. Each one found is declared like any other filter value,
         // so the line it sits on gets the same "no value, no filter" guard - which is what makes a
-        // pane with nothing picked mean every row. Sorted, so the same canvas assembles to the same
+        // slicer with nothing picked mean every row. Sorted, so the same canvas assembles to the same
         // bytes.
-        Set<String> paneParamsUsed = new TreeSet<>();
-        Matcher paneToken = PANE_TOKEN.matcher(everyQuery.toString());
-        while (paneToken.find())
-            paneParamsUsed.add(paneToken.group(1));
-        if (!paneParamsUsed.isEmpty()) {
-            List<String> withPanes = new ArrayList<>(paramNames);
-            for (String paneParam : paneParamsUsed)
-                if (!withPanes.contains(paneParam))
-                    withPanes.add(paneParam);
-            paramNames = withPanes;
+        Set<String> slicerParamsUsed = new TreeSet<>();
+        Matcher slicerToken = SLICER_TOKEN.matcher(everyQuery.toString());
+        while (slicerToken.find())
+            slicerParamsUsed.add(slicerToken.group(1));
+        if (!slicerParamsUsed.isEmpty()) {
+            List<String> withSlicers = new ArrayList<>(paramNames);
+            for (String slicerParam : slicerParamsUsed)
+                if (!withSlicers.contains(slicerParam))
+                    withSlicers.add(slicerParam);
+            paramNames = withSlicers;
         }
 
         // 4. Build script text + line-to-widget blame map
@@ -610,15 +610,15 @@ public class ScriptAssembler {
     }
 
     /**
-     * The field one filter pane filters by, from the canonical DSL Map
+     * The field one slicer filters by, from the canonical DSL Map
      * ({@code displayConfig.dslConfig}, Principle 4 of DSLPrinciplesReadme), and its label the same
-     * way. The structured {@code filterField} / {@code filterPaneLabel} this used to read were
-     * removed from the canvas, so every pane published since then named no field at all.
+     * way. The structured {@code filterField} / {@code slicerLabel} this used to read were
+     * removed from the canvas, so every slicer published since then named no field at all.
      *
-     * <p>Mirrored in {@code DashboardFileGenerator} - the two have to name a pane the same way, because one
+     * <p>Mirrored in {@code DashboardFileGenerator} - the two have to name a slicer the same way, because one
      * writes the element and the other the block that fills it.
      */
-    private static String filterPaneField(Map<String, Object> widget) {
+    private static String slicerField(Map<String, Object> widget) {
         Map<String, Object> dc = displayConfig(widget);
         Object dsl = dc.get("dslConfig");
         if (dsl instanceof Map<?, ?> map) {
@@ -628,15 +628,15 @@ public class ScriptAssembler {
         return strOr(dc, "filterField", "");
     }
 
-    /** The label one filter pane shows, from the same Map; "" when the author left it to the field. */
-    private static String filterPaneLabel(Map<String, Object> widget) {
+    /** The label one slicer shows, from the same Map; "" when the author left it to the field. */
+    private static String slicerLabel(Map<String, Object> widget) {
         Map<String, Object> dc = displayConfig(widget);
         Object dsl = dc.get("dslConfig");
         if (dsl instanceof Map<?, ?> map) {
             Object label = map.get("label");
             if (label instanceof String s && !s.isBlank()) return s;
         }
-        return strOr(dc, "filterPaneLabel", "");
+        return strOr(dc, "slicerLabel", "");
     }
 
     private static String inferSemanticSlug(String type, Map<String, Object> widget) {
@@ -647,7 +647,7 @@ public class ScriptAssembler {
             case "chart"       -> { List<String> f = listOfStr(dc, "xFields");   yield f.isEmpty() ? "" : f.get(0); }
             case "tabulator"   -> visualQueryTable(widget);
             case "pivot"       -> { List<String> r = listOfStr(dc, "pivotRows"); yield r.isEmpty() ? "" : r.get(0); }
-            case "filter-pane" -> filterPaneField(widget);
+            case "slicer" -> slicerField(widget);
             case "gauge"       -> strOr(dc, "field",        "");
             case "trend"       -> strOr(dc, "dateField",    "");
             case "sankey"      -> strOr(dc, "sourceField",  "");
@@ -658,7 +658,7 @@ public class ScriptAssembler {
         String label = switch (type) {
             case "number"      -> strOr(dc, "numberLabel",     "");
             case "chart"       -> strOr(dc, "chartTitle",      "");
-            case "filter-pane" -> filterPaneLabel(widget);
+            case "slicer" -> slicerLabel(widget);
             case "gauge"       -> strOr(dc, "label",           "");
             case "trend"       -> strOr(dc, "label",           "");
             default            -> "";
@@ -707,18 +707,18 @@ public class ScriptAssembler {
     }
 
     private static String resolveSql(Map<String, Object> widget) {
-        // A filter pane asks one question only: which values its field has. That query is the
+        // A slicer asks one question only: which values its field has. That query is the
         // canvas's own (`buildDistinctValuesSql`, vendor-safe), kept on the widget so the published
-        // pane lists exactly what the author picked from.
-        if ("filter-pane".equals(str(widget, "type"))) {
-            String values = dsField(widget, "paneValuesSql");
+        // slicer lists exactly what the author picked from.
+        if ("slicer".equals(str(widget, "type"))) {
+            String values = dsField(widget, "slicerValuesSql");
             return values.isBlank() ? null : values;
         }
-        // The query this widget runs while a pane of its canvas reaches it: its own, with one
-        // `IN (${__pane_<field>})` per pane field (`pane-filters.ts`). It is written only while a
-        // pane is there, so a dashboard with no pane publishes exactly the SQL it always did.
-        String underPanes = dsField(widget, "paneSql");
-        if (!underPanes.isBlank()) return underPanes;
+        // The query this widget runs while a slicer of its canvas reaches it: its own, with one
+        // `IN (${__slicer_<field>})` per slicer field (`slicer-filters.ts`). It is written only while a
+        // slicer is there, so a dashboard with no slicer publishes exactly the SQL it always did.
+        String underSlicers = dsField(widget, "slicerSql");
+        if (!underSlicers.isBlank()) return underSlicers;
         String mode = dsField(widget, "mode");
         if ("sql".equals(mode) || "ai-sql".equals(mode)) {
             String sql = dsField(widget, "sql");

@@ -1,7 +1,7 @@
-<svelte:options customElement="rb-filter-pane" accessors={true} />
+<svelte:options customElement="rb-slicer" accessors={true} />
 
 <script context="module" lang="ts">
-  // Module-level: shared across all <rb-filter-pane> instances on the page.
+  // Module-level: shared across all <rb-slicer> instances on the page.
   // Deduplicates config requests when N components share the same report-id.
   const _cfgCache = new Map<string, Promise<any>>();
 
@@ -19,7 +19,7 @@
 <script lang="ts">
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { withCsrfHeader } from '../shared/session-request';
-  import { isPaneParamName } from '../shared/pane-selections';
+  import { isSlicerParamName } from '../shared/slicer-selections';
 
   // ============================================================================
   // Two usage modes:
@@ -27,9 +27,9 @@
   // MODE 1 — "Data Push" (parent fetches data, passes via props)
   //   Props: [data], [field], plus DSL config props
   //   Parent (Angular) calls the API, gets reportData, then renders:
-  //     <rb-filter-pane [data]="result.reportData" field="ShipCountry">
+  //     <rb-slicer [data]="result.reportData" field="ShipCountry">
   //   Used in: Configuration > Test SQL/Script button — Angular fetches data once
-  //   and pushes the SAME dataset to Tabulator, Chart, PivotTable, and FilterPane.
+  //   and pushes the SAME dataset to Tabulator, Chart, PivotTable, and Slicer.
   //   This avoids N separate API calls for the same data.
   //
   // MODE 2 — "Self-Fetch" (component fetches its own config + data)
@@ -64,15 +64,15 @@
   // DSL Config Props — one required (field), rest have smart defaults
   //
   // Groovy DSL example:
-  //   filterPane('countryFilter') {
+  //   slicer('countryFilter') {
   //     field 'ShipCountry'       // required
   //     label 'Country'           // default: field name
   //     sort 'asc'                // 'asc'|'desc'|'count_desc'|'none', default: 'asc'
   //     maxValues 500             // default: 500
   //     showSearch true           // default: auto (true when >10 values)
   //     showCount false           // default: false
-  //     defaultSelected 'Germany' // default: [] (nothing)
-  //     multiSelect true          // default: true
+  //     defaultValue 'Germany'    // default: [] (nothing)
+  //     control 'multiselect'     // 'multiselect' (default) or 'select'
   //     height 'auto'             // default: 'auto' (grows, max 300px)
   //   }
   // ============================================================================
@@ -82,8 +82,12 @@
   export let maxValues: number = 500;
   export let showSearch: boolean | 'auto' = 'auto';      // 'auto' = true when >10 values
   export let showCount: boolean = false;
-  export let defaultSelected: string[] = [];
-  export let multiSelect: boolean = true;
+  export let defaultValue: string[] = [];
+  // `control` and `defaultValue` are a parameter's words for the same two ideas, and the DSL,
+  // the config file and this component all say them the same way. The markup branches on one
+  // boolean, derived here - the single place the word becomes behaviour.
+  export let control: 'multiselect' | 'select' = 'multiselect';
+  $: multiSelect = control !== 'select';
   export let height: string = 'auto';                    // 'auto' = grows to fit, max 300px
 
   // Raw DSL source code (exposed for Configuration tab)
@@ -100,7 +104,7 @@
   // Internal state
   // ============================================================================
   let allValues: { value: string; count?: number }[] = [];
-  /** Every value this pane can show: the list it read while no pane had a pick (see the greys). */
+  /** Every value this slicer can show: the list it read while no slicer had a pick (see the greys). */
   let baselineValues: { value: string; count?: number }[] | null = null;
   /** The parameters the last fetch was made with, so the same ones are not fetched twice. */
   let lastParamsKey = '';
@@ -113,7 +117,7 @@
   const dispatch = createEventDispatcher();
 
   // Computed: effective label
-  $: effectiveLabel = label || field || 'Filter Pane';
+  $: effectiveLabel = label || field || 'Slicer';
 
   // Computed: should show search
   $: effectiveShowSearch = showSearch === 'auto'
@@ -158,12 +162,12 @@
       else if (searchAttr === 'false') showSearch = false;
       const countAttr = hostEl.getAttribute('show-count');
       if (countAttr === 'true') showCount = true;
-      const multiAttr = hostEl.getAttribute('multi-select');
-      if (multiAttr === 'false') multiSelect = false;
+      const controlAttr = hostEl.getAttribute('control');
+      if (controlAttr === 'select' || controlAttr === 'multiselect') control = controlAttr;
       const heightAttr = hostEl.getAttribute('height');
       if (heightAttr) height = heightAttr;
-      const defaultSelAttr = hostEl.getAttribute('default-selected');
-      if (defaultSelAttr) defaultSelected = defaultSelAttr.split(',').map(s => s.trim());
+      const defaultValueAttr = hostEl.getAttribute('default-value');
+      if (defaultValueAttr) defaultValue = defaultValueAttr.split(',').map(s => s.trim());
       const testModeAttr = hostEl.getAttribute('test-mode');
       if (testModeAttr === 'true') testMode = true;
     }
@@ -173,8 +177,8 @@
     // ====================================================================
     if (data && data.length > 0) {
       extractDistinctValuesFromData(data);
-      if (defaultSelected.length > 0 && selectedValues.length === 0) {
-        selectedValues = [...defaultSelected];
+      if (defaultValue.length > 0 && selectedValues.length === 0) {
+        selectedValues = [...defaultValue];
       }
       loading = false;
       dispatch('dataFetched', { totalRows: allValues.length, field, componentId });
@@ -192,36 +196,36 @@
         const config = await fetchConfigCached(configUrl, headers);
 
         // Extract named config for this componentId, or fall back to unnamed
-        let fpConfig: any = null;
-        if (componentId && config.namedFilterPaneOptions?.[componentId]) {
-          fpConfig = config.namedFilterPaneOptions[componentId];
-        } else if (config.filterPaneOptions) {
-          fpConfig = config.filterPaneOptions;
+        let slicerConfig: any = null;
+        if (componentId && config.namedSlicerOptions?.[componentId]) {
+          slicerConfig = config.namedSlicerOptions[componentId];
+        } else if (config.slicerOptions) {
+          slicerConfig = config.slicerOptions;
         }
 
         // Apply config values (only override if not already set via attributes)
-        if (fpConfig) {
-          if (fpConfig.field && !field) field = fpConfig.field;
-          if (fpConfig.label) label = fpConfig.label;
-          if (fpConfig.sort) sort = fpConfig.sort;
-          if (fpConfig.maxValues != null) maxValues = fpConfig.maxValues;
-          if (fpConfig.showSearch != null) showSearch = fpConfig.showSearch;
-          if (fpConfig.showCount != null) showCount = fpConfig.showCount;
-          if (fpConfig.multiSelect != null) multiSelect = fpConfig.multiSelect;
-          if (fpConfig.height) height = fpConfig.height;
-          if (fpConfig.defaultSelected?.length > 0) defaultSelected = fpConfig.defaultSelected;
+        if (slicerConfig) {
+          if (slicerConfig.field && !field) field = slicerConfig.field;
+          if (slicerConfig.label) label = slicerConfig.label;
+          if (slicerConfig.sort) sort = slicerConfig.sort;
+          if (slicerConfig.maxValues != null) maxValues = slicerConfig.maxValues;
+          if (slicerConfig.showSearch != null) showSearch = slicerConfig.showSearch;
+          if (slicerConfig.showCount != null) showCount = slicerConfig.showCount;
+          if (slicerConfig.control === 'select' || slicerConfig.control === 'multiselect') control = slicerConfig.control;
+          if (slicerConfig.height) height = slicerConfig.height;
+          if (slicerConfig.defaultValue?.length > 0) defaultValue = slicerConfig.defaultValue;
         }
 
         // Store raw DSL for display
-        if (config.filterPaneDsl) configDsl = config.filterPaneDsl;
+        if (config.slicerDsl) configDsl = config.slicerDsl;
       } catch (e: any) {
-        console.warn('rb-filter-pane: Failed to fetch config', e);
+        console.warn('rb-slicer: Failed to fetch config', e);
       }
     }
 
     // Apply default selections
-    if (defaultSelected.length > 0 && selectedValues.length === 0) {
-      selectedValues = [...defaultSelected];
+    if (defaultValue.length > 0 && selectedValues.length === 0) {
+      selectedValues = [...defaultValue];
     }
 
     await loadDistinctValues();
@@ -235,9 +239,9 @@
   });
 
   function findHostElement(): Element | null {
-    const el = document.querySelector(`rb-filter-pane[component-id="${componentId}"]`);
+    const el = document.querySelector(`rb-slicer[component-id="${componentId}"]`);
     if (el) return el;
-    return document.querySelector(`rb-filter-pane[field="${field}"]`);
+    return document.querySelector(`rb-slicer[field="${field}"]`);
   }
 
   /** Extract distinct values from a data array (Mode 1 or Mode 2 report-mode) */
@@ -275,11 +279,11 @@
         // Direct mode: query distinct values via connection.
         //
         // No row cap in the SQL. `LIMIT` is rejected outright by SQL Server, Oracle and Db2 - the
-        // pane's value list came back empty on all three - and this component is handed a
+        // slicer's value list came back empty on all three - and this component is handed a
         // connection, not a vendor, so it cannot write each one's form. The list is cut to
         // `maxValues` where it is sorted instead (`applySortAndLimit`), which answers the same for
         // a picker. The canvas and a published dashboard do not take this path: the canvas runs the
-        // vendor's own query (`buildDistinctValuesSql`) and a published pane reads the rows its
+        // vendor's own query (`buildDistinctValuesSql`) and a published slicer reads the rows its
         // report fetched.
         const orderClause = sort === 'none' ? '' : ` ORDER BY "${field}" ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         const sql = `SELECT DISTINCT "${field}" FROM "${tableName}" WHERE "${field}" IS NOT NULL${orderClause}`;
@@ -310,7 +314,7 @@
         const rows = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
         extractDistinctValuesFromData(rows);
-        applyPaneNarrowing();
+        applySlicerNarrowing();
 
         dispatch('dataFetched', {
           totalRows: allValues.length,
@@ -328,29 +332,29 @@
   }
 
   /**
-   * The greys on a published dashboard, read off this pane's own list.
+   * The greys on a published dashboard, read off this slicer's own list.
    *
-   * The canvas asks `/api/analytics/explore` which values still answer rows. A published pane may not:
+   * The canvas asks `/api/analytics/explore` which values still answer rows. A published slicer may not:
    * that endpoint answers to report authors, and it reads the table directly - past the parameters a
    * share link locked, which is the same reason a server-side pivot refuses a locked view. So the
-   * pane reads it off what it is given instead. Its value query carries the OTHER panes' conditions
-   * (`paneNarrowingLines`), so the list it gets back while nothing is picked is every value it could
-   * ever show - its baseline - and the shorter list it gets once another pane has a pick is the
+   * slicer reads it off what it is given instead. Its value query carries the OTHER slicers' conditions
+   * (`slicerNarrowingLines`), so the list it gets back while nothing is picked is every value it could
+   * ever show - its baseline - and the shorter list it gets once another slicer has a pick is the
    * values that still answer rows. The difference is the greys, and the baseline stays on screen:
    * a value that answers nothing is greyed, never taken away, or the next click could not be made.
    *
-   * Its own pick narrows nothing here, because its own field is not in its query. A pane that first
+   * Its own pick narrows nothing here, because its own field is not in its query. A slicer that first
    * loads with picks already in place has no baseline to compare against and simply shows the
    * narrowed list; nothing is greyed until it has seen the whole one.
    */
-  function applyPaneNarrowing() {
+  function applySlicerNarrowing() {
     const params = reportParams || {};
     const anyPicked = Object.keys(params)
-      .some(k => isPaneParamName(k) && String(params[k] ?? '') !== '');
+      .some(k => isSlicerParamName(k) && String(params[k] ?? '') !== '');
 
     if (!anyPicked) {
       // Nothing is picked anywhere, so this list is the whole one, whatever else changed: the only
-      // parameters a pane's value query holds are the other panes' (`buildDistinctValuesSql`), so a
+      // parameters a slicer's value query holds are the other slicers' (`buildDistinctValuesSql`), so a
       // filter bar moving cannot take a value out of it and cannot make this baseline stale.
       baselineValues = allValues.map(v => ({ ...v }));
       excludedValues = null;
@@ -371,23 +375,23 @@
 
   /**
    * An arbitrary value as characters an HTML id may hold, the way `RbParameters.safeId` does it,
-   * so a test reaches one value of one pane by its own id.
+   * so a test reaches one value of one slicer by its own id.
    */
   function safeId(value: any): string {
     return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
   }
 
-  /** Which pane this is, for its ids: the component it was published as, else the field it shows. */
+  /** Which slicer this is, for its ids: the component it was published as, else the field it shows. */
   $: idBase = safeId(componentId || field);
 
   function handleClick(value: string) {
     const isSelected = selectedValues.includes(value);
-    // One event, on this element: both hosts listen on the pane itself - the canvas's
-    // `FilterPaneWidget` and a published dashboard's page, which attaches to every pane it injected
-    // (`RbReport.listenToFilterPanes`). Nothing listens further up, so the event does not need to
-    // leave the pane, and dispatching it a second time to make it bubble would have the canvas
+    // One event, on this element: both hosts listen on the slicer itself - the canvas's
+    // `SlicerWidget` and a published dashboard's page, which attaches to every slicer it injected
+    // (`RbReport.listenToSlicers`). Nothing listens further up, so the event does not need to
+    // leave the slicer, and dispatching it a second time to make it bubble would have the canvas
     // count the same click twice and toggle the value straight back.
-    dispatch('filterPaneSelect', {
+    dispatch('slicerSelect', {
       field,
       value,
       action: isSelected ? 'deselect' : 'select',
@@ -399,8 +403,8 @@
     loadDistinctValues();
   }
 
-  // A pick in another pane changes which of this pane's values answer rows, and a dashboard hands
-  // the picks to its panes as parameters (`RbReport.applyPaneSelections`), so the pane reads its list
+  // A pick in another slicer changes which of this slicer's values answer rows, and a dashboard hands
+  // the picks to its slicers as parameters (`RbReport.applySlicerSelections`), so the slicer reads its list
   // again whenever those parameters change. The data-push mode (`selfFetchReady` stays false) has no
   // list of its own to read and is left alone.
   $: if (selfFetchReady) {
@@ -437,9 +441,9 @@
   }
   /* Theme-inheriting & framework-agnostic: container/surfaces inherit the page,
      text uses currentColor, structure is derived from currentColor via color-mix.
-     A host MAY override: rb-filter-pane { --rb-border / --rb-surface / --rb-accent }.
+     A host MAY override: rb-slicer { --rb-border / --rb-surface / --rb-accent }.
      No daisyUI / Tailwind hardcoded. */
-  .rb-filter-pane {
+  .rb-slicer {
     font-family: system-ui, -apple-system, sans-serif;
     font-size: 13px;
     border: 1px solid var(--rb-border, color-mix(in srgb, currentColor 18%, transparent));
@@ -448,7 +452,7 @@
     background: transparent;
     color: inherit;
   }
-  .pane-header {
+  .slicer-header {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -456,13 +460,13 @@
     border-bottom: 1px solid var(--rb-border, color-mix(in srgb, currentColor 18%, transparent));
     background: color-mix(in srgb, currentColor 6%, transparent);
   }
-  .pane-label {
+  .slicer-label {
     font-weight: 600;
     font-size: 12px;
     color: inherit;
     flex: 1;
   }
-  .pane-search {
+  .slicer-search {
     font-size: 11px;
     border: 1px solid var(--rb-border, color-mix(in srgb, currentColor 22%, transparent));
     border-radius: 4px;
@@ -472,13 +476,13 @@
     background: transparent;
     color: inherit;
   }
-  .pane-search:focus {
+  .slicer-search:focus {
     border-color: var(--rb-accent, var(--color-primary, #2171b5));
   }
-  .pane-list {
+  .slicer-list {
     overflow-y: auto;
   }
-  .pane-item {
+  .slicer-item {
     display: flex;
     align-items: center;
     padding: 5px 10px;
@@ -491,42 +495,42 @@
     font-size: 12px;
     color: inherit;
   }
-  .pane-item:hover {
+  .slicer-item:hover {
     background: color-mix(in srgb, currentColor 8%, transparent);
   }
-  .pane-item.selected {
+  .slicer-item.selected {
     background: var(--rb-accent, color-mix(in srgb, currentColor 16%, transparent));
     color: var(--rb-accent-text, inherit);
     font-weight: 600;
   }
-  .pane-item.excluded {
+  .slicer-item.excluded {
     color: color-mix(in srgb, currentColor 60%, transparent);
     opacity: 0.5;
   }
-  .pane-dot {
+  .slicer-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     margin-right: 8px;
     flex-shrink: 0;
   }
-  .pane-dot.selected { background: var(--rb-accent, var(--color-primary, #2171b5)); }
-  .pane-dot.associated { background: color-mix(in srgb, currentColor 25%, transparent); }
-  .pane-dot.excluded { background: color-mix(in srgb, currentColor 40%, transparent); }
-  .pane-value { flex: 1; }
-  .pane-item-count {
+  .slicer-dot.selected { background: var(--rb-accent, var(--color-primary, #2171b5)); }
+  .slicer-dot.associated { background: color-mix(in srgb, currentColor 25%, transparent); }
+  .slicer-dot.excluded { background: color-mix(in srgb, currentColor 40%, transparent); }
+  .slicer-value { flex: 1; }
+  .slicer-item-count {
     font-size: 10px;
     color: color-mix(in srgb, currentColor 60%, transparent);
     margin-left: 4px;
   }
-  .pane-loading, .pane-error {
+  .slicer-loading, .slicer-error {
     padding: 12px;
     text-align: center;
     font-size: 12px;
     color: var(--color-base-content, #64748b);
   }
-  .pane-error { color: var(--color-error, #dc2626); }
-  .pane-footer {
+  .slicer-error { color: var(--color-error, #dc2626); }
+  .slicer-footer {
     font-size: 11px;
     color: color-mix(in srgb, currentColor 60%, transparent);
     padding: 4px 10px;
@@ -535,17 +539,17 @@
   }
 </style>
 
-<!-- Ids, so a test clicks one value of one pane and reads what that value is showing:
-     `filterPane-<pane>`, `paneSearch-<pane>`, `paneValue-<pane>-<value>` (its `data-state` is
-     selected / associated / excluded) and `paneCount-<pane>`, where <pane> is the component id a
+<!-- Ids, so a test clicks one value of one slicer and reads what that value is showing:
+     `slicer-<slicer>`, `slicerSearch-<slicer>`, `slicerValue-<slicer>-<value>` (its `data-state` is
+     selected / associated / excluded) and `slicerCount-<slicer>`, where <slicer> is the component id a
      dashboard published it under, or its field. -->
-<div id="filterPane-{idBase}" class="rb-filter-pane">
-  <div class="pane-header">
-    <span class="pane-label">{effectiveLabel}</span>
+<div id="slicer-{idBase}" class="rb-slicer">
+  <div class="slicer-header">
+    <span class="slicer-label">{effectiveLabel}</span>
     {#if effectiveShowSearch}
       <input
-        id="paneSearch-{idBase}"
-        class="pane-search"
+        id="slicerSearch-{idBase}"
+        class="slicer-search"
         type="text"
         placeholder="Search..."
         bind:value={searchQuery}
@@ -554,27 +558,27 @@
   </div>
 
   {#if loading}
-    <div id="paneLoading-{idBase}" class="pane-loading">Loading...</div>
+    <div id="slicerLoading-{idBase}" class="slicer-loading">Loading...</div>
   {:else if error}
-    <div id="paneError-{idBase}" class="pane-error">{error}</div>
+    <div id="slicerError-{idBase}" class="slicer-error">{error}</div>
   {:else}
-    <div class="pane-list" style={heightStyle}>
+    <div class="slicer-list" style={heightStyle}>
       {#each sortedValues as item}
         {@const state = getState(item.value)}
         <button
-          id="paneValue-{idBase}-{safeId(item.value)}"
+          id="slicerValue-{idBase}-{safeId(item.value)}"
           data-state={state}
-          class="pane-item {state}"
+          class="slicer-item {state}"
           on:click={() => handleClick(item.value)}
         >
-          <span class="pane-dot {state}"></span>
-          <span class="pane-value">{item.value}</span>
+          <span class="slicer-dot {state}"></span>
+          <span class="slicer-value">{item.value}</span>
           {#if showCount && item.count != null}
-            <span class="pane-item-count">({item.count})</span>
+            <span class="slicer-item-count">({item.count})</span>
           {/if}
         </button>
       {/each}
     </div>
-    <div id="paneCount-{idBase}" class="pane-footer">{allValues.length} values</div>
+    <div id="slicerCount-{idBase}" class="slicer-footer">{allValues.length} values</div>
   {/if}
 </div>

@@ -3,8 +3,8 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { prepareDashboardHtml } from '../shared/dashboard-injection';
-  import { fieldOf, PANE_TAG, paneFieldsOnPage, paneSelectionsFor, refreshDataWidgets,
-           type PaneSelection } from '../shared/pane-selections';
+  import { fieldOf, SLICER_TAG, slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets,
+           type SlicerSelection } from '../shared/slicer-selections';
 
   // ============================================================================
   // Minimal Interface - Only 3 required props!
@@ -468,11 +468,11 @@
     // `toggle` does not bubble, so a panel anywhere in the dashboard is heard on the way down.
     dashboardContainer.removeEventListener('toggle', handlePanelOpened, true);
     dashboardContainer.addEventListener('toggle', handlePanelOpened, true);
-    // Every pane of the dashboard, heard on itself (the event does not bubble), and shown whatever
-    // the reader had already picked - an injection that runs again must not look like a pane that
+    // Every slicer of the dashboard, heard on itself (the event does not bubble), and shown whatever
+    // the reader had already picked - an injection that runs again must not look like a slicer that
     // forgot.
-    listenToFilterPanes();
-    if (paneSelectionsFor(reportId).size > 0) applyPaneSelections();
+    listenToSlicers();
+    if (slicerSelectionsFor(reportId).size > 0) applySlicerSelections();
     openHashTarget();
   }
 
@@ -579,77 +579,77 @@
 
   /**
    * An arbitrary value as characters an HTML id may hold, the way `RbParameters.safeId` and
-   * `RbFilterPane.safeId` do it, so a test reaches one chip by its own id.
+   * `RbSlicer.safeId` do it, so a test reaches one chip by its own id.
    */
   function safeId(value: unknown): string {
     return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
   }
 
-  // ── The filter panes of this dashboard ──────────────────────────────────────
+  // ── The slicers of this dashboard ──────────────────────────────────────
   //
-  // A pane is a slicer: the reader clicks a value and every tile built on that table answers for
-  // that value. The canvas does the same thing with the same SQL (`pane-filters.ts` wrote the
-  // condition into each widget's query, bound to `__pane_<field>`), so a dashboard answers the same
+  // A slicer applies by itself: the reader clicks a value and every tile built on that table answers for
+  // that value. The canvas does the same thing with the same SQL (`slicer-filters.ts` wrote the
+  // condition into each widget's query, bound to `__slicer_<field>`), so a dashboard answers the same
   // question whichever side of publishing it is read on.
   //
-  // The event comes from the pane element itself, not from the container: a web component's event
+  // The event comes from the slicer element itself, not from the container: a web component's event
   // is handed to the listeners of its own host element and does not travel further up.
 
   /** What the reader has picked, for the chips bar. */
-  let paneChips: PaneSelection[] = [];
+  let slicerChips: SlicerSelection[] = [];
 
-  function panesOf(): Element[] {
-    return dashboardContainer ? Array.from(dashboardContainer.querySelectorAll(PANE_TAG)) : [];
+  function slicersOf(): Element[] {
+    return dashboardContainer ? Array.from(dashboardContainer.querySelectorAll(SLICER_TAG)) : [];
   }
 
-  /** Hear every pane of the dashboard, once each (injection may run again). */
-  function listenToFilterPanes() {
-    for (const pane of panesOf()) {
-      pane.removeEventListener('filterPaneSelect', handlePaneSelect as EventListener);
-      pane.addEventListener('filterPaneSelect', handlePaneSelect as EventListener);
+  /** Hear every slicer of the dashboard, once each (injection may run again). */
+  function listenToSlicers() {
+    for (const slicer of slicersOf()) {
+      slicer.removeEventListener('slicerSelect', handleSlicerSelect as EventListener);
+      slicer.addEventListener('slicerSelect', handleSlicerSelect as EventListener);
     }
   }
 
-  function handlePaneSelect(e: Event) {
+  function handleSlicerSelect(e: Event) {
     const detail = (e as CustomEvent).detail as
       { field?: string; value?: string; multiSelect?: boolean } | undefined;
     if (!detail?.field || detail.value === undefined) return;
-    paneSelectionsFor(reportId).toggle(detail.field, detail.value, detail.multiSelect !== false);
-    applyPaneSelections();
+    slicerSelectionsFor(reportId).toggle(detail.field, detail.value, detail.multiSelect !== false);
+    applySlicerSelections();
   }
 
   /** One pick dropped, from its chip. */
-  function removePaneSelection(field: string, value: string) {
-    paneSelectionsFor(reportId).remove(field, value);
-    applyPaneSelections();
+  function removeSlicerSelection(field: string, value: string) {
+    slicerSelectionsFor(reportId).remove(field, value);
+    applySlicerSelections();
   }
 
   /** Every pick dropped at once: the dashboard answers for everything again. */
-  function clearPaneSelections() {
-    paneSelectionsFor(reportId).clear();
-    applyPaneSelections();
+  function clearSlicerSelections() {
+    slicerSelectionsFor(reportId).clear();
+    applySlicerSelections();
   }
 
   /**
-   * What a pick changes: the panes show it, the chips bar says it, and every tile asks again with
-   * the panes' values beside the filter bar's.
+   * What a pick changes: the slicers show it, the chips bar says it, and every tile asks again with
+   * the slicers' values beside the filter bar's.
    *
-   * The panes themselves are never replaced - a replaced element loses the listener this page put
+   * The slicers themselves are never replaced - a replaced element loses the listener this page put
    * on it and everything it had picked - so they are handed the new parameters instead and read
-   * their own list again (`RbFilterPane` watches `reportParams`). That read is what greys out the
-   * values the other panes' picks have left without rows; a pane's own pick never narrows its own
+   * their own list again (`RbSlicer` watches `reportParams`). That read is what greys out the
+   * values the other slicers' picks have left without rows; a slicer's own pick never narrows its own
    * list, so a reader can always pick twice.
    */
-  function applyPaneSelections() {
-    const selections = paneSelectionsFor(reportId);
-    paneChips = selections.list();
+  function applySlicerSelections() {
+    const selections = slicerSelectionsFor(reportId);
+    slicerChips = selections.list();
     const values = {
       ...currentDashboardParams,
-      ...selections.paramValues(paneFieldsOnPage(dashboardContainer)),
+      ...selections.paramValues(slicerFieldsOnPage(dashboardContainer)),
     };
-    for (const pane of panesOf()) {
-      const el = pane as unknown as { selectedValues?: string[]; reportParams?: Record<string, any> };
-      el.selectedValues = selections.valuesOf(fieldOf(pane));
+    for (const slicer of slicersOf()) {
+      const el = slicer as unknown as { selectedValues?: string[]; reportParams?: Record<string, any> };
+      el.selectedValues = selections.valuesOf(fieldOf(slicer));
       el.reportParams = values;
     }
     refreshDataWidgets(dashboardContainer, values);
@@ -790,12 +790,12 @@
   {/if}
 
   <!-- Dashboard Mode: Inject HTML with live web components into DOM -->
-  {#if configLoaded && dashboardTemplate && !error && paneChips.length > 0}
-    <!-- What the panes have picked, and the one way to drop it all: the same bar the canvas shows
+  {#if configLoaded && dashboardTemplate && !error && slicerChips.length > 0}
+    <!-- What the slicers have picked, and the one way to drop it all: the same bar the canvas shows
          above the same dashboard. -->
-    <div class="rb-selections" id="paneSelectionBar">
+    <div class="rb-selections" id="slicerSelectionBar">
       <span class="rb-selections-label">Selections</span>
-      {#each paneChips as chip (chip.field + '=' + chip.value)}
+      {#each slicerChips as chip (chip.field + '=' + chip.value)}
         <span class="rb-selection-chip">
           <span class="rb-selection-field">{chip.field}:</span> {chip.value}
           <button
@@ -803,11 +803,11 @@
             id="btnRemoveSelection-{safeId(chip.field)}-{safeId(chip.value)}"
             class="rb-selection-drop"
             title="Drop this selection"
-            on:click={() => removePaneSelection(chip.field, chip.value)}>x</button>
+            on:click={() => removeSlicerSelection(chip.field, chip.value)}>x</button>
         </span>
       {/each}
       <button type="button" id="btnClearSelections" class="rb-selections-clear"
-              on:click={clearPaneSelections}>Clear all</button>
+              on:click={clearSlicerSelections}>Clear all</button>
     </div>
   {/if}
 
@@ -1023,7 +1023,7 @@
     margin: 8px 0;
   }
 
-  /* The selections bar: the panes' picks, in the dashboard's own colours. */
+  /* The selections bar: the slicers' picks, in the dashboard's own colours. */
   .rb-selections {
     display: flex;
     flex-wrap: wrap;

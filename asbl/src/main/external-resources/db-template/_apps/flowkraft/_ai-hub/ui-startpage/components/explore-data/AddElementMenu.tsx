@@ -13,7 +13,7 @@ const ITEMS: { type: WidgetType; label: string; icon: React.ElementType; descrip
   { type: "text", label: "Text Block", icon: _TypeIcon, description: "Notes, headings, captions" },
   { type: "divider", label: "Divider", icon: _MinusIcon, description: "Visual separator" },
   { type: "iframe", label: "iFrame", icon: _FrameIcon, description: "Embed an external page" },
-  { type: "filter-pane", label: "Filter Pane", icon: _ListFilter, description: "Associative exploration" },
+  { type: "slicer", label: "Slicer", icon: _ListFilter, description: "Associative exploration" },
 ];
 
 export function AddElementMenu() {

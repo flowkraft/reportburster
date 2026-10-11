@@ -7,7 +7,7 @@
   // Which control each declared type is filled in with lives in its own module, so `npm test`
   // can ask it directly - see src/shared/parameter-controls.test.ts.
   import { controlTypeOf, defaultForType } from '../shared/parameter-controls';
-  import { paneFieldsOnPage, paneSelectionsFor, refreshDataWidgets } from '../shared/pane-selections';
+  import { slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets } from '../shared/slicer-selections';
   // Starting values a link carries, and the address bar kept on the view that is on screen. This
   // component is the only one that reads or writes the URL for parameters - see
   // src/shared/url-start-values.ts for the rules.
@@ -707,13 +707,13 @@
   // Replace all sibling rb-* components with fresh elements carrying the given params
   function applyParamsToSiblings(values: { [id: string]: any }) {
     if (!hostElement) return;
-    // The panes' picks ride along. A reload asked for in the filter bar re-fetches every tile, and a
-    // tile asked without `__pane_channel` would answer for every channel again - the reader would
-    // watch their pane selection undo itself. A pane parameter is the pane's own name and never a
+    // The slicers' picks ride along. A reload asked for in the filter bar re-fetches every tile, and a
+    // tile asked without `__slicer_channel` would answer for every channel again - the reader would
+    // watch their slicer selection undo itself. A slicer parameter is the slicer's own name and never a
     // name the author declared, so adding them here cannot overwrite a filter-bar value, a value
-    // locked by a share link or anything an embed token fixed: the panes only ever narrow.
-    const panePicks = paneSelectionsFor(reportId).paramValues(paneFieldsOnPage(hostElement));
-    refreshDataWidgets(hostElement, { ...values, ...panePicks });
+    // locked by a share link or anything an embed token fixed: the slicers only ever narrow.
+    const slicerPicks = slicerSelectionsFor(reportId).paramValues(slicerFieldsOnPage(hostElement));
+    refreshDataWidgets(hostElement, { ...values, ...slicerPicks });
   }
 
   // Submit: user explicitly requests data refresh with current param values

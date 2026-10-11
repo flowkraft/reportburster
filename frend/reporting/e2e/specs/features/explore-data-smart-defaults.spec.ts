@@ -216,7 +216,7 @@
 //   category-breakdowns.tests.ts       — 10 tests (shape C1, Rule 5)
 //   edge-cases-and-degenerate.tests.ts — Fallback (0 measures)
 //   chart-subtype-business-rules.tests.ts — 17 tests (chart subtype sensibility)
-//   filter-controls.tests.ts           — 7 tests (autoFilterPaneField)
+//   filter-controls.tests.ts           — 7 tests (autoSlicerField)
 //   record-drill-down.tests.ts         — 18 tests (pickDetailDefaults)
 //
 // LAYER 2 — Default configuration for each widget type (once selected):
@@ -255,7 +255,7 @@
 //
 // Gap                                          Impact    Action needed?
 // ──────────────────────────────────────────── ──────── ──────────────────────
-// Spec doesn't mention filter-pane auto-pick   Low       Tested in Jasmine; consider
+// Spec doesn't mention slicer auto-pick   Low       Tested in Jasmine; consider
 //                                                        adding to use-cases spec
 // Spec doesn't mention detail drill-down       Low       Tested in Jasmine; consider
 //                                                        adding to use-cases spec

@@ -485,7 +485,7 @@ describe("VENDOR LAYER — the row cap", () => {
     }
   });
 
-  it("puts SQL Server's TOP after DISTINCT in the filter pane's query", () => {
+  it("puts SQL Server's TOP after DISTINCT in the slicer's query", () => {
     expect(buildDistinctValuesSql("crm_deals", "stage", 1000, "sqlserver"))
       .toContain("SELECT DISTINCT TOP 1000 [stage]");
     expect(buildDistinctValuesSql("crm_deals", "stage", 1000, "sqlite")).toContain("LIMIT 1000");
@@ -557,7 +557,7 @@ describe("VENDOR LAYER — quoting a name and a table reference", () => {
     }
   });
 
-  it("is what the generator, the four probes and the filter pane all write the table with", () => {
+  it("is what the generator, the four probes and the slicer all write the table with", () => {
     const qualified = { schema: "cube_demo", name: "crm_deals" };
     for (const vendor of EVERY_VENDOR) {
       const want = `FROM ${quoteTableRef(qualified, vendor)}`;
@@ -994,9 +994,9 @@ describe("the committed AI Hub SQL is current", () => {
       expect(["A", "B", "C", "D"]).withContext(one.id).toContain(one.group);
       expect(one.proves.length).withContext(one.id).toBeGreaterThan(10);
       // Group D is the user's own SQL and holds `sql` instead of a query, a probe or a
-      // filter pane: nothing is built for it, which is what it proves.
-      const shapes = [one.query, one.probe, one.filterPane, one.sql].filter(Boolean).length;
-      expect(shapes).withContext(`${one.id} holds one of query, probe, filterPane, sql`).toBe(1);
+      // slicer: nothing is built for it, which is what it proves.
+      const shapes = [one.query, one.probe, one.slicer, one.sql].filter(Boolean).length;
+      expect(shapes).withContext(`${one.id} holds one of query, probe, slicer, sql`).toBe(1);
       expect(one.sql === undefined).withContext(`${one.id}: only group D carries its own SQL`)
         .toBe(one.group !== "D");
       const answers = [one.rows, one.rowCount].filter((a) => a !== undefined).length;

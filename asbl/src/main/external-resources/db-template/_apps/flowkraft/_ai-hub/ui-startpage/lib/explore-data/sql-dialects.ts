@@ -2,7 +2,7 @@
 // vendor-specific SQL form may live.
 //
 // The AI Hub generator writes standard ANSI SQL (`sql-builder.ts`,
-// `smart-defaults/probes.ts`, the filter-pane query). A form is added to this
+// `smart-defaults/probes.ts`, the slicer query). A form is added to this
 // file only because ANSI has no form for it, or because a database we support
 // rejects the ANSI form. Every function below says in one line why ANSI cannot
 // do it, and every one has a per-vendor test table in

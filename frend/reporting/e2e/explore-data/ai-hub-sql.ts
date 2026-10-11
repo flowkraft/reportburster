@@ -41,7 +41,7 @@ export interface AiHubProbe {
   sampleSize?: number;
 }
 
-export interface AiHubFilterPane {
+export interface AiHubSlicer {
   table: TableRef | string;
   field: string;
   rowLimit: number;
@@ -69,7 +69,7 @@ export interface AiHubCase {
   excluded?: Record<string, string>;
   query?: VisualQuery;
   probe?: AiHubProbe;
-  filterPane?: AiHubFilterPane;
+  slicer?: AiHubSlicer;
   /** What a value compared against a column looks like - what the schema API
    *  tells the product, written out here because this file has no schema. */
   columnKinds?: Record<string, SqlLiteralKind>;
@@ -132,9 +132,9 @@ export function buildAiHubCaseSql(one: AiHubCase, vendor: SqlDialect): string {
       today: one.today,
     });
   }
-  if (one.filterPane) {
-    const pane = one.filterPane;
-    return buildDistinctValuesSql(pane.table, pane.field, pane.rowLimit, vendor);
+  if (one.slicer) {
+    const slicer = one.slicer;
+    return buildDistinctValuesSql(slicer.table, slicer.field, slicer.rowLimit, vendor);
   }
   if (one.probe) {
     const probe = one.probe;
@@ -156,7 +156,7 @@ export function buildAiHubCaseSql(one: AiHubCase, vendor: SqlDialect): string {
         throw new Error(`${one.id}: no probe of kind '${probe.kind}'`);
     }
   }
-  throw new Error(`${one.id}: a case holds a query, a probe or a filterPane, and this one holds none`);
+  throw new Error(`${one.id}: a case holds a query, a probe or a slicer, and this one holds none`);
 }
 
 function required<T>(value: T | undefined, id: string, what: string): T {

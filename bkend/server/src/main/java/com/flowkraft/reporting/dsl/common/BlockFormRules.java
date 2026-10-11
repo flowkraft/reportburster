@@ -57,8 +57,8 @@ public final class BlockFormRules {
     /** Pivot: rows/cols/vals are lists of strings — no plural rules needed. */
     public static final Map<String, PluralRule> PIVOT = EMPTY;
 
-    /** Filter-pane: flat scalars only — no plural rules needed. */
-    public static final Map<String, PluralRule> FILTERPANE = EMPTY;
+    /** Slicer: flat scalars only — no plural rules needed. */
+    public static final Map<String, PluralRule> SLICER = EMPTY;
 
     /** Cube: same default — extensible via parser methodMissing. */
     public static final Map<String, PluralRule> CUBE = EMPTY;
@@ -91,7 +91,7 @@ public final class BlockFormRules {
             case "chart"            -> CHART;
             case "tabulator"        -> TABULATOR;
             case "pivot"            -> PIVOT;
-            case "filterpane"       -> FILTERPANE;
+            case "slicer"       -> SLICER;
             case "cube"             -> CUBE;
             case "reportparameters" -> REPORTPARAMETERS;
             default                 -> EMPTY;
