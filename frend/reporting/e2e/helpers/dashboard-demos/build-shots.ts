@@ -215,7 +215,7 @@ function ringOf(page: Page, step: Step, widgetId: string): Locator | undefined {
     case 'filters':
       return page.locator('rb-parameters');
     case 'layout':
-      return page.locator('.react-grid-layout').first();
+      return page.locator('#canvasGrid');
     case 'publish':
       return page.locator('#btnPublishDashboard');
     default:
