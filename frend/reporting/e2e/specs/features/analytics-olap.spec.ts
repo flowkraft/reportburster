@@ -45,7 +45,7 @@ import { Constants } from '../../utils/constants';
  *
  * TEST 5: Warehouse OLAP [DuckDB + ClickHouse] — Comprehensive OLAP, server engines
  *   - Identical DRY code path (runWarehouseOlap), different pivotId per engine
- *   - Server pre-aggregates to ~640 grouped rows (Count ~ 640)
+ *   - Server pre-aggregates to ~640 grouped rows; Count still answers the ~7937 transactions
  *   - ClickHouse: Docker columnar engine, started/stopped within test
  *
  * runWarehouseOlap(engine) — single DRY entry point for all engines:
@@ -990,22 +990,16 @@ async function performWarehouseOlapDiverseCombinations(
 
   // DIVERSE 1: Count aggregator — total transaction count
   // Generator produces ~8,000 fact rows (seed=42, deterministic)
-  // NOTE: Server-side engines (DuckDB/ClickHouse) pre-aggregate rows on the server,
-  // so "Count" in the client counts grouped rows (~640), not raw transactions (~7937).
-  // Browser engine has all raw rows, so Count = ~7937.
+  // The same answer from every engine: the browser counts its raw rows, and a server-side engine
+  // (DuckDB/ClickHouse) hands over one pre-aggregated row per cell with its count, which the pivot
+  // sums rather than counting the ~640 rows themselves (every cell would read 1).
   console.log(`[${engineLabel}] Diverse 1: Count aggregator (transaction count)`);
   const isServerEngine = engineLabel === 'DUCKDB' || engineLabel === 'CLICKHOUSE';
   const preCountTotal = await H.getPivotGrandTotal(page, pivotId);
   await H.changeAggregator(page, pivotId, 'Count');
   const countTotal = await H.getPivotGrandTotal(page, pivotId, preCountTotal);
-  if (isServerEngine) {
-    // Server returns ~640 grouped rows (country × category × quarter combos)
-    expect(countTotal).toBeGreaterThan(500);
-    expect(countTotal).toBeLessThan(1000);
-  } else {
-    expect(countTotal).toBeGreaterThan(7000);
-    expect(countTotal).toBeLessThan(10000);
-  }
+  expect(countTotal).toBeGreaterThan(7000);
+  expect(countTotal).toBeLessThan(10000);
   console.log(`[${engineLabel}] ✓ Transaction count: ${countTotal}`);
   // Restore
   await H.changeAggregator(page, pivotId, 'Sum');
