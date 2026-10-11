@@ -456,19 +456,12 @@ async function cReadTabulator(page: Page, widgetId: string): Promise<{ options: 
   });
 }
 
-/**
- * The text of a column's cell in the first row Tabulator drew. Tabulator draws its rows itself, so
- * this is the one place the test reaches a third-party class (`.tabulator-row`, `tabulator-field`);
- * it is a recorded exception of the id coverage table.
- */
-async function cFirstRowCell(tabulator: Locator, field: string): Promise<number | null> {
-  return tabulator.evaluate((el, f) => {
-    const root: ParentNode = (el as HTMLElement).shadowRoot ?? el;
-    const cell = root.querySelector(`.tabulator-row .tabulator-cell[tabulator-field="${f}"]`);
-    if (!cell) return null;
-    const n = Number((cell.textContent ?? '').replace(/[^0-9.\-]/g, ''));
-    return Number.isNaN(n) ? null : n;
-  }, field);
+/** The number in a column's cell of the top row a table draws (`tabCell-<cid>-0-<field>`). */
+async function cFirstRowCell(page: Page, componentId: string, field: string): Promise<number | null> {
+  const cell = page.locator(`[id="tabCell-${componentId}-0-${field}"]`);
+  if ((await cell.count()) === 0) return null;
+  const n = Number(((await cell.textContent()) ?? '').replace(/[^0-9.\-]/g, ''));
+  return Number.isNaN(n) ? null : n;
 }
 
 /** Replace the DSL in the Display tab's slicer and stay there (no return to the Data tab). */
@@ -1114,13 +1107,11 @@ async function pPublishedNumberIs(page: Page, componentId: string, want: number,
 /** The cells a published table shows, row by row, in its own column order. An answer of no rows at
  *  all is one of the answers worth asserting, which is why this does not wait for rows. */
 async function pPublishedCells(page: Page, componentId: string): Promise<string[][]> {
-  const tile = page.locator(`[component-id="${componentId}"]`).first();
-  if ((await tile.count()) === 0) return [];
-  return tile.locator('.tabulator-row').evaluateAll((rows) =>
+  return page.locator(`[id^="tabRow-${componentId}-"]`).evaluateAll((rows, cid) =>
     rows.map((row) =>
-      Array.from(row.querySelectorAll('.tabulator-cell')).map((cell) => (cell as HTMLElement).innerText.trim()),
+      Array.from(row.querySelectorAll(`[id^="tabCell-${cid}-"]`)).map((cell) => (cell as HTMLElement).innerText.trim()),
     ),
-  );
+  componentId);
 }
 
 /** Wait until the cells a published table shows satisfy `ok`, then hand them back. */
@@ -2007,7 +1998,7 @@ test.describe('Canvas mechanics', () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Math.max(...((el as any).data as Array<{ list_price: unknown }>).map((r) => Number(r.list_price))));
         await expect
-          .poll(async () => cFirstRowCell(cViz(page, tabId), 'list_price'), { message: 'the Canvas draws the dearest product first', timeout: 20_000 })
+          .poll(async () => cFirstRowCell(page, tabId, 'list_price'), { message: 'the Canvas draws the dearest product first', timeout: 20_000 })
           .toBeCloseTo(dearest, 2);
 
         // ── A pivot written in DSL, with rendererName.
@@ -2032,13 +2023,14 @@ test.describe('Canvas mechanics', () => {
         expect(canvasPivot.state.rows).toEqual(['status']);
 
         // + the same two on the published page.
+        const canvasId = canvasIdOf(page);
         const published = await publishDashboard(page);
         reportId = published.reportId;
+        const pubTable = (await getCanvasComponentIds(page, canvasId)).tabulator[0];
         await openPublished(page, published.reportId);
-        const publishedTable = page.locator('rb-tabulator').first();
-        await expect(publishedTable).toBeVisible({ timeout: 60_000 });
+        await expect(page.locator(`[id="widgetTabulator-${pubTable}"]`)).toBeVisible({ timeout: 60_000 });
         await expect
-          .poll(async () => cFirstRowCell(publishedTable, 'list_price'), { message: 'the published table sorts the same way', timeout: 60_000 })
+          .poll(async () => cFirstRowCell(page, pubTable, 'list_price'), { message: 'the published table sorts the same way', timeout: 60_000 })
           .toBeCloseTo(dearest, 2);
         await cWaitPivot(page.locator('rb-pivot-table').first(),
           (x) => x.state.rendererName === 'Table Row Heatmap',
@@ -2060,7 +2052,7 @@ test.describe('Canvas mechanics', () => {
         await expect(page.locator('#dslSyncError'), 'the editor says the DSL is wrong').toBeVisible({ timeout: 20_000 });
         const kept = await cReadTabulator(page, tabId);
         expect(kept.options.initialSort, 'the table keeps its last good config').toEqual([{ column: 'list_price', dir: 'desc' }]);
-        expect(await cFirstRowCell(cViz(page, tabId), 'list_price')).toBeCloseTo(dearest, 2);
+        expect(await cFirstRowCell(page, tabId, 'list_price')).toBeCloseTo(dearest, 2);
       });
     } finally {
       if (reportId) await deleteReportAsAdmin(reportId);
