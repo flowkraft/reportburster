@@ -221,8 +221,8 @@ test.describe('Cube widgets — the two publishing modes', () => {
       await page.waitForLoadState('networkidle');
       await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
       // Unticked, the cube is a widget like any other, drawn from frozen SQL.
-      await expect(page.locator('rb-tabulator')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-cube-renderer')).toHaveCount(0);
+      await expect(page.locator(`[id="widgetTabulator-${componentId}"]`)).toBeVisible({ timeout: 20_000 });
+      await expect(page.locator(`[id="widgetCube-${componentId}"]`)).toHaveCount(0);
 
       const frozenAnswer = await page.evaluate(async ({ rid, cid }) => {
         const r = await fetch(`/api/reports/${rid}/data?componentId=${cid}`);
@@ -251,13 +251,12 @@ test.describe('Cube widgets — the two publishing modes', () => {
       await page.waitForLoadState('networkidle');
       await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
       // Ticked, this widget IS the cube: the field tree, not a drawn result. The cube draws its own
-      // answer with a tabulator inside its renderer (RbCubeRenderer, #cubeRuntimeResult), so what
-      // must be gone is the dashboard's own tabulator widget, the frozen-SQL one: every tabulator
-      // left on the page is the renderer's.
-      await expect(page.locator('rb-cube-renderer')).toHaveCount(1, { timeout: 20_000 });
+      // answer with a table inside its renderer (#cubeRuntimeTable), so what must be gone is the
+      // dashboard's own tabulator tile, the frozen-SQL one.
+      await expect(page.locator(`[id="widgetCube-${componentId}"]`)).toBeVisible({ timeout: 20_000 });
       await expect(page.locator('#cubeRuntimeResult')).toContainText('Beverages', { timeout: 30_000 });
-      expect(await page.locator('rb-tabulator').count())
-        .toBe(await page.locator('rb-cube-renderer rb-tabulator').count());
+      await expect(page.locator('#cubeRuntimeTable')).toBeVisible();
+      await expect(page.locator(`[id="widgetTabulator-${componentId}"]`)).toHaveCount(0);
 
       // The dashboard opens on the author's own selection, so that selection is
       // what the live cube is asked — the entry the exporter wrote, read back.

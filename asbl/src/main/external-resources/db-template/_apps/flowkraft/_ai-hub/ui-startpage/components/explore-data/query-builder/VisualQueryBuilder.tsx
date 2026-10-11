@@ -437,6 +437,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
             <div className="border border-base-300 rounded-md overflow-hidden" style={{ height: 380 }}>
               {/* @ts-expect-error — Web component custom element */}
               <rb-cube-renderer
+                id="cubeQueryBuilderRenderer"
                 ref={cubeRef}
                 style={{ display: "block", width: "100%", height: "100%", overflow: "auto" }}
               />

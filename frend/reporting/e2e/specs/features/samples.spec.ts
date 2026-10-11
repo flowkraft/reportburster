@@ -1332,7 +1332,8 @@ electronBeforeAfterAllTest(
           .toContainText('What the country you picked sold', { timeout: 10000 });
         const titleAboveTiles = await page.evaluate(() => {
           const title = document.querySelector('.text-block h1');
-          const tiles = Array.from(document.querySelectorAll('rb-value, rb-chart, rb-tabulator, rb-cube-renderer'));
+          const tiles = Array.from(document.querySelectorAll(
+            '[id^="widgetValue-"], [id^="widgetChart-"], [id^="widgetTabulator-"], [id^="widgetCube-"]'));
           if (!title || tiles.length === 0) return false;
           return tiles.every((tile) => title.getBoundingClientRect().bottom <= tile.getBoundingClientRect().top);
         });
@@ -1460,7 +1461,7 @@ electronBeforeAfterAllTest(
         // ── The live Shop cube beside them (R8, TODO 21a) ──
         // The fifth tile is the cube itself: the same country manager ticks their own
         // breakdowns in it, and the one country at the top must reach it like every other tile.
-        await expect(page.locator('rb-cube-renderer'), 'the dashboard carries one live cube')
+        await expect(page.locator('[id^="widgetCube-"]'), 'the dashboard carries one live cube')
           .toHaveCount(1, { timeout: 15000 });
 
         // Germany is picked (the reload above), so the cube says so where its own filters are
@@ -1660,7 +1661,7 @@ electronBeforeAfterAllTest(
         // and "Your view was not saved" under every tick - while the tiles above, which read with
         // GET, looked perfectly well. So: a fresh load, one tick, and what is drawn.
         await page.goto(dashboardUrl, { timeout: 30000, waitUntil: 'networkidle' });
-        await expect(page.locator('rb-cube-renderer')).toHaveCount(1, { timeout: 15000 });
+        await expect(page.locator('[id^="widgetCube-"]')).toHaveCount(1, { timeout: 15000 });
 
         // What the cube answers for that tick, taken from the cube itself rather than written
         // here: whatever the shop's channels are called, one of them has to be on the screen.
@@ -1675,8 +1676,8 @@ electronBeforeAfterAllTest(
         // Both are one refusal each - the rows' POST and the view's PUT - and either one of them
         // coming back would put its text here.
         await new FluentTester(page)
-          .elementShouldNotContainText('rb-cube-renderer', 'Forbidden')
-          .elementShouldNotContainText('rb-cube-renderer', 'Your view was not saved');
+          .elementShouldNotContainText('[id^="widgetCube-"]', 'Forbidden')
+          .elementShouldNotContainText('[id^="widgetCube-"]', 'Your view was not saved');
         await expect(page.locator('#cubeRuntimeError'), 'nothing was refused where the rows go')
           .toHaveCount(0);
         await expect(page.locator('#cubeViewSaveError'), 'and nothing was refused where the view is saved')
@@ -1716,10 +1717,10 @@ electronBeforeAfterAllTest(
         const monthCheck = checksOf('online-sales').get('sales-by-month');
         expect(monthCheck, 'the story carries a check of its own').toBeTruthy();
         await expect
-          .poll(async () => (await page.locator('#cubeRuntimeResult rb-tabulator').first()
+          .poll(async () => (await page.locator('#cubeRuntimeTable')
             .evaluate((el: any) => (el.data ?? []).length)), { timeout: 60000 })
           .toBe(monthCheck!.rows.length);
-        const monthDrawn = await page.locator('#cubeRuntimeResult rb-tabulator').first()
+        const monthDrawn = await page.locator('#cubeRuntimeTable')
           .evaluate((el: any) => (el.data ?? []).map((row: Record<string, unknown>) => Object.values(row)));
         expect(difference(monthCheck!.rows, monthDrawn, false),
           'the rows of the month-by-month story, month by month').toBeNull();
@@ -1770,7 +1771,7 @@ electronBeforeAfterAllTest(
           .toBeVisible({ timeout: 60000 });
         await expect(page.locator('#chipDashFilter-Country'), 'and the country is still the dashboard\'s')
           .toContainText('Country: Germany (dashboard)');
-        const periodRows = async () => page.locator('#cubeRuntimeResult rb-tabulator').first()
+        const periodRows = async () => page.locator('#cubeRuntimeTable')
           .evaluate((el: any) => (el.data ?? []).map((row: Record<string, unknown>) => Object.values(row)));
         await expect
           .poll(async () => difference(germanyQuarter, await periodRows(), false), { timeout: 60000 })

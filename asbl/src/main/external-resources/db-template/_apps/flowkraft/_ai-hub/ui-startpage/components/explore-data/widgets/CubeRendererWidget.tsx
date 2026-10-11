@@ -134,6 +134,7 @@ export function CubeRendererWidget({ widgetId }: CubeRendererWidgetProps) {
       <rb-cube-renderer
         ref={ref}
         id={`widgetViz-${widgetId}`}
+        component-id={widgetId}
         style={{ display: "block", width: "100%", flex: 1, overflow: "auto" }}
       />
       {sqlError && (
