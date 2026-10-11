@@ -99,6 +99,7 @@ import {
   DASH_DEMO_CONNECTION,
 } from '../../helpers/dashboard-demos/demo-catalog';
 import {
+  canvasComponentId,
   getCanvasComponentIds,
 } from '../../helpers/dashboard-test-helper';
 import {
@@ -290,7 +291,7 @@ async function bAddParam(page: Page, n: number, spec: BParamSpec): Promise<strin
   await page.waitForTimeout(200);
   await page.locator('#btnDoneFilters').click();
   await page.waitForTimeout(1_500);
-  await page.locator('rb-parameters').first().waitFor({ state: 'visible', timeout: 10_000 });
+  await page.locator('#formReportParameters').waitFor({ state: 'visible', timeout: 10_000 });
   return id;
 }
 
@@ -384,8 +385,10 @@ interface CPivotState {
 /** What a pivot is computing: its state and every cell, from `<rb-pivot-table>`'s own PivotData. */
 async function cReadPivot(locator: Locator): Promise<CPivotState | null> {
   return locator.evaluate((el) => {
+    // On the Canvas the locator is the pivot itself (`widgetViz-<id>`); published, it is the pivot's
+    // own box (`widgetPivot-<cid>`), inside the pivot's shadow root.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pivot = el as any;
+    const pivot = ((el.getRootNode() as ShadowRoot).host ?? el) as any;
     const data = pivot.getPivotData?.();
     if (!data) return null;
     const rowKeys: string[][] = data.getRowKeys();
@@ -539,17 +542,14 @@ function eNumberPattern(n: number): RegExp {
   return new RegExp(String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',?'));
 }
 
-/** The rows the widget behind `#widget-<id>` was handed: the `data` of its rb-* element. */
+/** The rows the widget `<id>` was handed: the `data` of what it draws (`#widgetViz-<id>`). */
 async function eWidgetRows(page: Page, widgetId: string): Promise<Array<Record<string, unknown>>> {
   let rows: Array<Record<string, unknown>> = [];
   await expect
     .poll(
       async () => {
         rows = await page.evaluate((id) => {
-          const widget = document.getElementById(`widget-${id}`);
-          const viz = widget?.querySelector(
-            'rb-value, rb-trend, rb-chart, rb-tabulator, rb-pivot-table, rb-map, rb-gauge, rb-progress',
-          ) as (HTMLElement & { data?: unknown }) | null;
+          const viz = document.getElementById(`widgetViz-${id}`) as (HTMLElement & { data?: unknown }) | null;
           const data = viz?.data;
           return Array.isArray(data) ? (JSON.parse(JSON.stringify(data)) as Array<Record<string, unknown>>) : [];
         }, widgetId);
@@ -626,10 +626,10 @@ async function eStoredWidgets(
   return widgets;
 }
 
-/** The colour the first dataset of the chart behind `#widget-<id>` is drawn with. */
+/** The colour the first dataset of the chart `#widgetViz-<id>` is drawn with. */
 async function eFirstDatasetColour(page: Page, widgetId: string): Promise<string> {
   const colour = await page.evaluate((id) => {
-    const chart = document.getElementById(`widget-${id}`)?.querySelector('rb-chart') as
+    const chart = document.getElementById(`widgetViz-${id}`) as
       (HTMLElement & { data?: { datasets?: Array<{ backgroundColor?: unknown }> } }) | null;
     const bg = chart?.data?.datasets?.[0]?.backgroundColor;
     return Array.isArray(bg) ? String(bg[0]) : String(bg ?? '');
@@ -695,9 +695,9 @@ async function fAddTabulator(page: Page, table: string, sql: string): Promise<st
   return getLastWidgetId(page);
 }
 
-/** What the first `n`-th rb-tabulator on the page writes out, shadow DOM included. */
-async function fTabulatorText(page: Page, nth: number): Promise<string> {
-  const tile = page.locator('rb-tabulator').nth(nth);
+/** What a table writes out, by the id of its element: `widgetViz-<id>` on the Canvas, `widgetTabulator-<cid>` published. */
+async function fTabulatorText(page: Page, elementId: string): Promise<string> {
+  const tile = page.locator(`[id="${elementId}"]`);
   await tile.waitFor({ state: 'visible', timeout: 30_000 });
   return tile.evaluate((el) => `${el.textContent ?? ''} ${el.shadowRoot?.textContent ?? ''}`);
 }
@@ -790,14 +790,14 @@ async function g2Edit(page: Page, gearId: string, edit: () => Promise<void>): Pr
   await page.locator('#panelColumnSettings').waitFor({ state: 'hidden', timeout: 5_000 });
 }
 
-/** Wait until the first Tabulator on the page writes out text that matches. */
-async function g2TableShows(page: Page, pattern: RegExp, message: string): Promise<void> {
-  await expect.poll(() => fTabulatorText(page, 0), { message, timeout: 20_000 }).toMatch(pattern);
+/** Wait until the table widget `<id>` writes out text that matches. */
+async function g2TableShows(page: Page, widgetId: string, pattern: RegExp, message: string): Promise<void> {
+  await expect.poll(() => fTabulatorText(page, `widgetViz-${widgetId}`), { message, timeout: 20_000 }).toMatch(pattern);
 }
 
-/** Wait until the first Tabulator on the page no longer writes out text that matches. */
-async function g2TableLacks(page: Page, pattern: RegExp, message: string): Promise<void> {
-  await expect.poll(() => fTabulatorText(page, 0), { message, timeout: 20_000 }).not.toMatch(pattern);
+/** Wait until the table widget `<id>` no longer writes out text that matches. */
+async function g2TableLacks(page: Page, widgetId: string, pattern: RegExp, message: string): Promise<void> {
+  await expect.poll(() => fTabulatorText(page, `widgetViz-${widgetId}`), { message, timeout: 20_000 }).not.toMatch(pattern);
 }
 
 /** Open a gear, press the X, and wait for the panel to go (nothing is changed on the way). */
@@ -877,7 +877,7 @@ function g4SumBy(rows: Array<Record<string, string>>, by: string, field: string)
 async function g4Radii(page: Page, widgetId: string): Promise<number[]> {
   const radii = await page.evaluate((id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chart = (document.getElementById(`widget-${id}`)?.querySelector('rb-chart') as any)?.getChartInstance?.();
+    const chart = (document.getElementById(`widgetViz-${id}`) as any)?.getChartInstance?.();
     const points: Array<{ r?: number }> = chart?.data?.datasets?.[0]?.data ?? [];
     return points.map((p) => Number(p.r));
   }, widgetId);
@@ -888,7 +888,7 @@ async function g4Radii(page: Page, widgetId: string): Promise<number[]> {
 async function g4ChartStack(page: Page, widgetId: string): Promise<{ stacked: boolean; series: number }> {
   return page.evaluate((id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chart = (document.getElementById(`widget-${id}`)?.querySelector('rb-chart') as any)?.getChartInstance?.();
+    const chart = (document.getElementById(`widgetViz-${id}`) as any)?.getChartInstance?.();
     return {
       stacked: chart?.options?.scales?.y?.stacked === true,
       series: (chart?.data?.datasets ?? []).length,
@@ -979,9 +979,8 @@ async function g5PublishPivot(
   const cid = (await getCanvasComponentIds(page, canvasId)).pivot[0];
   const published = await publishDashboard(page);
   await openPublished(page, published.reportId);
-  const pivot = page.locator('rb-pivot-table').first();
-  await expect(pivot).toHaveAttribute('component-id', cid, { timeout: 60_000 });
-  await expect(page.locator(`[id="widgetPivot-${cid}"]`), 'the published pivot is on the page').toBeVisible();
+  const pivot = page.locator(`[id="widgetPivot-${cid}"]`);
+  await expect(pivot, 'the published pivot is on the page').toBeVisible({ timeout: 60_000 });
   await cWaitPivot(pivot, (x) => cSame(x.rowKeys, g5Statuses) && cSame(x.colKeys, g5Channels),
     'the published pivot counts orders per status and channel');
   return { reportId: published.reportId, pivot };
@@ -1065,8 +1064,10 @@ async function pClickBar(chart: Locator, label: string): Promise<void> {
       if ((await chart.count()) === 0) return false;
       await chart.scrollIntoViewIfNeeded().catch(() => {});
       at = await chart.evaluate((el, wanted) => {
+        // On the Canvas the locator is the chart itself (`widgetViz-<id>`); published, it is the
+        // chart's own box (`widgetChart-<cid>`), inside the chart's shadow root.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const instance = (el as any).getChartInstance?.();
+        const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
         if (!instance) return null;
         const index = (instance.data.labels ?? []).findIndex((l: unknown) => String(l) === wanted);
         if (index < 0) return null;
@@ -1093,7 +1094,7 @@ async function pClickBar(chart: Locator, label: string): Promise<void> {
  * looked up again on every read.
  */
 async function pPublishedText(page: Page, componentId: string): Promise<string> {
-  const tile = page.locator(`[component-id="${componentId}"]`).first();
+  const tile = page.locator(`[id="widgetValue-${componentId}"]`);
   if ((await tile.count()) === 0) return '';
   return tile.innerText();
 }
@@ -1490,12 +1491,12 @@ test.describe('Canvas mechanics', () => {
         readerContext = await page.context().browser()!.newContext();
         reader = await readerContext.newPage();
         await reader.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
-        await expect(reader.locator('rb-dashboard'), 'the link opens the dashboard with no sign-in')
+        await expect(reader.locator('#publishedDashboard'), 'the link opens the dashboard with no sign-in')
           .toBeVisible({ timeout: 60_000 });
         await expect(reader.locator('#channel'), 'the locked control cannot be changed').toBeDisabled({ timeout: 30_000 });
         await expect(reader.locator('#channel_lockedNote')).toHaveText('Fixed by this link');
         await expect
-          .poll(async () => bDigits(await reader!.locator('rb-value').first().innerText()), { timeout: 60_000, intervals: [500] })
+          .poll(async () => bDigits(await reader!.locator(`[id="widgetValue-${numberIds[0]}"]`).innerText()), { timeout: 60_000, intervals: [500] })
           .toBe(String(truth));
 
         // And what the link carries is a credential that works for the data behind the tile.
@@ -1507,7 +1508,8 @@ test.describe('Canvas mechanics', () => {
         expect(allowed.status(), 'the live link answers its data call').toBe(200);
 
         // Negative: revoke it, and the same link is refused.
-        await page.locator('[id^="btnRevokeShareLink-"]').first().click();
+        const linkId = (await row.getAttribute('id'))!.substring('shareLink-'.length);
+        await page.locator(`[id="btnRevokeShareLink-${linkId}"]`).click();
         await expect(page.locator('#tableShareLinks [id^="shareLink-"]'), 'the revoked link leaves the table')
           .toHaveCount(0, { timeout: 15_000 });
         const refused = await readerContext.request.get(dataUrl);
@@ -1589,7 +1591,7 @@ test.describe('Canvas mechanics', () => {
 
         const root = await openPublished(page, reportId, { region: 'DE', channel: B_CHANNEL });
         await expect
-          .poll(async () => bDigits(await root.locator('rb-value').first().innerText()), { timeout: 60_000, intervals: [500] })
+          .poll(async () => bDigits(await root.locator(`[id="widgetValue-${numberIds[0]}"]`).innerText()), { timeout: 60_000, intervals: [500] })
           .toBe(String(literal));
 
         // + a Required filter left empty says so; − filled again, it says nothing.
@@ -1853,7 +1855,8 @@ test.describe('Canvas mechanics', () => {
       await expect(page.locator(`[id="btnConvertPivotToChart-${id}"]`)).toBeVisible();
       await page.locator(`[id="btnConvertPivotToChart-${id}"]`).click();
       await cWaitChart(page, id, () => true, 'the widget is a chart after Convert to Chart');
-      await expect(page.locator('rb-pivot-table'), 'and no pivot is left').toHaveCount(0);
+      expect(await page.locator(`[id="widgetViz-${id}"]`).evaluate((el) => el.tagName), 'and no pivot is left: it draws a chart')
+        .toBe('RB-CHART');
 
       // + "Auto-pick rows, columns, values": a fresh pivot on a table lays itself out (the button is
       //   pressed by the widget on mount; it is on screen only while that runs).
@@ -2031,13 +2034,14 @@ test.describe('Canvas mechanics', () => {
         const canvasId = canvasIdOf(page);
         const published = await publishDashboard(page);
         reportId = published.reportId;
-        const pubTable = (await getCanvasComponentIds(page, canvasId)).tabulator[0];
+        const pubIds = await getCanvasComponentIds(page, canvasId);
+        const pubTable = pubIds.tabulator[0];
         await openPublished(page, published.reportId);
         await expect(page.locator(`[id="widgetTabulator-${pubTable}"]`)).toBeVisible({ timeout: 60_000 });
         await expect
           .poll(async () => cFirstRowCell(page, pubTable, 'list_price'), { message: 'the published table sorts the same way', timeout: 60_000 })
           .toBeCloseTo(dearest, 2);
-        await cWaitPivot(page.locator('rb-pivot-table').first(),
+        await cWaitPivot(page.locator(`[id="widgetPivot-${pubIds.pivot[0]}"]`),
           (x) => x.state.rendererName === 'Table Row Heatmap',
           'the published pivot has the DSL renderer');
 
@@ -2177,7 +2181,9 @@ test('(canvas mechanics) M15 Visualize as', async () => {
 
     // + #sparklesBadge sits on exactly one button of the Visualize as buttons.
     await expect(page.locator('#sparklesBadge')).toHaveCount(1);
-    await expect(page.locator('[id^="btnVisualizeAs-"] #sparklesBadge')).toHaveCount(1);
+    const bestFit = (await dStoredWidgets(page, canvasId))[0]?.type;
+    await expect(page.locator(`[id="btnVisualizeAs-${bestFit}"] #sparklesBadge`), 'on the best fit, the type the widget moved to')
+      .toHaveCount(1);
 
     // + after a manual pick the type is pinned: running the query again does not switch it.
     await switchToWidget(page, 'tabulator');
@@ -2420,10 +2426,10 @@ test('(canvas mechanics) M22 Gauge, Trend and Progress settings', async () => {
 
       // + on the Canvas: what each widget was handed.
       const options = await page.evaluate((ids) => {
-        const read = (id: string, tag: string) =>
+        const read = (id: string) =>
           JSON.parse(JSON.stringify(
-            ((document.getElementById(`widget-${id}`)?.querySelector(tag) as unknown as { options?: unknown })?.options) ?? {}));
-        return { gauge: read(ids.g, 'rb-gauge'), trend: read(ids.t, 'rb-trend'), progress: read(ids.p, 'rb-progress') };
+            ((document.getElementById(`widgetViz-${id}`) as unknown as { options?: unknown })?.options) ?? {}));
+        return { gauge: read(ids.g), trend: read(ids.t), progress: read(ids.p) };
       }, { g: gaugeId, t: trendId, p: progressId });
       expect(options.gauge).toMatchObject({ min: 0, max: 1, label: 'Completed orders', format: 'percent' });
       expect((options.gauge.bands as Array<{ to: number }>).map((b) => b.to)).toEqual([0.5, 0.8, 1]);
@@ -2869,14 +2875,18 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       const byId = (id: string) => saved.widgets.find((w) => w.id === id)!;
       expect(byId(bId).displayConfig.columnSettings?.total_amount, 'the gear settings are stored and survive a reload')
         .toMatchObject({ columnTitle: 'Order total', viewAs: 'currency' });
-      expect(await fTabulatorText(page, 0), 'the reloaded canvas shows the new title').toContain('Order total');
+      expect(await fTabulatorText(page, `widgetViz-${bId}`), 'the reloaded canvas shows the new title').toContain('Order total');
       const again = await publishDashboard(page);
       expect(again.reportId, 'publishing again keeps the report').toBe(reportId);
       await openPublished(page, reportId);
-      await expect.poll(() => fTabulatorText(page, 0), { message: 'the published table shows the new title', timeout: 60_000 })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pubB = `widgetTabulator-${canvasComponentId(byId(bId) as any)}`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pubC = `widgetTabulator-${canvasComponentId(byId(cId) as any)}`;
+      await expect.poll(() => fTabulatorText(page, pubB), { message: 'the published table shows the new title', timeout: 60_000 })
         .toContain('Order total');
       expect(byId(cId).displayConfig.columnSettings, 'an untouched Tabulator stores no columnSettings').toBeUndefined();
-      const untouched = await fTabulatorText(page, 1);
+      const untouched = await fTabulatorText(page, pubC);
       expect(untouched, 'and renders its columns as before').toContain('segment');
       expect(untouched).not.toContain('Order total');
 
@@ -3036,7 +3046,8 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         await expect(row).toContainText('sales');
 
         // Take the link back, then close.
-        await page.locator('#tableShareLinks [id^="btnRevokeShareLink-"]').first().click();
+        const linkId = (await row.getAttribute('id'))!.substring('shareLink-'.length);
+        await page.locator(`[id="btnRevokeShareLink-${linkId}"]`).click();
         await page.locator('#btnShareClose').click();
         await expect(page.locator('#shareDialog')).not.toBeVisible();
       });
@@ -3094,7 +3105,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       // − a click on the backdrop closes it and nothing is added.
       await page.locator('#overlayFilterBarConfig').click({ position: { x: 5, y: 5 } });
       await expect(page.locator('#dlgFilterBarConfig')).not.toBeVisible();
-      await expect(page.locator('rb-parameters')).toHaveCount(0);
+      await expect(page.locator('#formReportParameters')).toHaveCount(0);
 
       // + a parameter gets an id of its own, shown read-only.
       await addFilterBarParam(page, G1_SMALL_DSL);
@@ -3159,7 +3170,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       const gear = `btnColumnSettings-${widgetId}-score`;
 
       // − nothing touched: the number is drawn plain and nothing is stored.
-      await g2TableShows(page, /12,345\.68/, 'the plain number');
+      await g2TableShows(page, widgetId, /12,345\.68/, 'the plain number');
       expect(await g2Stored(page, canvasId, 'score'), 'no column settings yet').toBeUndefined();
 
       // + Style "Currency": the value gets a $ and the currency pickers appear.
@@ -3170,67 +3181,67 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         await expect(page.locator('#selectColumnCurrency')).toBeVisible();
         await expect(page.locator('#selectColumnCurrencyStyle')).toBeVisible();
       });
-      await g2TableShows(page, /\$12,345\.68/, 'the value is currency');
+      await g2TableShows(page, widgetId, /\$12,345\.68/, 'the value is currency');
 
       // + Unit of currency: EUR.
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnCurrency').selectOption('EUR');
       });
-      await g2TableShows(page, /€12,345\.68/, 'euro sign');
+      await g2TableShows(page, widgetId, /€12,345\.68/, 'euro sign');
 
       // + Currency label style: code, then name, then symbol again.
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnCurrencyStyle').selectOption('code');
       });
-      await g2TableShows(page, /EUR\s*12,345\.68/, 'the code');
+      await g2TableShows(page, widgetId, /EUR\s*12,345\.68/, 'the code');
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnCurrencyStyle').selectOption('name');
       });
-      await g2TableShows(page, /12,345\.68\s*euros/i, 'the name');
+      await g2TableShows(page, widgetId, /12,345\.68\s*euros/i, 'the name');
 
       // + Decimals 0 (with the symbol back).
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnCurrencyStyle').selectOption('symbol');
         await page.locator('#numColumnDecimals').fill('0');
       });
-      await g2TableShows(page, /€12,346(?![.\d])/, 'no decimals');
+      await g2TableShows(page, widgetId, /€12,346(?![.\d])/, 'no decimals');
 
       // + Scale × 2.
       await g2Edit(page, gear, async () => {
         await page.locator('#numColumnScale').fill('2');
       });
-      await g2TableShows(page, /€24,691(?![.\d])/, 'the value is doubled');
+      await g2TableShows(page, widgetId, /€24,691(?![.\d])/, 'the value is doubled');
 
       // + Prefix and suffix.
       await g2Edit(page, gear, async () => {
         await page.locator('#txtColumnPrefix').fill('net ');
         await page.locator('#txtColumnSuffix').fill(' /yr');
       });
-      await g2TableShows(page, /net .*24,691.*\/yr/, 'prefix and suffix');
+      await g2TableShows(page, widgetId, /net .*24,691.*\/yr/, 'prefix and suffix');
 
       // + Compact notation shortens the number; − unticking it brings the full number back.
       await g2Edit(page, gear, async () => {
         await page.locator('#chkColumnCompact').check();
       });
-      await g2TableShows(page, /\dK/, 'compact notation');
-      await g2TableLacks(page, /24,691/, 'the long number is gone');
+      await g2TableShows(page, widgetId, /\dK/, 'compact notation');
+      await g2TableLacks(page, widgetId, /24,691/, 'the long number is gone');
       await g2Edit(page, gear, async () => {
         await page.locator('#chkColumnCompact').uncheck();
       });
-      await g2TableShows(page, /24,691/, 'the long number is back');
+      await g2TableShows(page, widgetId, /24,691/, 'the long number is back');
 
       // + Style "Percent": a %, and the currency pickers go again.
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnNumberStyle').selectOption('percent');
         await expect(page.locator('#selectColumnCurrency'), '− percent has no currency picker').toHaveCount(0);
       });
-      await g2TableShows(page, /24,691%/, 'percent');
+      await g2TableShows(page, widgetId, /24,691%/, 'percent');
 
       // + Style "Scientific" is stored and the % is gone.
       await g2Edit(page, gear, async () => {
         await page.locator('#selectColumnNumberStyle').selectOption('scientific');
       });
-      await g2TableLacks(page, /%/, 'no percent any more');
+      await g2TableLacks(page, widgetId, /%/, 'no percent any more');
 
       // + every setting was stored.
       await expect
@@ -3251,7 +3262,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       expect((await g2Stored(page, canvasId, 'score'))?.scale, 'X keeps the settings').toBe(2);
       await g2OpenAndClose(page, gear, 'overlay');
       expect((await g2Stored(page, canvasId, 'score'))?.prefix, 'the overlay click keeps the settings').toBe('net ');
-      await g2TableShows(page, /net .*24,691/, 'the table still shows them');
+      await g2TableShows(page, widgetId, /net .*24,691/, 'the table still shows them');
 
       // − "Display as: Plain text" takes the number controls away.
       await g2Edit(page, gear, async () => {
@@ -3263,7 +3274,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         await expect(page.locator('#selectColumnNumberStyle')).toHaveCount(0);
         await page.locator('#btnResetColumnSettings').click();
       });
-      await g2TableShows(page, /12,345\.68/, 'reset brings the plain number back');
+      await g2TableShows(page, widgetId, /12,345\.68/, 'reset brings the plain number back');
       await expect
         .poll(async () => g2Stored(page, canvasId, 'score'), { timeout: 20_000 })
         .toBeUndefined();
@@ -3285,7 +3296,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       const quarterGear = `btnColumnSettings-${widgetId}-q_no`;
 
       // − nothing touched: the date is drawn in full; the number column has no date granularity.
-      await g2TableShows(page, /May 15, 2026/, 'the full date');
+      await g2TableShows(page, widgetId, /May 15, 2026/, 'the full date');
       expect(await g2Stored(page, canvasId, 'shipped_on'), 'no column settings yet').toBeUndefined();
 
       // + Year, then Quarter, then Month.
@@ -3293,28 +3304,28 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         await expect(page.locator('#numColumnScale'), '− a date has no number section').toHaveCount(0);
         await page.locator('#selectColumnDateUnit').selectOption('year');
       });
-      await g2TableShows(page, /2026/, 'year');
-      await g2TableLacks(page, /May/, 'year only');
+      await g2TableShows(page, widgetId, /2026/, 'year');
+      await g2TableLacks(page, widgetId, /May/, 'year only');
       await g2Edit(page, dateGear, async () => {
         await page.locator('#selectColumnDateUnit').selectOption('quarter');
       });
-      await g2TableShows(page, /Q2 2026/, 'quarter');
+      await g2TableShows(page, widgetId, /Q2 2026/, 'quarter');
       await g2Edit(page, dateGear, async () => {
         await page.locator('#selectColumnDateUnit').selectOption('month');
       });
-      await g2TableShows(page, /May 2026/, 'month');
-      await g2TableLacks(page, /May 15/, 'no day any more');
+      await g2TableShows(page, widgetId, /May 2026/, 'month');
+      await g2TableLacks(page, widgetId, /May 15/, 'no day any more');
       await expect
         .poll(async () => (await g2Stored(page, canvasId, 'shipped_on'))?.dateUnit, { message: 'the unit is stored', timeout: 20_000 })
         .toBe('month');
 
       // + an extraction unit on a plain number shown as a date: 3 becomes Q3.
-      await g2TableLacks(page, /Q3/, 'no Q3 before');
+      await g2TableLacks(page, widgetId, /Q3/, 'no Q3 before');
       await g2Edit(page, quarterGear, async () => {
         await page.locator('#selectColumnViewAs').selectOption('date');
         await page.locator('#selectColumnDateUnit').selectOption('quarter-of-year');
       });
-      await g2TableShows(page, /Q3/, 'quarter of year');
+      await g2TableShows(page, widgetId, /Q3/, 'quarter of year');
       await expect
         .poll(async () => g2Stored(page, canvasId, 'q_no'), { timeout: 20_000 })
         .toMatchObject({ viewAs: 'date', dateUnit: 'quarter-of-year' });
@@ -3323,7 +3334,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await g2Edit(page, dateGear, async () => {
         await page.locator('#selectColumnDateUnit').selectOption('auto');
       });
-      await g2TableShows(page, /May 15, 2026/, 'the full date is back');
+      await g2TableShows(page, widgetId, /May 15, 2026/, 'the full date is back');
       await expect
         .poll(async () => (await g2Stored(page, canvasId, 'shipped_on'))?.dateUnit, { timeout: 20_000 })
         .toBeUndefined();
@@ -4376,7 +4387,7 @@ test('(canvas mechanics) M57 The same slicers on the published dashboard, and a 
       readerContext = await page.context().browser()!.newContext();
       const reader = await readerContext.newPage();
       await reader.goto(shareUrl, { waitUntil: 'networkidle', timeout: 60_000 });
-      await expect(reader.locator('rb-dashboard'), 'the link opens the dashboard with no sign-in')
+      await expect(reader.locator('#publishedDashboard'), 'the link opens the dashboard with no sign-in')
         .toBeVisible({ timeout: 60_000 });
       await expect(reader.locator('#channel'), 'the locked control cannot be changed')
         .toBeDisabled({ timeout: 30_000 });
@@ -4489,7 +4500,7 @@ test('(canvas mechanics) M58 Clicks that filter the dashboard, in the Canvas and
       reportId = published.reportId;
       await openPublished(page, reportId);
       // Looked up again on every click: each selection replaces the tiles with copies of themselves.
-      const pubChartEl = () => page.locator(`[component-id="${pubChart}"]`).first();
+      const pubChartEl = () => page.locator(`[id="widgetChart-${pubChart}"]`);
 
       await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
       await pWaitCells(page, pubTable, (cells) => cells.length === pPairs.length,
@@ -4731,7 +4742,7 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
     const published = await publishDashboard(page);
     const body = await openPublished(page, published.reportId);
     await expect
-      .poll(async () => (await body.locator('rb-value').allInnerTexts()).map((s) => s.trim()).sort(),
+      .poll(async () => (await body.locator('[id^="widgetValue-"]').allInnerTexts()).map((s) => s.trim()).sort(),
             { message: 'the published numbers carry the sign and the unit', timeout: 60_000, intervals: [1_000] })
       .toEqual([`€ ${orders}`, `${orders} %`].sort());
   });
@@ -4741,18 +4752,18 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
 async function pChartColors(page: Page, widgetId: string): Promise<string[]> {
   return page.evaluate((id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chart = (document.getElementById(`widget-${id}`)?.querySelector('rb-chart') as any)?.getChartInstance?.();
+    const chart = (document.getElementById(`widgetViz-${id}`) as any)?.getChartInstance?.();
     const bg = chart?.data?.datasets?.[0]?.backgroundColor;
     return Array.isArray(bg) ? bg.map(String) : [String(bg ?? '')];
   }, widgetId);
 }
 
-/** The same, for every chart on a published page, with the type each one is drawn as. */
+/** The same, for every chart on a published page (each one's box `widgetChart-<cid>`), with the type each one is drawn as. */
 async function pPublishedChartColors(page: Page): Promise<Array<{ type: string; colors: string[] }>> {
-  return page.evaluate(() =>
-    Array.from(document.querySelectorAll('rb-chart')).map((el) => {
+  return page.locator('#publishedDashboard [id^="widgetChart-"]').evaluateAll((boxes) =>
+    boxes.map((box) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const chart = (el as any).getChartInstance?.();
+      const chart = ((box.getRootNode() as ShadowRoot).host as any)?.getChartInstance?.();
       const bg = chart?.data?.datasets?.[0]?.backgroundColor;
       return {
         type: String(chart?.config?.type ?? ''),
