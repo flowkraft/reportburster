@@ -599,7 +599,9 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
       try {
         await reader.goto(
           `${BASE_URL}/dashboard/${DD02.reportId}`
-            + `?${encodeURIComponent(name)}=${encodeURIComponent('<script>alert(1)</script>')}`
+            // The payload carries its own id and sets a flag, so the two checks below each count
+            // something real: an element that became script, and script that ran.
+            + `?${encodeURIComponent(name)}=${encodeURIComponent('<script id="xss">window.xssRan=true;alert(1)</script>')}`
             + '&notAFilterOfThisDashboard=whatever',
           { timeout: 120_000, waitUntil: 'networkidle' },
         );
