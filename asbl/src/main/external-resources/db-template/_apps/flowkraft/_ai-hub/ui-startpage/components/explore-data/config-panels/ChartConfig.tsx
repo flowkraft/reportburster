@@ -123,10 +123,12 @@ function writeXFields(map: ChartDslOptions, xFields: string[]): ChartDslOptions 
   return next;
 }
 
-/** Replace the data block's datasets from the new yFields[]. */
+/** Replace the data block's datasets from the new yFields[]. A measure that stays keeps its
+ *  entry whole (its name, its type, its axis), as the widget's own auto-pick does. */
 function writeYFields(map: ChartDslOptions, yFields: string[]): ChartDslOptions {
   const data: ChartDataBlock = { ...((map.data as ChartDataBlock | undefined) ?? {}) };
-  if (yFields.length > 0) data.datasets = yFields.map((f) => ({ field: f, label: f }));
+  const kept = data.datasets ?? [];
+  if (yFields.length > 0) data.datasets = yFields.map((f) => kept.find((d) => d.field === f) ?? { field: f, label: f });
   else delete data.datasets;
   const next: ChartDslOptions = { ...map };
   if (data.labelField || data.seriesField || (data.datasets && data.datasets.length > 0)) next.data = data;
@@ -193,6 +195,56 @@ function setPluginOption(map: ChartDslOptions, key: "title" | "legend", value: u
   return next;
 }
 
+/** The right-hand axis a combo chart's series can be put on (Chart.js scale id). */
+export const RIGHT_AXIS = "y1";
+
+/** The draw type a combo series has when none is set: the first bars, the rest lines (`RbChart`). */
+export function comboSeriesType(datasets: ChartDataBlock["datasets"], idx: number): string {
+  return datasets?.[idx]?.type ?? (idx === 0 ? "bar" : "line");
+}
+
+/** One key of one series (`data.datasets[idx]`), set or, with `undefined` or "", taken away. */
+export function setSeriesKey(
+  map: ChartDslOptions,
+  idx: number,
+  key: "label" | "type" | "yAxisID",
+  value: string | undefined,
+): ChartDslOptions {
+  const data: ChartDataBlock = { ...((map.data as ChartDataBlock | undefined) ?? {}) };
+  const datasets = (data.datasets ?? []).map((d) => ({ ...d }));
+  if (!datasets[idx]) return map;
+  if (value === undefined || value === "") delete datasets[idx][key];
+  else datasets[idx][key] = value;
+  data.datasets = datasets;
+  return { ...map, data };
+}
+
+/**
+ * A series on the right axis or back on the left. The right axis is `options.scales.y1`: drawn
+ * on the right, with no grid lines of its own across the chart. It stays as long as a series uses
+ * it - an author's own settings on it (a title) kept - and goes with the last one.
+ */
+export function setSeriesOnRightAxis(map: ChartDslOptions, idx: number, on: boolean): ChartDslOptions {
+  const next = setSeriesKey(map, idx, "yAxisID", on ? RIGHT_AXIS : undefined);
+  const used = ((next.data as ChartDataBlock | undefined)?.datasets ?? []).some((d) => d.yAxisID === RIGHT_AXIS);
+  const opts = { ...((next.options as Record<string, unknown> | undefined) ?? {}) };
+  const scales = { ...((opts.scales as Record<string, unknown> | undefined) ?? {}) };
+  if (used) {
+    const right = { ...((scales[RIGHT_AXIS] as Record<string, unknown> | undefined) ?? {}) };
+    right.position = "right";
+    if (right.grid === undefined) right.grid = { drawOnChartArea: false };
+    scales[RIGHT_AXIS] = right;
+  } else {
+    delete scales[RIGHT_AXIS];
+  }
+  if (Object.keys(scales).length > 0) opts.scales = scales;
+  else delete opts.scales;
+  const out: ChartDslOptions = { ...next };
+  if (Object.keys(opts).length > 0) out.options = opts;
+  else delete out.options;
+  return out;
+}
+
 export function ChartConfig({ config, columns, onChange, rankingHints }: ChartConfigProps) {
   const map = readDslMap(config);
 
@@ -207,6 +259,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
 
   const hasSeriesSplit = xFields.length >= 2;
   const stacked = readStacked(map);
+  const datasets = (map.data as ChartDataBlock | undefined)?.datasets ?? [];
 
   const replaceAt = (arr: string[], idx: number, value: string): string[] => {
     if (!value) return arr.filter((_, i) => i !== idx);
@@ -415,7 +468,8 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </span>
         <div className="mt-1 space-y-1">
           {yFields.map((field, idx) => (
-            <div key={`y-${idx}`} className="flex items-center gap-1">
+            <div key={`y-${idx}`} className="space-y-1">
+            <div className="flex items-center gap-1">
               <select
                 id={`selectChartYAxis-${idx}`}
                 value={field}
@@ -449,6 +503,47 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
+            </div>
+            {/* The series this measure draws: the name its legend gives it, and in a combo chart
+                whether it is drawn as bars or a line and on which axis. With a series breakout the
+                series are the breakout's values, named by them, so there is nothing to name here. */}
+            {!hasSeriesSplit && (
+              <div className="flex items-center gap-1 pl-2">
+                <input
+                  id={`inputChartSeriesLabel-${idx}`}
+                  type="text"
+                  value={datasets[idx]?.label ?? ""}
+                  placeholder={field}
+                  onChange={(e) => setDslMap(config, setSeriesKey(map, idx, "label", e.target.value), onChange)}
+                  aria-label={`Name of the ${field} series`}
+                  className="flex-1 min-w-0 text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+                />
+                {chartType === "combo" && (
+                  <>
+                    <select
+                      id={`selectChartSeriesType-${idx}`}
+                      value={comboSeriesType(datasets, idx)}
+                      onChange={(e) => setDslMap(config, setSeriesKey(map, idx, "type", e.target.value), onChange)}
+                      aria-label={`How the ${field} series is drawn`}
+                      className="text-xs bg-base-100 border border-base-300 rounded-md px-1 py-1 text-base-content"
+                    >
+                      <option value="bar">Bars</option>
+                      <option value="line">Line</option>
+                    </select>
+                    <label className="flex items-center gap-1 text-[10px] text-base-content/60 whitespace-nowrap cursor-pointer">
+                      <input
+                        id={`chkChartSeriesRightAxis-${idx}`}
+                        type="checkbox"
+                        checked={datasets[idx]?.yAxisID === RIGHT_AXIS}
+                        onChange={(e) => setDslMap(config, setSeriesOnRightAxis(map, idx, e.target.checked), onChange)}
+                        className="rounded border-base-300"
+                      />
+                      right axis
+                    </label>
+                  </>
+                )}
+              </div>
+            )}
             </div>
           ))}
           {!hasSeriesSplit && measures.length + dimensions.length > 0 && (

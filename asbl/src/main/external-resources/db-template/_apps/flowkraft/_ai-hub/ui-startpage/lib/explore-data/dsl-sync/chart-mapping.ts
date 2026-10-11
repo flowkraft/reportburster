@@ -17,7 +17,9 @@ export type ChartDataBlock = {
   labelField?: string;
   /** Series breakout column — chart runtime pivots reportData by this field. */
   seriesField?: string;
-  datasets?: { field: string; label?: string }[];
+  /** One per measure: its field, the name the legend gives it, and in a combo chart how it is
+   *  drawn (`type`) and on which axis (`yAxisID`, `y1` being the right one). */
+  datasets?: { field: string; label?: string; type?: string; yAxisID?: string }[];
 };
 
 export type ChartDslOptions = {
