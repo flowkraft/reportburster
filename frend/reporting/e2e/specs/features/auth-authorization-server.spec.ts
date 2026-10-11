@@ -3848,7 +3848,7 @@ test.describe('Auth — Server: the reports a caller may run', () => {
       //    out of the database this person is allowed to read.
       const data = await jsonAs(author, `/api/reports/${RUNNABLE_REPORT}/data`);
       expect(
-        data.reportData?.length ?? 0,
+        data.data?.length ?? 0,
         'the report they may run gives them real rows, not an empty shell',
       ).toBeGreaterThan(0);
     } finally {
