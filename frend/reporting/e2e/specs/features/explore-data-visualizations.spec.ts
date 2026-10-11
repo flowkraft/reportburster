@@ -1345,7 +1345,7 @@ test.describe('Data Canvas Visualizations', () => {
     // column is read from the grid's geometry as Canvas.tsx sets it: 12 columns, a 12 px margin
     // between them and, with no containerPadding of its own, the same 12 px around the grid.
     const drawnColumn = async (): Promise<number> => {
-      const grid = await page.locator('.react-grid-layout').first().boundingBox();
+      const grid = await page.locator('#canvasGrid').boundingBox();
       const item = await page.locator(`#widgetDragHandle-${widgetId}`).boundingBox();
       if (!grid || !item) throw new Error('the grid or the widget is not on screen');
       const COLS = 12, MARGIN = 12;

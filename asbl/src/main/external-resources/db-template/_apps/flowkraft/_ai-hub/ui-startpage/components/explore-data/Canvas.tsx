@@ -84,6 +84,9 @@ export function Canvas() {
           </div>
         </div>
       ) : (
+        // The grid's own box, for anything that measures its columns: inside the area's padding it
+        // is exactly as wide and as tall as the grid (react-grid-layout keeps no id of its own).
+        <div id="canvasGrid">
         <GridLayout
           className="layout"
           layout={layout}
@@ -127,6 +130,7 @@ export function Canvas() {
             </div>
           ))}
         </GridLayout>
+        </div>
       )}
     </div>
   );

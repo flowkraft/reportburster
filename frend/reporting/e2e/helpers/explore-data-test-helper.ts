@@ -848,7 +848,7 @@ async function dragWidgetsIntoPlace(
   // The grid is as wide as the panels beside it leave it: the settings panel of the widget added
   // last is open when the drags start, and the first drag on the canvas closes it, so the grid
   // widens. Its geometry is therefore measured afresh before every drag, never once for all.
-  const grid = page.locator('.react-grid-layout').first();
+  const grid = page.locator('#canvasGrid');
   const geometry = async () => {
     const gridBox = await grid.boundingBox();
     if (!gridBox) throw new Error('layoutWidgetsByDrag: grid container not found');
