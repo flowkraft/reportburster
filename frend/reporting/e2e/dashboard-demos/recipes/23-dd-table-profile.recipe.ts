@@ -52,7 +52,8 @@ Size, freshness and gaps first, then what every column holds, then the one colum
     },
     {
       kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
+      script: `// Groovy, not SQL: the table comes from a filter, and a table name cannot be a SQL parameter.
+// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
 // anywhere near a query, because it lands in FROM where no bind can carry it.
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
 dbSql.rows("""SELECT count(*) AS row_count
@@ -87,17 +88,16 @@ FROM dash_demo.\${tableName}""", [])`,
       },
     },
     {
-      kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
-// anywhere near a query, because it lands in FROM where no bind can carry it.
-if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
-dbSql.rows("""SELECT count(*) AS column_count
+      // The table's columns, counted from the catalogue: here the table name is only a value to match,
+      // which a SQL parameter carries, so this one needs no script.
+      kind: 'sql',
+      sql: `SELECT count(*) AS column_count
 FROM information_schema.columns
 WHERE table_schema = 'dash_demo'
-  AND table_name = ?""", [tableName])`,
+  AND table_name = \${tableName}`,
       shot: {
-        title: 'The script for columns',
-        caption: 'Open Finetune → Script and paste the script. It needs more than the Visual tab offers, so this one is a script: copy it.',
+        title: 'The query for columns',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -126,7 +126,8 @@ WHERE table_schema = 'dash_demo'
     },
     {
       kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
+      script: `// Groovy, not SQL: the table comes from a filter and its date column is found at runtime; neither name can be a SQL parameter.
+// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
 // anywhere near a query, because it lands in FROM where no bind can carry it.
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
 // The first date or timestamp column whose name speaks of a beginning. A table with
@@ -175,7 +176,8 @@ WHERE \${created} >= (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 30 DAY
     },
     {
       kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
+      script: `// Groovy, not SQL: SUMMARIZE takes the filter's table by name, and a table name cannot be a SQL parameter.
+// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
 // anywhere near a query, because it lands in FROM where no bind can carry it.
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
 dbSql.rows("""SELECT count(*) AS columns_with_nulls
@@ -219,7 +221,8 @@ WHERE null_percentage > 0""", [])`,
     },
     {
       kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
+      script: `// Groovy, not SQL: SUMMARIZE takes the filter's table by name, and a table name cannot be a SQL parameter.
+// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
 // anywhere near a query, because it lands in FROM where no bind can carry it.
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
 dbSql.rows("""SELECT s.column_name AS column_name,
@@ -294,7 +297,8 @@ ORDER BY c.ordinal_position""", [tableName])`,
     },
     {
       kind: 'script',
-      script: `// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
+      script: `// Groovy, not SQL: the table and the column both come from filters, and neither name can be a SQL parameter.
+// Whitelisted, never trusted: the name must be a table of dash_demo before it goes
 // anywhere near a query, because it lands in FROM where no bind can carry it.
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
 if (!dbSql.firstRow("SELECT 1 FROM information_schema.columns WHERE table_schema = 'dash_demo' AND table_name = ? AND column_name = ?", [tableName, columnName])) return []

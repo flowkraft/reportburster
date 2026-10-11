@@ -33,6 +33,7 @@ def hasColumnName = (columnName != null && !columnName.isEmpty())
 // ─── Widget: number_row_count_rows (type=number, dataSource=script) ───
 if (!componentId || componentId == 'number_row_count_rows') {
     def number_row_count_rows_data = { ->
+        // Groovy, not SQL: the table comes from a filter, and a table name cannot be a SQL parameter.
         // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
         // anywhere near a query, because it lands in FROM where no bind can carry it.
         if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
@@ -42,23 +43,27 @@ if (!componentId || componentId == 'number_row_count_rows') {
     ctx.reportData('number_row_count_rows', number_row_count_rows_data)
 }
 
-// ─── Widget: number_column_count_columns (type=number, dataSource=script) ───
+// ─── Widget: number_column_count_columns (type=number, dataSource=sql) ───
 if (!componentId || componentId == 'number_column_count_columns') {
-    def number_column_count_columns_data = { ->
-        // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
-        // anywhere near a query, because it lands in FROM where no bind can carry it.
-        if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
-        dbSql.rows("""SELECT count(*) AS column_count
-        FROM information_schema.columns
-        WHERE table_schema = 'dash_demo'
-          AND table_name = ?""", [tableName])
-    }()
-    ctx.reportData('number_column_count_columns', number_column_count_columns_data)
+    def sql = new StringBuilder()
+    def params = []
+    sql << 'SELECT count(*) AS column_count\n'
+    sql << 'FROM information_schema.columns\n'
+    sql << 'WHERE table_schema = \'dash_demo\'\n'
+    if (hasTableName) {
+        sql << '  AND table_name = ?\n'
+        params << asDeclaredType('tableName', 'String', tableName)
+    } else {
+        sql << '  AND 1=1\n'   // no value: this filter is off
+    }
+    def data = params.isEmpty() ? dbSql.rows(sql.toString()) : dbSql.rows(sql.toString(), params)
+    ctx.reportData('number_column_count_columns', data)
 }
 
 // ─── Widget: number_rows_added_days (type=number, dataSource=script) ───
 if (!componentId || componentId == 'number_rows_added_days') {
     def number_rows_added_days_data = { ->
+        // Groovy, not SQL: the table comes from a filter and its date column is found at runtime; neither name can be a SQL parameter.
         // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
         // anywhere near a query, because it lands in FROM where no bind can carry it.
         if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
@@ -77,6 +82,7 @@ if (!componentId || componentId == 'number_rows_added_days') {
 // ─── Widget: number_columns_with_nulls_nulls (type=number, dataSource=script) ───
 if (!componentId || componentId == 'number_columns_with_nulls_nulls') {
     def number_columns_with_nulls_nulls_data = { ->
+        // Groovy, not SQL: SUMMARIZE takes the filter's table by name, and a table name cannot be a SQL parameter.
         // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
         // anywhere near a query, because it lands in FROM where no bind can carry it.
         if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
@@ -90,6 +96,7 @@ if (!componentId || componentId == 'number_columns_with_nulls_nulls') {
 // ─── Widget: tabulator_dd23-table-column-profile (type=tabulator, dataSource=script) ───
 if (!componentId || componentId == 'tabulator_dd23-table-column-profile') {
     def tabulator_dd23_table_column_profile_data = { ->
+        // Groovy, not SQL: SUMMARIZE takes the filter's table by name, and a table name cannot be a SQL parameter.
         // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
         // anywhere near a query, because it lands in FROM where no bind can carry it.
         if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
@@ -120,6 +127,7 @@ if (!componentId || componentId == 'tabulator_dd23-table-column-profile') {
 // ─── Widget: chart_dd23-chart-distribution (type=chart, dataSource=script) ───
 if (!componentId || componentId == 'chart_dd23-chart-distribution') {
     def chart_dd23_chart_distribution_data = { ->
+        // Groovy, not SQL: the table and the column both come from filters, and neither name can be a SQL parameter.
         // Whitelisted, never trusted: the name must be a table of dash_demo before it goes
         // anywhere near a query, because it lands in FROM where no bind can carry it.
         if (!dbSql.firstRow("SELECT 1 FROM information_schema.tables WHERE table_schema = 'dash_demo' AND table_name = ?", [tableName])) return []
