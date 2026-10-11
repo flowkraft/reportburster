@@ -3329,8 +3329,8 @@ return ctx.dbSql.rows(sql)`,
       // ── W2: the dashboard opens on the author's own selection ────────────
       await page.goto(d25Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-cube-renderer')).toHaveCount(1, { timeout: 20_000 });
+      await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator(`[id="widgetCube-${d25ComponentId}"]`)).toBeVisible({ timeout: 20_000 });
       // The field tree is the live cube's own /meta, ticked as the author left it.
       await expect(page.locator('#chk-meas-Revenue')).toBeChecked({ timeout: 30_000 });
       await expect(page.locator('#chk-dim-CategoryName')).toBeChecked();
@@ -3562,8 +3562,8 @@ return ctx.dbSql.rows(sql)`,
       // ── The dashboard: the cube itself, not a frozen answer ──────────────
       await page.goto(d26Url);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
-      await expect(page.locator('rb-cube-renderer')).toHaveCount(1, { timeout: 20_000 });
+      await expect(page.locator('#publishedDashboard')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator(`[id="widgetCube-${d26ComponentId}"]`)).toBeVisible({ timeout: 20_000 });
       // The field tree is the live cube's own /meta, so its arrival is the proof
       // that the dashboard reads the cube rather than a published copy of it.
       await expect(page.locator('#chk-meas-Revenue')).toBeVisible({ timeout: 30_000 });
@@ -5928,7 +5928,7 @@ return ctx.dbSql.rows(sql)`,
       await page.waitForLoadState('networkidle');
       await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('rb-value')).toHaveCount(2, { timeout: 20_000 });
-      await expect(page.locator('rb-cube-renderer'), 'the dashboard carries one live cube')
+      await expect(page.locator('[id^="widgetCube-"]'), 'the dashboard carries one live cube')
         .toHaveCount(1, { timeout: 20_000 });
 
       // A binding nobody answers is not a filter anybody sees: the filter bar holds the

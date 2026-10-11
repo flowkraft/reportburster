@@ -2743,7 +2743,7 @@
 
 <svelte:window on:keydown={onWindowKeydown} on:pointerdown={onWindowPointerDown} />
 
-<div bind:this={container} id="cubePreviewContainer" class="rb-cube-root">
+<div bind:this={container} id={componentId ? `widgetCube-${componentId}` : 'cubePreviewContainer'} class="rb-cube-root">
   {#if !activeCube && runtime}
     <!-- A published dashboard's live cube, before `/meta` has answered - or when it refused. -->
     <div class="rb-cube-empty">
@@ -3132,7 +3132,7 @@
           {:else if resultShape === 'map'}
             <rb-map data={runtimeRows} options={mapOptions} on:pointClick={onPointClick}></rb-map>
           {:else}
-            <rb-tabulator data={runtimeRows} columns={resultColumns}
+            <rb-tabulator id="cubeRuntimeTable" data={runtimeRows} columns={resultColumns}
                           on:cellClick={onCellClick}></rb-tabulator>
           {/if}
         {/if}

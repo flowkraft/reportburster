@@ -153,7 +153,7 @@ export async function addCubeToCanvas(page: Page, cubeId: string): Promise<void>
   await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   await page.locator('#visualizeAsSection').waitFor({ state: 'visible', timeout: 30_000 });
   // Wait for the rb-cube-renderer to load and parse the cube DSL.
-  await page.locator('rb-cube-renderer').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.locator('#cubeQueryBuilderRenderer').waitFor({ state: 'visible', timeout: 15_000 });
   await page.waitForTimeout(1_500);
 }
 
@@ -171,7 +171,7 @@ export async function addCubeToCanvas(page: Page, cubeId: string): Promise<void>
  * open is left alone: its field is visible, and a second click would close it again.
  */
 export async function openCubeFolders(page: Page, fieldIds: string[]): Promise<void> {
-  await page.locator('rb-cube-renderer').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.locator('#cubeQueryBuilderRenderer').waitFor({ state: 'visible', timeout: 15_000 });
   for (const fieldId of fieldIds) {
     const field = page.locator(`#${fieldId}`);
     if (await field.isVisible().catch(() => false)) continue;
@@ -190,10 +190,10 @@ export async function selectCubeFields(
   dimensions: string[],
   measures: string[],
 ): Promise<void> {
-  await page.locator('rb-cube-renderer').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.locator('#cubeQueryBuilderRenderer').waitFor({ state: 'visible', timeout: 15_000 });
   await page.evaluate(({ dims, meas }) => {
-    const el = document.querySelector('rb-cube-renderer');
-    if (!el) throw new Error('rb-cube-renderer not found');
+    const el = document.getElementById('cubeQueryBuilderRenderer');
+    if (!el) throw new Error('the cube picker (#cubeQueryBuilderRenderer) is not on the page');
     el.dispatchEvent(new CustomEvent('selectionChanged', {
       detail: {
         selectedDimensions: dims,
@@ -1683,9 +1683,9 @@ export async function applyCubeSelection(
     limit?: number | null;
   },
 ): Promise<void> {
-  await page.locator('rb-cube-renderer').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.locator('#cubeQueryBuilderRenderer').waitFor({ state: 'visible', timeout: 15_000 });
   const accepted = await page.evaluate((ask) => {
-    const el = document.querySelector('rb-cube-renderer') as
+    const el = document.getElementById('cubeQueryBuilderRenderer') as
       (HTMLElement & { applySelection?: (s: unknown) => boolean }) | null;
     if (!el || typeof el.applySelection !== 'function') return false;
     return el.applySelection({
