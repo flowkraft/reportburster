@@ -44,3 +44,10 @@ next-env.d.ts
 .next/standalone/
 .next/static/
 .next/cache/
+
+# what a run of this app leaves in its own folder, and nothing the app is made of: the SQLite file
+# of a dev run (`next dev` from these sources, asbl/ci/dp-ci.sh), and the empty mount points Docker
+# creates here for the nested mounts of the compose service when the folder is bind-mounted into it.
+/data/
+/config/
+/workspace/
