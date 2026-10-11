@@ -162,7 +162,7 @@ export function DetailWidget({ widgetId }: DetailWidgetProps) {
   return (
     <div ref={wrapRef} className="h-full" onClick={handleGearClick}>
       {/* @ts-expect-error — custom element */}
-      <rb-detail ref={ref} id={`widgetViz-${widgetId}`} style={{ display: "block", width: "100%", height: "100%" }} />
+      <rb-detail ref={ref} id={`widgetViz-${widgetId}`} component-id={widgetId} style={{ display: "block", width: "100%", height: "100%" }} />
       <ColumnSettingsDialog
         open={activeField !== null && activeMeta !== null}
         onClose={() => setActiveField(null)}
