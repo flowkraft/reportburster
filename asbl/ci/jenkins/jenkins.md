@@ -50,11 +50,11 @@ All live in the folder `datapallas`, and are created by `seed.groovy`.
 
 | Job | Runs | Parameters |
 |---|---|---|
-| `dp-ci-package` | `dp-ci.sh build`: compile (no unit tests), the distribution packages, the Docker image, the Trivy scan; about 14 min. Needed before a `docker-server` run of `dp-ci-e2e` and before publishing a demo | none |
+| `dp-ci-package` | `dp-ci.sh build`: compile (no unit tests), the distribution packages, the Docker image, the Trivy scan; about 14 min. Needed before a `docker-server` run of `dp-ci-e2e-release` and before publishing a demo | none |
 | `dp-ci-junit` | `dp-ci.sh junit`: the JUnit gate; no package, no e2e | `JUNIT_MODULE`, `JUNIT_TEST` |
 | `dp-ci-quality` | `dp-ci.sh quality`: compiles the Java modules, installs the npm dependencies, runs the quality tools; no package, no tests, never gating | none |
-| `dp-ci-e2e-dev` | `dp-ci.sh e2e-dev`: the **development** e2e. One spec file, never rebuilds the package; not a release check | `E2E_SPEC` (required), `E2E_GREP`, `E2E_TARGET` (`web` or `electron-linux`), `E2E_PACKAGE` (`reuse` = run on the package that is there, for a fix to specs, helpers, Java, the Angular UI or web components; `content` = package the content again on the built jars first, minutes, for a fix under db-template, config, samples or scripts). The log has the line `E2E_PACKAGE mode=... built_from=... commit_under_test=...` |
-| `dp-ci-e2e` | `dp-ci.sh e2e`, or `dp-ci.sh win e2e` for `electron-windows-vm`: the **real** e2e, on a package built from this exact commit (rebuilt first when it is not: 26-40 min). Needed before a release | `E2E_SPEC` (one file, empty = the full suite), `E2E_TARGET` (`web`, `electron-linux`, `electron-windows-vm`, `docker-server`), `E2E_ROTATION_DATE` (empty = today; the day's database rotation, e.g. 2026-09-22 = sqlserver) |
+| `dp-ci-e2e-loop` | `dp-ci.sh e2e-loop`: the fix-and-retry **loop**. One spec file, never rebuilds the package; not a release check. Speed: about 4 min fixed plus the spec | `E2E_SPEC` (required), `E2E_GREP`, `E2E_TARGET` (`web` or `electron-linux`), `E2E_PACKAGE`: `package-reuse-as-is` (default; run on the package exactly as it stands, for a fix to specs, helpers, Java or the Angular UI; instant), `package-rsync-simple-file-changes` (copy the plain db-template files changed since the package was built into the package and the testground; stops with `use package-repackage` when a changed file is not a verbatim copy; seconds), `package-repackage` (package the content again on the built jars, `AssemblerTest#refreshContentForE2E`; minutes; not a full rebuild, that is `dp-ci-package`). `reuse` and `content` are refused, naming the new value. The log has the line `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` |
+| `dp-ci-e2e-release` | `dp-ci.sh e2e`, or `dp-ci.sh win e2e` for `electron-windows-vm`: the **real** e2e, the release check. Speed: the slowest, it rebuilds a stale package first (about 26 min before the tests). It has no package parameter on purpose: it always runs on a package built from this exact commit and rebuilds it first when it is stale; it is the release check, so the package shortcuts exist only on `dp-ci-e2e-loop`. Needed before a release | `E2E_SPEC` (one file, empty = the full suite), `E2E_TARGET` (`web`, `electron-linux`, `electron-windows-vm`, `docker-server`), `E2E_ROTATION_DATE` (empty = today; the day's database rotation, e.g. 2026-09-22 = sqlserver) |
 
 To add a step: make it a script in `asbl/ci/` that launches a detached run and prints a `log:` line, add a
 `<name>.Jenkinsfile` here (copy `dp-ci-package.Jenkinsfile`), add an entry to `seed.groovy`, push, run `seed`.
@@ -125,7 +125,7 @@ The plugins are listed in `plugins.txt`. `pull-reports.sh` is read from the host
 
 The Robot UAT (`asbl/src/uat/run-tests.bat`, results in `asbl/src/uat/results/`: `output.xml`, `log.html`, `report.html`) is not run by `dp-ci.sh win` yet (the lane's header lists it as W9).
 The Jenkins side is ready: when a UAT step of the lane copies `results/` to the host as `<step log of the run, without .log>-robot` (like `-playwright-html` next to it),
-`dp-ci-e2e` with `E2E_TARGET=electron-windows-vm` pulls it and shows it with the Robot Framework plugin. Until then nothing is shown and nothing fails.
+`dp-ci-e2e-release` with `E2E_TARGET=electron-windows-vm` pulls it and shows it with the Robot Framework plugin. Until then nothing is shown and nothing fails.
 
 ## Quality reports (one place to look)
 
@@ -137,9 +137,9 @@ the first-run checklist is at the end. Jenkins folder `datapallas`, each job's b
 | JUnit (Surefire XML of every Java module) | `dp-ci-junit` | "Test Result" (counts, failed tests, trend) |
 | JaCoCo coverage | `dp-ci-junit` | "Coverage" (percentages, trend); "JaCoCo common / reporting / server" (HTML with the source of each class) |
 | Error Prone + NullAway (javac warnings) | `dp-ci-junit` | "Error Prone" warnings table |
-| Playwright | `dp-ci-e2e` | "Test Result" (JUnit XML) and "Playwright report" (HTML: steps, screenshots, trace) |
-| Robot Framework UAT (Windows lane) | `dp-ci-e2e` with `E2E_TARGET=electron-windows-vm` | "Robot Results" (nothing until a UAT step of the lane produces it) |
-| springdoc OpenAPI + Swagger UI | `dp-ci-e2e` with `E2E_TARGET=docker-server` | "Swagger UI (OpenAPI)" and the archived `openapi.json` |
+| Playwright | `dp-ci-e2e-release` | "Test Result" (JUnit XML) and "Playwright report" (HTML: steps, screenshots, trace) |
+| Robot Framework UAT (Windows lane) | `dp-ci-e2e-release` with `E2E_TARGET=electron-windows-vm` | "Robot Results" (nothing until a UAT step of the lane produces it) |
+| springdoc OpenAPI + Swagger UI | `dp-ci-e2e-release` with `E2E_TARGET=docker-server` | "Swagger UI (OpenAPI)" and the archived `openapi.json` |
 | Trivy (image CVEs, HIGH and CRITICAL)  | `dp-ci-package` | "Trivy" warnings table; the same table is in the console log |
 | Javadoc | `dp-ci-quality` | "Javadoc" |
 | Compodoc | `dp-ci-quality` | "Compodoc" |
@@ -157,7 +157,7 @@ the first-run checklist is at the end. Jenkins folder `datapallas`, each job's b
 
 1. The one-time Jenkins steps below, in order: install the plugins, relax the CSP, restart Jenkins, run `seed` (and approve the new `seed.groovy`).
 2. Run **`dp-ci-junit`** first: JaCoCo and Error Prone change the Java compile, so this is where a mistake shows first. If the compile breaks, remove the block marked "Error Prone + NullAway" in the poms.
-3. Run **`dp-ci-quality`**, then **`dp-ci-package`** (Trivy), then **`dp-ci-e2e`** (Playwright; for the OpenAPI page use `E2E_TARGET=docker-server`, after a build of the same commit).
+3. Run **`dp-ci-quality`**, then **`dp-ci-package`** (Trivy), then **`dp-ci-e2e-release`** (Playwright; for the OpenAPI page use `E2E_TARGET=docker-server`, after a build of the same commit).
 4. Open each table above once. An empty table next to a fine console log means the parser does not fit that tool's output: the raw output is archived or in the console, tell an agent which.
 
 ### The least certain changes (never run)
@@ -241,3 +241,7 @@ fails and runs it again. The owner reads the same console in Jenkins.
 ## Job renames and removals (2026-10-08)
 
 `dp-ci-build` is now `dp-ci-package`; `dp-ci-attach` is gone; `dp-ci-e2e-dev` is new. The seed job creates and updates jobs but never deletes one (`removedJobAction` IGNORE), so the old jobs `datapallas/dp-ci-build` and `datapallas/dp-ci-attach` stay in Jenkins until someone deletes them there; neither had a build history worth keeping.
+
+## Job renames (2026-10-11)
+
+The two e2e jobs are named for what they prove: `dp-ci-e2e` is now `dp-ci-e2e-release` and `dp-ci-e2e-dev` is now `dp-ci-e2e-loop`; `dp-ci.sh e2e-dev` is now `dp-ci.sh e2e-loop`; `E2E_PACKAGE` `reuse` and `content` are now `package-reuse-as-is` and `package-repackage`, and `package-rsync-simple-file-changes` is new. The old names are refused with the new one, and the old jobs were deleted in Jenkins after `seed` had created the new ones (their build history went with them).

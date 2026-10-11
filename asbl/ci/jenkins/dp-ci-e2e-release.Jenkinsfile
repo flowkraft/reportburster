@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-e2e. The REAL end-to-end tests: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fast development loop use dp-ci-e2e-dev.
+// Job datapallas/dp-ci-e2e-release. The REAL end-to-end tests, the release check: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fix-and-retry loop use dp-ci-e2e-loop.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
 // the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
