@@ -1653,7 +1653,7 @@ export async function setWidgetDsl(page: Page, dsl: string): Promise<void> {
  * header / next to its key), give the column a title, close the panel.
  *
  * The gear is drawn by the widget, not by React, so it carries its id from the code that draws it:
- * `btnColumnSettings-<widgetId>-<field>` in a Tabulator header, `btnColumnSettings-<field>` in a Detail.
+ * `btnColumnSettings-<widgetId>-<field>` in a Tabulator header, `<widgetId>_btnColumnSettings-<field>` in a Detail.
  */
 export async function setColumnTitle(
   page: Page,

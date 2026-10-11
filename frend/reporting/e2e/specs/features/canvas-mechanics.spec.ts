@@ -513,10 +513,11 @@ async function dSchemaOf(connectionCode: string): Promise<{ tables: Array<{ tabl
 /** Open a Detail column's gear and fill the dialog: title, "Display as", decimals; then Done. */
 async function dSetDetailColumn(
   page: Page,
+  widgetId: string,
   field: string,
   settings: { title: string; viewAs: string; decimals: number },
 ): Promise<void> {
-  const gear = page.locator(`[id="btnColumnSettings-${field}"]`);
+  const gear = page.locator(`[id="${widgetId}_btnColumnSettings-${field}"]`);
   await gear.waitFor({ state: 'visible', timeout: 15_000 });
   await gear.click();
   await page.locator('#txtColumnTitle').waitFor({ state: 'visible', timeout: 5_000 });
@@ -2119,11 +2120,12 @@ test('(canvas mechanics) M10 Detail column settings', async () => {
     await addTableToCanvas(page, 'dash_demo.orders');
     await runSqlQuery(page, "SELECT 'Acme' AS company, 12345.678 AS score");
     await switchToWidget(page, 'detail');
-    const detail = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
+    const detailId = await getLastWidgetId(page);
+    const detail = page.locator(`[id="widgetViz-${detailId}"]`);
     await expect(detail).toContainText('Acme', { timeout: 30_000 });
 
     // + gear on one field: a new title, "Display as: Currency", 0 decimals.
-    await dSetDetailColumn(page, 'score', { title: 'Final score', viewAs: 'currency', decimals: 0 });
+    await dSetDetailColumn(page, detailId, 'score', { title: 'Final score', viewAs: 'currency', decimals: 0 });
     await expect(detail, 'the new title shows').toContainText('Final score');
     await expect(detail, 'the value is currency with no decimals').toContainText(/\$\s?12,346(?![.\d])/);
 
@@ -2136,7 +2138,7 @@ test('(canvas mechanics) M10 Detail column settings', async () => {
     await expect(detail).toContainText(/\$\s?12,346(?![.\d])/);
 
     // − Reset to defaults brings back the default display.
-    await page.locator('[id="btnColumnSettings-score"]').click();
+    await page.locator(`[id="${detailId}_btnColumnSettings-score"]`).click();
     await page.locator('#btnResetColumnSettings').click();
     await page.locator('#btnDoneColumnSettings').click();
     await page.locator('#panelColumnSettings').waitFor({ state: 'hidden', timeout: 5_000 });
@@ -3339,7 +3341,8 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await addTableToCanvas(page, 'dash_demo.orders');
       await runSqlQuery(page, "SELECT 'Acme' AS company, 12345.678 AS score, 'Berlin' AS city");
       await switchToWidget(page, 'detail');
-      const detail = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
+      const detailId = await getLastWidgetId(page);
+      const detail = page.locator(`[id="widgetViz-${detailId}"]`);
       await expect(detail).toContainText('Berlin', { timeout: 30_000 });
       await page.locator('#btnDisplayTab').click();
       await page.locator('#configPanel-detail').waitFor({ state: 'visible', timeout: 10_000 });
@@ -3372,7 +3375,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await expect.poll(hidden, { timeout: 20_000 }).toEqual([]);
 
       // + a Detail column's gear takes the same settings: a suffix on the score.
-      await g2Edit(page, 'btnColumnSettings-score', async () => {
+      await g2Edit(page, `${detailId}_btnColumnSettings-score`, async () => {
         await page.locator('#txtColumnSuffix').fill(' pts');
         await page.locator('#numColumnScale').fill('2');
       });
@@ -3383,8 +3386,8 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         .toMatchObject({ suffix: ' pts', scale: 2 });
 
       // + the X and the dark area close the panel without a change.
-      await g2OpenAndClose(page, 'btnColumnSettings-score', 'x');
-      await g2OpenAndClose(page, 'btnColumnSettings-score', 'overlay');
+      await g2OpenAndClose(page, `${detailId}_btnColumnSettings-score`, 'x');
+      await g2OpenAndClose(page, `${detailId}_btnColumnSettings-score`, 'overlay');
       await expect(detail).toContainText('pts');
     });
   });

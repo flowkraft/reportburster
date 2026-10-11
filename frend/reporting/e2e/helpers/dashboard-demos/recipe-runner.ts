@@ -365,9 +365,8 @@ async function doDisplayConfig(
       return;
 
     case 'detail':
-      // A Detail's gear ids carry the widget's component id in front.
-      await doColumnTitles(page, config, async (field) =>
-        (await page.locator(`[id$="btnColumnSettings-${field}"]`).first().getAttribute('id')) ?? '');
+      // A Detail's gear ids carry the widget's id in front.
+      await doColumnTitles(page, config, (field) => `${current.widgetId}_btnColumnSettings-${field}`);
       return;
 
     default:
