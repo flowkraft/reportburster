@@ -1165,7 +1165,15 @@ if [ "${1:-}" = "--inside" ]; then
   aihub_from_sources() {
     local u="$REPO/asbl/src/main/external-resources/db-template/_apps/flowkraft/_ai-hub/ui-startpage"
     local f="$REPO/frend/reporting/testground/e2e/_apps/flowkraft/_ai-hub/docker-compose.yml"
-    [ -f "$f" ] || { echo "!!! ai-hub: $f is missing - the testground has no AI Hub app to point at the sources"; return 1; }
+    if [ ! -f "$f" ]; then
+      # The testground is emptied before every run and filled from the package by this gulp task,
+      # which is the first thing the e2e chain does. It is idempotent (it looks for datapallas.bat
+      # and does nothing when the content is there), so running it here only means the app's compose
+      # file exists before it is pointed at the sources; the chain then finds nothing left to do.
+      (cd "$REPO/frend/reporting" && npx gulp e2e-package-javastuff-if-needed) ||
+        { echo "!!! ai-hub: could not fill the testground from the package"; return 1; }
+    fi
+    [ -f "$f" ] || { echo "!!! ai-hub: $f is missing even with the testground filled from the package"; return 1; }
     echo "ai-hub: building the dev image from the sources (cached after the first time)"
     timeout 3600 docker build --target devserver -t ai-hub-ai-hub-frend:dev "$u" >/dev/null ||
       { echo "!!! ai-hub: docker build --target devserver failed"; return 1; }
