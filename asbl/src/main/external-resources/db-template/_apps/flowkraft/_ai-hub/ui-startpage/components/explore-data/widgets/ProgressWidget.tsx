@@ -107,6 +107,6 @@ export function ProgressWidget({ widgetId }: ProgressWidgetProps) {
 
   return (
     // @ts-expect-error — custom element
-    <rb-progress ref={ref} style={{ display: "block", width: "100%", height: "100%", minHeight: "60px" }} />
+    <rb-progress ref={ref} id={`widgetViz-${widgetId}`} style={{ display: "block", width: "100%", height: "100%", minHeight: "60px" }} />
   );
 }

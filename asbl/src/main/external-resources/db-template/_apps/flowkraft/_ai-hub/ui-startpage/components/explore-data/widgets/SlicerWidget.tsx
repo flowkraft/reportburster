@@ -274,6 +274,6 @@ export function SlicerWidget({ widgetId }: SlicerWidgetProps) {
 
   return (
     // @ts-expect-error - Web component custom element
-    <rb-slicer ref={setSlicerEl} style={{ display: "block", width: "100%", height: "100%" }} />
+    <rb-slicer ref={setSlicerEl} id={`widgetViz-${widgetId}`} style={{ display: "block", width: "100%", height: "100%" }} />
   );
 }

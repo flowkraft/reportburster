@@ -88,6 +88,6 @@ export function MapWidget({ widgetId }: MapWidgetProps) {
 
   return (
     // @ts-expect-error — custom element
-    <rb-map ref={attachMap} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
+    <rb-map ref={attachMap} id={`widgetViz-${widgetId}`} component-id={widgetId} style={{ display: "block", width: "100%", height: "100%", minHeight: "240px" }} />
   );
 }

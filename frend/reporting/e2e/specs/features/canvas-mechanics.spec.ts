@@ -646,9 +646,9 @@ async function eFirstDatasetColour(page: Page, widgetId: string): Promise<string
 /** Leaflet draws a region, a pin or a grid cell as one interactive path inside the widget's own box. */
 async function eMapShapes(page: Page, widgetId: string): Promise<number> {
   // The map draws on a canvas, so its shapes are not elements; it writes their number on its container.
-  const container = page.locator(`#widget-${widgetId} [data-shape-count]`);
+  const container = page.locator(`[id="widgetMap-${widgetId}"]`);
   if ((await container.count()) === 0) return 0;
-  return Number(await container.first().getAttribute('data-shape-count'));
+  return Number((await container.getAttribute('data-shape-count')) ?? 0);
 }
 
 /** Pick Finetune → SQL or Script in the current widget. */
@@ -913,7 +913,7 @@ async function g4ChartStack(page: Page, widgetId: string): Promise<{ stacked: bo
 async function g4SankeyColour(page: Page, widgetId: string): Promise<string> {
   const colour = await page.evaluate((id) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const options = (document.getElementById(`widget-${id}`)?.querySelector('rb-sankey') as any)?.options;
+    const options = (document.getElementById(`widgetViz-${id}`) as any)?.options;
     return String(options?.palette?.[0] ?? '');
   }, widgetId);
   return colour.toLowerCase();
@@ -2134,7 +2134,7 @@ test('(canvas mechanics) M10 Detail column settings', async () => {
     await addTableToCanvas(page, 'dash_demo.orders');
     await runSqlQuery(page, "SELECT 'Acme' AS company, 12345.678 AS score");
     await switchToWidget(page, 'detail');
-    const detail = page.locator('rb-detail');
+    const detail = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
     await expect(detail).toContainText('Acme', { timeout: 30_000 });
 
     // + gear on one field: a new title, "Display as: Currency", 0 decimals.
@@ -2147,16 +2147,16 @@ test('(canvas mechanics) M10 Detail column settings', async () => {
       .poll(async () => (await dStoredWidgets(page, canvasId))[0]?.displayConfig?.columnSettings?.score?.columnTitle, { timeout: 20_000 })
       .toBe('Final score');
     await page.reload();
-    await expect(page.locator('rb-detail')).toContainText('Final score', { timeout: 60_000 });
-    await expect(page.locator('rb-detail')).toContainText(/\$\s?12,346(?![.\d])/);
+    await expect(detail).toContainText('Final score', { timeout: 60_000 });
+    await expect(detail).toContainText(/\$\s?12,346(?![.\d])/);
 
     // − Reset to defaults brings back the default display.
     await page.locator('[id="btnColumnSettings-score"]').click();
     await page.locator('#btnResetColumnSettings').click();
     await page.locator('#btnDoneColumnSettings').click();
     await page.locator('#panelColumnSettings').waitFor({ state: 'hidden', timeout: 5_000 });
-    await expect(page.locator('rb-detail')).not.toContainText('Final score');
-    await expect(page.locator('rb-detail')).not.toContainText('$');
+    await expect(detail).not.toContainText('Final score');
+    await expect(detail).not.toContainText('$');
     await expect
       .poll(async () => (await dStoredWidgets(page, canvasId))[0]?.displayConfig?.columnSettings?.score, { timeout: 20_000 })
       .toBeUndefined();
@@ -3354,7 +3354,7 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await addTableToCanvas(page, 'dash_demo.orders');
       await runSqlQuery(page, "SELECT 'Acme' AS company, 12345.678 AS score, 'Berlin' AS city");
       await switchToWidget(page, 'detail');
-      const detail = page.locator('rb-detail');
+      const detail = page.locator(`[id="widgetViz-${await getLastWidgetId(page)}"]`);
       await expect(detail).toContainText('Berlin', { timeout: 30_000 });
       await page.locator('#btnDisplayTab').click();
       await page.locator('#configPanel-detail').waitFor({ state: 'visible', timeout: 10_000 });
