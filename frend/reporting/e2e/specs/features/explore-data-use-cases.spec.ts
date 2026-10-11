@@ -89,7 +89,7 @@ async function addFilterBarParam(page: Page, dslCode: string): Promise<void> {
   await page.locator('#btnConfigureFilters').click();
   await page.locator('#btnFilterDslToggle').waitFor({ state: 'visible', timeout: 5_000 });
   await page.locator('#btnFilterDslToggle').click();
-  const dslEditor = page.locator('#filterDslEditorContainer .cm-content');
+  const dslEditor = page.locator('#filterDslEditorInput');
   await dslEditor.waitFor({ state: 'visible', timeout: 5_000 });
   await dslEditor.click();
   await page.keyboard.press('Control+a');
@@ -170,7 +170,7 @@ async function addVisualWidget(
 async function setCustomWidgetDsl(page: Page, dsl: string): Promise<void> {
   await clickDisplayTab(page);
   await openDslEditor(page);
-  const editor = page.locator('#dslEditorContainer .cm-content');
+  const editor = page.locator('#dslEditorInput');
   await editor.click();
   await page.keyboard.press('Control+a');
   await enterTextIntoEditor(page, dsl);

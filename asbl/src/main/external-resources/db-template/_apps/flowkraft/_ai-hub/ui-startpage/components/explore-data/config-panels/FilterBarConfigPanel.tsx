@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 // lucide-react removed
 import dynamic from "next/dynamic";
+import { EditorView } from "@codemirror/view";
 import { useCanvasStore, type ParamMeta } from "@/lib/stores/canvas-store";
 import { fetchDslExample } from "@/lib/explore-data/ai-prompt-builder";
 import { DslHelpDialog } from "./DslHelpDialog";
@@ -21,6 +22,9 @@ import { DslExampleDialog } from "./DslExampleDialog";
  * /api/dsl/reportparameters/serialize on open, /parse on save → setParametersConfig.
  * ============================================================================
  */
+
+// The editor's input is #filterDslEditorInput, as the Finetune editors' are #sqlEditorInput / #scriptEditorInput.
+const FILTER_DSL_EDITOR_INPUT = [EditorView.contentAttributes.of({ id: "filterDslEditorInput" })];
 
 const CodeMirror = dynamic(
   () => import("@uiw/react-codemirror").then((m) => m.default),
@@ -289,6 +293,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
                   <div id="filterDslEditorContainer" className="border border-base-300 rounded-md overflow-hidden">
                     <CodeMirror
                       value={dslText}
+                      extensions={FILTER_DSL_EDITOR_INPUT}
                       onChange={handleDslChange}
                       height="180px"
                       theme="dark"
