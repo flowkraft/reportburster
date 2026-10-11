@@ -16,6 +16,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flowkraft.reporting.dsl.chart.ChartOptions;
+import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsScript;
 import com.flowkraft.reporting.dsl.common.BlockFormEmitter;
 import com.flowkraft.reporting.dsl.common.BlockFormRules;
@@ -298,6 +300,32 @@ public class DslFullRoundTripTest {
         assertEquals(table, TabulatorOptionsParser.parseGroovyTabulatorDslCode(emittedTable)
                 .getNamedOptions().get("orders"),
             "a table's `clicksFilter` survives the round trip");
+    }
+
+    /** The colour set an author picks for one chart travels in that chart's own DSL. */
+    @Test
+    public void roundTrip_chartPalette() throws Exception {
+        Map<String, Object> chart = parseChartRawNamed(
+            "chart('ordersByChannel') {\n" +
+            "  type 'bar'\n" +
+            "  palette 'warm'\n" +
+            "  data { labelField 'channel'; datasets { dataset { field 'orders' } } }\n" +
+            "}").get("ordersByChannel");
+        assertEquals("warm", chart.get("palette"), "the chart's colour set is parsed");
+
+        String emitted = BlockFormEmitter.emitNamed("chart", "ordersByChannel", chart,
+                                                     BlockFormRules.CHART);
+        assertEquals(chart, parseChartRawNamed(emitted).get("ordersByChannel"),
+            "a chart's `palette` survives the round trip");
+
+        ChartOptions read = ChartOptionsParser.parseGroovyChartDslCode(
+            "chart('ordersByChannel') {\n" +
+            "  type 'bar'\n" +
+            "  palette 'warm'\n" +
+            "  data { labelField 'channel'; datasets { dataset { field 'orders' } } }\n" +
+            "}");
+        assertEquals("warm", read.getNamedOptions().get("ordersByChannel").getPalette(),
+            "and the chart the page is given carries it");
     }
 
     // ═════════════════════════════════════════════════════════════════════════════

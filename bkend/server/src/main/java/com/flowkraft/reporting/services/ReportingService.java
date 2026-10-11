@@ -276,6 +276,10 @@ public class ReportingService {
 				if (opts.getClicksFilter() != null) {
 					config.chartOptions.put("clicksFilter", opts.getClicksFilter());
 				}
+				// The named colour set the author picked for this chart.
+				if (opts.getPalette() != null && !opts.getPalette().isEmpty()) {
+					config.chartOptions.put("palette", opts.getPalette());
+				}
 				// Extract named blocks for aggregator reports
 				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
 					config.namedChartOptions = new HashMap<>();
@@ -290,6 +294,7 @@ public class ReportingService {
 						if (co.getDatasets() != null && !co.getDatasets().isEmpty()) m.put("datasets", co.getDatasets());
 						if (co.getData() != null && !co.getData().isEmpty()) m.put("data", co.getData());
 						if (co.getClicksFilter() != null) m.put("clicksFilter", co.getClicksFilter());
+						if (co.getPalette() != null && !co.getPalette().isEmpty()) m.put("palette", co.getPalette());
 						config.namedChartOptions.put(entry.getKey(), m);
 					}
 				}

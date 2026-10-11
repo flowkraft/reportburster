@@ -62,6 +62,10 @@
   export let clicksFilter: boolean = false;
   export let crossFilterField: string = '';
 
+  // The named colour set this chart is drawn in (`palette 'warm'` in its DSL). Empty is the house
+  // colours, which is every chart whose author never picked another set.
+  export let palette: string = '';
+
   // Raw DSL source code (exposed for Configuration tab)
   export let configDsl: string = '';
   
@@ -71,6 +75,7 @@
   // What a published chart is told by its own config file: the setting travels in the chart's DSL
   // like every other display setting, so nothing else has to carry it.
   $: if (chartConfig?.clicksFilter === true) clicksFilter = true;
+  $: if (!palette && chartConfig?.palette) palette = String(chartConfig.palette);
   $: if (!crossFilterField && chartConfig?.labelField) crossFilterField = chartConfig.labelField;
 
   /**
@@ -214,6 +219,19 @@
   //   rb-chart { --rb-chart-grid: …; --rb-chart-palette: c1,c2,…; --rb-chart-accent: … }
   // ──────────────────────────────────────────────────────────────────────────
   const RB_DEFAULT_PALETTE = ['#509ee3', '#88bf4d', '#a989c5', '#ef8c8c', '#f9d45c', '#f2a86f', '#98d9d9', '#7172ad'];
+  /**
+   * The colour sets a chart can be drawn in by name, as the Canvas offers them.
+   *
+   * LOGIC-MIRROR of `PALETTE_COLORS` in `ui-startpage/components/explore-data/widgets/ChartWidget.tsx`:
+   * the same names and the same colours in the same order, so a chart published from a canvas keeps
+   * the colours its author saw. A name nobody knows falls back to the house colours below.
+   */
+  const RB_NAMED_PALETTES: Record<string, string[]> = {
+    warm:   ['#d62728', '#ff7f0e', '#ffbb78', '#8c564b', '#e377c2', '#f7b6d2', '#bcbd22', '#dbdb8d'],
+    cool:   ['#1f77b4', '#aec7e8', '#2ca02c', '#98df8a', '#9467bd', '#c5b0d5', '#17becf', '#9edae5'],
+    pastel: ['#a8dadc', '#f4a261', '#e9c46a', '#2a9d8f', '#e76f51', '#457b9d', '#1d3557', '#264653'],
+    mono:   ['#1a1a1a', '#404040', '#666666', '#8c8c8c', '#b3b3b3'],
+  };
   const RB_SINGLE_COLOR_TYPES = new Set(['bar', 'line', 'scatter', 'bubble', 'radar']);
   let _themeObserver: MutationObserver | null = null;
 
@@ -231,9 +249,14 @@
     const v = (name: string) => (cs?.getPropertyValue(name) || '').trim();
     const grid = v('--rb-chart-grid') || rbToAlpha(text, 0.15);
     const pv = v('--rb-chart-palette');
-    const palette = pv ? pv.split(',').map((s) => s.trim()).filter(Boolean) : RB_DEFAULT_PALETTE;
-    const accent = v('--rb-chart-accent') || palette[0];
-    return { text, grid, palette, accent };
+    // The author's own pick first: a named set beats both the host's CSS contract and the house
+    // colours, because it is this chart's own setting rather than the page's.
+    const named = RB_NAMED_PALETTES[palette];
+    const colors = named
+      ? named
+      : (pv ? pv.split(',').map((s) => s.trim()).filter(Boolean) : RB_DEFAULT_PALETTE);
+    const accent = v('--rb-chart-accent') || colors[0];
+    return { text, grid, palette: colors, named: !!named, accent };
   }
 
   // Inject inherited text/grid colors (always) + a palette for colourless datasets
@@ -266,6 +289,14 @@
         const col = c.palette[i % c.palette.length];
         if (ds.backgroundColor === undefined) ds.backgroundColor = cfg.type === 'line' ? rbToAlpha(col, 0.25) : col;
         if (ds.borderColor === undefined) ds.borderColor = col;
+      });
+    } else if (c.named && (cfg.type === 'pie' || cfg.type === 'doughnut')) {
+      // A slice at a time, which is what a pie of one dataset needs. Only for a set the author
+      // named: without one, the slices keep the colours they came with.
+      const labels: unknown[] = cfg.data?.labels || [];
+      (cfg.data?.datasets || []).forEach((ds: any) => {
+        if (ds.backgroundColor === undefined)
+          ds.backgroundColor = labels.map((_, i) => c.palette[i % c.palette.length]);
       });
     }
   }
@@ -700,6 +731,7 @@
       if (!embedToken) embedToken = hostEl.getAttribute('embed-token') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
       if (hostEl.getAttribute('clicks-filter') === 'true') clicksFilter = true;
+      if (!palette) palette = hostEl.getAttribute('palette') || '';
       if (!crossFilterField) crossFilterField = hostEl.getAttribute('cross-filter-field') || '';
       if (!Object.keys(reportParams).length) {
         const rp = hostEl.getAttribute('report-params');

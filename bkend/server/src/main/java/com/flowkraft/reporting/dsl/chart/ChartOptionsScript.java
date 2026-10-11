@@ -142,13 +142,16 @@ public abstract class ChartOptionsScript extends Script {
 			String type, String labelField, String seriesField,
 			Map<String, Object> options, List<String> labels,
 			List<Map<String, Object>> datasets, List<Map<String, Object>> dataRows,
-			Boolean clicksFilter) {
+			Boolean clicksFilter, String palette) {
 		Map<String, Object> out = new LinkedHashMap<>();
 		if (type != null) out.put("type", type);
 		// A setting of the chart, not of Chart.js: whether a click on a bar selects the value its
 		// label stands for (`slicer-filters.ts`). It has its own setter below, so it is a key of
 		// this DSL rather than one of the unknown ones that go into `options`.
 		if (clicksFilter != null) out.put("clicksFilter", clicksFilter);
+		// Which of the named colour sets the chart is drawn in - a setting of the chart, like
+		// clicksFilter, and not one of Chart.js's own.
+		if (palette != null && !palette.isEmpty()) out.put("palette", palette);
 		if (!options.isEmpty()) out.put("options", new LinkedHashMap<>(options));
 		if (!dataRows.isEmpty()) {
 			// Legacy override form: chart { data([[row1],[row2]]) } — preserve.
@@ -333,6 +336,7 @@ public abstract class ChartOptionsScript extends Script {
 		private String labelField = null;
 		private String seriesField = null;
 		private Boolean clicksFilter = null;
+		private String palette = null;
 		private Map<String, Object> options = new LinkedHashMap<>();
 		private final List<String> labels = new ArrayList<>();
 		private final List<Map<String, Object>> datasets = new ArrayList<>();
@@ -345,6 +349,7 @@ public abstract class ChartOptionsScript extends Script {
 		public void labelField(String f) { this.labelField = f; }
 		public void seriesField(String f) { this.seriesField = f; }
 		public void clicksFilter(boolean on) { this.clicksFilter = on; }
+		public void palette(String id) { this.palette = id; }
 		public void datasets(Closure<?> body) {
 			DatasetsContainer dc = new DatasetsContainer();
 			body.setDelegate(dc);
@@ -421,7 +426,7 @@ public abstract class ChartOptionsScript extends Script {
 			// Routes through the same canonical-shape builder as the top-level
 			// `chart { ... }` form — see ChartOptionsScript.buildOptionsMap.
 			return buildOptionsMap(type, labelField, seriesField, options, labels, datasets, dataRows,
-					clicksFilter);
+					clicksFilter, palette);
 		}
 	}
 }

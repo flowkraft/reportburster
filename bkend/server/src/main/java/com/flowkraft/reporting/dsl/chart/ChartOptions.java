@@ -31,6 +31,17 @@ public class ChartOptions {
 	 * published chart it may make such a selection.
 	 */
 	private Boolean clicksFilter;
+	/**
+	 * Which of the named colour sets this chart is drawn in ({@code palette 'warm'} in the chart's
+	 * DSL): one of {@code warm}, {@code cool}, {@code pastel}, {@code mono}. Null or empty is the
+	 * house colours, which is every chart whose author never picked another set.
+	 *
+	 * <p>LOGIC-MIRROR of {@code PALETTE_COLORS} in
+	 * {@code ui-startpage/components/explore-data/widgets/ChartWidget.tsx} and of
+	 * {@code RB_NAMED_PALETTES} in {@code RbChart.wc.svelte}: the canvas and the published page
+	 * draw the same chart in the same colours because all three know the same names.
+	 */
+	private String palette;
 
 	private Map<String, ChartOptions> namedOptions = new LinkedHashMap<>(); // Named blocks for aggregator reports
 	/**
@@ -63,6 +74,9 @@ public class ChartOptions {
 
 	public Boolean getClicksFilter() { return clicksFilter; }
 	public void setClicksFilter(Boolean clicksFilter) { this.clicksFilter = clicksFilter; }
+
+	public String getPalette() { return palette; }
+	public void setPalette(String palette) { this.palette = palette; }
 
 	public Map<String, ChartOptions> getNamedOptions() { return namedOptions; }
 	public void setNamedOptions(Map<String, ChartOptions> namedOptions) { this.namedOptions = namedOptions; }

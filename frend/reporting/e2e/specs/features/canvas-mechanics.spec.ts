@@ -4744,4 +4744,84 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
   });
 });
 
+/** The first dataset's colours of a widget's chart, as Chart.js holds them. */
+async function pChartColors(page: Page, widgetId: string): Promise<string[]> {
+  return page.evaluate((id) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chart = (document.getElementById(`widget-${id}`)?.querySelector('rb-chart') as any)?.getChartInstance?.();
+    const bg = chart?.data?.datasets?.[0]?.backgroundColor;
+    return Array.isArray(bg) ? bg.map(String) : [String(bg ?? '')];
+  }, widgetId);
+}
+
+/** The same, for every chart on a published page, with the type each one is drawn as. */
+async function pPublishedChartColors(page: Page): Promise<Array<{ type: string; colors: string[] }>> {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll('rb-chart')).map((el) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const chart = (el as any).getChartInstance?.();
+      const bg = chart?.data?.datasets?.[0]?.backgroundColor;
+      return {
+        type: String(chart?.config?.type ?? ''),
+        colors: Array.isArray(bg) ? bg.map(String) : [String(bg ?? '')],
+      };
+    }));
+}
+
+test('(canvas mechanics) M62 The colours an author picks for a chart, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M62 Chart palette', async () => {
+    const warm = ['#d62728', '#ff7f0e', '#ffbb78', '#8c564b', '#e377c2', '#f7b6d2', '#bcbd22', '#dbdb8d'];
+
+    // Orders per channel twice: as bars, where the colour is the series', and as a pie, where it is
+    // each slice's. Both drawn in the set the author picks, which is neither the Canvas's house
+    // colours nor the published page's.
+    const bars = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'bar');
+    const houseColours = await pChartColors(page, bars);
+    expect(houseColours[0], 'the bars start in the house colours').not.toBe(warm[0]);
+
+    await clickDisplayTab(page);
+    await page.locator('#btnChartPalette-warm').click();
+    await expect
+      .poll(async () => (await pChartColors(page, bars))[0],
+            { message: 'the bars take the colour the author picked', timeout: 20_000, intervals: [500] })
+      .toBe(warm[0]);
+
+    await clickDataTab(page);
+    const pie = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'pie');
+    await clickDisplayTab(page);
+    await page.locator('#btnChartPalette-warm').click();
+    const wantSlices = Array.from({ length: D_ORDER_CHANNELS }, (_, i) => warm[i % warm.length]);
+    await expect
+      .poll(async () => await pChartColors(page, pie),
+            { message: 'a slice of the set at a time', timeout: 20_000, intervals: [500] })
+      .toEqual(wantSlices);
+    const canvasSlices = await pChartColors(page, pie);
+
+    // + Published, the same two charts are drawn in the same colours.
+    const published = await publishDashboard(page);
+    await openPublished(page, published.reportId);
+    await expect
+      .poll(async () => {
+        const charts = await pPublishedChartColors(page);
+        if (charts.length < 2) return null;
+        return {
+          bar: charts.find((c) => c.type === 'bar')?.colors[0] ?? '',
+          pie: charts.find((c) => c.type === 'pie')?.colors ?? [],
+        };
+      }, { message: 'the published charts keep the author\'s colours', timeout: 60_000, intervals: [1_000] })
+      .toEqual({ bar: warm[0], pie: canvasSlices });
+  });
+});
+
 });
