@@ -1,6 +1,7 @@
 package com.flowkraft.exploredata.export;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,6 +49,31 @@ class EmptyParameterMeansNoFilterTest {
 
 	/** Closing on or before 2026-01-31, whatever the amount (case p1a). */
 	private static final int DEALS_BY_DATE = 425;
+
+	/** Deals at one stage, and at two: {@code crm_deals.psv} counted by its {@code stage} column
+	 *  (Closed Won 402, Negotiation 189, and the four other stages making the 1,200 up). */
+	private static final int DEALS_CLOSED_WON = 402;
+	private static final int DEALS_CLOSED_WON_OR_NEGOTIATION = 402 + 189;
+
+	/** The stages the frozen deals really sit at: what a pane on that field lists. */
+	private static final List<String> STAGES = List.of("Closed Lost", "Closed Won", "Negotiation",
+			"Proposal", "Prospecting", "Qualification");
+
+	/**
+	 * What a filter pane does to the widget beside it, as the canvas writes it: the widget's own
+	 * query with one condition per pane field, bound to the pane's own parameter. Nothing is
+	 * declared on the parameters tab for it - a pane parameter is the pane's, not the author's - so
+	 * this is also the proof that the assembler finds it in the SQL itself.
+	 */
+	private static final String PANE_FILTERED_SQL = "SELECT COUNT(*) AS deal_count\n"
+			+ "FROM cube_demo.crm_deals\n"
+			+ "WHERE stage IN (${__pane_stage})";
+
+	/** The pane's own question: the values of its field, which is all a pane ever asks. */
+	private static final String PANE_VALUES_SQL = "SELECT DISTINCT stage\n"
+			+ "FROM cube_demo.crm_deals\n"
+			+ "WHERE stage IS NOT NULL\n"
+			+ "ORDER BY stage";
 
 	/**
 	 * The shape the Visualize step writes: one condition per line, the first carrying the WHERE and
@@ -100,6 +126,50 @@ class EmptyParameterMeansNoFilterTest {
 		}
 	}
 
+	/**
+	 * A filter pane is the same rule as a filter bar, on a parameter the author never declared:
+	 * nothing picked is every row, one value picked narrows to that value, two values OR together.
+	 * The pane itself lists its field's values whatever is picked - a pane that lost the values it
+	 * had just dimmed would be a pane nobody can click twice.
+	 */
+	@Test
+	void ansi_a_pane_filters_the_published_dashboard_and_nothing_picked_is_every_row() throws Exception {
+		for (String vendor : List.of("duckdb", "sqlite")) {
+			try (Connection connection = open(vendor)) {
+
+				assertEquals(ALL_DEALS, underPane(connection, ""),
+						vendor + ", published: nothing picked in the pane, so every deal");
+				assertEquals(DEALS_CLOSED_WON, underPane(connection, "Closed Won"),
+						vendor + ", published: one value picked");
+				assertEquals(DEALS_CLOSED_WON_OR_NEGOTIATION, underPane(connection, "Closed Won,Negotiation"),
+						vendor + ", published: two values of one pane OR together");
+			}
+		}
+	}
+
+	/** The pane's own value list is its field's values, whatever is picked in it. */
+	@Test
+	void ansi_a_published_pane_lists_its_values_whatever_is_picked() throws Exception {
+		try (Connection connection = open("duckdb")) {
+			for (String picked : List.of("", "Closed Won")) {
+				assertEquals(STAGES, paneValues(connection, picked),
+						"the pane lists every stage, with '" + picked + "' picked");
+			}
+		}
+	}
+
+	/** The assembled script declares the pane's parameter and guards the line it sits on. */
+	@Test
+	void the_assembled_script_declares_the_pane_parameter_nobody_declared() throws Exception {
+		String script = ScriptAssembler.assemble(paneCanvas(), List.of()).text();
+		assertTrue(script.contains("def __pane_stage = userVars?.get('__pane_stage')?.toString()"),
+				"the pane's parameter is read from the request like any other filter value:\n" + script);
+		assertTrue(script.contains("if (has__pane_stage && listHasValues(__pane_stage))"),
+				"and the line it sits on is only written when something is picked:\n" + script);
+		assertTrue(script.contains("WHERE 1=1"),
+				"with nothing picked the query keeps asking a whole question:\n" + script);
+	}
+
 	// ── The two paths ────────────────────────────────────────────────────────────
 
 	/** What the canvas asks: the production {@code prepare}, then JDBI, on this connection. */
@@ -137,6 +207,81 @@ class EmptyParameterMeansNoFilterTest {
 		parameters.add(Map.of("id", "stages"));
 		String script = ScriptAssembler.assemble(List.of(widget), parameters).text();
 
+		Map<String, List<Map<String, Object>>> reported = run(connection, script, values);
+
+		List<Map<String, Object>> rows = reported.get("tabulator_a");
+		if (rows == null || rows.isEmpty()) {
+			throw new IllegalStateException("the widget reported no rows: " + reported);
+		}
+		return ((Number) rows.get(0).values().iterator().next()).longValue();
+	}
+
+	/** The canvas a pane makes: a KPI on a table and a pane on one of its fields. */
+	private static List<Map<String, Object>> paneCanvas() {
+
+		Map<String, Object> filteredSource = new LinkedHashMap<>();
+		filteredSource.put("mode", "visual");
+		// What the widget ran before any pane was added - left in on purpose: a pane must not be
+		// able to change what a widget asks except through paneSql.
+		filteredSource.put("generatedSql", "SELECT COUNT(*) AS deal_count\nFROM cube_demo.crm_deals");
+		filteredSource.put("paneSql", PANE_FILTERED_SQL);
+		Map<String, Object> kpi = new LinkedHashMap<>();
+		kpi.put("id", "w-a");
+		kpi.put("type", "number");
+		kpi.put("dataSource", filteredSource);
+
+		Map<String, Object> paneSource = new LinkedHashMap<>();
+		paneSource.put("mode", "visual");
+		paneSource.put("paneValuesSql", PANE_VALUES_SQL);
+		Map<String, Object> pane = new LinkedHashMap<>();
+		pane.put("id", "w-p");
+		pane.put("type", "filter-pane");
+		pane.put("dataSource", paneSource);
+		pane.put("displayConfig", Map.of("dslConfig", Map.of("field", "stage")));
+
+		return List.of(kpi, pane);
+	}
+
+	/** The KPI's number on a published dashboard whose pane is picked at these values. */
+	private static long underPane(Connection connection, String picked) throws Exception {
+		Map<String, Object> values = new LinkedHashMap<>();
+		values.put("__pane_stage", picked);
+		Map<String, List<Map<String, Object>>> reported = runPublished(connection, values);
+		List<Map<String, Object>> rows = reported.get("number_a");
+		if (rows == null || rows.isEmpty())
+			throw new IllegalStateException("the KPI reported no rows: " + reported);
+		return ((Number) rows.get(0).values().iterator().next()).longValue();
+	}
+
+	/** The values the published pane itself was handed, in the order it got them. */
+	private static List<String> paneValues(Connection connection, String picked) throws Exception {
+		Map<String, Object> values = new LinkedHashMap<>();
+		values.put("__pane_stage", picked);
+		Map<String, List<Map<String, Object>>> reported = runPublished(connection, values);
+		List<Map<String, Object>> rows = reported.get("filter-pane_stage_p");
+		if (rows == null)
+			throw new IllegalStateException("the pane reported nothing: " + reported);
+		List<String> listed = new ArrayList<>();
+		for (Map<String, Object> row : rows)
+			listed.add(String.valueOf(row.values().iterator().next()));
+		return listed;
+	}
+
+	/** The pane canvas published and run: what each of its widgets reported. */
+	private static Map<String, List<Map<String, Object>>> runPublished(Connection connection,
+			Map<String, Object> values) throws Exception {
+		String script = ScriptAssembler.assemble(paneCanvas(), List.of()).text();
+		return run(connection, script, values);
+	}
+
+	/**
+	 * One published script, run the way the server runs it: {@code ctx.dbSql} on this connection,
+	 * the request's values as the viewer's variables, and {@code ctx.reportData} collecting what
+	 * each widget reported.
+	 */
+	private static Map<String, List<Map<String, Object>>> run(Connection connection, String script,
+			Map<String, Object> values) {
+
 		Binding binding = new Binding();
 		Map<String, List<Map<String, Object>>> reported = new LinkedHashMap<>();
 		binding.setVariable("reported", reported);
@@ -153,12 +298,7 @@ class EmptyParameterMeansNoFilterTest {
 				ctx
 				"""));
 		shell.evaluate(script);
-
-		List<Map<String, Object>> rows = reported.get("tabulator_a");
-		if (rows == null || rows.isEmpty()) {
-			throw new IllegalStateException("the widget reported no rows: " + reported);
-		}
-		return ((Number) rows.get(0).values().iterator().next()).longValue();
+		return reported;
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────────
