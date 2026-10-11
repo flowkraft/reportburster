@@ -4807,7 +4807,8 @@ test.describe('Auth — Server: the AI Hub door', () => {
       // was authorised, and an empty dashboard is exactly what a grant that did not reach the data
       // would look like.
       await expect(
-        page.locator(`[id="dashboard-${SAMPLE_DASHBOARD}"] [id^="tabRow-"]`).first(),
+        // The sample's table is topCustomers; its first drawn row is tabRow-<component id>-0.
+        page.locator(`[id="dashboard-${SAMPLE_DASHBOARD}"] [id="tabRow-topCustomers-0"]`),
         'with real rows in it',
       ).toBeVisible({ timeout: 60_000 });
 
@@ -5014,7 +5015,7 @@ test.describe('Auth — Server: the AI Hub door', () => {
         .elementShouldContainText('#shareLockParams', 'shows all of its data');
 
       // No control to lock with, either — the sentence is instead of them, not next to them.
-      await expect(page.locator('#shareLockParams input[type="checkbox"]')).toHaveCount(0);
+      await expect(page.locator('#shareLockParams [id^="shareLockParam-"]')).toHaveCount(0);
 
       // Left open on purpose, like the sharing test above: closing it clicks a button the canvas
       // widgets can paint over. Cleanup is HTTP.
@@ -5179,7 +5180,7 @@ test.describe('Auth — Server: the AI Hub door', () => {
           const recipient = await recipientContext.newPage();
           await recipient.goto(shareUrl, { timeout: 60_000, waitUntil: 'networkidle' });
 
-          const table = recipient.locator('.tabulator').first();
+          const table = recipient.locator(`[id="widgetTabulator-${componentId}"]`);
           await expect(table, 'the recipient is shown the widget').toBeVisible({ timeout: 60_000 });
           await expect(table, 'filled with their own customer').toContainText(ATTRIBUTE_VALUE, {
             timeout: 60_000,
@@ -5195,9 +5196,9 @@ test.describe('Auth — Server: the AI Hub door', () => {
 
         // Deleted where it was created. A link is shown once and revoked from this table, and
         // revoking is the only protection a link that is already in somebody's inbox has.
-        const listed = page.locator('#tableShareLinks tbody tr[id^="shareLink-"]');
+        const listed = page.locator('#tableShareLinks [id^="shareLink-"]');
         await expect(listed).toHaveCount(1);
-        const linkId = (await listed.first().getAttribute('id'))!.replace('shareLink-', '');
+        const linkId = (await listed.getAttribute('id'))!.replace('shareLink-', '');
         await page.locator(`#btnRevokeShareLink-${linkId}`).click();
         await expect(
           page.locator('#tableShareLinks'),

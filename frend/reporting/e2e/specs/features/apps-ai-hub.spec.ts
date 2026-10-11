@@ -240,12 +240,14 @@ async function assertAgentProvisioning(page: Page): Promise<void> {
   // Wait for provisioning to complete (success or error) — timeout up to 5 minutes
   const successIcon = logPanel.locator('#provision-status-success');
   const errorIcon = logPanel.locator('#provision-status-error');
-  const closeBtn = logPanel.getByText('Close');
+  const closeBtn = logPanel.locator('#log-panel-close-button');
+  const finished = async (): Promise<boolean> =>
+    (await successIcon.isVisible()) || (await errorIcon.isVisible())
+    || (await closeBtn.isEnabled({ timeout: 1_000 }).catch(() => false));
 
-  // Wait for either success or error (max 5 min)
+  // Wait for success, error, or the Close button enabled again (max 5 min)
   try {
-    await expect(successIcon.or(errorIcon).or(closeBtn.and(page.locator(':not([disabled])'))))
-      .toBeVisible({ timeout: 300000 });
+    await expect.poll(finished, { timeout: 300000, intervals: [2_000] }).toBe(true);
     console.log('[T16] Provisioning completed');
   } catch (e) {
     console.warn('[T16] Provisioning timed out — may still be running');
@@ -264,11 +266,10 @@ async function assertAgentProvisioning(page: Page): Promise<void> {
   await page.waitForTimeout(3000);
 
   // Check for expected agents (Athena should always be first)
-  const pageText = await page.locator('body').textContent();
   const expectedAgents = ['Athena', 'Hephaestus', 'Hermes', 'Apollo', 'Pythia'];
   let foundCount = 0;
   for (const agent of expectedAgents) {
-    if (pageText?.includes(agent)) {
+    if ((await page.locator(`#agent-row-${agent.toLowerCase()}`).count()) > 0) {
       foundCount++;
     }
   }
@@ -292,8 +293,8 @@ async function assertAgentProvisioning(page: Page): Promise<void> {
     console.log('[T16] Athena row is highlighted');
   }
 
-  // Verify no sleeptime agents visible
-  expect(pageText).not.toContain('sleeptime');
+  // Verify no sleeptime agents visible: no agent row is named after one
+  await expect(page.locator('[id^="agent-row-"][id*="sleeptime"]')).toHaveCount(0);
   console.log('[T16] No sleeptime agents visible (correctly filtered)');
 }
 

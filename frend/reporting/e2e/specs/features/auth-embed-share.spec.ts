@@ -435,27 +435,36 @@ test.describe('Embedding and sharing: tokens and share links', () => {
 
       await page.goto(`${BASE_URL}/dashboard/${REPORT}?token=${encodeURIComponent(token)}`);
 
-      const widgets = 'rb-value, rb-chart, rb-tabulator, rb-pivot-table, rb-parameters';
-      const withCredential =
-        'rb-value[embed-token], rb-chart[embed-token], rb-tabulator[embed-token], ' +
-        'rb-pivot-table[embed-token], rb-parameters[embed-token]';
+      // The sample's four numbers share one data call, so they share its component id and its id.
+      const values = page.locator('[id="widgetValue-atomicValues"]');
+      await expect(page.locator('#publishedDashboard')).toHaveCount(1, { timeout: 20_000 });
+      await expect(values).toHaveCount(4, { timeout: 20_000 });
 
-      await expect(page.locator('rb-dashboard')).toHaveCount(1, { timeout: 20_000 });
-      await expect(page.locator('rb-value').first()).toBeVisible({ timeout: 20_000 });
-
-      const total = await page.locator(widgets).count();
-      expect(total, 'the template really put widgets inside the frame').toBeGreaterThan(0);
+      // Every tile and the filter bar, each by its own id; the credential is an attribute of the
+      // element that draws it, the nearest custom element above the box.
+      const handed = await page.locator('#publishedDashboard').locator(
+        '[id^="widgetValue-"], [id^="widgetChart-"], [id^="widgetTabulator-"], [id^="widgetPivot-"], ' +
+        '#formReportParameters',
+      ).evaluateAll((boxes) => boxes.map((box) => {
+        let el: Element | null = box;
+        while (el && !el.tagName.includes('-'))
+          el = el.parentElement ?? ((el.getRootNode() as ShadowRoot).host ?? null);
+        return el?.hasAttribute('embed-token') ?? false;
+      }));
+      expect(handed.length, 'the template really put widgets inside the frame').toBeGreaterThan(0);
       expect(
-        await page.locator(withCredential).count(),
+        handed.filter(Boolean).length,
         'every widget in a shared dashboard was handed the page credential',
-      ).toBe(total);
+      ).toBe(handed.length);
 
       // What they fetched with it, on the screen. A refused widget renders its own frame and nothing
       // else, which is exactly what counting elements alone would walk past.
-      await expect(page.locator('rb-tabulator .tabulator-row').first()).toBeVisible({
+      await expect(page.locator('[id="tabRow-topCustomers-0"]')).toBeVisible({
         timeout: 20_000,
       });
-      await expect(page.locator('rb-value').first()).not.toHaveText(/^\s*$/);
+      await expect
+        .poll(async () => (await values.allInnerTexts()).filter((text) => text.trim() === '').length)
+        .toBe(0);
       await expect(
         page.locator('[id^="widgetNotShared-"]'),
         'and nothing in this dashboard belongs to another report',
