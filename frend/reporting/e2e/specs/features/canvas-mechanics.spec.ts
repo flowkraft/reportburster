@@ -4722,6 +4722,11 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
     await page.locator('#inputNumberPrefix').fill('€ ');
     await expect(page.locator(`#widgetViz-${money}`), 'the Canvas puts the sign before the number')
       .toHaveText(`€ ${orders}`, { timeout: 15_000 });
+    // + Compact (#27): the sign stays where it is, the number reads short.
+    const short = pOrders.length.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+    await page.locator('#selectNumberFormat').selectOption('compact');
+    await expect(page.locator(`#widgetViz-${money}`), 'the Canvas writes it short')
+      .toHaveText(`€ ${short}`, { timeout: 15_000 });
 
     await clickDataTab(page);
     const unit = await eNewVisualWidget(page, 'orders');
@@ -4747,7 +4752,7 @@ test('(canvas mechanics) M61 What the author puts before and after a number, in 
     await expect
       .poll(async () => (await dashboard.locator('[id^="widgetValue-"]').allInnerTexts()).map((s) => s.trim()).sort(),
             { message: 'the published numbers carry the sign and the unit', timeout: 60_000, intervals: [1_000] })
-      .toEqual([`€ ${orders}`, `${orders} %`].sort());
+      .toEqual([`€ ${short}`, `${orders} %`].sort());
   });
 });
 

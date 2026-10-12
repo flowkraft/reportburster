@@ -24,6 +24,7 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { reportQuery } from '../shared/report-query';
+  import { formatMeasure } from '../shared/cube-format';
 
   // ============================================================================
   // Two usage modes:
@@ -113,6 +114,9 @@
           maximumFractionDigits: 2,
         }) + '%';
       }
+      case 'compact':
+        // 1.2K (#27), the page's one compact rule (`formatMeasure`).
+        return formatMeasure(raw, 'compact');
       case 'date': {
         const d = new Date(str);
         if (isNaN(d.getTime())) return str;
