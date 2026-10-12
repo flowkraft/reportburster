@@ -112,6 +112,7 @@ import {
 import {
   stateOf,
 } from '../../helpers/dashboard-demos/canvas-parity';
+import { dragPivotChip } from '../../helpers/dashboard-demos/recipe-runner';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 import { SelfServicePortalsTestHelper } from '../../helpers/areas/self-service-portals-test-helper';
@@ -427,18 +428,7 @@ const cSumCells = (p: CPivotState) => Object.values(p.cells).reduce((a, b) => a 
  * The chip is found where it is: in "Available fields", or already in a zone.
  */
 async function cDragPivotField(page: Page, field: string, zone: 'rows' | 'cols' | 'vals' | 'available'): Promise<void> {
-  const chip = page.locator(`[id="btnDragPivotSource-${field}"], [id="btnDragPivotField-${field}"]`).first();
-  const target = page.locator(`[id="pivotZone-${zone}"]`);
-  await chip.waitFor({ state: 'visible', timeout: 10_000 });
-  await target.waitFor({ state: 'visible', timeout: 10_000 });
-  const from = await chip.boundingBox();
-  const to = await target.boundingBox();
-  if (!from || !to) throw new Error(`cannot drag ${field} to ${zone}: a box is missing`);
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(from.x + from.width / 2 + 8, from.y + from.height / 2 + 8, { steps: 4 });
-  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
-  await page.mouse.up();
+  await dragPivotChip(page, field, zone);
   await page.waitForTimeout(600);
 }
 

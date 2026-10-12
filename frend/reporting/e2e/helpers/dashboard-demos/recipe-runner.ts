@@ -509,6 +509,15 @@ async function chooseWritten(page: Page, selector: string, value: string): Promi
 
 /** Drag a field chip into a pivot zone (`rows`, `cols`, `vals`) with the mouse, as a person does. */
 async function dragPivotField(page: Page, field: string, zone: 'rows' | 'cols' | 'vals'): Promise<void> {
+  await dragPivotChip(page, field, zone);
+  await page.locator(`[id="btnDragPivotField-${field}"]`).waitFor({ state: 'visible', timeout: 10_000 });
+}
+
+/**
+ * The drag itself, from a field chip (available or placed) to a pivot zone, `available` included:
+ * what the drop does is the caller's to check (canvas mechanics also drops where a field is refused).
+ */
+export async function dragPivotChip(page: Page, field: string, zone: 'rows' | 'cols' | 'vals' | 'available'): Promise<void> {
   const chip = page.locator(`[id="btnDragPivotSource-${field}"], [id="btnDragPivotField-${field}"]`).first();
   const target = page.locator(`[id="pivotZone-${zone}"]`);
   await chip.waitFor({ state: 'visible', timeout: 10_000 });
@@ -531,7 +540,6 @@ async function dragPivotField(page: Page, field: string, zone: 'rows' | 'cols' |
   await page.mouse.move(from.x + from.width / 2 + 8, from.y + from.height / 2 + 8, { steps: 4 });
   await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
   await page.mouse.up();
-  await page.locator(`[id="btnDragPivotField-${field}"]`).waitFor({ state: 'visible', timeout: 10_000 });
 }
 
 /**
