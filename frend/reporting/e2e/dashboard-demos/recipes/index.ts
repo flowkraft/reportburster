@@ -28,6 +28,7 @@ import { recipe as r22 } from './22-dd-support-quality.recipe';
 import { recipe as r23 } from './23-dd-table-profile.recipe';
 import { recipe as r24 } from './24-dd-metric-deep-dive.recipe';
 import { recipe as r25 } from './25-dd-segment-vs-all.recipe';
+import { recipe as l13 } from './13-dd-invoices-low-code.recipe';
 
 /** Recipe by `<nn>-<id>`, e.g. `01-dd-executive-overview`. */
 export const RECIPES: Record<string, Recipe> = {
@@ -57,3 +58,9 @@ export const RECIPES: Record<string, Recipe> = {
   '24-dd-metric-deep-dive': r24,
   '25-dd-segment-vs-all': r25,
 };
+
+// The "(low-code)" twins (plan-dashboard-demos-low-code.md, TODO 8): the same dashboards built with
+// less code, walked by canvas-dashboard-demos-low-code.spec.ts in this order.
+export const LOW_CODE_RECIPES: Recipe[] = [
+  l13,
+];

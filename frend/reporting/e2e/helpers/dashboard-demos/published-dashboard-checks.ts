@@ -377,7 +377,8 @@ export async function askData(
 export function reading(widget: DemoWidget, rows: Array<Record<string, unknown>>, kpi: Kpi): unknown {
   const how = kpi.reading ?? '';
   const column = kpi.column ?? null;
-  let answered = rows ?? [];
+  // A twin's widget that is not built as its original: its columns read under the original's names.
+  let answered = widget.columns ? renamed(rows ?? [], widget.columns) : rows ?? [];
 
   if (how === 'rows') return answered.length;
   if (how === 'distinct')
@@ -433,6 +434,7 @@ export function reading(widget: DemoWidget, rows: Array<Record<string, unknown>>
       row = answered[0];
       break;
   }
+  if (widget.columns && rows.length > 0) field = originalName(rows[0], field, widget.columns);
   // A visual-mode tile names the source column and the builder aliased it (total_amount_sum), so
   // the first column is the reading wherever the named one is not in the answer.
   const value = has(row, field) ? valueOf(row, field) : first(row);
@@ -447,6 +449,33 @@ export function shows(want: unknown, got: unknown): boolean {
   if (typeof want === 'string') return got !== null && got !== undefined && String(got) === want;
   if (got === null || got === undefined) return false;
   return Math.abs(Number(got) - Number(want)) <= 0.005;
+}
+
+/** Rows under other column names, matched by position: the first column is `names[0]`, and so on. */
+export function renamed(rows: Array<Record<string, unknown>>, names: string[]): Array<Record<string, unknown>> {
+  return rows.map((row) => {
+    const out: Record<string, unknown> = {};
+    Object.entries(row).forEach(([name, value], i) => { out[i < names.length ? names[i] : name] = value; });
+    return out;
+  });
+}
+
+/** The original's name of one of a twin's columns (the one at the same place), or the name itself. */
+function originalName(row: Record<string, unknown>, field: string, names: string[]): string {
+  const at = Object.keys(row).findIndex((name) => name.toLowerCase() === field.toLowerCase());
+  return at >= 0 && at < names.length ? names[at] : field;
+}
+
+/** The column names a dashboard's widget answers with, in order: the first row's. */
+export async function columnsOf(
+  root: Locator,
+  demo: Demo,
+  widget: DemoWidget,
+  params: Record<string, unknown>,
+): Promise<string[]> {
+  const rows = await askData(root, demo, widget, params);
+  if (rows.length === 0) throw new Error(`${demo.id}/${widget.key} answers no row, so its columns are unknown`);
+  return Object.keys(rows[0]);
 }
 
 function valueOf(row: Record<string, unknown>, column: string | null): unknown {

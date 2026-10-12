@@ -46,7 +46,7 @@ class DashboardDemosExportParityTest {
 		List<String> written = new ArrayList<>();
 		int files = 0;
 
-		for (Demo demo : DashboardDemos.all()) {
+		for (Demo demo : DashboardDemos.allWithTwins()) {
 			Map<String, String> exported = DashboardDemosExporter.publish(demo);
 			Map<String, String> shipped = DashboardDemosExporter.shipped(demo);
 			files += exported.size();
@@ -92,7 +92,7 @@ class DashboardDemosExportParityTest {
 
 		List<String> wrong = new ArrayList<>();
 
-		for (Demo demo : DashboardDemos.all()) {
+		for (Demo demo : DashboardDemos.allWithTwins()) {
 			String id = demo.reportId();
 			Set<String> shipped = DashboardDemosExporter.shipped(demo).keySet();
 

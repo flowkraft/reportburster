@@ -1735,7 +1735,8 @@ export async function bindCubeMember(
 
 /**
  * Fill the Dashboard Filters dialog's form, one row per filter: add it, name it (the id follows the
- * label), pick its type and control, give it a default, its options and whether it is required.
+ * label unless `id` says another), pick its type and control, give it a default, its options and
+ * whether it is required. A Boolean's default is the dialog's true/false choice.
  * Opens the dialog and closes it with Done, as `addFilterBarParam` does for the DSL pane.
  *
  * The row's own ids change as its label is typed (`inputParamLabel-param1` becomes
@@ -1746,6 +1747,7 @@ export async function addFilterBarParamsByForm(
   page: Page,
   params: Array<{
     label: string;
+    id?: string;
     type?: string;
     widget?: string;
     defaultValue?: string;
@@ -1760,11 +1762,19 @@ export async function addFilterBarParamsByForm(
     const p = params[i];
     await page.locator('#btnAddParameter').click();
     await page.locator(`#inputParamLabel-param${i + 1}`).fill(p.label);
-    const id = p.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'param';
+    let id = p.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'param';
+    if (p.id !== undefined && p.id !== id) {
+      // The row is named by its id, so after this every control of it is found under the new one.
+      await page.locator(`#inputParamId-${id}`).fill(p.id);
+      id = p.id;
+    }
     if (p.type !== undefined) await page.locator(`#selectParamType-${id}`).selectOption(p.type);
     if (p.widget !== undefined) await page.locator(`#selectParamWidget-${id}`).selectOption(p.widget);
     if (p.options !== undefined) await page.locator(`#inputParamOptions-${id}`).fill(p.options);
-    if (p.defaultValue !== undefined) await page.locator(`#inputParamDefault-${id}`).fill(p.defaultValue);
+    if (p.defaultValue !== undefined) {
+      if (p.type === 'Boolean') await page.locator(`#selectParamDefault-${id}`).selectOption(p.defaultValue);
+      else await page.locator(`#inputParamDefault-${id}`).fill(p.defaultValue);
+    }
     if (p.required !== undefined) await page.locator(`#inputParamRequired-${id}`).setChecked(p.required);
     await page.waitForTimeout(200);
   }

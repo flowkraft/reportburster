@@ -1676,6 +1676,20 @@ public class NoExeAssembler extends AbstractAssembler {
 			_assembleDashboardDemo(String.valueOf(demo.get("reportId")), String.valueOf(demo.get("title")),
 					samplesDirPath, templatesDirPath);
 
+		// The "(low-code)" twins: the same dashboards built with less code, each one published on its
+		// own (not on the Gallery, where the original keeps its card).
+		File twinsIndex = new File(samplesDirPath + "/dashboard-demos-low-code.json");
+		if (twinsIndex.exists()) {
+			Map<String, Object> twins = new ObjectMapper().readValue(twinsIndex,
+					new TypeReference<Map<String, Object>>() {
+					});
+			@SuppressWarnings("unchecked")
+			List<Map<String, Object>> listed = (List<Map<String, Object>>) twins.get("twins");
+			for (Map<String, Object> twin : listed)
+				_assembleDashboardDemo(String.valueOf(twin.get("reportId")), String.valueOf(twin.get("title")),
+						samplesDirPath, templatesDirPath);
+		}
+
 		// And the Gallery itself, which is a published dashboard like any other: one long page whose
 		// cards embed the 25.
 		_assembleDashboardDemo("g-dashboard-demos", "Dashboard Demos", samplesDirPath, templatesDirPath);

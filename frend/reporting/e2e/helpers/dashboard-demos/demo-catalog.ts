@@ -153,6 +153,12 @@ export interface DemoWidget {
   type: string;
   componentId: string;
   displayConfig: Record<string, unknown>;
+  /**
+   * Set on a "(low-code)" twin's widget whose query is not its original's (a Visual query or a cube
+   * in place of SQL): the original's column names, in order. The claims name those columns, and the
+   * twin's answer is read by position, because a builder names its own columns (`amount_sum`).
+   */
+  columns?: string[];
 }
 
 function readJson<T>(file: string): T {
@@ -192,6 +198,15 @@ export function loadCanvas(id: string): Record<string, any> {
   return readJson<Record<string, any>>(
     path.join(SAMPLES_PATH, demo.reportId, `${demo.reportId}.canvas.json`),
   );
+}
+
+/**
+ * The canvas a "(low-code)" twin ships (`g-<id>-low-code`), or null while its recipe has not yet
+ * recorded one (TODO 8 of the low-code plan: the twin's test prints the canvas it built).
+ */
+export function loadTwinCanvas(reportId: string): Record<string, any> | null {
+  const file = path.join(SAMPLES_PATH, reportId, `${reportId}.canvas.json`);
+  return fs.existsSync(file) ? readJson<Record<string, any>>(file) : null;
 }
 
 /** The questions a demo offers a reader, from the stories file its dashboard serves in its config. */
