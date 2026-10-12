@@ -6964,19 +6964,26 @@ test('(canvas mechanics) M95 Duplicate a widget; duplicate, rename and search ca
       await expect.poll(async () => (await saved(dup!.id)).name,
         { message: 'the new name is saved', timeout: 20_000, intervals: [500] }).toBe(`${name} renamed`);
 
-      // + New from a demo: the shipped demo canvases, and a copy of one, opened at once.
+      // + New from a demo: the shipped demo canvases, and a copy of one, opened at once. Every one is
+      //   offered, the 25 originals and their "(low-code)" twins, each by its folder in the samples.
+      const fs = await import('fs');
+      const path = await import('path');
+      const { E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH } = await import('../../utils/paths');
+      const samples = path.join(E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH, 'db-template/config/samples');
+      const demoCanvases = fs.readdirSync(samples)
+        .filter((d) => d.startsWith('g-dd-') && fs.existsSync(path.join(samples, d, `${d}.canvas.json`)))
+        .sort();
+      expect(demoCanvases.filter((d) => !d.endsWith('-low-code')).length, 'the 25 demos ship').toBe(25);
       await page.locator('#btnNewFromDemo').click();
       await expect(page.locator('#dlgNewFromDemo')).toBeVisible();
-      await expect(page.locator('[id^="btnDemoCanvas-"]'), 'the 25 demos are offered').toHaveCount(25);
+      await expect.poll(async () => (await page.locator('[id^="btnDemoCanvas-"]').evaluateAll(
+        (els) => els.map((el) => el.id.slice('btnDemoCanvas-'.length)))).sort(),
+        { message: 'every shipped demo canvas is offered', timeout: 10_000 }).toEqual(demoCanvases);
       await page.locator('#btnDemoCanvas-g-dd-fulfillment').click();
       await page.waitForURL(/\/explore-data\/canvas-/, { timeout: 30_000 });
       const fromDemo = page.url().split('/explore-data/')[1].split(/[?#]/)[0];
       made.push(fromDemo);
-      const fs = await import('fs');
-      const path = await import('path');
-      const { E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH } = await import('../../utils/paths');
-      const shipped = JSON.parse(fs.readFileSync(path.join(E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH,
-        'db-template/config/samples/g-dd-fulfillment/g-dd-fulfillment.canvas.json'), 'utf8'));
+      const shipped = JSON.parse(fs.readFileSync(path.join(samples, 'g-dd-fulfillment/g-dd-fulfillment.canvas.json'), 'utf8'));
       const opened = await saved(fromDemo);
       expect(opened.name, 'named as the demo').toBe(shipped.name);
       expect(opened.connectionId, 'on the demo\'s connection').toBe(shipped.connection_id);
