@@ -5263,4 +5263,63 @@ test('(canvas mechanics) M69 A formula column: a condition, days between two dat
   });
 });
 
+test('(canvas mechanics) M70 A cube answer sorted and cut to its first rows by clicks', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M70 Cube order and limit', async () => {
+    // The truths, from the frozen rows: the orders each carrier took.
+    const perCarrier = new Map<string, number>();
+    for (const o of frozenRows('orders')) perCarrier.set(o.carrier, (perCarrier.get(o.carrier) ?? 0) + 1);
+    const counts = [...perCarrier.values()];
+    const largestFirst = [...counts].sort((a, b) => b - a);
+    const carriersZtoA = [...perCarrier.keys()].sort().reverse();
+    const cube = page.locator('#cubeQueryBuilderRenderer');
+    const ordersOf = (rows: Array<Record<string, unknown>>) => rows.map((r) => Number(r.Orders));
+
+    const id = await eNewVisualWidget(page, 'orders');
+    await pickVisualCube(page, 'dd-delivery');
+    await applyCubeSelection(page, { dimensions: ['Carrier'], measures: ['Orders'] });
+    await switchToWidget(page, 'tabulator');
+    await g4RowsWhere(page, id, (r) => r.length === perCarrier.size, 'one row per carrier');
+
+    // + a click on the sort beside a ticked measure: largest first; the first 2 rows are the top 2.
+    await cube.locator('#btnOrder-Orders').click();
+    await cube.locator('#inputCubeLimit').fill('2');
+    await cube.locator('#inputCubeLimit').press('Enter');
+    const top2 = await g4RowsWhere(page, id, (r) => r.length === 2, 'the first 2 rows only');
+    expect(ordersOf(top2), 'the 2 carriers with the most orders, largest first').toEqual(largestFirst.slice(0, 2));
+
+    // + a second click: smallest first, still 2 rows.
+    await cube.locator('#btnOrder-Orders').click();
+    const bottom2 = await g4RowsWhere(page, id,
+      (r) => r.length === 2 && Number(r[0].Orders) <= Number(r[1].Orders), 'the 2 smallest, smallest first');
+    expect(ordersOf(bottom2)).toEqual([...counts].sort((a, b) => a - b).slice(0, 2));
+
+    // − an empty box keeps every row again.
+    await cube.locator('#inputCubeLimit').fill('');
+    await cube.locator('#inputCubeLimit').press('Enter');
+    const all = await g4RowsWhere(page, id, (r) => r.length === perCarrier.size, 'every carrier again');
+    expect(ordersOf(all), 'still smallest first').toEqual([...counts].sort((a, b) => a - b));
+
+    // + the sort beside a dimension sorts by it alone: carriers Z to A, the measure's sort gone.
+    await cube.locator('#btnOrder-Carrier').click();
+    // The whole order is waited for: the answer before it can start with the same carrier.
+    const carrierOf = (r: Record<string, unknown>) => String(r.Carrier ?? Object.values(r)[0]);
+    await g4RowsWhere(page, id,
+      (r) => r.length === perCarrier.size && r.map(carrierOf).join('|') === carriersZtoA.join('|'),
+      `carriers Z to A: ${carriersZtoA.join(', ')}`);
+    await expect(cube.locator('#btnOrder-Orders'), 'one sort at a time').not.toHaveClass(/rb-order-on/);
+
+    // + a second click on it: A to Z; − a third: no sort. Unticking the measure takes its button away.
+    await cube.locator('#btnOrder-Carrier').click();
+    const carriersAtoZ = [...carriersZtoA].reverse();
+    await g4RowsWhere(page, id,
+      (r) => r.length === perCarrier.size && r.map(carrierOf).join('|') === carriersAtoZ.join('|'),
+      `carriers A to Z: ${carriersAtoZ.join(', ')}`);
+    await cube.locator('#btnOrder-Carrier').click();
+    await expect(cube.locator('#btnOrder-Carrier')).not.toHaveClass(/rb-order-on/);
+    await cube.locator('#chk-meas-Orders').uncheck();
+    await expect(cube.locator('#btnOrder-Orders')).toHaveCount(0);
+  });
+});
+
 });
