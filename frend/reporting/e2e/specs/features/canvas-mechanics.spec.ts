@@ -5972,6 +5972,7 @@ test('(canvas mechanics) M80 On a phone the published dashboard is one column', 
       await addAggregation(page, 0, 'COUNT', 'order_id');
       await addGroupBy(page, 'channel');
       await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
       await layoutWidgetsByDrag(page, [{ x: 0, y: 0, w: 6, h: 4 }, { x: 6, y: 0, w: 6, h: 4 }]);
       const published = await publishDashboard(page);
       reportId = published.reportId;
