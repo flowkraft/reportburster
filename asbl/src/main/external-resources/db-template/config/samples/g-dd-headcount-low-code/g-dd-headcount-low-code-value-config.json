@@ -1,0 +1,15 @@
+{
+  "number_headcount_headcount" : {
+    "field" : "Headcount",
+    "format" : "number",
+    "label" : "Headcount"
+  },
+  "number_hires_ytd_ytd" : {
+    "format" : "number",
+    "label" : "Hires YTD"
+  },
+  "number_leavers_ytd_ytd" : {
+    "format" : "number",
+    "label" : "Leavers YTD"
+  }
+}

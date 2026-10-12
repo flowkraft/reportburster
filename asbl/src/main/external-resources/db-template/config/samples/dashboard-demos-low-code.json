@@ -41,6 +41,12 @@
       "id": "dd-subscriptions-mrr-low-code",
       "reportId": "g-dd-subscriptions-mrr-low-code",
       "title": "Subscriptions: MRR & Churn (low-code)"
+    },
+    {
+      "of": "dd-headcount",
+      "id": "dd-headcount-low-code",
+      "reportId": "g-dd-headcount-low-code",
+      "title": "Headcount & Attrition (low-code)"
     }
   ]
 }
