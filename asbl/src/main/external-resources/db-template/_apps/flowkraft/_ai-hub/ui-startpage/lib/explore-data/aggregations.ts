@@ -36,6 +36,9 @@ export const AGGREGATIONS: AggregationDef[] = [
   { value: "AVG",            label: "AVG" },
   { value: "MIN",            label: "MIN" },
   { value: "MAX",            label: "MAX" },
+  // The middle value (#33), written by the vendor layer (`medianExpr`) and offered only on a
+  // connection whose database has one (`hasMedian`).
+  { value: "MEDIAN",         label: "Median" },
 ];
 
 /** The aggregations the dropdown offers, as the widget stores them. */
@@ -87,11 +90,21 @@ export const RUNNING_TOTAL_AGGREGATIONS = ["SUM", "COUNT", "COUNT DISTINCT"];
  * `<alias>_change` / `<alias>_rank`, and only where it means something
  * (`quickCalcOf`, the one rule). Absent on every aggregate saved before it.
  */
-export type QuickCalc = "change" | "rank";
+export type QuickCalc = "change" | "rank" | "moving";
 export const QUICK_CALCS: { value: QuickCalc; label: string }[] = [
   { value: "change", label: "change vs previous" },
   { value: "rank", label: "rank" },
 ];
+/**
+ * "Moving average" (#33): the aggregate averaged over this bucket and the ones just before it, a
+ * checkbox next to the running total and under the same rule as a change (a series over one time
+ * bucket). It is the quick calculation `moving`, so it is one reading at a time with the others;
+ * `sql-builder.ts` writes it (`movingAverageExpr`, ANSI) under `<alias>_moving`.
+ */
+export const MOVING_AVERAGE_LABEL = "moving average";
+/** How many buckets a moving average spans: this one and the two before it. */
+export const MOVING_AVERAGE_BUCKETS = 3;
+
 /** The aggregations a quick calculation is offered on: numbers that add or average. */
 export const QUICK_CALC_AGGREGATIONS = ["SUM", "AVG", "COUNT", "COUNT DISTINCT"];
 
