@@ -1,0 +1,21 @@
+{
+  "number_total_amount_sum_revenue" : {
+    "field" : "total_amount_sum",
+    "format" : "currency",
+    "label" : "Lifetime revenue"
+  },
+  "number_count_invoices" : {
+    "field" : "count",
+    "format" : "number",
+    "label" : "Open invoices"
+  },
+  "number_count_closed" : {
+    "field" : "count",
+    "format" : "number",
+    "label" : "Tickets not closed"
+  },
+  "number_care_plan_mrr_mrr" : {
+    "format" : "currency",
+    "label" : "Care plan MRR"
+  }
+}
