@@ -230,8 +230,10 @@ export function decimalDivision(
  * The median of a numeric expression (#33): the middle value, or the mean of the two middle ones.
  *
  * Why not ANSI: the standard's `PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY x)` is an aggregate on
- * PostgreSQL, Oracle and Db2 only. DuckDB names it `MEDIAN`; ClickHouse's exact interpolating one
- * is `quantileExactInclusive` (its plain `median` is an estimate). SQL Server and MariaDB have it as
+ * PostgreSQL, Oracle and Db2 only. DuckDB names it `MEDIAN`, and over a DOUBLE: over a DECIMAL it
+ * answers in the column's own scale, so the median of 943.06 and 943.07 came back 943.06 instead of
+ * 943.065 (M93). ClickHouse's exact interpolating one is `quantileExactInclusive` (its plain `median`
+ * is an estimate). SQL Server and MariaDB have it as
  * a window function only, MySQL and SQLite not at all: there it is `null`, and the Summarize step
  * does not offer it on such a connection (`hasMedian`) - a property of the dialect, read here.
  */
@@ -242,7 +244,7 @@ export function medianExpr(expr: string, dialect: SqlDialect = DEFAULT_DIALECT):
     case "db2":
       return `PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${expr})`;
     case "duckdb":
-      return `MEDIAN(${expr})`;
+      return `MEDIAN(CAST(${expr} AS DOUBLE))`;
     case "clickhouse":
       return `quantileExactInclusive(0.5)(toFloat64(${expr}))`;
     default:

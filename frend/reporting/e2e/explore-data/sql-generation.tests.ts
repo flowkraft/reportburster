@@ -3975,7 +3975,7 @@ describe("VENDOR LAYER — the median, and a moving average next to the running 
   it("writes the median the vendor's way, and has none where the vendor has none", () => {
     for (const [vendor, expected] of eachVendor<string | null>({
       postgres: ordered, oracle: ordered, db2: ordered,
-      duckdb: "MEDIAN(amount)",
+      duckdb: "MEDIAN(CAST(amount AS DOUBLE))",
       clickhouse: "quantileExactInclusive(0.5)(toFloat64(amount))",
       sqlite: null, mysql: null, mariadb: null, sqlserver: null,
     })) {
