@@ -199,9 +199,13 @@ async function doFilters(
       const options = hints.options;
       return {
         label: String(p.label ?? p.id),
+        id: p.id,
         type: p.type,
         widget: (hints.control ?? hints.widget) as string | undefined,
-        defaultValue: p.defaultValue === undefined || p.defaultValue === '' ? undefined : String(p.defaultValue),
+        defaultValue: p.defaultValue === undefined || p.defaultValue === ''
+          || (Array.isArray(p.defaultValue) && p.defaultValue.length === 0)
+          ? undefined
+          : Array.isArray(p.defaultValue) ? p.defaultValue.join(', ') : String(p.defaultValue),
         options: Array.isArray(options) ? (options as unknown[]).join(', ') : (options as string | undefined),
         required: (p.constraints as Record<string, unknown> | undefined)?.required === true ? true : undefined,
       };
@@ -348,8 +352,12 @@ async function doDisplayConfig(
       return;
 
     case 'chart':
-      await doChart(page, config);
-      if (dsl) await setWidgetDsl(page, dsl);
+      if (dsl) {
+        await doChart(page, config);
+        await setWidgetDsl(page, dsl);
+      } else {
+        await doChartByPickers(page, config);
+      }
       return;
 
     case 'tabulator':
@@ -400,6 +408,67 @@ async function doChart(page: Page, config: DisplayConfig): Promise<void> {
   if (x !== undefined || y !== undefined) await setChartAxes(page, { x, y });
   if (dsl.options?.plugins?.title?.text) await setChartTitle(page, dsl.options.plugins.title.text);
   if (dsl.options?.plugins?.legend?.display === false) await setChartLegend(page, 'hide');
+}
+
+/**
+ * A chart said by the pickers alone, with no DSL pasted after them: what `doChart` sets, then the
+ * series breakout, every measure with its name, draw type and axis, data labels, stacking, the
+ * value axis' ends, top N, number format, palette and clicks. A setting the chart does not have is
+ * left as the pickers leave it.
+ */
+async function doChartByPickers(page: Page, config: DisplayConfig): Promise<void> {
+  type Dataset = { field: string; label?: string; type?: string; yAxisID?: string };
+  const dsl = (config.dslConfig ?? {}) as {
+    type?: string;
+    palette?: string;
+    clicksFilter?: boolean;
+    data?: { labelField?: string; seriesField?: string; datasets?: Dataset[] };
+    options?: {
+      plugins?: { rbValueLabels?: { display?: boolean }; legend?: { display?: boolean } };
+      scales?: Record<string, { stacked?: boolean; min?: number; max?: number }>;
+      rbStack100?: boolean;
+      rbTopN?: number;
+      rbNumberFormat?: string;
+    };
+  };
+  await doChart(page, config);
+  await page.locator('#btnDisplayTab').click();
+
+  const series = dsl.data?.seriesField;
+  if (series) {
+    await page.locator('#btnAddChartXAxis').click();
+    await page.locator('#selectChartXAxis-1').selectOption(series);
+  }
+  const datasets = dsl.data?.datasets ?? [];
+  for (const [i, d] of datasets.entries()) {
+    if (i > 0) {
+      await page.locator('#btnAddChartYAxis').click();
+      await page.locator(`#selectChartYAxis-${i}`).selectOption(d.field);
+    }
+    if (!series && d.label !== undefined) await page.locator(`#inputChartSeriesLabel-${i}`).fill(d.label);
+    if (d.type !== undefined) await page.locator(`#selectChartSeriesType-${i}`).selectOption(d.type);
+    if (d.yAxisID === 'y1') await page.locator(`#chkChartSeriesRightAxis-${i}`).check();
+  }
+  if (dsl.options?.plugins?.legend?.display === true) await page.locator('#btnChartLegend-show').click();
+  if (dsl.options?.plugins?.rbValueLabels?.display === true) await page.locator('#btnChartLabels-on').click();
+  if (dsl.options?.rbStack100 === true) await page.locator('#btnChartStacked-percent').click();
+  else if (dsl.options?.scales?.y?.stacked === true || dsl.options?.scales?.x?.stacked === true) {
+    await page.locator('#btnChartStacked-on').click();
+  }
+  const valueAxis = dsl.type === 'row' ? 'x' : 'y';
+  const ends = dsl.options?.scales?.[valueAxis];
+  if (ends?.min !== undefined) await page.locator('#inputChartAxisMin').fill(String(ends.min));
+  if (ends?.max !== undefined) await page.locator('#inputChartAxisMax').fill(String(ends.max));
+  if (dsl.options?.rbTopN !== undefined) {
+    await page.locator('#inputChartTopN').fill(String(dsl.options.rbTopN));
+    await page.locator('#inputChartTopN').press('Enter');
+  }
+  if (dsl.options?.rbNumberFormat) await page.locator('#selectChartNumberFormat').selectOption(dsl.options.rbNumberFormat);
+  if (dsl.palette) await page.locator(`#btnChartPalette-${dsl.palette}`).click();
+  if (dsl.clicksFilter === true) await page.locator('#chkChartClicksFilter').check();
+  await page.waitForTimeout(500);
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
 }
 
 /** A Tabulator: layout, pagination, rows per page, theme, hidden columns, column titles. */

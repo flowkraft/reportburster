@@ -83,6 +83,8 @@ export interface BuildShotsOptions {
   /** Default: the docs site's `public/images/docs/dashboard-demos`. */
   imagesRoot?: string;
   shooter?: Shooter;
+  /** The pictures' folder under `imagesRoot`; default `<nn>-<id>` of the demo (a twin has its own). */
+  folder?: string;
 }
 
 /** The URL path the docs site serves a demo's pictures under (`public/` is its root). */
@@ -106,7 +108,7 @@ export function createBuildShots(
     return { enabled: false, entries: [], start: async () => {}, capture: async () => {}, finish: async () => {} };
   }
 
-  const folder = `${pad(demo.nn)}-${demo.id}`;
+  const folder = options.folder ?? `${pad(demo.nn)}-${demo.id}`;
   const outDir = path.join(options.imagesRoot ?? path.join(DOCS_IMAGES_DIR, 'dashboard-demos'), folder);
   const shooter = options.shooter ?? docsShooter;
   const entries: StepEntry[] = [];

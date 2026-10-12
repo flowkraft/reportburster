@@ -213,6 +213,77 @@ final class DashboardDemos {
 		return demos;
 	}
 
+	// ── The (low-code) twins ──────────────────────────────────────────────────
+
+	/**
+	 * A demo built again with less code: the same dashboard (the original's number, checks and
+	 * stories), from its own canvas. {@code twin.reportId()} is {@code g-<original id>-low-code}.
+	 */
+	record Twin(Demo original, Demo twin, String title) {
+	}
+
+	/**
+	 * {@code dashboard-demos-low-code.json}: the twins, in Gallery order of their originals. Not on
+	 * the Gallery (the original keeps its card); the installer ships each one as its own dashboard.
+	 */
+	@SuppressWarnings("unchecked")
+	static List<Twin> twins() throws Exception {
+		Path path = Paths.get(SAMPLES, "dashboard-demos-low-code.json");
+		if (!Files.exists(path))
+			return List.of();
+		Map<String, Object> read = JSON.readValue(Files.readString(path), Map.class);
+		Map<String, Demo> originals = new LinkedHashMap<>();
+		for (Demo demo : all())
+			originals.put(demo.id(), demo);
+
+		List<Twin> twins = new ArrayList<>();
+		Object listed = read.get("twins");
+		for (Object one : listed instanceof List<?> list ? list : List.of()) {
+			Map<String, Object> entry = (Map<String, Object>) one;
+			String of = Objects.toString(entry.get("of"), "");
+			Demo original = originals.get(of);
+			if (original == null)
+				throw new IllegalStateException(path + " names a twin of '" + of + "', which is no demo");
+			String id = Objects.toString(entry.get("id"), "");
+			String reportId = Objects.toString(entry.get("reportId"), "");
+			Path canvasPath = Paths.get(SAMPLES, reportId, reportId + ".canvas.json");
+			if (!Files.exists(canvasPath))
+				throw new IllegalStateException(reportId + " is missing " + canvasPath.toAbsolutePath());
+			twins.add(new Twin(original,
+					new Demo(original.nn(), id, reportId, entry,
+							JSON.readValue(Files.readString(canvasPath), Map.class), original.checks()),
+					Objects.toString(entry.get("title"), "")));
+		}
+		return twins;
+	}
+
+	/** The 25, then every twin: each one a dashboard the product ships. */
+	static List<Demo> allWithTwins() throws Exception {
+		List<Demo> demos = new ArrayList<>(all());
+		for (Twin twin : twins())
+			demos.add(twin.twin());
+		return demos;
+	}
+
+	/**
+	 * A twin's rows under its original's column names, matched by position: a Visual query or a
+	 * cube names its columns itself ({@code amount_sum}, {@code OverdueAmount}), and what must be
+	 * the same is the data, not the names.
+	 */
+	static List<Map<String, Object>> renamed(List<Map<String, Object>> rows, List<String> names) {
+		List<Map<String, Object>> out = new ArrayList<>();
+		for (Map<String, Object> row : rows) {
+			Map<String, Object> one = new LinkedHashMap<>();
+			int i = 0;
+			for (Map.Entry<String, Object> cell : row.entrySet()) {
+				one.put(i < names.size() ? names.get(i) : cell.getKey(), cell.getValue());
+				i++;
+			}
+			out.add(one);
+		}
+		return out;
+	}
+
 	// ── What the published dashboard answers ──────────────────────────────────
 
 	/**
