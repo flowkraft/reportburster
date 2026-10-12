@@ -6824,6 +6824,8 @@ test('(canvas mechanics) M93 The median, and a moving average next to the runnin
     await addAggregation(page, 0, 'MEDIAN', 'total_amount');
     await addGroupBy(page, 'channel');
     await runVisualQuery(page);
+    // Grouped, the widget draws itself as a chart; the rows are read off a table.
+    await switchToWidget(page, 'tabulator');
     const channels = [...new Set(orders.map((o) => o.channel))];
     const medians = await g4RowsWhere(page, med, (r) => r.length === channels.length && 'total_amount_median' in r[0],
       'one median per channel');
@@ -6843,6 +6845,7 @@ test('(canvas mechanics) M93 The median, and a moving average next to the runnin
     await setTimeBucket(page, 'order_ts', 'month');
     await page.locator('#checkMovingAverage-1').check();
     await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
     const months = (await g4RowsWhere(page, mov, (r) => r.length > 3 && 'total_amount_sum_moving' in r[0],
       'a moving average per month'))
       .sort((a, b) => String(a.order_ts).localeCompare(String(b.order_ts)));
