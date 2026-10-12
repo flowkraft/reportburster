@@ -228,15 +228,11 @@ export async function setParams(
 }
 
 /**
- * The reader's "ask again": the button under the filters, and the confirmation it asks for. The
- * root is one dashboard (a card, or a dashboard's own page), so it holds one of each.
+ * The reader's "ask again": Apply, the button under the filters, which reloads at once (#18). The
+ * root is one dashboard (a card, or a dashboard's own page), so it holds one.
  */
 export async function reloadDashboard(root: Locator): Promise<void> {
   await root.locator('#btnReloadDashboard').click();
-  const confirm = root.locator('#btnConfirmReload');
-  if (await confirm.isVisible().catch(() => false)) await confirm.click();
-  await expect(confirm, 'the reload was confirmed and the question is gone')
-    .toBeHidden({ timeout: 30_000 });
 }
 
 /**

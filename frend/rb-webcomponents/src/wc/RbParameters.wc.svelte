@@ -96,6 +96,8 @@
   // Per-multi-select-param transient state — kept here (not in formValues) so it
   // doesn't leak into valueChange events. Search resets pagination on input.
   let multiSearch: { [id: string]: string } = {};
+  // What is typed in a long single select's search box (#18), per parameter.
+  let selectSearch: { [id: string]: string } = {};
   let multiPage: { [id: string]: number } = {};
 
   // A list too long to send whole is searched where it lives: `uiHints.remoteSearch` makes the
@@ -418,12 +420,21 @@
     optionsVersion += 1;
   }
 
+  /** A single select longer than this gets a search box above it (#18). */
+  const SELECT_SEARCH_FROM = 10;
+
   /**
    * The options a single select or a radio group draws, as `optionsVersion` last left them: a list
    * asked again (a cascading filter, #17) is replaced in place, and only the version says it changed.
+   * Narrowed by what is typed in a long select's search box (#18); the option the filter holds stays
+   * in the list, so the select never shows a value it does not hold.
    */
-  function shownOptions(p: ParamMeta, _version: number): { label: string; value: any }[] {
-    return loadOptions(p);
+  function shownOptions(p: ParamMeta, search: string | undefined, _version: number): { label: string; value: any }[] {
+    const all = loadOptions(p);
+    const wanted = (search || '').trim().toLowerCase();
+    if (!wanted) return all;
+    const held = String(formValues[p.id] ?? '');
+    return all.filter(o => String(o.label).toLowerCase().includes(wanted) || String(o.value) === held);
   }
 
   /** The search box was typed in: page 1 again, and for a remote list, ask the host. */
@@ -855,18 +866,20 @@
   }
 
   // Submit: user explicitly requests data refresh with current param values
-  let showConfirm = false;
+  // Apply reloads the dashboard at once (#18): picking the values was the question, Apply the answer.
   function handleReloadClick() {
-    showConfirm = true;
+    confirmReload();
   }
   function confirmReload() {
-    showConfirm = false;
     const values = { ...formValues };
     emitHostEvent('submit', values);
     applyParamsToSiblings(values);
   }
-  function cancelReload() {
-    showConfirm = false;
+  /** Reset: every filter back to its default, and the dashboard reloaded with them. */
+  function resetAndApply() {
+    selectSearch = {};
+    reset();
+    confirmReload();
   }
 
   // Dispatch custom event on the host element (for Angular, vanilla JS, etc.)
@@ -1141,7 +1154,7 @@
                  work, and a change goes through the same handleChange the select uses — so
                  valueChange, validation, Reload and the backend binding are untouched. -->
             <div class="rb-radio-group" id={p.id}>
-              {#each shownOptions(p, optionsVersion) as o (o.value)}
+              {#each shownOptions(p, '', optionsVersion) as o (o.value)}
                 <label class="rb-radio-row" for={p.id + '_rb_' + safeId(o.value)}>
                   <input type="radio"
                          id={p.id + '_rb_' + safeId(o.value)}
@@ -1241,6 +1254,16 @@
               </div>
             {/if}
           {:else if getControlType(p) === 'select'}
+            {#if loadOptions(p).length > SELECT_SEARCH_FROM && !isLocked(p)}
+              <input
+                type="search"
+                id={p.id + '_search'}
+                class="form-control rb-select-search"
+                placeholder="Search…"
+                value={selectSearch[p.id] || ''}
+                on:input={(e) => { selectSearch[p.id] = e.currentTarget.value; selectSearch = selectSearch; }}
+              />
+            {/if}
             <select
               id={p.id}
               value={formValues[p.id]}
@@ -1250,7 +1273,7 @@
               on:change={(e) => handleChange(p, e)}
               on:blur={() => handleBlur(p)}
             >
-              {#each shownOptions(p, optionsVersion) as o}
+              {#each shownOptions(p, selectSearch[p.id], optionsVersion) as o}
                 <option value={o.value} selected={String(o.value) === String(formValues[p.id] ?? '')}>{o.label}</option>
               {/each}
             </select>
@@ -1288,17 +1311,14 @@
       {/each}
     </form>
     {#if showReload}
-      {#if !showConfirm}
-        <button id="btnReloadDashboard" type="button" style="display:block;width:100%;margin-top:12px;padding:10px 20px;background:var(--rb-accent, var(--color-primary, #2171b5));color:var(--rb-accent-text, var(--color-primary-content, #fff));border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;" on:click={handleReloadClick}>
-          Reload
+      <div class="rb-apply-row" style="display:flex;gap:8px;margin-top:12px;">
+        <button id="btnReloadDashboard" type="button" style="flex:1;padding:10px 20px;background:var(--rb-accent, var(--color-primary, #2171b5));color:var(--rb-accent-text, var(--color-primary-content, #fff));border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;" on:click={handleReloadClick}>
+          Apply
         </button>
-      {:else}
-        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;background:var(--color-base-200, color-mix(in srgb, currentColor 6%, transparent));border:1px solid var(--rb-border, color-mix(in srgb, currentColor 18%, transparent));border-radius:6px;">
-          <span style="flex:1;font-size:13px;color:inherit;">Reload dashboard with current parameters?</span>
-          <button id="btnConfirmReload" type="button" style="padding:6px 16px;background:var(--rb-accent, var(--color-primary, #2171b5));color:var(--rb-accent-text, var(--color-primary-content, #fff));border:none;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;" on:click={confirmReload}>Yes</button>
-          <button id="btnCancelReload" type="button" style="padding:6px 16px;background:color-mix(in srgb, currentColor 12%, transparent);color:inherit;border:1px solid var(--rb-border, color-mix(in srgb, currentColor 18%, transparent));border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;" on:click={cancelReload}>No</button>
-        </div>
-      {/if}
+        <button id="btnResetDashboard" type="button" title="Every filter back to its default" style="padding:10px 16px;background:color-mix(in srgb, currentColor 12%, transparent);color:inherit;border:1px solid var(--rb-border, color-mix(in srgb, currentColor 18%, transparent));border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;" on:click={resetAndApply}>
+          Reset
+        </button>
+      </div>
     {/if}
   {:else}
     <div class="rb-no-params" style="padding: 1rem; color: color-mix(in srgb, currentColor 60%, transparent); text-align: center;">

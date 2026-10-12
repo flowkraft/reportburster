@@ -642,10 +642,8 @@ test.describe('DataPallas - Dashboard Report E2E', async () => {
           await expect(page.locator('#btnCancelReload')).toBeVisible({ timeout: 5000 });
           await page.click('#btnCancelReload');
 
-          // Click Reload again → confirm (click Yes) — dashboard refreshes with Germany filter
+          // Click Apply — dashboard refreshes with Germany filter, no question asked (#18)
           await page.click('#btnReloadDashboard');
-          await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
-          await page.click('#btnConfirmReload');
 
           // Wait for filtered data to load
           await page.waitForTimeout(5000);
