@@ -476,6 +476,7 @@
     const keys = keysOfDimension(dim.name);
     if (keys.length > 0) {
       for (const key of keys) selectedDimensions.delete(key);
+      selectedOrder = selectedOrder.filter((o) => !keys.includes(o.member));
     } else {
       selectedDimensions.add(defaultKeyOf(dim));
     }
@@ -485,8 +486,12 @@
   }
 
   function setGranularity(dim: any, granularity: string) {
-    for (const key of keysOfDimension(dim.name)) selectedDimensions.delete(key);
-    selectedDimensions.add(granularity ? dim.name + '.' + granularity : dim.name);
+    const old = keysOfDimension(dim.name);
+    const key = granularity ? dim.name + '.' + granularity : dim.name;
+    for (const k of old) selectedDimensions.delete(k);
+    selectedDimensions.add(key);
+    // An order on the dimension stays on it at its new grain.
+    selectedOrder = selectedOrder.map((o) => (old.includes(o.member) ? { ...o, member: key } : o));
     selectedDimensions = new Set(selectedDimensions);
     dispatchSelection();
   }
@@ -495,10 +500,45 @@
     if (errorOf('measure', meas.name)) return;
     if (selectedMeasures.has(meas.name)) {
       selectedMeasures.delete(meas.name);
+      selectedOrder = selectedOrder.filter((o) => o.member !== meas.name);
     } else {
       selectedMeasures.add(meas.name);
     }
     selectedMeasures = new Set(selectedMeasures);
+    dispatchSelection();
+  }
+
+  // ── #4: order and limit by clicks ───────────────────────────────────────────
+
+  /** The order a ticked member gives the answer: `''` (none), `'desc'` or `'asc'`. The order is
+   *  handed in, so the button redraws when it changes. */
+  function orderOf(order: Array<{ member: string; dir: string }>, member: string): string {
+    return order.find((o) => o.member === member)?.dir ?? '';
+  }
+
+  const ORDER_MARK: Record<string, string> = { '': '⇅', desc: '↓', asc: '↑' };
+  const ORDER_TIP: Record<string, string> = {
+    '': 'Sort the answer by this',
+    desc: 'Sorted by this, largest first. Click: smallest first',
+    asc: 'Sorted by this, smallest first. Click: no sort',
+  };
+
+  /** A click sorts by this member alone, as a click on a column header sorts a table: largest
+   *  first, then smallest first, then no sort. */
+  function cycleOrder(member: string) {
+    if (!member) return;
+    const now = orderOf(selectedOrder, member);
+    const next = now === '' ? 'desc' : now === 'desc' ? 'asc' : '';
+    selectedOrder = next ? [{ member, dir: next }] : [];
+    dispatchSelection();
+  }
+
+  /** "Show the first N rows": a whole number above 0, or nothing for every row. */
+  function setLimit(text: string) {
+    const n = Number(text);
+    const limit = text.trim() !== '' && Number.isFinite(n) && n >= 1 ? Math.floor(n) : null;
+    if (limit === selectedLimit) return;
+    selectedLimit = limit;
     dispatchSelection();
   }
 
@@ -2919,6 +2959,12 @@
                 on:change={() => toggleMeasure(meas)} />
               {meas.title || meas.name}
             </label>
+            {#if selectedMeasures.has(meas.name)}
+              <button type="button" id="btnOrder-{meas.name}" class="rb-order"
+                      class:rb-order-on={orderOf(selectedOrder, meas.name) !== ''}
+                      title={ORDER_TIP[orderOf(selectedOrder, meas.name)]}
+                      on:click={() => cycleOrder(meas.name)}>{ORDER_MARK[orderOf(selectedOrder, meas.name)]}</button>
+            {/if}
             {#if showEverything && extrasOf(meas, 'measure').length > 0}
               <button type="button" class="rb-more" title="settings"
                       on:click={() => toggleExtras('measure:' + meas.name)}>
@@ -2947,6 +2993,12 @@
                   <option value={grain.value} selected={grain.value === granularityOf(dim.name)}>{grain.label}</option>
                 {/each}
               </select>
+            {/if}
+            {#if isDimensionSelected(dim.name)}
+              <button type="button" id="btnOrder-{dim.name}" class="rb-order"
+                      class:rb-order-on={orderOf(selectedOrder, keysOfDimension(dim.name)[0]) !== ''}
+                      title={ORDER_TIP[orderOf(selectedOrder, keysOfDimension(dim.name)[0])]}
+                      on:click={() => cycleOrder(keysOfDimension(dim.name)[0])}>{ORDER_MARK[orderOf(selectedOrder, keysOfDimension(dim.name)[0])]}</button>
             {/if}
             {#if isFilterable(dim)}
               <button type="button" id="btnFilter-{dim.name}" class="rb-filter-icon"
@@ -3063,6 +3115,14 @@
         {selectedMeasures.size} measure{selectedMeasures.size !== 1 ? 's' : ''}
         {#if selectedSegments.size > 0}, {selectedSegments.size} filter{selectedSegments.size !== 1 ? 's' : ''}{/if}
         selected
+        {#if !readOnly}
+          <!-- #4: how many rows the answer keeps; with a sort above, "the top N" -->
+          · <label class="rb-cube-limit" title="Keep only the first rows of the answer; empty keeps every row">
+            first <input id="inputCubeLimit" type="number" min="1" step="1" placeholder="all"
+                         value={selectedLimit ?? ''}
+                         on:change={(e) => setLimit(e.currentTarget.value)} /> rows
+          </label>
+        {/if}
       </p>
     {/if}
 
@@ -3664,6 +3724,28 @@
   }
   .rb-extra-label {
     font-weight: 600;
+  }
+  .rb-order {
+    margin-left: 4px;
+    color: color-mix(in oklab, currentColor 45%, transparent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 3px;
+  }
+  .rb-order-on {
+    color: inherit;
+    font-weight: 600;
+  }
+  .rb-cube-limit input {
+    width: 4.5em;
+    padding: 0 2px;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--rb-border, color-mix(in oklab, currentColor 18%, transparent));
+    border-radius: 3px;
+    font-size: 11px;
   }
   .rb-more {
     color: inherit;
