@@ -5322,4 +5322,82 @@ test('(canvas mechanics) M70 A cube answer sorted and cut to its first rows by c
   });
 });
 
+/** What a pivot draws, counted in its HTML: value cells with a heat colour, total cells, the grand total. */
+async function m71Drawn(locator: Locator): Promise<{ heat: number; totals: number; grand: number }> {
+  return locator.evaluate((el) => {
+    // On the Canvas the locator is the pivot (its table is in its shadow root); published, it is the box around the table.
+    const root: ParentNode = (el as HTMLElement).shadowRoot ?? el;
+    const heat = Array.from(root.querySelectorAll('td.pvtVal')).filter((td) => (td as HTMLElement).style.backgroundColor !== '').length;
+    return { heat, totals: root.querySelectorAll('td.pvtTotal').length, grand: root.querySelectorAll('td.pvtGrandTotal').length };
+  });
+}
+
+/** Wait until the pivot draws `want` (heat: `true` = some cells coloured, `false` = none). */
+async function m71WaitDrawn(locator: Locator, want: { heat: boolean; totals: number; grand: number }, message: string): Promise<void> {
+  await expect.poll(async () => {
+    const d = await m71Drawn(locator);
+    return `heat=${d.heat > 0} totals=${d.totals} grand=${d.grand}`;
+  }, { message, timeout: 30_000, intervals: [500] }).toBe(`heat=${want.heat} totals=${want.totals} grand=${want.grand}`);
+}
+
+test('(canvas mechanics) M71 A pivot drawn as a heatmap, its totals switched off and on, and the same published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId = '';
+  try {
+    await withFreshCanvas(page, 'E2E mech M71 Pivot heatmap and totals', async (canvasId) => {
+      const rowsN = g5Statuses.length;
+      const colsN = g5Channels.length;
+      await addTableToCanvas(page, 'dash_demo.orders');
+      await runSqlQuery(page, 'SELECT status, channel, total_amount FROM dash_demo.orders');
+      await switchToWidget(page, 'pivot');
+      const id = await getLastWidgetId(page);
+      const pivot = cViz(page, id);
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#configPanel-pivot').waitFor({ state: 'visible', timeout: 10_000 });
+      const assigned = page.locator('[id^="btnRemovePivotField-"]');
+      for (let left = await assigned.count(); left > 0; left = await assigned.count()) {
+        await assigned.first().click();
+        await expect(assigned).toHaveCount(left - 1);
+      }
+      await cDragPivotField(page, 'status', 'rows');
+      await cDragPivotField(page, 'channel', 'cols');
+      await page.locator('#selectPivotAggregation').selectOption('Count');
+      await cWaitPivot(pivot, (x) => cSame(x.rowKeys, g5Statuses) && cSame(x.colKeys, g5Channels), 'orders per status and channel');
+
+      // − nothing picked: a plain table with both totals, as `<rb-pivot-table>` draws it published.
+      await expect(page.locator('#selectPivotRenderer')).toHaveValue('Table');
+      await expect(page.locator('#chkPivotRowTotals')).toBeChecked();
+      await expect(page.locator('#chkPivotColTotals')).toBeChecked();
+      await m71WaitDrawn(pivot, { heat: false, totals: rowsN + colsN, grand: 1 }, 'a plain table with a totals column, a totals row and the grand total');
+
+      // + Show as: Heatmap colours the cells; the numbers do not change.
+      await page.locator('#selectPivotRenderer').selectOption('Table Heatmap');
+      const p = await cWaitPivot(pivot, (x) => x.state.rendererName === 'Table Heatmap', 'the pivot is a heatmap');
+      g5ExpectCells(p, g5Counts(), 'a heatmap counts what the table counted');
+      await m71WaitDrawn(pivot, { heat: true, totals: rowsN + colsN, grand: 1 }, 'the cells are coloured');
+
+      // − each total switched off on its own, then the row totals back on.
+      await page.locator('#chkPivotRowTotals').uncheck();
+      await m71WaitDrawn(pivot, { heat: true, totals: colsN, grand: 0 }, 'no totals column: only the totals row, and no grand total');
+      await page.locator('#chkPivotColTotals').uncheck();
+      await m71WaitDrawn(pivot, { heat: true, totals: 0, grand: 0 }, 'no totals at all');
+      await page.locator('#chkPivotRowTotals').check();
+      await m71WaitDrawn(pivot, { heat: true, totals: rowsN, grand: 0 }, 'the totals column only');
+
+      // + published, the reader sees what the author saw: a heatmap with the totals column only.
+      const cid = (await getCanvasComponentIds(page, canvasId)).pivot[0];
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, published.reportId);
+      const shown = page.locator(`[id="widgetPivot-${cid}"]`);
+      await expect(shown, 'the published pivot is on the page').toBeVisible({ timeout: 60_000 });
+      await cWaitPivot(shown, (x) => x.state.rendererName === 'Table Heatmap' && cSame(x.rowKeys, g5Statuses),
+        'the published pivot is a heatmap of the same rows');
+      await m71WaitDrawn(shown, { heat: true, totals: rowsN, grand: 0 }, 'published: coloured cells and the totals column only');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
