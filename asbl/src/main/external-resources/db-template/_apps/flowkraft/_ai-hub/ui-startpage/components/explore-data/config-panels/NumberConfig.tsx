@@ -11,6 +11,7 @@ const FORMATS = [
   { value: "number", label: "Number (1,234)" },
   { value: "currency", label: "Currency ($1,234)" },
   { value: "percent", label: "Percent (73.1%)" },
+  { value: "compact", label: "Compact (1.2K)" },
   { value: "raw", label: "Raw value" },
 ];
 
