@@ -802,7 +802,8 @@ public class DashboardFileGenerator {
      *
      * Visual mode: derive from the visualQuery's summarize. Formula matches
      * sql-builder.ts:154 — `{field}_{aggregation}` (lowercase), or `count` for COUNT(*).
-     * If numberField doesn't match any summarize entry, fall back to first summarize alias.
+     * numberField may name the source column or the alias itself (the Canvas's value picker stores
+     * the alias, `qty_sum`). If it matches no summarize entry, fall back to first summarize alias.
      *
      * SQL mode: returns empty — rb-value falls back to the first result column,
      * which is the right thing for the typical Number widget (one summary column).
@@ -831,7 +832,7 @@ public class DashboardFileGenerator {
                 ? "count"
                 : field + "_" + aggregation;
             if (firstAlias == null) firstAlias = alias;
-            if (field.equals(numberField)) return alias;
+            if (field.equals(numberField) || alias.equals(numberField)) return alias;
         }
         return firstAlias != null ? firstAlias : numberField;
     }
