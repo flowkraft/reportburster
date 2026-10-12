@@ -3410,3 +3410,90 @@ describe("VENDOR LAYER — a running total over a month bucket", () => {
     }
   });
 });
+
+// ── 31 ─────────────────────────────────────────────────────────
+
+describe("ANSI — an aggregate of its own rows (Count where / Sum where, #9)", () => {
+
+  /** "How many deals are won, beside all of them": two aggregates over different rows of one
+   *  grouped query, which no WHERE can say - a WHERE would take the other rows from both. */
+  const wonBesideAll = query({
+    groupBy: ["title"],
+    summarize: [
+      { aggregation: "COUNT", field: "*" },
+      { aggregation: "COUNT", field: "*", where: { column: "stage", operator: "equals", value: "won" } },
+      { aggregation: "SUM", field: "amount", where: { column: "stage", operator: "equals", value: "won" } },
+    ],
+  } as Partial<VisualQuery>);
+
+  it("writes one text on every vendor", () => {
+    expect(oneAnsiTextFor(wonBesideAll).length).toBeGreaterThan(0);
+  });
+
+  it("counts the kept rows and sums them, beside the plain count", () => {
+    const ansi = oneAnsiTextFor(wonBesideAll);
+    expect(ansi).toContain("COUNT(*) AS count");
+    expect(ansi).toContain("COUNT(CASE WHEN stage = 'won' THEN 1 END) AS count_where_stage_won");
+    expect(ansi).toContain("CAST(SUM(CASE WHEN stage = 'won' THEN amount END) AS DECIMAL(31,4)) AS amount_sum_where_stage_won");
+    // The condition is the aggregate's own: the query keeps every row.
+    expect(ansi).not.toContain("WHERE stage");
+  });
+
+  it("writes the condition the Filter step writes, numbers and dates included", () => {
+    const ansi = oneAnsiTextFor(query({
+      summarize: [
+        { aggregation: "COUNT", field: "*", where: { column: "amount", operator: "greater_than", value: "100" } },
+        { aggregation: "AVG", field: "amount", where: { column: "title", operator: "not_equals", value: "Pro" } },
+        { aggregation: "COUNT", field: "*", where: { column: "closed_on", operator: "is_null", value: "" } },
+      ],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("COUNT(CASE WHEN amount > 100 THEN 1 END) AS count_where_amount_greater_than_100");
+    expect(ansi).toContain("CAST(AVG(CAST(CASE WHEN ");
+    expect(ansi).toContain("COUNT(CASE WHEN closed_on IS NULL THEN 1 END) AS count_where_closed_on_is_null");
+  });
+
+  it("is the expression the HAVING and the ORDER BY write too", () => {
+    const ansi = oneAnsiTextFor(query({
+      groupBy: ["title"],
+      summarize: [{
+        aggregation: "COUNT", field: "*", having: { operator: ">", value: "5" },
+        where: { column: "stage", operator: "equals", value: "won" },
+      }],
+      sort: [{ column: "count_where_stage_won", direction: "DESC" }],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("HAVING COUNT(CASE WHEN stage = 'won' THEN 1 END) > 5");
+    expect(ansi).toContain("COUNT(CASE WHEN stage = 'won' THEN 1 END) DESC");
+  });
+
+  it("is a plain aggregate while its value box is empty, as an empty filter is", () => {
+    const plain = oneAnsiTextFor(query({
+      groupBy: ["title"], summarize: [{ aggregation: "SUM", field: "amount" }],
+    } as Partial<VisualQuery>));
+    const halfTyped = oneAnsiTextFor(query({
+      groupBy: ["title"],
+      summarize: [{ aggregation: "SUM", field: "amount", where: { column: "stage", operator: "equals", value: "" } }],
+    } as Partial<VisualQuery>));
+    expect(halfTyped.replace(/amount_sum_where_stage/g, "amount_sum")).toBe(plain);
+  });
+
+  it("names two conditions on one column apart", () => {
+    const ansi = oneAnsiTextFor(query({
+      summarize: [
+        { aggregation: "COUNT", field: "*", where: { column: "amount", operator: "greater_than", value: "100" } },
+        { aggregation: "COUNT", field: "*", where: { column: "amount", operator: "less_than", value: "100" } },
+      ],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("AS count_where_amount_greater_than_100");
+    expect(ansi).toContain("AS count_where_amount_less_than_100");
+  });
+
+  it("changes nothing for a query that has none (every canvas saved until now)", () => {
+    const before = oneAnsiTextFor(query({
+      summarize: [{ aggregation: "SUM", field: "amount" }], groupBy: ["title"],
+    } as Partial<VisualQuery>));
+    expect(oneAnsiTextFor(query({
+      summarize: [{ aggregation: "SUM", field: "amount", where: undefined }], groupBy: ["title"],
+    } as Partial<VisualQuery>))).toBe(before);
+    expect(before).not.toContain("CASE WHEN");
+  });
+});

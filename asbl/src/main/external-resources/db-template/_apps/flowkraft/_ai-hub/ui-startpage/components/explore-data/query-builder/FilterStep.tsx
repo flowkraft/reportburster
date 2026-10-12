@@ -49,7 +49,8 @@ function getColumnType(column: ColumnSchema): "string" | "number" | "date" | "bo
   }
 }
 
-function getOperatorsForColumn(column: ColumnSchema | undefined): OperatorDef[] {
+/** The operators a filter row offers for a column - and an aggregate's own `where` (#9). */
+export function getOperatorsForColumn(column: ColumnSchema | undefined): OperatorDef[] {
   if (!column) return STRING_OPS;
   switch (getColumnType(column)) {
     case "number": return NUMBER_OPS;
