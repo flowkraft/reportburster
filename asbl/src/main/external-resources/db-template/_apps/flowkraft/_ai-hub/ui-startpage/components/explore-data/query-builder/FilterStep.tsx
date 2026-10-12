@@ -9,6 +9,7 @@ import { bindableParams, columnClassOf, isParamRef, paramRefOf, type BindablePar
 // kind, as it always did.
 import {
   BOOLEAN_OPS,
+  COLUMN_COMPARISON_OPS,
   DATE_OPS,
   FILTER_MATCHES,
   NO_VALUE_OPS,
@@ -25,6 +26,10 @@ interface FilterItem {
   operator: string;
   value: string;
   valueTo?: string;
+  /** Another column this one is compared with, instead of a value (#10). */
+  valueColumn?: string;
+  /** How the row joins the one above (#10): "or" makes one group with it; absent is "and". */
+  join?: "and" | "or";
 }
 
 // Type detection from column schema
@@ -121,6 +126,11 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
         }
         next.value = "";
         next.valueTo = undefined;
+        next.valueColumn = undefined;
+      }
+      // Only the six comparisons compare two columns: any other operator reads a value again.
+      if (patch.operator && !COLUMN_COMPARISON_OPS.has(patch.operator)) {
+        next.valueColumn = undefined;
       }
       // Clear valueTo when switching away from between
       if (patch.operator && patch.operator !== "between") {
@@ -137,6 +147,20 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
 
   const removeFilter = (i: number) => {
     onChange(filters.filter((_, idx) => idx !== i));
+  };
+
+  /** The other columns a row's column can be compared with (#10): the ones of the same kind. */
+  const comparableColumns = (column: string): ColumnSchema[] => {
+    const col = columns.find((c) => c.columnName === column);
+    const kind = col ? getColumnType(col) : "string";
+    return columns.filter((c) => c.columnName !== column && getColumnType(c) === kind);
+  };
+
+  /** Value or column: the toggle beside a comparison's value box (#10). */
+  const toggleValueColumn = (i: number) => {
+    const f = filters[i];
+    if (f.valueColumn) updateFilter(i, { valueColumn: undefined });
+    else updateFilter(i, { valueColumn: comparableColumns(f.column)[0]?.columnName, value: "" });
   };
 
   const bindParam = (i: number, paramId: string, field: "value" | "valueTo" = "value") => {
@@ -233,10 +257,28 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
         const col = columns.find((c) => c.columnName === f.column);
         const ops = getOperatorsForColumn(col);
         const boundToParam = !NO_VALUE_OPS.includes(f.operator) && isParamRef(f.value);
-        const canBind = offers.length > 0 && PARAM_BINDABLE_OPS.has(f.operator) && !boundToParam;
-
+        const byColumn = !!f.valueColumn && COLUMN_COMPARISON_OPS.has(f.operator);
+        const canBind = offers.length > 0 && PARAM_BINDABLE_OPS.has(f.operator) && !boundToParam && !byColumn;
+        const canCompareColumns = COLUMN_COMPARISON_OPS.has(f.operator) && !boundToParam
+          && comparableColumns(f.column).length > 0;
         return (
-          <div key={i} className="flex items-center gap-1.5 ml-6">
+          <div key={i} className="space-y-1.5">
+          {/* How this row joins the one above (#10): "and", or "or" to make one group with it.
+              Matching any filter joins every row with OR already, so there is nothing to choose. */}
+          {i > 0 && match === "all" && (
+            <button
+              id={`btnFilterJoin-${i}`}
+              type="button"
+              onClick={() => updateFilter(i, { join: f.join === "or" ? "and" : "or" })}
+              title={f.join === "or"
+                ? "Either this row or the one above (one group). Click: both"
+                : "This row and the ones above. Click: either this row or the one above"}
+              className={`ml-6 text-[10px] px-1.5 rounded border ${f.join === "or" ? "border-primary/40 text-primary" : "border-base-300 text-base-content/60"}`}
+            >
+              {f.join === "or" ? "or" : "and"}
+            </button>
+          )}
+          <div className="flex items-center gap-1.5 ml-6">
             <select
               id={`selectFilterCol-${i}`}
               value={f.column}
@@ -266,6 +308,18 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
                 <span className="text-[10px] text-base-content/60 shrink-0">and</span>
                 {betweenBox(i, "valueTo", f.valueTo || "", "max")}
               </div>
+            ) : byColumn ? (
+              /* Compared with another column of the same kind (#10) */
+              <select
+                id={`selectFilterValueColumn-${i}`}
+                value={f.valueColumn}
+                onChange={(e) => updateFilter(i, { valueColumn: e.target.value })}
+                className="text-xs bg-base-100 border border-primary/30 rounded px-1.5 py-1 text-base-content min-w-0 flex-1"
+              >
+                {comparableColumns(f.column).map((c) => (
+                  <option key={c.columnName} value={c.columnName}>{c.columnName}</option>
+                ))}
+              </select>
             ) : !NO_VALUE_OPS.includes(f.operator) && (
               boundToParam ? (
                 /* Param chip — shows the bound ${paramName} with a clear button */
@@ -325,9 +379,21 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
               )
             )}
 
+            {canCompareColumns && (
+              <button
+                id={`btnFilterValueColumn-${i}`}
+                type="button"
+                onClick={() => toggleValueColumn(i)}
+                title={byColumn ? "Compare with a value instead" : "Compare with another column"}
+                className={`text-[10px] px-1 py-0.5 rounded shrink-0 leading-none ${byColumn ? "text-primary bg-primary/10" : "text-base-content/60 hover:text-primary hover:bg-primary/10"}`}
+              >
+                col
+              </button>
+            )}
             <button id={`btnRemoveFilter-${i}`} onClick={() => removeFilter(i)} className="p-0.5 rounded hover:bg-error/10 text-base-content/60 hover:text-error">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
             </button>
+          </div>
           </div>
         );
       })}

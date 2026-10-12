@@ -5400,4 +5400,54 @@ test('(canvas mechanics) M71 A pivot drawn as a heatmap, its totals switched off
   }
 });
 
+test('(canvas mechanics) M72 A filter compares two columns, and two filter rows make one OR group', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M72 Column filter and OR group', async () => {
+    const orders = frozenRows('orders');
+    // Late, as the dd-delivery cube says it: delivered on a later day than the one promised.
+    const late = orders.filter((o) => o.delivered_ts !== '' && o.delivered_ts.slice(0, 10) > o.promised_date).length;
+    const s1 = 'returned';
+    const s2 = g5Statuses.find((s) => s !== s1 && s !== 'completed') ?? 'completed';
+
+    // + delivered_ts after promised_date: the value of the filter is another column, compared as whole days.
+    const id = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'delivered_ts', 'greater_than');
+    await page.locator('#btnFilterValueColumn-0').click();
+    await page.locator('#selectFilterValueColumn-0').selectOption('promised_date');
+    await addAggregation(page, 0, 'COUNT', '*');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id, late, 'the orders delivered after their promised day');
+
+    // − back to a value: the column picker goes and the value box is back.
+    await page.locator('#btnFilterValueColumn-0').click();
+    await expect(page.locator('#selectFilterValueColumn-0')).toHaveCount(0);
+    await expect(page.locator('#inputFilterValue-0')).toBeVisible();
+    await page.locator('#btnRemoveFilter-0').click();
+
+    // − two statuses and a channel, all AND-ed: no order has two statuses.
+    await addVisualFilter(page, 0, 'status', 'equals', s1);
+    await addVisualFilter(page, 1, 'status', 'equals', s2);
+    await addVisualFilter(page, 2, 'channel', 'equals', 'web');
+    await expect(page.locator('#btnFilterJoin-1'), 'rows are joined by and until one is switched').toHaveText('and');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id, 0, 'one order cannot have two statuses');
+
+    // + the second row joined by or: (s1 OR s2) AND web.
+    await page.locator('#btnFilterJoin-1').click();
+    await expect(page.locator('#btnFilterJoin-1')).toHaveText('or');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id,
+      orders.filter((o) => (o.status === s1 || o.status === s2) && o.channel === 'web').length,
+      `the ${s1} or ${s2} orders of the web channel`);
+
+    // − matching any filter joins every row with OR already: no join to choose.
+    await page.locator('#selectFilterMatch').selectOption('any');
+    await expect(page.locator('#btnFilterJoin-1')).toHaveCount(0);
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id,
+      orders.filter((o) => o.status === s1 || o.status === s2 || o.channel === 'web').length,
+      'any of the three');
+  });
+});
+
 });

@@ -116,7 +116,10 @@ export interface VisualQuery {
   // canvas saved before this existed means) or any one of them (`any`, joined
   // with OR - `filter-operators.ts`).
   filterMatch?: FilterMatch;
-  filters: { column: string; operator: string; value: string; valueTo?: string }[];
+  // A filter row may compare its column with another column (`valueColumn`, #10), and may be
+  // joined to the row above it by OR (`join: "or"`, #10): such rows make one bracketed OR
+  // group, and the groups are AND-ed. Both absent on every canvas saved before them.
+  filters: { column: string; operator: string; value: string; valueTo?: string; valueColumn?: string; join?: "and" | "or" }[];
   // An aggregate may carry a condition (`having`): the rows it keeps are the
   // groups whose aggregate passes it ("customers with more than 5 orders"),
   // which is what a WHERE cannot say. Absent on every canvas saved before this

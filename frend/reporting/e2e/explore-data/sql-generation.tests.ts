@@ -3723,3 +3723,102 @@ describe("VENDOR LAYER — what a formula writes per vendor (#8)", () => {
     }
   });
 });
+
+// ── 34 ───────────────────────────────────────────────────────────────────────
+
+describe("ANSI — a column compared with another column, and an OR group (#10)", () => {
+
+  it("compares two numbers, or two texts, column with column", () => {
+    const ansi = oneAnsiTextFor(query({
+      filters: [
+        { column: "amount", operator: "greater_than", value: "", valueColumn: "qty" },
+        { column: "title", operator: "not_equals", value: "", valueColumn: "title" },
+      ],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("WHERE amount > qty\n  AND title <> title");
+  });
+
+  it("writes each of the six comparisons, and reads a value again for any other operator", () => {
+    const sqlOf = (operator: string) => oneAnsiTextFor(query({
+      filters: [{ column: "amount", operator, value: "5", valueColumn: "qty" }],
+    } as Partial<VisualQuery>));
+    expect(sqlOf("equals")).toContain("WHERE amount = qty");
+    expect(sqlOf("not_equals")).toContain("WHERE amount <> qty");
+    expect(sqlOf("greater_or_equal")).toContain("WHERE amount >= qty");
+    expect(sqlOf("less_than")).toContain("WHERE amount < qty");
+    expect(sqlOf("less_or_equal")).toContain("WHERE amount <= qty");
+    // `in` takes a list: the column picked for a comparison is not its value.
+    expect(sqlOf("in")).toContain("WHERE amount IN (5)");
+  });
+
+  it("is a column like any other: a computed one on either side", () => {
+    expect(oneAnsiTextFor(query({
+      computed: [{ name: "doubled", left: "qty", operator: "*", right: "2" }],
+      filters: [{ column: "amount", operator: "less_than", value: "", valueColumn: "doubled" }],
+    } as Partial<VisualQuery>))).toContain("WHERE amount < (qty * 2)");
+  });
+
+  it("makes one bracketed OR group of a row joined to the one above by or; the groups are AND-ed", () => {
+    expect(oneAnsiTextFor(query({
+      filters: [
+        { column: "title", operator: "equals", value: "Pro" },
+        { column: "title", operator: "equals", value: "Basic", join: "or" },
+        { column: "amount", operator: "greater_than", value: "100" },
+      ],
+    } as Partial<VisualQuery>))).toContain("WHERE (title = 'Pro' OR title = 'Basic')\n  AND amount > 100");
+  });
+
+  it("leaves a half-typed row out of its group, where 1=1 would answer every row", () => {
+    const ansi = oneAnsiTextFor(query({
+      filters: [
+        { column: "amount", operator: "greater_than", value: "100" },
+        { column: "qty", operator: "in", value: "", join: "or" },
+        { column: "title", operator: "equals", value: "", join: "or" },
+      ],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("WHERE amount > 100");
+    expect(ansi).not.toContain("1=1");
+    expect(ansi).not.toContain(" OR ");
+  });
+
+  it("ignores the joins when the query matches any filter (all OR already), and on the first row", () => {
+    const any = oneAnsiTextFor(query({
+      filterMatch: "any",
+      filters: [
+        { column: "amount", operator: "greater_than", value: "100", join: "or" },
+        { column: "qty", operator: "less_than", value: "5", join: "or" },
+      ],
+    } as Partial<VisualQuery>));
+    expect(any).toContain("WHERE (amount > 100\n  OR qty < 5)");
+    expect(oneAnsiTextFor(query({
+      filters: [{ column: "amount", operator: "greater_than", value: "100", join: "or" }],
+    } as Partial<VisualQuery>))).toContain("WHERE amount > 100");
+  });
+
+  it("changes nothing for filters that have neither (every canvas saved until now)", () => {
+    const filters = [
+      { column: "amount", operator: "greater_than", value: "100" },
+      { column: "qty", operator: "in", value: "" },
+    ];
+    const before = oneAnsiTextFor(query({ filters } as Partial<VisualQuery>));
+    expect(before).toContain("WHERE amount > 100\n  AND 1=1");
+    expect(oneAnsiTextFor(query({
+      filters: filters.map((f) => ({ ...f, valueColumn: "", join: "and" })),
+    } as Partial<VisualQuery>))).toBe(before);
+  });
+});
+
+// ── 35 ───────────────────────────────────────────────────────────────────────
+
+describe("VENDOR LAYER — two date columns compared as whole days (#10)", () => {
+
+  it("compares the days from one to the other with 0, so a later time on the same day is not after", () => {
+    for (const vendor of EVERY_VENDOR) {
+      const sql = unquoted(sqlOn(query({
+        filters: [{ column: "closed_on", operator: "greater_than", value: "", valueColumn: "created_at" }],
+      } as Partial<VisualQuery>), vendor));
+      const days = unquoted(daysBetweenExpr(dateExpr("created_at", vendor), dateExpr("closed_on", vendor), vendor));
+      expect(sql).withContext(vendor).toContain(`WHERE ${days} > 0`);
+    }
+  });
+});
