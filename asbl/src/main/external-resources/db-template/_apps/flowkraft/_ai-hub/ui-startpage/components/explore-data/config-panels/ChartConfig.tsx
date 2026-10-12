@@ -162,6 +162,32 @@ export function readValueLabels(map: ChartDslOptions): boolean {
   return (plugins?.rbValueLabels as Record<string, unknown> | undefined)?.display === true;
 }
 
+/** The number formats a chart can be written in (#26), the ones a table column and a KPI know. */
+export const CHART_NUMBER_FORMATS = [
+  { value: "", label: "Auto" },
+  { value: "number", label: "Number (1,234)" },
+  { value: "currency", label: "Currency ($1,234.00)" },
+  { value: "percent", label: "Percent (0.34 is 34%)" },
+  { value: "compact", label: "Compact (1.2K)" },
+] as const;
+
+/** Read the chart's number format (`options.rbNumberFormat`); "" when Chart.js writes the numbers. */
+export function readNumberFormat(map: ChartDslOptions): string {
+  const fmt = (map.options as Record<string, unknown> | undefined)?.rbNumberFormat;
+  return typeof fmt === "string" && CHART_NUMBER_FORMATS.some((f) => f.value === fmt) ? fmt : "";
+}
+
+/** Set or clear the chart's number format, pruning what it empties. */
+export function setNumberFormat(map: ChartDslOptions, fmt: string): ChartDslOptions {
+  const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
+  if (fmt) opts.rbNumberFormat = fmt;
+  else delete opts.rbNumberFormat;
+  const next: ChartDslOptions = { ...map };
+  if (Object.keys(opts).length > 0) next.options = opts;
+  else delete next.options;
+  return next;
+}
+
 /** How a chart stacks (#25): not at all, stacked, or each stack as 100%. An area chart stacks
  *  unless it says `stacked false`; a bar chart only when it says `stacked true`. */
 export type StackMode = "off" | "on" | "percent";
@@ -389,6 +415,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   const canStack = chartType === "area"
     || ((chartType === "bar" || chartType === "row") && (hasSeriesSplit || yFields.length >= 2));
   const valueLabels = readValueLabels(map);
+  const numberFormat = readNumberFormat(map);
   const valueAxis = valueAxisOf(chartType);
   const axisMin = valueAxis ? readAxisBound(map, valueAxis, "min") : undefined;
   const axisMax = valueAxis ? readAxisBound(map, valueAxis, "max") : undefined;
@@ -440,6 +467,8 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   // off takes the key away, so a chart that never had them reads exactly as it did.
   const setValueLabels = (on: boolean) =>
     setDslMap(config, setPluginOption(map, "rbValueLabels", on ? { display: true } : undefined), onChange);
+  // The number format is read by rb-chart for the value axis, the tooltips and the labels (#26).
+  const setChartNumberFormat = (fmt: string) => setDslMap(config, setNumberFormat(map, fmt), onChange);
   // Stacking is two Chart.js keys, written into the same Map the published page
   // reads, so the bars stack in the Canvas and on the dashboard by one route.
   const setStacked = (mode: StackMode) => setDslMap(config, setStackMode(map, mode, chartType), onChange);
@@ -801,6 +830,20 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
           )}
         </div>
       )}
+
+      <div>
+        <span className="text-xs text-base-content/60">Number format</span>
+        <select
+          id="selectChartNumberFormat"
+          value={numberFormat}
+          onChange={(e) => setChartNumberFormat(e.target.value)}
+          className="w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content"
+        >
+          {CHART_NUMBER_FORMATS.map((f) => (
+            <option key={f.value || "auto"} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <span className="text-xs text-base-content/60">Color palette</span>
