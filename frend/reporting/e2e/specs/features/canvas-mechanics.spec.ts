@@ -5656,7 +5656,7 @@ test('(canvas mechanics) M76 A date range: one control, two dates, presets from 
 
       // + `dateFrom` asks for a range: it and `dateTo` are drawn as one control with presets.
       await addFilterBarParam(page, `reportParameters {
-  parameter(id: 'dateFrom', type: 'Date', label: 'Period', defaultValue: '2026-01-01') {
+  parameter(id: 'dateFrom', type: 'Date', label: 'Period', defaultValue: '2026-01-02') {
     constraints(required: false)
     ui(control: 'date-range')
   }
@@ -5679,7 +5679,7 @@ test('(canvas mechanics) M76 A date range: one control, two dates, presets from 
       await addAggregation(page, 0, 'COUNT', 'order_id');
       await runVisualQuery(page);
       await switchToWidget(page, 'number');
-      await g4ScalarIs(page, kpi, between('2026-01-01', '2026-09-30'), 'the defaults: January to the data\'s today');
+      await g4ScalarIs(page, kpi, between('2026-01-02', '2026-09-30'), 'the defaults: 2 January to the data\'s today');
 
       // + a preset fills both days at once, from the data's today.
       await bar.locator('#dateFrom_preset').selectOption('last_7_days');
@@ -5708,7 +5708,7 @@ test('(canvas mechanics) M76 A date range: one control, two dates, presets from 
       await openPublished(page, reportId);
       const pubBar = page.locator('#parameterBarContainer');
       await expect(pubBar.locator('#dateFrom_range'), 'published, the same range control').toBeVisible({ timeout: 30_000 });
-      await pPublishedNumberIs(page, ids.number[0], between('2026-01-01', '2026-09-30'), 'published, the defaults');
+      await pPublishedNumberIs(page, ids.number[0], between('2026-01-02', '2026-09-30'), 'published, the defaults');
       await pubBar.locator('#dateFrom_preset').selectOption('quarter_to_date');
       await expect(pubBar.locator('#dateFrom')).toHaveValue('2026-07-01');
       await expect(pubBar.locator('#dateTo')).toHaveValue('2026-09-30');
