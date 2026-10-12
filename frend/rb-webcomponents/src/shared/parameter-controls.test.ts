@@ -4,7 +4,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { controlTypeOf, defaultForType, resetControlWarnings } from './parameter-controls.ts';
+import { controlTypeOf, defaultForType, isTicked, resetControlWarnings } from './parameter-controls.ts';
 
 describe('the control a declared parameter type is filled in with', () => {
   test('a number with a fraction is a number box, by either name', () => {
@@ -72,5 +72,25 @@ describe('the control a declared parameter type is filled in with', () => {
     assert.equal(defaultForType('integer'), null);
     assert.equal(defaultForType('boolean'), false);
     assert.equal(defaultForType('string'), '');
+  });
+});
+
+describe('whether a Boolean tick box is ticked', () => {
+  test('a default of false that arrives as text leaves the box unticked', () => {
+    assert.equal(isTicked('false'), false);
+    assert.equal(isTicked('FALSE'), false);
+    assert.equal(isTicked(false), false);
+  });
+
+  test('true ticks it, as a value or as text', () => {
+    assert.equal(isTicked(true), true);
+    assert.equal(isTicked('true'), true);
+    assert.equal(isTicked(' True '), true);
+  });
+
+  test('no value at all leaves it unticked', () => {
+    assert.equal(isTicked(undefined), false);
+    assert.equal(isTicked(null), false);
+    assert.equal(isTicked(''), false);
   });
 });

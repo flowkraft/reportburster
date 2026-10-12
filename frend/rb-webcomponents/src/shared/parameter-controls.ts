@@ -74,6 +74,16 @@ export function resetControlWarnings(): void {
   warned.clear();
 }
 
+/**
+ * Whether a Boolean parameter's tick box is ticked. A published dashboard's defaults reach the page as text
+ * (the server keeps every default as a string), and so does a value read from a link: the text "false" is a
+ * value, so testing the value itself ticked every Boolean whose default was false. Only true, or the word
+ * true in any case, ticks the box.
+ */
+export function isTicked(value: unknown): boolean {
+  return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true');
+}
+
 /** What a parameter holds before anyone fills it in: false for a tick box, nothing for a number. */
 export function defaultForType(type: string): any {
   const t = (type || '').toLowerCase();
