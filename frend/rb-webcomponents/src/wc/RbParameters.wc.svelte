@@ -418,6 +418,14 @@
     optionsVersion += 1;
   }
 
+  /**
+   * The options a single select or a radio group draws, as `optionsVersion` last left them: a list
+   * asked again (a cascading filter, #17) is replaced in place, and only the version says it changed.
+   */
+  function shownOptions(p: ParamMeta, _version: number): { label: string; value: any }[] {
+    return loadOptions(p);
+  }
+
   /** The search box was typed in: page 1 again, and for a remote list, ask the host. */
   function onMultiSearchInput(p: ParamMeta) {
     multiPage[p.id] = 0;
@@ -1133,7 +1141,7 @@
                  work, and a change goes through the same handleChange the select uses — so
                  valueChange, validation, Reload and the backend binding are untouched. -->
             <div class="rb-radio-group" id={p.id}>
-              {#each loadOptions(p) as o (o.value)}
+              {#each shownOptions(p, optionsVersion) as o (o.value)}
                 <label class="rb-radio-row" for={p.id + '_rb_' + safeId(o.value)}>
                   <input type="radio"
                          id={p.id + '_rb_' + safeId(o.value)}
@@ -1242,8 +1250,8 @@
               on:change={(e) => handleChange(p, e)}
               on:blur={() => handleBlur(p)}
             >
-              {#each loadOptions(p) as o}
-                <option value={o.value}>{o.label}</option>
+              {#each shownOptions(p, optionsVersion) as o}
+                <option value={o.value} selected={String(o.value) === String(formValues[p.id] ?? '')}>{o.label}</option>
               {/each}
             </select>
           {:else}
