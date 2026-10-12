@@ -463,6 +463,12 @@ public class CliJob {
 	 * Job files are only needed for operations with side effects (burst, merge, email, etc.).
 	 */
 	public ReportDataResult doFetchData(Map<String, String> parameters, boolean testMode) throws Exception {
+		return doFetchData(parameters, testMode, 0);
+	}
+
+	/** The same, holding every statement the report runs to {@code timeoutSeconds}; 0 lets them run. */
+	public ReportDataResult doFetchData(Map<String, String> parameters, boolean testMode, int timeoutSeconds)
+			throws Exception {
 
 		ReportDataResult result = new ReportDataResult();
 		AbstractBurster burster = null;
@@ -492,6 +498,7 @@ public class CliJob {
 				// AbstractReporter");
 				((AbstractReporter) burster).setPreviewMode(true);
 				((AbstractReporter) burster).setTestMode(testMode);
+				((AbstractReporter) burster).setStatementTimeoutSeconds(timeoutSeconds);
 				// System.out.println("doFetchData: setPreviewMode called");
 
 				((AbstractReporter) burster).setReportParameters(parameters);

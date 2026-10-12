@@ -15,6 +15,7 @@ import com.flowkraft.cubes.CubeDates;
 import com.flowkraft.iam.limits.ConnectionNotAllowedException;
 import com.flowkraft.iam.limits.LimitsService;
 import com.flowkraft.queries.ConnectionFactory;
+import com.flowkraft.queries.WidgetLimits;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
@@ -44,6 +45,9 @@ public class QueriesService {
 
 	@Autowired
 	private LimitsService limitsService;
+
+	@Autowired
+	private WidgetLimits widgetLimits = WidgetLimits.NONE;
 
 	private CubeDataToday cubeDataToday = new CubeDataToday();
 
@@ -124,7 +128,8 @@ public class QueriesService {
 		}
 		try (DatabaseConnectionManager dbManager = createConnectionManager(connectionId)) {
 			SqlExecutor executor = new SqlExecutor(dbManager);
-			List<Map<String, Object>> rows = executor.queryOnReadOnly(connectionId, prepared.sql, prepared.params);
+			List<Map<String, Object>> rows = widgetLimits.held(executor.queryOnReadOnly(connectionId, prepared.sql,
+					prepared.params, widgetLimits.statementMaxRows(), widgetLimits.timeoutSeconds()));
 			audit(connectionId, sql, "ok", rows.size(), startedAt, null);
 			return rows;
 		} catch (Exception e) {

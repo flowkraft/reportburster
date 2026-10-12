@@ -1,11 +1,20 @@
 package com.sourcekraft.documentburster.common.db;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.statement.StatementCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,6 +192,16 @@ public class SqlExecutor {
 	 */
 	public List<Map<String, Object>> queryOnReadOnly(String connectionCode, String sql, Map<String, Object> params)
 			throws Exception {
+		return queryOnReadOnly(connectionCode, sql, params, 0, 0);
+	}
+
+	/**
+	 * The same, reading at most {@code maxRows} rows (0 reads them all) and stopping the statement
+	 * once it has run {@code timeoutSeconds} (0 lets it run). A statement stopped that way fails with
+	 * {@link #ranTooLong(int)} as its message.
+	 */
+	public List<Map<String, Object>> queryOnReadOnly(String connectionCode, String sql, Map<String, Object> params,
+			int maxRows, int timeoutSeconds) throws Exception {
 		log.debug("Executing read-only query on '{}': {}", connectionCode, sql);
 		if (StringUtils.isBlank(connectionCode)) {
 			throw new IllegalArgumentException("Connection code cannot be blank for queryOnReadOnly.");
@@ -211,7 +230,7 @@ public class SqlExecutor {
 					log.debug("Connection '{}' would not open a transaction: {}", connectionCode, e.getMessage());
 				}
 
-				return executeQuery(handle, sql, params);
+				return executeQuery(handle, sql, params, maxRows, timeoutSeconds);
 
 			} finally {
 				if (inTransaction) {
@@ -283,10 +302,18 @@ public class SqlExecutor {
 	/** The same, reading at most {@code maxRows} rows; 0 reads them all. */
 	private List<Map<String, Object>> executeQuery(Handle handle, String sql, Map<String, Object> params,
 			int maxRows) {
+		return executeQuery(handle, sql, params, maxRows, 0);
+	}
+
+	/** The same, stopping the statement once it has run {@code timeoutSeconds}; 0 lets it run. */
+	private List<Map<String, Object>> executeQuery(Handle handle, String sql, Map<String, Object> params,
+			int maxRows, int timeoutSeconds) {
 		org.jdbi.v3.core.statement.Query query = handle.createQuery(sql);
 		if (maxRows > 0) {
 			query.setMaxRows(maxRows);
 		}
+		Deadline deadline = new Deadline(timeoutSeconds);
+		query.addCustomizer(deadline);
 		if (params != null && !params.isEmpty()) {
 			Map<String, Object> scalarParams = new java.util.LinkedHashMap<>();
 			for (Map.Entry<String, Object> e : params.entrySet()) {
@@ -302,14 +329,107 @@ public class SqlExecutor {
 		// as-is, matching the case the published Groovy script returns via JDBC.
 		// JDBI's default mapToMap() lowercases all keys, which breaks rb-value/rb-chart
 		// field lookups in published dashboards.
-		return query.map((rs, ctx) -> {
-			java.sql.ResultSetMetaData meta = rs.getMetaData();
-			Map<String, Object> row = new java.util.LinkedHashMap<>();
-			for (int i = 1; i <= meta.getColumnCount(); i++) {
-				row.put(meta.getColumnLabel(i), rs.getObject(i));
+		try {
+			return query.map((rs, ctx) -> {
+				java.sql.ResultSetMetaData meta = rs.getMetaData();
+				Map<String, Object> row = new java.util.LinkedHashMap<>();
+				for (int i = 1; i <= meta.getColumnCount(); i++) {
+					row.put(meta.getColumnLabel(i), rs.getObject(i));
+				}
+				return row;
+			}).list();
+		} catch (RuntimeException failed) {
+			throw deadline.explain(failed);
+		} finally {
+			deadline.disarm();
+		}
+	}
+
+	/** What a statement stopped for running too long fails with: words a widget can show. */
+	public static String ranTooLong(int timeoutSeconds) {
+		return "The query ran longer than " + timeoutSeconds + " seconds and was stopped.";
+	}
+
+	/** Whether this failure is a statement stopped by its timeout, anywhere in its causes. */
+	public static boolean timedOut(Throwable failure) {
+		for (Throwable cause = failure; cause != null; cause = cause.getCause())
+			if (cause instanceof SQLTimeoutException)
+				return true;
+		return false;
+	}
+
+	/**
+	 * Holds every statement of this Groovy {@code Sql} to {@code timeoutSeconds}, through the driver's
+	 * own query timeout; 0 leaves them as they are.
+	 */
+	public static void timeLimit(groovy.sql.Sql sql, int timeoutSeconds) {
+		if (sql == null || timeoutSeconds <= 0)
+			return;
+		sql.withStatement(new groovy.lang.Closure<Void>(null) {
+			@SuppressWarnings("unused")
+			public void doCall(java.sql.Statement statement) {
+				try {
+					statement.setQueryTimeout(timeoutSeconds);
+				} catch (SQLException unsupported) {
+					log.debug("The driver takes no query timeout: {}", unsupported.getMessage());
+				}
 			}
-			return row;
-		}).list();
+		});
+	}
+
+	/**
+	 * Stops a statement that runs past its time, two ways at once because drivers differ: the JDBC
+	 * query timeout, which DuckDB, PostgreSQL and the other servers honour while the query runs, and a
+	 * cancel() when the time is up, for a driver whose timeout means something else (SQLite's only
+	 * bounds a wait for a lock). With 0 seconds it does nothing.
+	 */
+	private static final class Deadline implements StatementCustomizer {
+
+		private static final ScheduledExecutorService TIMER = Executors.newSingleThreadScheduledExecutor(r -> {
+			Thread thread = new Thread(r, "statement-deadline");
+			thread.setDaemon(true);
+			return thread;
+		});
+
+		private final int seconds;
+
+		private volatile ScheduledFuture<?> cancel;
+
+		private volatile boolean passed;
+
+		Deadline(int seconds) {
+			this.seconds = seconds;
+		}
+
+		@Override
+		public void beforeExecution(PreparedStatement statement, StatementContext ctx) {
+			if (seconds <= 0)
+				return;
+			try {
+				statement.setQueryTimeout(seconds);
+			} catch (SQLException unsupported) {
+				log.debug("The driver takes no query timeout: {}", unsupported.getMessage());
+			}
+			cancel = TIMER.schedule(() -> {
+				passed = true;
+				try {
+					statement.cancel();
+				} catch (SQLException alreadyDone) {
+					log.debug("Cancel after {} s: {}", seconds, alreadyDone.getMessage());
+				}
+			}, seconds, TimeUnit.SECONDS);
+		}
+
+		void disarm() {
+			if (cancel != null)
+				cancel.cancel(false);
+		}
+
+		RuntimeException explain(RuntimeException failed) {
+			if (seconds > 0 && (passed || timedOut(failed)))
+				return new IllegalStateException(ranTooLong(seconds), failed);
+			return failed;
+		}
 	}
 
 	/**

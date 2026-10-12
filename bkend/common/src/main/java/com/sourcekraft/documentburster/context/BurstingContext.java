@@ -120,6 +120,9 @@ public class BurstingContext extends DumpToString {
 	// Cache for extra Sql connections opened via getConnection()
 	public transient Map<String, Sql> namedDbSql;
 
+	// How long one statement of a script may run, in seconds, on dbSql and on every getConnection(); 0 lets it run
+	public transient int statementTimeoutSeconds;
+
 	/*
 	 * public List<String> getBurstTokens() { return burstTokens; }
 	 * 
@@ -312,6 +315,7 @@ public class BurstingContext extends DumpToString {
 			log.warn("Failed to decrypt database password for connection '{}': {}", connectionCode, e.getMessage());
 		}
 		Sql sql = Sql.newInstance(dbs.url, dbs.userid, decryptedPassword, dbs.driver);
+		SqlExecutor.timeLimit(sql, statementTimeoutSeconds);
 		namedDbSql.put(connectionCode, sql);
 		return sql;
 	}

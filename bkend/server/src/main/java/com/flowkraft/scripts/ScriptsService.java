@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.flowkraft.queries.WidgetLimits;
 import com.flowkraft.queries.services.QueriesService;
 
 import groovy.lang.Binding;
@@ -42,8 +43,12 @@ public class ScriptsService {
     /** Binding names the script itself relies on — a filter value may not take them over. */
     private static final Set<String> RESERVED_BINDING_NAMES = Set.of("ctx", "log", "dbSql");
 
-    @Value("${DataPallas.scripts.timeout-seconds:60}")
+    /** A script is a widget too: it gets the widgets' timeout unless this older key says otherwise. */
+    @Value("${DataPallas.scripts.timeout-seconds:${DataPallas.widgets.timeout-seconds}}")
     private int timeoutSeconds;
+
+    @Autowired
+    private WidgetLimits widgetLimits = WidgetLimits.NONE;
 
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "inline-script");
@@ -85,7 +90,7 @@ public class ScriptsService {
         Object result = evaluateWithTimeout(shell, script);
 
         if (result instanceof List) {
-            return (List<Map<String, Object>>) result;
+            return widgetLimits.held((List<Map<String, Object>>) result);
         }
 
         log.debug("Script returned non-List result ({}); returning empty", result == null ? "null" : result.getClass().getName());

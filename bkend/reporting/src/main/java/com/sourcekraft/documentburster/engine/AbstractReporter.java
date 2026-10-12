@@ -78,6 +78,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 	private boolean isPreviewMode = false;
 	protected boolean testMode = false;
 
+	/** How long one statement of the report may run, in seconds; 0 lets it run. */
+	protected int statementTimeoutSeconds = 0;
+
 	public AbstractReporter(String configFilePath) {
 		super(configFilePath);
 	}
@@ -782,6 +785,10 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	public void setTestMode(boolean testMode) {
 		this.testMode = testMode;
+	}
+
+	public void setStatementTimeoutSeconds(int statementTimeoutSeconds) {
+		this.statementTimeoutSeconds = statementTimeoutSeconds;
 	}
 
 	protected void checkLicense() throws Exception {
