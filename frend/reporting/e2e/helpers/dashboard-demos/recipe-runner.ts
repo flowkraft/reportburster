@@ -458,7 +458,9 @@ async function doChartByPickers(page: Page, config: DisplayConfig): Promise<void
       await page.locator(`#selectChartYAxis-${i}`).selectOption(d.field);
     }
     // A measure is named after its column until a name is typed; an empty box takes the name away.
-    await page.locator(`#inputChartSeriesLabel-${i}`).fill(d.label ?? '');
+    // A breakout (the Canvas makes one of a second group column by itself) hides the box.
+    const name = page.locator(`#inputChartSeriesLabel-${i}`);
+    if (await name.isVisible()) await name.fill(d.label ?? '');
     if (d.type !== undefined) await chooseWritten(page, `#selectChartSeriesType-${i}`, d.type);
     if (d.yAxisID === 'y1') await page.locator(`#chkChartSeriesRightAxis-${i}`).check();
   }

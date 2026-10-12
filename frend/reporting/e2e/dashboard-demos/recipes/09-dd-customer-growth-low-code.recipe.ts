@@ -1,7 +1,8 @@
 // Dashboard Demo 09, Customer Base & Growth (low-code): the same dashboard as
 // 09-dd-customer-growth.recipe.ts, built with less code (plan-dashboard-demos-low-code.md, TODO 7 and
 // 8). Against the original: the filters through the form; new customers per month by channel on the
-// Visual tab (a formula folds partner and email into Other), not SQL; charts by the pickers.
+// Visual tab (a formula folds partner and email into Other), not SQL; the other charts by the pickers
+// (that one keeps its DSL: its measure is named under a breakout).
 import type { Recipe } from '../../helpers/dashboard-demos/recipe';
 
 export const recipe: Recipe = {
@@ -284,6 +285,28 @@ FROM (SELECT (SELECT count(*) FROM dash_demo.orders o
           },
         },
       },
+      dsl: `chart {
+  type 'line'
+  data {
+    labelField 'signup_date'
+    seriesField 'channel'
+    datasets {
+      dataset {
+        field 'customer_id_count'
+        label 'New customers'
+      }
+    }
+  }
+  options {
+    plugins {
+      title {
+        display true
+        text 'New customers per month by channel'
+      }
+    }
+  }
+}
+`,
       shot: {
         title: 'Set up new customers per month by channel',
         caption: 'On the **Display** tab, set the chart\'s type, axes, title and legend (the code view says it in one paste).',
