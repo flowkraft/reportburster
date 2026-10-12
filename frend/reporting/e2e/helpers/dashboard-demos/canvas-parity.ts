@@ -131,6 +131,10 @@ function normalizeDataSource(ds: Json | null | undefined): Json | null {
   // A Visual query is read by its `generatedSql`; the `sql` next to it is that text, run.
   delete out.sql;
   delete out.executeVersion;
+  // The rows behind a click (#21) are written from the Visual query whenever the Canvas runs it, and
+  // the 25 originals were shipped before it: the query they come from is compared, they are not.
+  delete out.rowsSql;
+  delete out.rowsFields;
   if (out.script !== undefined) out.script = String(out.script).replace(/\r\n/g, '\n').trim();
   const vq = out.visualQuery;
   if (vq) {
