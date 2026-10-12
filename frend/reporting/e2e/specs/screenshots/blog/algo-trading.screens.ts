@@ -1176,8 +1176,8 @@ electronBeforeAfterAllTest(
       // ── Apply the filter, then capture the single-strategy view ──────────
       // Only 02e is captured now — the intermediate "modal open" and the
       // busy-by-default 200-series shots were dropped from the post. The
-      // published dashboard view DOES include `#btnReloadDashboard` /
-      // `#btnConfirmReload` (the host passes `showReload=true` — unlike the
+      // published dashboard view DOES include `#btnReloadDashboard`, the
+      // Apply button (the host passes `showReload=true` — unlike the
       // canvas builder which auto-reloads on valueChange). Same `getElementById`
       // selectors that RbParameters.wc.svelte exposes for the canvas builder
       // work here.
@@ -1186,12 +1186,11 @@ electronBeforeAfterAllTest(
       await page.locator('#strategy_runs_btnNone').click();
       await page.locator('#strategy_runs_cb_1').check();
       await page.waitForTimeout(400);
-      // Apply the selection: OK closes the modal, Reload+ConfirmReload triggers
+      // Apply the selection: OK closes the modal, Apply triggers
       // the cascade of widget re-queries (each chart re-runs its SQL with the
       // new strategy_runs IN-list).
       await page.locator('#strategy_runs_btnOk').click();
       await page.locator('#btnReloadDashboard').click();
-      await page.locator('#btnConfirmReload').click();
       // The published dashboard rebuilds every rb-* widget by replacing them
       // with fresh elements (see RbParameters.wc.svelte applyParamsToSiblings),
       // so wait for the cascade of fetches to settle.

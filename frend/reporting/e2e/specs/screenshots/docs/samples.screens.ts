@@ -286,8 +286,6 @@ electronBeforeAfterAllTest(
       // ── Exercise the Country filter → Germany (the frame the doc shows) ───────
       await page.selectOption('#country', 'Germany');
       await page.click('#btnReloadDashboard');
-      await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
-      await page.click('#btnConfirmReload');
       await page.waitForTimeout(3000);
 
       // ASSERT the "meat": Germany-filtered data rendered across all components,

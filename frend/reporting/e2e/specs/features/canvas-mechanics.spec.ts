@@ -3059,14 +3059,14 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
   });
 
   // ──────────────────────────────────────────────────────────
-  // M34 — Reload button cancel (published page)
+  // M34 — Apply reloads without a question (published page, #18)
   // ──────────────────────────────────────────────────────────
-  test('(canvas mechanics) M34 Reload can be cancelled', async () => {
+  test('(canvas mechanics) M34 Apply reloads without a question', async () => {
     test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
     let reportId: string | undefined;
 
     try {
-      await withFreshCanvas(page, 'E2E mech M34 Reload cancel', async () => {
+      await withFreshCanvas(page, 'E2E mech M34 Apply at once', async () => {
         await addFilterBarParam(page, G1_SMALL_DSL);
         await g1AddNumber(page);
         reportId = (await publishDashboard(page)).reportId;
@@ -3074,19 +3074,13 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
         await openPublished(page, reportId);
         await page.evaluate(() => ((window as unknown as { __m34: number }).__m34 = 1));
 
-        // − Cancel hides the question and leaves the page as it was.
+        // + Apply reloads the widgets in place: no Yes/No question, and the page itself stays.
+        await expect(page.locator('#btnReloadDashboard')).toHaveText('Apply');
         await page.locator('#btnReloadDashboard').click();
-        await expect(page.locator('#btnConfirmReload')).toBeVisible();
-        await page.locator('#btnCancelReload').click();
-        await expect(page.locator('#btnConfirmReload')).not.toBeVisible();
+        await expect(page.locator('#btnConfirmReload'), 'no question asked').toHaveCount(0);
+        await expect(page.locator('#btnCancelReload')).toHaveCount(0);
         await expect(page.locator('#btnReloadDashboard')).toBeVisible();
-        expect(await page.evaluate(() => (window as unknown as { __m34?: number }).__m34), 'nothing reloaded').toBe(1);
-
-        // + asked again, Confirm goes on and the question goes away.
-        await page.locator('#btnReloadDashboard').click();
-        await expect(page.locator('#btnConfirmReload')).toBeVisible();
-        await page.locator('#btnConfirmReload').click();
-        await expect(page.locator('#btnConfirmReload')).not.toBeVisible();
+        expect(await page.evaluate(() => (window as unknown as { __m34?: number }).__m34), 'the page did not navigate').toBe(1);
       });
     } finally {
       if (reportId) await deleteReportAsAdmin(reportId);
@@ -5792,6 +5786,67 @@ test('(canvas mechanics) M77 Cascading filters: a city list that follows the cou
       await pubBar.locator('#city').selectOption('Marseille');
       await reloadDashboard(pubBar);
       await pPublishedNumberIs(page, ids.number[0], 1, 'published, Marseille');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M78 A long select can be searched; Apply and Reset on the published page', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M78 Search Apply Reset', async (canvasId) => {
+      const cities = frozenRows('geo_cities').map((c) => c.city);
+      expect(cities.length, 'a list long enough to search').toBeGreaterThan(10);
+      const matching = (text: string) => cities.filter((c) => c.toLowerCase().includes(text)).sort();
+
+      await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'city', type: 'String', label: 'City', defaultValue: '') {
+    constraints(required: false)
+    ui(control: 'select', options: 'SELECT city FROM dash_demo.geo_cities ORDER BY city')
+  }
+}
+`);
+      // + a long single select gets a search box; what is typed narrows the list.
+      const bar = page.locator('#formReportParameters');
+      await expect(bar.locator('#city_search')).toBeVisible();
+      await bar.locator('#city_search').fill('ly');
+      await expect.poll(async () => m77Offered(bar, 'city'), { timeout: 10_000 }).toEqual(matching('ly'));
+      await bar.locator('#city').selectOption('Lyon');
+
+      const kpi = await eNewVisualWidget(page, 'geo_cities');
+      await addVisualFilter(page, 0, 'city', 'equals');
+      await bindVisualFilterToParam(page, 0, 'city');
+      await addAggregation(page, 0, 'COUNT', 'city_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, 1, 'Lyon');
+
+      // − a search with no match leaves only the city the filter holds.
+      await bar.locator('#city_search').fill('zzz');
+      await expect.poll(async () => m77Offered(bar, 'city'), { timeout: 10_000 }).toEqual(['Lyon']);
+
+      // + published: search, Apply at once, then Reset back to the defaults.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length;
+      }, { message: 'the saved canvas holds the number widget', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubBar = page.locator('#parameterBarContainer');
+      await pPublishedNumberIs(page, ids.number[0], cities.length, 'published, no city: every city');
+      await pubBar.locator('#city_search').fill('mar');
+      await expect.poll(async () => m77Offered(pubBar, 'city'), { timeout: 10_000 }).toEqual(matching('mar'));
+      await pubBar.locator('#city').selectOption('Marseille');
+      await pubBar.locator('#btnReloadDashboard').click();
+      await expect(pubBar.locator('#btnConfirmReload'), 'Apply asks nothing').toHaveCount(0);
+      await pPublishedNumberIs(page, ids.number[0], 1, 'published, Marseille');
+      await pubBar.locator('#btnResetDashboard').click();
+      await pPublishedNumberIs(page, ids.number[0], cities.length, 'Reset: the default, every city');
+      await expect(pubBar.locator('#city_search'), 'and the search is cleared').toHaveValue('');
     });
   } finally {
     if (reportId) await deleteReportAsAdmin(reportId);

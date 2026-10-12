@@ -1009,8 +1009,6 @@ electronBeforeAfterAllTest(
         // Exercise the country parameter filter — select "Germany"
         await page.selectOption('#country', 'Germany');
         await page.click('#btnReloadDashboard');
-        await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
-        await page.click('#btnConfirmReload');
         await page.waitForTimeout(5000);
 
         // Assert Germany-filtered data across all components
@@ -1448,8 +1446,6 @@ electronBeforeAfterAllTest(
         // and the drawn number is Germany's.
         await page.selectOption('#country', 'Germany');
         await page.click('#btnReloadDashboard');
-        await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
-        await page.click('#btnConfirmReload');
         await expect
           .poll(async () => (await page.locator('#widgetValue-number_netsales_net').innerText()).replace(/[^0-9]/g, ''),
             { timeout: 60000 })
@@ -1637,8 +1633,6 @@ electronBeforeAfterAllTest(
         await expect(page.locator('#chk-dim-Category')).toBeChecked({ timeout: 15000 });
         await page.selectOption('#country', 'France');
         await page.click('#btnReloadDashboard');
-        await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
-        await page.click('#btnConfirmReload');
         await expect(page.locator('#chipDashFilter-Country'), 'the cube follows the new country')
           .toContainText('Country: France (dashboard)', { timeout: 60000 });
         await expect(page.locator('#chk-dim-Category'), 'and the tick the viewer made is still theirs')
