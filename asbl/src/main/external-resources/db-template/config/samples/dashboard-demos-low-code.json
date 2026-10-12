@@ -1,6 +1,12 @@
 {
   "twins": [
     {
+      "of": "dd-sales-channels",
+      "id": "dd-sales-channels-low-code",
+      "reportId": "g-dd-sales-channels-low-code",
+      "title": "Sales Channels (low-code)"
+    },
+    {
       "of": "dd-invoices",
       "id": "dd-invoices-low-code",
       "reportId": "g-dd-invoices-low-code",

@@ -1,0 +1,457 @@
+{
+  "id": "g-dd-sales-channels-low-code",
+  "name": "Sales Channels (low-code)",
+  "description": "The channel budget page: the revenue mix today, what an order is worth in each channel, where the mix is moving month by month, and what each channel sells. One checkbox switches every tile between revenue net of returns and gross.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-sales-channels-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd04-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Sales Channels\n\nThe mobile app has grown from about 14% to about 28% of orders since 2024 while the marketplace has shrunk from 19% to 12%. Marketplace orders come back about twice as often as web orders (10.7% against 5.6%), and Smart Home sells mostly through the app."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd04-chart-revenue-mix-by-channel",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "status",
+                "operator": "not_equals",
+                "value": "cancelled"
+              },
+              {
+                "column": "status",
+                "operator": "not_equals",
+                "value": "returned",
+                "switchParam": "includeReturns",
+                "switchOn": "off"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "SUM",
+                "field": "total_amount"
+              },
+              {
+                "aggregation": "SUM",
+                "field": "total_amount",
+                "share": true
+              }
+            ],
+            "groupBy": [
+              "channel"
+            ],
+            "sort": [
+              {
+                "column": "total_amount_sum",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT \"channel\", CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) AS \"total_amount_sum\", (100.0 * CAST(CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) AS DECIMAL(20,4)) / NULLIF(SUM(CAST(SUM(\"total_amount\") AS DECIMAL(31,4))) OVER (), 0)) AS \"total_amount_sum_pct\"\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\nGROUP BY \"channel\"\nORDER BY CASE WHEN CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "rowsSql": "SELECT *\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\n  AND \"channel\" = ${__drill_channel}\nLIMIT 500",
+          "rowsFields": [
+            "channel"
+          ],
+          "sql": "SELECT \"channel\", CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) AS \"total_amount_sum\", (100.0 * CAST(CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) AS DECIMAL(20,4)) / NULLIF(SUM(CAST(SUM(\"total_amount\") AS DECIMAL(31,4))) OVER (), 0)) AS \"total_amount_sum_pct\"\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\nGROUP BY \"channel\"\nORDER BY CASE WHEN CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(SUM(\"total_amount\") AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "pie",
+            "data": {
+              "labelField": "channel",
+              "datasets": [
+                {
+                  "field": "total_amount_sum",
+                  "label": "Revenue"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Revenue mix by channel"
+                }
+              }
+            }
+          },
+          "grouped": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "channel",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "total_amount_sum",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "total_amount_sum_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "channel",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "total_amount_sum",
+              "kind": "measure"
+            },
+            {
+              "name": "total_amount_sum_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd04-chart-average-order-value-per-channel",
+        "type": "chart",
+        "gridPosition": {
+          "x": 6,
+          "y": 1,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "status",
+                "operator": "not_equals",
+                "value": "cancelled"
+              },
+              {
+                "column": "status",
+                "operator": "not_equals",
+                "value": "returned",
+                "switchParam": "includeReturns",
+                "switchOn": "off"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "AVG",
+                "field": "total_amount"
+              },
+              {
+                "aggregation": "COUNT",
+                "field": "order_id"
+              }
+            ],
+            "groupBy": [
+              "channel"
+            ],
+            "sort": [
+              {
+                "column": "total_amount_avg",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT \"channel\", CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) AS \"total_amount_avg\", COUNT(\"order_id\") AS \"order_id_count\"\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\nGROUP BY \"channel\"\nORDER BY CASE WHEN CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "rowsSql": "SELECT *\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\n  AND \"channel\" = ${__drill_channel}\nLIMIT 500",
+          "rowsFields": [
+            "channel"
+          ],
+          "sql": "SELECT \"channel\", CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) AS \"total_amount_avg\", COUNT(\"order_id\") AS \"order_id_count\"\nFROM \"dash_demo\".\"orders\"\nWHERE \"status\" <> 'cancelled'\n  AND (${includeReturns} = TRUE OR \"status\" <> 'returned')\nGROUP BY \"channel\"\nORDER BY CASE WHEN CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(AVG(CAST(\"total_amount\" AS DECIMAL(31,4))) AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "datasets": [
+                {
+                  "field": "total_amount_avg",
+                  "label": "Average order"
+                }
+              ],
+              "labelField": "channel"
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Average order value per channel"
+                }
+              }
+            }
+          },
+          "grouped": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "total_amount_avg",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "order_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "total_amount_avg",
+              "kind": "measure"
+            },
+            {
+              "name": "order_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd04-chart-channel-share-per-month",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 5,
+          "w": 12,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT date_trunc('month', o.order_ts) AS month,\n       o.channel AS channel,\n       round(100.0 * count(*)\n             / sum(count(*)) OVER (PARTITION BY date_trunc('month', o.order_ts)), 2) AS share_pct\nFROM dash_demo.orders o\nWHERE o.status <> 'cancelled'\n  AND (o.status <> 'returned' OR ${includeReturns})\nGROUP BY 1, 2\nORDER BY 1, 2",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "area",
+            "data": {
+              "labelField": "month",
+              "datasets": [
+                {
+                  "field": "share_pct",
+                  "label": "Share of orders %"
+                }
+              ],
+              "seriesField": "channel"
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Channel share of orders per month"
+                }
+              }
+            }
+          },
+          "series": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "month",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "channel",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "share_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "month",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "channel",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "share_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd04-sankey-channel-to-category",
+        "type": "sankey",
+        "gridPosition": {
+          "x": 0,
+          "y": 9,
+          "w": 12,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT o.channel AS channel,\n       p.category AS category,\n       round(sum(l.line_amount), 2) AS revenue\nFROM dash_demo.orders o\nJOIN dash_demo.order_lines l ON l.order_id = o.order_id\nJOIN dash_demo.products p ON p.product_id = l.product_id\nWHERE o.status <> 'cancelled'\n  AND (o.status <> 'returned' OR ${includeReturns})\nGROUP BY 1, 2\nORDER BY revenue DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "channel",
+              "datasets": [
+                {
+                  "field": "revenue",
+                  "label": "revenue"
+                }
+              ],
+              "seriesField": "category"
+            }
+          },
+          "grouped": true,
+          "series": true,
+          "sourceField": "channel",
+          "_auto_sourceField": true,
+          "targetField": "category",
+          "_auto_targetField": true,
+          "valueField": "revenue",
+          "_auto_valueField": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "channel",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "category",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "revenue",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "channel",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "category",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "revenue",
+              "kind": "measure"
+            }
+          ]
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "includeReturns",
+          "type": "Boolean",
+          "label": "Include returns",
+          "description": "",
+          "defaultValue": false,
+          "constraints": {},
+          "uiHints": {
+            "control": "checkbox"
+          }
+        }
+      ]
+    }
+  }
+}
