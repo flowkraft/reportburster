@@ -7114,4 +7114,396 @@ test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embe
   }
 });
 
+test('(canvas mechanics) M98 Text filters contains and ends with; the relative dates not yet tested', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M98 Contains and relative dates', async () => {
+    // contains and ends with fold both sides to lower case and escape the LIKE wildcards
+    // (`likeFilter` in sql-dialects.ts): LOWER(channel) LIKE LOWER('%app%') ESCAPE '!'.
+    // The channels are marketplace 3723, mobile_app 4932, sales_rep 2176, web 13169 (24000 orders).
+    const kpi = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'channel', 'contains', 'APP');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    // SELECT count(*) FROM dash_demo.orders WHERE lower(channel) LIKE '%app%'  -> 4932
+    await g4ScalarIs(page, kpi, pCount((r) => r.channel.toLowerCase().includes('app')), 'contains, whatever the case');
+
+    // + an underscore typed is an underscore, not LIKE's "any one character" (that would be all 24000).
+    await page.locator('#inputFilterValue-0').fill('_');
+    await runVisualQuery(page);
+    // ... WHERE lower(channel) LIKE '%!_%' ESCAPE '!'  -> 7108 (mobile_app + sales_rep)
+    const withUnderscore = pCount((r) => r.channel.includes('_'));
+    expect(withUnderscore, 'some channels hold an underscore, not all').toBeLessThan(pCount(() => true));
+    await g4ScalarIs(page, kpi, withUnderscore, 'contains _ keeps only the channels that hold one');
+
+    // − a percent sign typed is a percent sign: no channel holds one.
+    await page.locator('#inputFilterValue-0').fill('%');
+    await runVisualQuery(page);
+    // ... WHERE lower(channel) LIKE '%!%%' ESCAPE '!'  -> 0
+    await g4ScalarIs(page, kpi, 0, 'contains % matches nothing');
+
+    // + ends with, whatever the case.
+    await page.locator('#selectFilterOp-0').selectOption('ends_with');
+    await page.locator('#inputFilterValue-0').fill('EB');
+    await runVisualQuery(page);
+    // ... WHERE lower(channel) LIKE '%eb' ESCAPE '!'  -> 13169 (web)
+    await g4ScalarIs(page, kpi, pCount((r) => r.channel.toLowerCase().endsWith('eb')), 'ends with, whatever the case');
+
+    // − the start of a value is not its end: "mobile" begins mobile_app and ends nothing.
+    await page.locator('#inputFilterValue-0').fill('mobile');
+    await runVisualQuery(page);
+    // ... WHERE lower(channel) LIKE '%mobile' ESCAPE '!'  -> 0
+    expect(pCount((r) => r.channel.startsWith('mobile')), 'mobile begins some channel').toBeGreaterThan(0);
+    await g4ScalarIs(page, kpi, pCount((r) => r.channel.toLowerCase().endsWith('mobile')), 'ends with mobile matches nothing');
+
+    // − the filter taken away: every order again.
+    await page.locator('#btnRemoveFilter-0').click();
+    await runVisualQuery(page);
+    // SELECT count(*) FROM dash_demo.orders  -> 24000
+    await g4ScalarIs(page, kpi, pCount(() => true), 'no filter, every order');
+
+    // The relative dates count from the data's today, 2026-09-30 here (M66), and take whole days
+    // (`relativeDayRange` in relative-dates.ts): c >= DATE 'from' AND c < DATE 'the day after the last'.
+    const day = (r: Record<string, string>): string => r.order_ts.slice(0, 10);
+    const between = (from: string, to: string): number => pCount((r) => day(r) >= from && day(r) <= to);
+
+    // + the last 2 weeks: the 14 days that end on the data's today.
+    await addVisualFilter(page, 0, 'order_ts', 'last_n_weeks', '2');
+    await runVisualQuery(page);
+    // ... WHERE order_ts >= DATE '2026-09-17' AND order_ts < DATE '2026-10-01'  -> 451
+    await g4ScalarIs(page, kpi, between('2026-09-17', '2026-09-30'), 'the last 2 weeks end on the data\'s today');
+
+    // − a count that is not a whole number asks nothing: the filter is left out, every order is counted.
+    await page.locator('#inputFilterValue-0').fill('1.5');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, kpi, pCount(() => true), '1.5 weeks is not a period');
+
+    // + the last 2 months: from the day after 2026-07-30 to the data's today.
+    await page.locator('#selectFilterOp-0').selectOption('last_n_months');
+    await page.locator('#inputFilterValue-0').fill('2');
+    await runVisualQuery(page);
+    // ... WHERE order_ts >= DATE '2026-07-31' AND order_ts < DATE '2026-10-01'  -> 1516
+    await g4ScalarIs(page, kpi, between('2026-07-31', '2026-09-30'), 'the last 2 months end on the data\'s today');
+
+    // + the periods take no value and are the calendar's own.
+    const periods: Array<[string, string, string]> = [
+      // ... WHERE order_ts >= DATE '2026-07-01' AND order_ts < DATE '2026-10-01'  -> 2351
+      ['this_quarter', '2026-07-01', '2026-09-30'],
+      // ... WHERE order_ts >= DATE '2026-08-01' AND order_ts < DATE '2026-09-01'  -> 551
+      ['previous_month', '2026-08-01', '2026-08-31'],
+      // ... WHERE order_ts >= DATE '2026-01-01' AND order_ts < DATE '2026-10-01'  -> 7253
+      ['year_to_date', '2026-01-01', '2026-09-30'],
+    ];
+    for (const [operator, from, to] of periods) {
+      await page.locator('#selectFilterOp-0').selectOption(operator);
+      await expect(page.locator('#inputFilterValue-0'), `${operator} takes no value`).toHaveCount(0);
+      await runVisualQuery(page);
+      await g4ScalarIs(page, kpi, between(from, to), `${operator} counts from the data's today`);
+    }
+  });
+});
+
+test('(canvas mechanics) M99 Time buckets: day, quarter, year, day of week, hour of day, quarter of year, raw', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M99 Time buckets', async () => {
+    // Orders per bucket of `order_ts`, counted in the frozen rows the demo database is seeded from
+    // (`order_ts` is 'yyyy-mm-dd hh:mm:ss' there, the same instants DuckDB holds). The DuckDB forms are
+    // `duckdbBucket` in sql-dialects.ts: strftime for day / quarter / year, and the integers of
+    // dayofweek (Sunday = 0), hour and quarter. The truths, all of them adding up to the 24000 orders:
+    //   SELECT strftime(order_ts, '%Y'), count(*) FROM dash_demo.orders GROUP BY 1
+    //     -> 2024 7146, 2025 9601, 2026 7253
+    //   SELECT strftime(order_ts, '%Y') || '-Q' || CAST(quarter(order_ts) AS VARCHAR), count(*) ... GROUP BY 1
+    //     -> 11 groups, 2024-Q1 1271 ... 2026-Q3 2351
+    //   SELECT CAST(quarter(order_ts) AS INTEGER), count(*) ... GROUP BY 1  -> 1 5226, 2 6263, 3 5662, 4 6849
+    //   SELECT CAST(dayofweek(order_ts) AS INTEGER), count(*) ... GROUP BY 1
+    //     -> 0 3222, 1 3965, 2 3618, 3 3445, 4 3404, 5 3437, 6 2909
+    //   SELECT CAST(hour(order_ts) AS INTEGER), count(*) ... GROUP BY 1  -> 17 groups, 7 446 ... 23 708
+    //   SELECT strftime(order_ts, '%Y-%m-%d'), count(*) ... GROUP BY 1  -> 1004 groups, 2026-09-30 31
+    //   SELECT order_ts, count(*) ... GROUP BY 1  -> 23998 groups
+    const per = (key: (ts: string) => string): Record<string, number> => {
+      const n: Record<string, number> = {};
+      for (const r of pOrders) {
+        const k = key(r.order_ts);
+        n[k] = (n[k] ?? 0) + 1;
+      }
+      return n;
+    };
+    const quarterOf = (ts: string): number => Math.floor((Number(ts.slice(5, 7)) - 1) / 3) + 1;
+    const buckets: Array<[Parameters<typeof setTimeBucket>[2], Record<string, number>]> = [
+      ['year', per((ts) => ts.slice(0, 4))],
+      ['quarter', per((ts) => `${ts.slice(0, 4)}-Q${quarterOf(ts)}`)],
+      ['quarter-of-year', per((ts) => String(quarterOf(ts)))],
+      ['day-of-week', per((ts) => String(new Date(`${ts.slice(0, 10)}T00:00:00Z`).getUTCDay()))],
+      ['hour-of-day', per((ts) => String(Number(ts.slice(11, 13))))],
+      ['day', per((ts) => ts.slice(0, 10))],
+    ];
+
+    const id = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'order_ts');
+    // + Auto: the bucket is picked from the column's range, 2024-01-01 to 2026-09-30 (between two and
+    //   ten years: a quarter, `guessTimeBucket`). Waiting for it also lets the range probe land before
+    //   a bucket is picked by hand.
+    await expect(page.locator('#selectTimeBucket-order_ts'), 'Auto picks a quarter for this range')
+      .toHaveValue('quarter', { timeout: 20_000 });
+
+    // − Raw timestamp: a group per instant, so the query stops at its limit (inputLimit's default 500).
+    const queryLimit = 500;
+    await setTimeBucket(page, 'order_ts', 'none');
+    await runVisualQuery(page);
+    expect(new Set(pOrders.map((r) => r.order_ts)).size, 'the instants are more than the limit lets through')
+      .toBeGreaterThan(queryLimit);
+    await expect(page.locator('#selectTimeBucket-order_ts')).toHaveValue('none');
+    await expect(g4RowCount(page)).toContainText(`${queryLimit} rows returned`);
+
+    // + every bucket: one row per group, each with its orders, adding up to every order. The days
+    //   are more than 500, so the limit is raised first.
+    await setVisualLimit(page, 2000);
+    for (const [bucket, want] of buckets) {
+      await setTimeBucket(page, 'order_ts', bucket);
+      await runVisualQuery(page);
+      // a handful of groups is drawn as a chart, and a chart keeps no rows to read: look at the table
+      await switchToWidget(page, 'tabulator');
+      const groups = Object.keys(want).length;
+      const rows = await g4RowsWhere(page, id,
+        (r) => r.length === groups && r.every((x) => want[String(x.order_ts)] !== undefined),
+        `${bucket}: one row per group (${groups})`);
+      const countKey = Object.keys(rows[0]).find((k) => k !== 'order_ts')!;
+      const got: Record<string, number> = {};
+      for (const r of rows) got[String(r.order_ts)] = Number(r[countKey]);
+      expect(got, `${bucket}: the orders of each group`).toEqual(want);
+      expect(Object.values(got).reduce((a, b) => a + b, 0), `${bucket}: the groups lose no order`).toBe(pOrders.length);
+    }
+  });
+});
+
+test('(canvas mechanics) M100 A date range chosen in the filter form, and its hint', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M100 Date range form', async (canvasId) => {
+      // The demo data's today is 2026-09-30 (`dash_demo.as_of`): the presets count from it (M76).
+      // Both days of a range are included.
+      const day = (r: Record<string, string>): string => r.order_ts.slice(0, 10);
+      const between = (from: string, to: string) => pCount((r) => day(r) >= from && day(r) <= to);
+      const bar = page.locator('#formReportParameters');
+
+      // − a range asked of a filter whose id names no first day: the form says how a range is made,
+      //   adds no last day, and the bar draws the one date it is.
+      await page.locator('#btnConfigureFilters').click();
+      await page.locator('#btnAddParameter').waitFor({ state: 'visible', timeout: 5_000 });
+      await page.locator('#btnAddParameter').click();
+      await page.locator('#inputParamLabel-param1').fill('Period');
+      await page.locator('#selectParamType-period').selectOption('Date');
+      await expect(page.locator('#paramRangeHint-period'), 'no hint before a range is asked for').toHaveCount(0);
+      await page.locator('#selectParamWidget-period').selectOption('daterange');
+      await expect(page.locator('#paramRangeHint-period'), 'the form says what a range needs')
+        .toContainText('ends in From (or _from)');
+      await page.locator('#btnDoneFilters').click();
+      await bar.waitFor({ state: 'visible', timeout: 10_000 });
+      await expect.poll(async () => (await m65Params(page, canvasId)).period?.uiHints?.control,
+        { message: 'the filter is saved as a range', timeout: 20_000, intervals: [500] }).toBe('daterange');
+      expect(Object.keys(await m65Params(page, canvasId)), 'no last day was added').toEqual(['period']);
+      await expect(bar.locator('#period'), 'drawn as one date').toHaveAttribute('type', 'date');
+      await expect(bar.locator('#period_range'), 'and not as a range').toHaveCount(0);
+
+      await page.locator('#btnConfigureFilters').click();
+      await page.locator('#btnRemoveParam-period').click();
+      await expect(page.locator('#paramRangeHint-period'), 'the hint goes with its filter').toHaveCount(0);
+
+      // + a label that ends in "from" is slugged into a first day's id; asked for a range, the form adds
+      //   its last day right after it, a Date of its own, and gives no hint.
+      await page.locator('#btnAddParameter').click();
+      await page.locator('#inputParamLabel-param1').fill('Order date from');
+      await expect(page.locator('#inputParamId-order_date_from')).toHaveValue('order_date_from');
+      await page.locator('#selectParamType-order_date_from').selectOption('Date');
+      await page.locator('#selectParamWidget-order_date_from').selectOption('daterange');
+      await expect(page.locator('#inputParamId-order_date_to'), 'the last day is added').toHaveValue('order_date_to');
+      await expect(page.locator('#inputParamLabel-order_date_to')).toHaveValue('To');
+      await expect(page.locator('#selectParamType-order_date_to')).toHaveValue('Date');
+      await expect(page.locator('#paramRangeHint-order_date_from'), 'nothing to hint').toHaveCount(0);
+      await page.locator('#inputParamDefault-order_date_from').fill('2026-01-02');
+      await page.locator('#inputParamDefault-order_date_to').fill('2026-09-30');
+      await page.locator('#btnDoneFilters').click();
+      await bar.waitFor({ state: 'visible', timeout: 10_000 });
+      await expect.poll(async () => (await m65Params(page, canvasId)).order_date_to?.defaultValue,
+        { message: 'the last day\'s default is saved', timeout: 20_000, intervals: [500] }).toBe('2026-09-30');
+      const params = await m65Params(page, canvasId);
+      expect(Object.keys(params).sort(), 'the two days, and the removed filter gone').toEqual(['order_date_from', 'order_date_to']);
+      expect(params.order_date_from).toMatchObject({ type: 'Date', defaultValue: '2026-01-02', uiHints: { control: 'daterange' } });
+      expect(params.order_date_to).toMatchObject({ type: 'Date', label: 'To' });
+
+      // + the bar draws one range control: both days inside it, presets, the defaults as Custom days.
+      await expect(bar.locator('#order_date_from_range'), 'one range control').toBeVisible();
+      await expect(bar.locator('#order_date_from_range #order_date_to'), 'the last day is inside the range').toBeVisible();
+      await expect(bar.locator('label[for="order_date_to"]'), 'and not drawn again on its own').toHaveCount(0);
+      await expect(bar.locator('#order_date_from')).toHaveValue('2026-01-02');
+      await expect(bar.locator('#order_date_to')).toHaveValue('2026-09-30');
+      await expect(bar.locator('#order_date_from_preset'), 'the defaults are days of the author\'s own').toHaveValue('');
+
+      // + a count of orders between the two days, both ends bound.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addVisualFilter(page, 0, 'order_ts', 'between');
+      await bindVisualFilterToParam(page, 0, 'order_date_from');
+      await bindVisualFilterToParam(page, 0, 'order_date_to', 'valueTo');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      // SELECT count(*) FROM dash_demo.orders WHERE order_ts >= DATE '2026-01-02' AND order_ts < DATE '2026-10-01'  -> 7230
+      await g4ScalarIs(page, kpi, between('2026-01-02', '2026-09-30'), 'the defaults: 2 January to the data\'s today');
+
+      // + a preset fills both days at once, from the data's today, and the count follows.
+      await bar.locator('#order_date_from_preset').selectOption('last_90_days');
+      await expect(bar.locator('#order_date_from')).toHaveValue('2026-07-03');
+      await expect(bar.locator('#order_date_to')).toHaveValue('2026-09-30');
+      // ... WHERE order_ts >= DATE '2026-07-03' AND order_ts < DATE '2026-10-01'  -> 2297
+      await g4ScalarIs(page, kpi, between('2026-07-03', '2026-09-30'), 'the last 90 days end on the data\'s today');
+
+      // + published: the same range control, the defaults, and a preset from the same today.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length;
+      }, { message: 'the saved canvas holds the number widget', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubBar = page.locator('#parameterBarContainer');
+      await expect(pubBar.locator('#order_date_from_range'), 'published, the same range control').toBeVisible({ timeout: 30_000 });
+      await pPublishedNumberIs(page, ids.number[0], between('2026-01-02', '2026-09-30'), 'published, the defaults');
+      await pubBar.locator('#order_date_from_preset').selectOption('this_month');
+      await expect(pubBar.locator('#order_date_from')).toHaveValue('2026-09-01');
+      await expect(pubBar.locator('#order_date_to')).toHaveValue('2026-09-30');
+      await reloadDashboard(pubBar);
+      // ... WHERE order_ts >= DATE '2026-09-01' AND order_ts < DATE '2026-10-01'  -> 938
+      await pPublishedNumberIs(page, ids.number[0], between('2026-09-01', '2026-09-30'),
+        'published, this month is the data\'s month');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M101 A cube answer by clicks: dimensions and measures ticked, a granularity picked, a segment applied', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M101 Cube by clicks', async () => {
+    // The truths, from the frozen rows, in the words of the dd-delivery cube: Orders is every order,
+    // Returned the ones with status 'returned', the segment arrived_late is
+    // CAST(delivered_ts AS DATE) > promised_date, and OrderedAt is order_ts cut to its month, quarter or year.
+    // On the seeded dash_demo (today 2026-09-30) the same numbers come from
+    //   SELECT channel, count(*), count(*) FILTER (WHERE status = 'returned') FROM dash_demo.orders GROUP BY 1
+    //     marketplace 3723 / 389, mobile_app 4932 / 265, sales_rep 2176 / 61, web 13169 / 717 (24000 / 1432 in all)
+    //   the same WHERE CAST(delivered_ts AS DATE) > promised_date
+    //     marketplace 222 / 26, mobile_app 298 / 11, sales_rep 139 / 3, web 898 / 42
+    //   SELECT CAST(DATE_TRUNC('quarter', order_ts) AS DATE), count(*), count(*) FILTER (WHERE status = 'returned') ... GROUP BY 1
+    //     11 quarters, 2024-01-01 1271 / 80 ... 2026-07-01 2351 / 144
+    //   the same with 'year': 2024-01-01 7146 / 424, 2025-01-01 9601 / 558, 2026-01-01 7253 / 450
+    //   SELECT count(DISTINCT DATE_TRUNC('month', order_ts)) FROM dash_demo.orders: 33
+    // No dd-* demo cube declares a drill path (hierarchy), so no chk-hier-<h>-<level> box exists to tick here.
+    const orders = frozenRows('orders');
+    type Truth = Map<string, { orders: number; returned: number }>;
+    const tally = (rows: Array<Record<string, string>>, keyOf: (o: Record<string, string>) => string): Truth => {
+      const out: Truth = new Map();
+      for (const o of rows) {
+        const t = out.get(keyOf(o)) ?? { orders: 0, returned: 0 };
+        t.orders += 1;
+        if (o.status === 'returned') t.returned += 1;
+        out.set(keyOf(o), t);
+      }
+      return out;
+    };
+    const late = orders.filter((o) => o.delivered_ts !== '' && o.delivered_ts.slice(0, 10) > o.promised_date);
+    const byChannel = tally(orders, (o) => o.channel);
+    const lateByChannel = tally(late, (o) => o.channel);
+    const byMonth = tally(orders, (o) => `${o.order_ts.slice(0, 7)}-01`);
+    const byQuarter = tally(orders, (o) =>
+      `${o.order_ts.slice(0, 4)}-${String(Math.floor((Number(o.order_ts.slice(5, 7)) - 1) / 3) * 3 + 1).padStart(2, '0')}-01`);
+    const byYear = tally(orders, (o) => `${o.order_ts.slice(0, 4)}-01-01`);
+    const returnedInAll = orders.filter((o) => o.status === 'returned').length;
+
+    // How a row of the answer is named: by its channel, or by the first day of its period (a DATE,
+    // read as its yyyy-mm-dd whether it arrives as text or as a number of milliseconds).
+    const channelOf = (r: Record<string, unknown>): string => String(r.Channel);
+    const periodOf = (r: Record<string, unknown>): string => {
+      const day = r.OrderedAt;
+      return (typeof day === 'number' ? new Date(day).toISOString() : String(day)).slice(0, 10);
+    };
+    const answers = (rows: Array<Record<string, unknown>>, keyOf: (r: Record<string, unknown>) => string, truth: Truth): boolean =>
+      rows.length === truth.size && rows.every((r) => 'Returned' in r
+        && truth.get(keyOf(r))?.orders === Number(r.Orders) && truth.get(keyOf(r))?.returned === Number(r.Returned));
+    const expectAnswer = (
+      rows: Array<Record<string, unknown>>,
+      keyOf: (r: Record<string, unknown>) => string,
+      truth: Truth,
+      what: string,
+    ): void => {
+      expect(rows.map(keyOf).sort(), `${what}: one row each`).toEqual([...truth.keys()].sort());
+      for (const [key, want] of truth) {
+        const row = rows.find((r) => keyOf(r) === key);
+        expect(Number(row!.Orders), `${what} ${key}: orders`).toBe(want.orders);
+        expect(Number(row!.Returned), `${what} ${key}: returned`).toBe(want.returned);
+      }
+    };
+    const totalsOnly = (r: Array<Record<string, unknown>>): boolean =>
+      r.length === 1 && 'Returned' in r[0] && Number(r[0].Orders) === orders.length && Number(r[0].Returned) === returnedInAll;
+
+    const id = await eNewVisualWidget(page, 'orders');
+    await pickVisualCube(page, 'dd-delivery');
+    const cube = page.locator('#cubeQueryBuilderRenderer');
+    await expect(cube.locator('#chk-meas-Orders'), 'the cube tree is drawn, nothing ticked').not.toBeChecked({ timeout: 15_000 });
+
+    // + a measure ticked alone is one number: every order placed.
+    await cube.locator('#chk-meas-Orders').check();
+    await g4RowsWhere(page, id, (r) => r.length === 1 && Number(r[0].Orders) === orders.length, `one row: the ${orders.length} orders`);
+
+    // + a dimension ticked beside it splits that number, one row per channel. The answer of a
+    //   dimension and a measure draws itself as a chart; the rows are read off a table, picked once
+    //   the answer is in (so the pick is not undone by the chart the answer chooses).
+    await cube.locator('#chk-dim-Channel').check();
+    await expect(g4RowCount(page), 'one row per channel').toContainText(`${byChannel.size} rows returned`, { timeout: 30_000 });
+    await switchToWidget(page, 'tabulator');
+    // + a second measure is a second column of the same rows.
+    await cube.locator('#chk-meas-Returned').check();
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, channelOf, byChannel), 'orders and returned orders per channel'),
+      channelOf, byChannel, 'per channel');
+
+    // + a segment narrows every number to the orders that arrived late (its folder opens with a click).
+    await cube.locator('#grp-filters').click();
+    await cube.locator('#chk-seg-arrived_late').check();
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, channelOf, lateByChannel), 'only the late orders, per channel'),
+      channelOf, lateByChannel, 'late, per channel');
+    // − unticked, it narrows nothing: the totals come back.
+    await cube.locator('#chk-seg-arrived_late').uncheck();
+    await expect(cube.locator('#chk-seg-arrived_late')).not.toBeChecked();
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, channelOf, byChannel), 'every order again, per channel'),
+      channelOf, byChannel, 'per channel again');
+
+    // − the dimension unticked: one row of totals again, and a date not ticked has no grain to pick.
+    await cube.locator('#chk-dim-Channel').uncheck();
+    await g4RowsWhere(page, id, totalsOnly, 'one row of totals');
+    await expect(cube.locator('#gran-OrderedAt'), 'no grain before the date is ticked').toHaveCount(0);
+
+    // + a time dimension ticked asks for its month first.
+    await cube.locator('#chk-dim-OrderedAt').check();
+    await expect(cube.locator('#gran-OrderedAt'), 'a ticked date is read by month').toHaveValue('month');
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, periodOf, byMonth), `one row per month (${byMonth.size})`),
+      periodOf, byMonth, 'per month');
+
+    // + the grain picked as quarter: one row per quarter, each the sum of its months.
+    await cube.locator('#gran-OrderedAt').selectOption('quarter');
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, periodOf, byQuarter), `one row per quarter (${byQuarter.size})`),
+      periodOf, byQuarter, 'per quarter');
+
+    // + and as year.
+    await cube.locator('#gran-OrderedAt').selectOption('year');
+    await expect(cube.locator('#gran-OrderedAt')).toHaveValue('year');
+    expectAnswer(await g4RowsWhere(page, id, (r) => answers(r, periodOf, byYear), `one row per year (${byYear.size})`),
+      periodOf, byYear, 'per year');
+
+    // − the date unticked: its grain goes with it, and the answer is the totals again.
+    await cube.locator('#chk-dim-OrderedAt').uncheck();
+    await expect(cube.locator('#gran-OrderedAt')).toHaveCount(0);
+    await g4RowsWhere(page, id, totalsOnly, 'one row of totals again');
+  });
+});
+
 });
