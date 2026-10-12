@@ -8,6 +8,7 @@
   // can ask it directly - see src/shared/parameter-controls.test.ts.
   import { controlTypeOf, defaultForType, isTicked } from '../shared/parameter-controls';
   import { slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets } from '../shared/slicer-selections';
+  import { withCsrfHeader } from '../shared/session-request';
   // A `date-range` control draws `<id>From` and `<id>To` as one range with presets - see
   // src/shared/date-range.ts.
   import {
@@ -259,6 +260,12 @@
         multiSearch[p.id] = '';
         multiPage[p.id] = 0;
       }
+    });
+
+    // The options a filter's SELECT answered came with the parameters, asked for these defaults.
+    optionsAskedFor = {};
+    parameters.forEach(p => {
+      if (optionsDependOn(p).length > 0) optionsAskedFor[p.id] = dependencyKey(p, formValues);
     });
 
     // Starting values the page URL carries: a link can hold a view. They are seeded HERE, before
@@ -719,6 +726,95 @@
     dispatch('valueChange', values);
     // Emit as CustomEvent for Angular/vanilla JS consumers
     emitHostEvent('valueChange', values);
+    refreshDependentOptions();
+  }
+
+  // ── Cascading filters (#17) ───────────────────────────────────────────────
+  // A filter whose options SELECT names other filters (`WHERE country = ${country}`) says which in
+  // `uiHints.optionsDependOn` (the server's config, or the Canvas, reads that off the SQL). When one
+  // of them changes, its options are asked again for the values the form holds: from the server on a
+  // published dashboard, from the host otherwise - an `optionsChange` event the Canvas answers with
+  // `setDependentOptions`.
+
+  /** The values each dependent filter's options were last asked for: an unchanged one is not asked again. */
+  let optionsAskedFor: { [id: string]: string } = {};
+
+  function optionsDependOn(p: ParamMeta): string[] {
+    const deps = (p.uiHints as any)?.optionsDependOn;
+    return Array.isArray(deps) ? deps.map(String) : [];
+  }
+
+  function dependencyKey(p: ParamMeta, values: { [id: string]: any }): string {
+    return JSON.stringify(optionsDependOn(p).map(id => values[id] ?? ''));
+  }
+
+  /** The filters a dependent filter's options follow, by their labels, for the note under it. */
+  function dependsOnLabels(p: ParamMeta): string {
+    return optionsDependOn(p)
+      .map(id => { const q = (parameters || []).find(x => x.id === id); return q ? paramLabel(q) : id; })
+      .join(', ');
+  }
+
+  function refreshDependentOptions() {
+    for (const p of parameters || []) {
+      if (optionsDependOn(p).length === 0) continue;
+      const key = dependencyKey(p, formValues);
+      if (optionsAskedFor[p.id] === key) continue;
+      optionsAskedFor[p.id] = key;
+      askOptions(p, key);
+    }
+  }
+
+  async function askOptions(p: ParamMeta, key: string) {
+    const values = { ...formValues };
+    if (!(reportId && apiBaseUrl)) {
+      emitHostEvent('optionsChange', { id: p.id, values });
+      return;
+    }
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (embedToken) headers['X-Embed-Token'] = embedToken;
+      const response = await fetch(`${apiBaseUrl}/reports/${encodeURIComponent(reportId)}/parameter-options`, {
+        method: 'POST',
+        headers: withCsrfHeader(headers),
+        body: JSON.stringify({ param: p.id, params: values }),
+      });
+      if (!response.ok) throw new Error(`parameter-options answered ${response.status}`);
+      const answer = await response.json();
+      // Asked again meanwhile: only the newest answer is shown.
+      if (optionsAskedFor[p.id] !== key) return;
+      setDependentOptions(p.id, Array.isArray(answer?.options) ? answer.options : []);
+    } catch (err) {
+      console.warn(`rb-parameters: the options of "${p.id}" could not be asked again`, err);
+    }
+  }
+
+  /**
+   * A dependent filter's new options, and its value kept only where they still offer it: a city of
+   * the country no longer picked is no answer. What a host answers an `optionsChange` with.
+   */
+  export function setDependentOptions(id: string, options: any[]) {
+    const p = (parameters || []).find(x => x.id === id);
+    if (!p) return;
+    setOptions(id, options);
+    const offered = new Set(loadOptions(p).map(o => String(o.value)));
+    const control = getControlType(p);
+    const current = formValues[id];
+    let next = current;
+    if ((control === 'select' || control === 'radio') && current != null && current !== ''
+        && !offered.has(String(current))) {
+      next = '';
+    } else if (control === 'multi-select' && typeof current === 'string' && current !== '' && current !== '*') {
+      const picked = splitEscaped(current);
+      const kept = picked.filter(v => offered.has(v));
+      if (kept.length !== picked.length) next = joinEscaped(kept);
+    }
+    if (next === current) return;
+    formValues[id] = next;
+    formValues = formValues;
+    validateAll();
+    emitValues();
+    syncUrl();
   }
 
   /**
@@ -1161,6 +1257,11 @@
               on:input={(e) => handleChange(p, e)}
               on:blur={() => handleBlur(p)}
             />
+          {/if}
+
+          {#if optionsDependOn(p).length > 0}
+            <!-- Its options are asked again when these filters change (#17). -->
+            <div class="rb-depends-note" id={p.id + '_dependsOn'} style="font-size:11px;opacity:0.7;">Follows {dependsOnLabels(p)}</div>
           {/if}
 
           {#if isLocked(p)}

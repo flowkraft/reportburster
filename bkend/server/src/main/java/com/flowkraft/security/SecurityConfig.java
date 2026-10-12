@@ -339,10 +339,12 @@ public class SecurityConfig {
 				// EndpointRoleMatrixTest reads this list as text - a symbol would let a sixth path in
 				// without anybody deciding. That test also checks this list against
 				// EmbedTokenAuthorizationManager.CUBE_PATHS, in both directions.
+				// parameter-options is the config's own filter options asked again for the values the
+				// viewer picked (a city list for the country chosen), so it answers to the same token.
 				.requestMatchers("/api/reports/*/config", "/api/reports/*/data", "/dashboard/*",
 						"/api/analytics/pivot", "/api/reports/*/cube/*/meta", "/api/reports/*/cube/*/query",
 						"/api/reports/*/cube/*/filter-options", "/api/reports/*/cube/*/drill",
-						"/api/reports/*/cube/*/sql")
+						"/api/reports/*/cube/*/sql", "/api/reports/*/parameter-options")
 				.access(embedTokenAuthorization())
 
 				.anyRequest().authenticated());

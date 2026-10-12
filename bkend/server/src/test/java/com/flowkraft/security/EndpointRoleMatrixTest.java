@@ -178,7 +178,8 @@ class EndpointRoleMatrixTest {
 				"\"/api/reports/*/config\", \"/api/reports/*/data\", \"/dashboard/*\","
 						+ " \"/api/analytics/pivot\", \"/api/reports/*/cube/*/meta\","
 						+ " \"/api/reports/*/cube/*/query\", \"/api/reports/*/cube/*/filter-options\","
-						+ " \"/api/reports/*/cube/*/drill\", \"/api/reports/*/cube/*/sql\""),
+						+ " \"/api/reports/*/cube/*/drill\", \"/api/reports/*/cube/*/sql\","
+						+ " \"/api/reports/*/parameter-options\""),
 				matchersEndingIn(config, ".access("),
 				"The token-authorised paths changed. Nine of them were decided, each because a web"
 						+ " component on somebody else's page needs it - the last five because a live cube"

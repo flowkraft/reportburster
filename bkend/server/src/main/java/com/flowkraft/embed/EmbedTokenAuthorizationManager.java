@@ -57,6 +57,12 @@ public class EmbedTokenAuthorizationManager implements AuthorizationManager<Requ
 	private static final Pattern REPORT_CONFIG = Pattern.compile("^/api/reports/([^/]+)/config/?$");
 
 	/**
+	 * A filter's options asked again for the values the viewer picked: the config's own options
+	 * SELECT, bound to other values, so the same read of the same report.
+	 */
+	private static final Pattern REPORT_OPTIONS = Pattern.compile("^/api/reports/([^/]+)/parameter-options/?$");
+
+	/**
 	 * A live cube of a published dashboard: its field tree, the rows one selection asks for, the
 	 * rows behind one number, the values a dimension may be filtered by, and — where the author
 	 * turned it on — the SQL a selection would be answered by. All of them are ways of reading the
@@ -290,6 +296,10 @@ public class EmbedTokenAuthorizationManager implements AuthorizationManager<Requ
 		Matcher config = REPORT_CONFIG.matcher(path);
 		if (config.matches())
 			return Optional.of(decode(config.group(1)));
+
+		Matcher options = REPORT_OPTIONS.matcher(path);
+		if (options.matches())
+			return Optional.of(decode(options.group(1)));
 
 		Matcher cube = REPORT_CUBE.matcher(path);
 		if (cube.matches())

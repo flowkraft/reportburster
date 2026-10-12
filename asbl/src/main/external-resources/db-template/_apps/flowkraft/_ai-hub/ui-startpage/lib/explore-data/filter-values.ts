@@ -20,3 +20,16 @@ export function filterValueApplies(
   // Nothing was entered, by the component seeding itself: it may not shadow a value already there.
   return !current;
 }
+
+/**
+ * The other filters an options SELECT names as `${id}`, in the bar's order: the ones whose change
+ * asks it again (#17). The same rule as the server's `ReportingService.optionsUses`, which the
+ * published dashboard's config reads.
+ */
+export function optionsUses(sql: string, params: { id: string }[], ownId: string): string[] {
+  const uses: string[] = [];
+  for (const p of params) {
+    if (p.id && p.id !== ownId && !uses.includes(p.id) && sql.includes("${" + p.id + "}")) uses.push(p.id);
+  }
+  return uses;
+}

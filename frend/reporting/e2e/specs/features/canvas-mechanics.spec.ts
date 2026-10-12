@@ -5721,4 +5721,81 @@ test('(canvas mechanics) M76 A date range: one control, two dates, presets from 
   }
 });
 
+/** The values a select of the filter bar offers, sorted, its empty "no value" choice left out. */
+async function m77Offered(bar: Locator, id: string): Promise<string[]> {
+  const values = await bar.locator(`select#${id} option`).evaluateAll(
+    (options) => options.map((o) => (o as HTMLOptionElement).value));
+  return values.filter((v) => v !== '').sort();
+}
+
+test('(canvas mechanics) M77 Cascading filters: a city list that follows the country', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M77 Cascading filters', async (canvasId) => {
+      const cities = frozenRows('geo_cities');
+      const citiesOf = (code: string) => cities.filter((c) => c.country_code === code).map((c) => c.city).sort();
+      expect(citiesOf('DE').length, 'the demo has German cities').toBeGreaterThan(1);
+      expect(citiesOf('FR').length, 'and French ones').toBeGreaterThan(1);
+
+      // + the city list's SELECT names ${country}: it offers the default country's cities.
+      await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'country', type: 'String', label: 'Country', defaultValue: 'DE') {
+    constraints(required: false)
+    ui(control: 'select', options: 'SELECT DISTINCT country_code AS value, country AS label FROM dash_demo.geo_cities ORDER BY label')
+  }
+  parameter(id: 'city', type: 'String', label: 'City', defaultValue: 'Berlin') {
+    constraints(required: false)
+    ui(control: 'select', options: 'SELECT city FROM dash_demo.geo_cities WHERE country_code = \${country} ORDER BY city')
+  }
+}
+`);
+      const bar = page.locator('#formReportParameters');
+      await expect.poll(async () => m77Offered(bar, 'city'), { timeout: 20_000 }).toEqual(citiesOf('DE'));
+      await expect(bar.locator('#city_dependsOn'), 'the form says what the list follows').toContainText('Country');
+
+      // + the filter dialog names the filter the SELECT reads.
+      await page.locator('#btnConfigureFilters').click();
+      await expect(page.locator('[id="paramOptionsUses-city"]')).toContainText('country');
+      await page.locator('#btnCloseFilterConfig').click();
+
+      // + a count of the cities the city filter keeps: one, Berlin.
+      const kpi = await eNewVisualWidget(page, 'geo_cities');
+      await addVisualFilter(page, 0, 'city', 'equals');
+      await bindVisualFilterToParam(page, 0, 'city');
+      await addAggregation(page, 0, 'COUNT', 'city_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, 1, 'Berlin');
+
+      // + another country: the list is France's, and Berlin, no longer offered, is no filter any more.
+      await bar.locator('#country').selectOption('FR');
+      await expect.poll(async () => m77Offered(bar, 'city'), { timeout: 20_000 }).toEqual(citiesOf('FR'));
+      await g4ScalarIs(page, kpi, cities.length, 'no city picked: every city');
+      await bar.locator('#city').selectOption('Lyon');
+      await g4ScalarIs(page, kpi, 1, 'Lyon');
+
+      // + published: the same list, asked again of the server when the country changes.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length;
+      }, { message: 'the saved canvas holds the number widget', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubBar = page.locator('#parameterBarContainer');
+      await expect.poll(async () => m77Offered(pubBar, 'city'), { timeout: 30_000 }).toEqual(citiesOf('DE'));
+      await pPublishedNumberIs(page, ids.number[0], 1, 'published, Berlin');
+      await pubBar.locator('#country').selectOption('FR');
+      await expect.poll(async () => m77Offered(pubBar, 'city'), { timeout: 30_000 }).toEqual(citiesOf('FR'));
+      await pubBar.locator('#city').selectOption('Marseille');
+      await reloadDashboard(pubBar);
+      await pPublishedNumberIs(page, ids.number[0], 1, 'published, Marseille');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });

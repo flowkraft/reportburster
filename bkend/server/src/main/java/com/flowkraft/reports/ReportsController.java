@@ -495,6 +495,28 @@ public class ReportsController {
 				userVariables.of(httpRequest), params));
 	}
 
+	@Operation(summary = "One filter's options for the values the viewer picked, when its SELECT names other filters")
+	@PostMapping(value = "/{reportId}/parameter-options", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Map<String, Object>> parameterOptions(@PathVariable String reportId,
+			@RequestBody(required = false) Map<String, Object> request, HttpServletRequest httpRequest)
+			throws Exception {
+
+		// The options the config already answered, asked again for other values: the same two
+		// checks /config makes, a share link's locks over the viewer's values, and the person's own
+		// dp_ values over whatever the body says, as /data does.
+		dashboardAccess.check(reportId, httpRequest);
+		reportAccess.assertReportReadable(reportId, httpRequest);
+
+		Map<String, Object> asked = request != null ? request : Map.of();
+		String param = asked.get("param") != null ? asked.get("param").toString() : "";
+		Map<String, Object> params = new LinkedHashMap<>(lockedOver(asked.get("params") instanceof Map
+				? castParams(asked.get("params")) : Map.of(), httpRequest));
+		params.putAll(userVariables.of(httpRequest));
+		Map<String, Object> answer = new LinkedHashMap<>();
+		answer.put("options", reportingService.parameterOptions(reportId, param, params));
+		return Mono.just(answer);
+	}
+
 	/** The body's own {@code params} map, as a map — the request is JSON, so the keys are names. */
 	@SuppressWarnings("unchecked")
 	private static Map<String, Object> castParams(Object params) {

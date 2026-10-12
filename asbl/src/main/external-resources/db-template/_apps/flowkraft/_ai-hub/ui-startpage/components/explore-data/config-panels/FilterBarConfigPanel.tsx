@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { EditorView } from "@codemirror/view";
 import { useCanvasStore, type ParamMeta } from "@/lib/stores/canvas-store";
+import { optionsUses } from "@/lib/explore-data/filter-values";
 import { fetchDslExample } from "@/lib/explore-data/ai-prompt-builder";
 import { DslHelpDialog } from "./DslHelpDialog";
 import { DslExampleDialog } from "./DslExampleDialog";
@@ -271,6 +272,7 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
                 <ParameterRow
                   key={i}
                   param={p}
+                  allParams={params}
                   onChange={(updated) => updateParam(i, updated)}
                   onRemove={() => removeParam(i)}
                 />
@@ -379,11 +381,13 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
 
 interface ParameterRowProps {
   param: ParamMeta;
+  /** Every filter of the bar, to name the ones an options SELECT reads (#17). */
+  allParams: ParamMeta[];
   onChange: (updated: ParamMeta) => void;
   onRemove: () => void;
 }
 
-function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
+function ParameterRow({ param, allParams, onChange, onRemove }: ParameterRowProps) {
   const constraints = (param.constraints ?? {}) as Record<string, unknown>;
   const uiHints     = (param.uiHints     ?? {}) as Record<string, unknown>;
   const key         = param.id || param.label;
@@ -398,6 +402,10 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
   // A range is drawn from a filter whose id names its first day (`...From`); any other id is a plain date.
   const rangeWithoutFrom = control === "daterange" && rangeToIdOf(param.id ?? "") === null;
   const isList      = control === "multiselect";
+  // The filters an options SELECT reads: the bar asks it again when one of them changes (#17).
+  const optionsReads = typeof options === "string" && options.trimStart().toUpperCase().startsWith("SELECT")
+    ? optionsUses(options, allParams, param.id)
+    : [];
 
   // What a list field shows while it is being typed: the stored value is parsed on every key, and
   // drawing it back would swallow a trailing ", " before the next value is typed.
@@ -580,6 +588,12 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
             onBlur={() => typed("options")}
             className="text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content w-full font-mono"
           />
+          {optionsReads.length > 0 && (
+            <p id={`paramOptionsUses-${key}`} className="mt-1 text-[10px] text-base-content/60">
+              Asked again when {optionsReads.join(", ")} changes. A line that names an empty filter is left
+              out, as in a widget's query: give each such condition a line of its own (in the DSL).
+            </p>
+          )}
         </div>
       )}
 

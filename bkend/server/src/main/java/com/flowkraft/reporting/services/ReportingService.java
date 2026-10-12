@@ -28,8 +28,10 @@ import com.flowkraft.reports.ReportsService;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.cubes.CubeDataToday;
 import com.flowkraft.cubes.CubeDates;
+import com.flowkraft.cubes.DashboardParameters;
 import com.flowkraft.queries.ConnectionFactory;
 import com.flowkraft.queries.SqlOptionRows;
+import com.flowkraft.queries.services.QueriesService;
 import com.flowkraft.reporting.dtos.ReportFullConfigDto;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
@@ -37,6 +39,7 @@ import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsParser;
 import com.flowkraft.reporting.dsl.slicer.SlicerOptionsParser;
+import com.sourcekraft.documentburster.common.reportparameters.BuiltinVariables;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
@@ -884,28 +887,139 @@ public class ReportingService {
 
 	public void resolveParameterSqlOptions(List<ReportParameter> parameters, String connectionCode) throws Exception {
 		for (ReportParameter param : parameters) {
-			Object options = param.uiHints.get("options");
-			if (options instanceof String) {
-				String sql = ((String) options).trim();
-				if (sql.toUpperCase().startsWith("SELECT")) {
-					try (DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager()) {
-						SqlExecutor sqlExec = new SqlExecutor(dbManager);
-						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
+			String sql = optionsSqlOf(param);
+			if (sql == null)
+				continue;
+			// A SELECT that names other filters (`WHERE country = ${country}`) is answered for their
+			// defaults here, and again for the viewer's own values each time one of them changes:
+			// the filter bar learns which ones from `optionsDependOn` (#17).
+			List<String> uses = optionsUses(sql, parameters, param.id);
+			List<Object> resolved = optionsFor(sql, parameters, Map.of(), connectionCode);
+			param.uiHints.put("options", resolved);
+			if (!uses.isEmpty())
+				param.uiHints.put("optionsDependOn", uses);
+			log.debug("Resolved SQL options for param '" + param.id + "': " + resolved.size() + " values");
+		}
+	}
 
-						// 1-col SQL → flat List<String> (back-compat for single-value selects).
-						// 2+-col SQL → List<Object[]> where each entry is [value, label] —
-						// the shape `<rb-parameters>` and `FilterBar.tsx` both consume to render
-						// `name` while binding `id` to the IN-list. Same convention used by the
-						// canvas-side resolver in FilterBar.tsx.
-						// The loop that reads those two shapes lives in SqlOptionRows, because a
-						// cube dimension's filter_options reads exactly the same rows.
-						List<Object> resolved = SqlOptionRows.options(rows);
-						param.uiHints.put("options", resolved);
-						log.debug("Resolved SQL options for param '" + param.id + "': " + resolved.size() + " values");
-					}
-				}
+	/** The SELECT a parameter takes its options from, or null when its options are a list of its own. */
+	static String optionsSqlOf(ReportParameter param) {
+		Object options = param.uiHints == null ? null : param.uiHints.get("options");
+		if (!(options instanceof String))
+			return null;
+		String sql = ((String) options).trim();
+		return sql.toUpperCase().startsWith("SELECT") ? sql : null;
+	}
+
+	/**
+	 * The other filters an options SELECT names as {@code ${id}}, in the dashboard's order: the
+	 * ones whose change asks the SELECT again. A name the dashboard does not declare (a built-in
+	 * {@code dp_} variable) and the parameter's own id are not among them.
+	 */
+	static List<String> optionsUses(String sql, List<ReportParameter> declared, String ownId) {
+		List<String> uses = new ArrayList<>();
+		for (ReportParameter p : declared) {
+			if (p.id == null || p.id.equals(ownId) || uses.contains(p.id))
+				continue;
+			if (sql.contains("${" + p.id + "}"))
+				uses.add(p.id);
+		}
+		return uses;
+	}
+
+	/**
+	 * The options an options SELECT answers. Where it names other filters, their values are bound
+	 * the way a widget's query binds them ({@link QueriesService#prepare}): the viewer's answer, or
+	 * the filter's default, typed as declared; a filter with no value takes its line out, so a
+	 * city list with no country picked lists every city. A built-in {@code dp_} value is bound as
+	 * the request carries it. A SELECT that names nothing runs as written, as it always has.
+	 *
+	 * <p>1-col SQL gives a flat list, 2+-col SQL {@code [value, label]} pairs - the shapes
+	 * {@code <rb-parameters>} and {@code FilterBar.tsx} read ({@link SqlOptionRows}, which a cube
+	 * dimension's filter_options reads too).
+	 */
+	List<Object> optionsFor(String sql, List<ReportParameter> declared, Map<String, ?> answered,
+			String connectionCode) throws Exception {
+
+		String toRun = sql;
+		Map<String, Object> bound = null;
+		if (sql.contains("${")) {
+			Map<String, Object> values = new LinkedHashMap<>();
+			for (ReportParameter p : declared) {
+				if (p.id == null)
+					continue;
+				Object value = answered.containsKey(p.id) ? answered.get(p.id) : p.defaultValue;
+				values.put(p.id, asText(value));
+			}
+			answered.forEach((name, value) -> {
+				if (BuiltinVariables.isBuiltinName(name))
+					values.put(name, asText(value));
+			});
+			QueriesService.PreparedSql prepared = QueriesService.prepare(sql, values, DashboardParameters.types(declared));
+			if (prepared.sql() == null || prepared.sql().isBlank())
+				return new ArrayList<>();
+			toRun = prepared.sql();
+			bound = prepared.params();
+		}
+		try (DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager()) {
+			return SqlOptionRows.options(new SqlExecutor(dbManager).queryOn(connectionCode, toRun, bound));
+		}
+	}
+
+	/** A value as the text a filter holds it: a list as its comma-separated values, nothing as empty. */
+	private static String asText(Object value) {
+		if (value == null)
+			return "";
+		if (value instanceof List<?> list) {
+			List<String> parts = new ArrayList<>();
+			for (Object one : list)
+				parts.add(String.valueOf(one));
+			return String.join(",", parts);
+		}
+		return String.valueOf(value);
+	}
+
+	/**
+	 * One filter's options for the values the viewer has picked (#17): what {@code /config} answered
+	 * for the defaults, asked again when a filter its SELECT names changes. The SQL, the connection
+	 * and the declared types are the report's own, read from its folder as {@link #loadReportConfig}
+	 * reads them - never from the request, which only carries values.
+	 */
+	public List<Object> parameterOptions(String reportCode, String paramId, Map<String, ?> answered)
+			throws Exception {
+
+		Path itemDir = null;
+		for (Path dir : List.of(Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports", reportCode),
+				Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", reportCode),
+				Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples",
+						SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode))) {
+			if (Files.exists(dir)) {
+				itemDir = dir;
+				break;
 			}
 		}
+		if (itemDir == null)
+			throw new IllegalArgumentException("Report not found: " + reportCode);
+
+		Path paramsPath = itemDir.resolve(reportCode + "-report-parameters-spec.groovy");
+		Path reportingPath = itemDir.resolve("reporting.xml");
+		String connectionCode = Files.exists(reportingPath)
+				? extractXmlValue(Files.readString(reportingPath), "conncode") : "";
+		if (!Files.exists(paramsPath) || connectionCode.isEmpty())
+			throw new IllegalArgumentException("Report " + reportCode + " has no filters that read a connection");
+
+		List<ReportParameter> declared = ReportParametersHelper.parseGroovyParametersDslCode(Files.readString(paramsPath));
+		resolveRelativeParameterDefaults(declared, connectionCode);
+		ReportParameter param = null;
+		for (ReportParameter p : declared) {
+			if (p.id != null && p.id.equals(paramId))
+				param = p;
+		}
+		String sql = param == null ? null : optionsSqlOf(param);
+		if (sql == null)
+			throw new IllegalArgumentException("Report " + reportCode + " has no filter '" + paramId
+					+ "' whose options come from a SELECT");
+		return optionsFor(sql, declared, answered == null ? Map.of() : answered, connectionCode);
 	}
 
 	private String extractXmlValue(String content, String tag) {
