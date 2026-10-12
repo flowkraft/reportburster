@@ -7,6 +7,7 @@
   import { decorateTiles } from '../shared/tile-menu';
   // A click on a bar or a table row opens the rows behind it (#21).
   import { wireDrillThrough } from '../shared/drill-through';
+  import { wireNoData } from '../shared/no-data';
   // How often the dashboard asks its data again by itself, as its author set it (#22).
   import { autoRefreshMinutesOf } from '../shared/auto-refresh';
   import { fieldOf, SLICER_TAG, slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets,
@@ -458,6 +459,7 @@
       });
       decorateTiles(dashboardContainer);
       wireDrillThrough(dashboardContainer);
+      wireNoData(dashboardContainer);
       startAutoRefresh();
       watchForNewTiles();
     }

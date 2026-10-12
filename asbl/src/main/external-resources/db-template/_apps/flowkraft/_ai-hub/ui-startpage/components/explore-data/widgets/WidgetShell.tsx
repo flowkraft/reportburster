@@ -100,6 +100,10 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
     && !!widget?.dataSource?.visualQuery?.showInDashboard;
   const textContent = (widget?.displayConfig?.textContent as string) || "";
   const heading = widgetHeadingOf(widget?.displayConfig);
+  // #30: a query that answered no rows shows the author's words instead, when there are any.
+  const answer = useCanvasStore((s) => s.queryResults[widgetId]);
+  const showsNoData = !!heading.noData && !!answer?.result && !answer.loading && !answer.error
+    && (answer.result.data?.length ?? 0) === 0;
 
   // Divider — minimal chrome: just a line. Selectable for delete.
   if (type === "divider") {
@@ -225,11 +229,17 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
               </div>
             )}
             <div className="flex-1 min-h-0">
+            {showsNoData ? (
+              <div id={`widgetNoData-${widgetId}`} className="h-full flex items-center justify-center p-2 text-center text-xs text-base-content/60">
+                {heading.noData}
+              </div>
+            ) : (
             <WidgetErrorBoundary resetKey={`${showsCube ? "cube" : type}:${widgetId}`} widgetId={widgetId}>
               {showsCube
                 ? <CubeRendererWidget widgetId={widgetId} />
                 : <LiveWidget widgetId={widgetId} type={type} />}
             </WidgetErrorBoundary>
+            )}
             </div>
           </div>
         ) : (
