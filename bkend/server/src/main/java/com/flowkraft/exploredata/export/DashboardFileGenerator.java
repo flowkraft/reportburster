@@ -292,9 +292,9 @@ public class DashboardFileGenerator {
 
         return switch (type) {
             case "chart" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-chart %s></rb-chart>\n    </div>", chartStyle, attrs);
+                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-chart %s%s></rb-chart>\n    </div>", chartStyle, attrs, drillFieldsAttr(w));
             case "tabulator" ->
-                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-tabulator %s></rb-tabulator>\n    </div>", style, attrs);
+                String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-tabulator %s%s></rb-tabulator>\n    </div>", style, attrs, drillFieldsAttr(w));
             case "pivot" ->
                 String.format("    <div class=\"grid-item\" style=\"%s\">\n      <rb-pivot-table %s></rb-pivot-table>\n    </div>", style, attrs);
             case "number" -> {
@@ -1019,6 +1019,23 @@ public class DashboardFileGenerator {
             }
         }
         return "";
+    }
+
+    /**
+     * The group columns a click on this widget names, when the canvas kept the rows behind its bars
+     * or rows (#21): {@code drill-fields="channel"}, which {@code drill-through.ts} reads to open them.
+     * Nothing at all for every other widget, so a dashboard with none is written as it always was.
+     */
+    private static String drillFieldsAttr(Map<String, Object> widget) {
+        if (!(widget.get("dataSource") instanceof Map<?, ?> source))
+            return "";
+        Object rowsSql = source.get("rowsSql");
+        if (!"visual".equals(source.get("mode")) || !(rowsSql instanceof String sql) || sql.isBlank())
+            return "";
+        if (!(source.get("rowsFields") instanceof List<?> fields) || fields.isEmpty())
+            return "";
+        String names = fields.stream().map(String::valueOf).collect(Collectors.joining(","));
+        return " drill-fields=\"" + escapeHtmlAttr(names) + "\"";
     }
 
     private static String escapeHtmlAttr(String s) {

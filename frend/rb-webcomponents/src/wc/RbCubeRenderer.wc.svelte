@@ -3249,25 +3249,11 @@
 
   {/if}
 
-  <!-- W4.6: the rows behind the number that was clicked -->
+  <!-- W4.6: the rows behind the number that was clicked, in the panel every drill opens (#21) -->
   {#if drillOpen}
-    <div id="cubeDrillModal" class="rb-drill-modal">
-      <div class="rb-drill-head">
-        <span id="cubeDrillTitle" class="rb-drill-title">{drillTitle}</span>
-        <button type="button" id="btnDrillClose" class="rb-drill-close" title="Close"
-                on:click={closeDrill}>×</button>
-      </div>
-      {#if drillError}
-        <div id="cubeDrillError" class="rb-filter-note rb-filter-bad">{drillError}</div>
-      {:else if drillLoading}
-        <div class="rb-filter-note">Answering…</div>
-      {:else}
-        {#if drillTruncated}
-          <div id="cubeDrillTruncated" class="rb-filter-note">First {drillRows.length} rows</div>
-        {/if}
-        <rb-tabulator data={drillRows} columns={drillColumns}></rb-tabulator>
-      {/if}
-    </div>
+    <rb-drill-rows idPrefix="cubeDrill" closeId="btnDrillClose" heading={drillTitle} rows={drillRows}
+                   columns={drillColumns} loading={drillLoading} error={drillError} truncated={drillTruncated}
+                   on:close={closeDrill}></rb-drill-rows>
   {/if}
 </div>
 
@@ -3459,38 +3445,6 @@
     white-space: nowrap;
   }
 
-  /* W4.6: the rows behind one number, over the tree they were asked from */
-  .rb-drill-modal {
-    position: absolute;
-    left: 8px;
-    right: 8px;
-    top: 24px;
-    z-index: 20;
-    border: 1px solid color-mix(in oklab, currentColor 20%, transparent);
-    border-radius: 4px;
-    padding: 8px;
-    background: Canvas;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-  }
-  .rb-drill-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-  .rb-drill-title {
-    font-weight: 600;
-    flex: 1;
-  }
-  .rb-drill-close {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: inherit;
-    font-size: 16px;
-    line-height: 1;
-    padding: 0 4px;
-  }
   /* A number that has rows behind it says so before it is clicked. */
   .rb-drillable {
     cursor: pointer;

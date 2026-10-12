@@ -100,6 +100,45 @@ class PublishedScriptParameterTypesTest {
 		}
 	}
 
+	/** 148 of the 1,200 deals are at the Proposal stage (crm_deals.psv, the frozen demo rows). */
+	private static final int DEALS_AT_PROPOSAL = 148;
+
+	/**
+	 * The rows behind a click on a bar (#21). A Visual-tab widget that keeps a rows query is
+	 * published with a second block, {@code <component id>__rows}, which answers the table's rows of
+	 * the group clicked: the value arrives in {@code __drill_stage}, a parameter nobody declared,
+	 * bound like any other. The widget's own block still answers its groups.
+	 */
+	@Test
+	void ansi_the_published_script_answers_the_rows_behind_a_click() throws Exception {
+		for (String vendor : List.of("duckdb", "sqlite")) {
+			try (Connection connection = open(vendor)) {
+
+				Map<String, Object> dataSource = new LinkedHashMap<>();
+				dataSource.put("mode", "visual");
+				dataSource.put("generatedSql", "SELECT stage, COUNT(*) AS deal_count\nFROM cube_demo.crm_deals\nGROUP BY stage");
+				dataSource.put("rowsSql", "SELECT *\nFROM cube_demo.crm_deals\nWHERE stage = ${__drill_stage}\nLIMIT 500");
+				dataSource.put("rowsFields", List.of("stage"));
+				Map<String, Object> widget = new LinkedHashMap<>();
+				widget.put("id", "w-a");
+				widget.put("type", "chart");
+				widget.put("dataSource", dataSource);
+				String script = ScriptAssembler.assemble(List.of(widget), List.of()).text();
+				String own = ScriptAssembler.componentId(widget);
+				String rows = own + ScriptAssembler.ROWS_COMPONENT_SUFFIX;
+
+				Map<String, List<Map<String, Object>>> answers = run(connection, script, Map.of("__drill_stage", "Proposal"));
+
+				assertEquals(6, answers.get(own).size(), vendor + ": the chart still answers its six stages");
+				assertEquals(DEALS_AT_PROPOSAL, answers.get(rows).size(), vendor + ": the rows of the stage clicked");
+				for (Map<String, Object> row : answers.get(rows)) {
+					Object stage = row.containsKey("stage") ? row.get("stage") : row.get("STAGE");
+					assertEquals("Proposal", String.valueOf(stage), vendor + ": a row of another stage");
+				}
+			}
+		}
+	}
+
 	// ── Helpers ──────────────────────────────────────────────────────────────────
 
 	/** Two SQL widgets, one per query, with a declared type beside each parameter id. */

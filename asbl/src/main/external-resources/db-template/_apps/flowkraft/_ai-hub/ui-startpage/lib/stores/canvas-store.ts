@@ -190,6 +190,13 @@ export interface DataSource {
    *  SQL a FILTERED widget runs - so the two never share a field: one effect wrote the value list
    *  into `slicerSql` while another took it away again, and the two kept each other busy. */
   slicerValuesSql?: string;
+  /** The rows behind one bar or one table row of a Visual-tab widget (#21): its query without the
+   *  aggregation, with one `= ${__drill_<column>}` per group column (`drill-rows.ts`). Kept so the
+   *  published dashboard opens the very rows the canvas does. Absent on a widget that cannot be
+   *  drilled, which is every widget saved before this existed. */
+  rowsSql?: string;
+  /** The group columns `rowsSql` takes a clicked value of, in the order the query groups by them. */
+  rowsFields?: string[];
   executeVersion?: number;
   scriptExecuteVersion?: number;
 }

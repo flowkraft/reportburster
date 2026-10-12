@@ -81,18 +81,25 @@ function download(doc: Document, href: string, name: string): void {
   a.remove();
 }
 
-/** The rows the tile shows, asked of its report exactly as the tile asked for them. */
-async function tileRows(widget: HTMLElement): Promise<Record<string, unknown>[]> {
+/**
+ * The rows the tile shows, asked of its report exactly as the tile asked for them. A drill (#21) asks
+ * the same way for another of the report's components (`<component id>__rows`), with the values
+ * clicked beside the tile's own.
+ */
+export async function tileRows(
+  widget: HTMLElement,
+  ask: { componentId?: string; values?: Record<string, string> } = {},
+): Promise<Record<string, unknown>[]> {
   const reportId = widget.getAttribute('report-id') || '';
   const apiBaseUrl = widget.getAttribute('api-base-url') || '';
-  const componentId = widget.getAttribute('component-id') || '';
+  const componentId = ask.componentId ?? (widget.getAttribute('component-id') || '');
   let params: Record<string, unknown> = {};
   try {
     params = JSON.parse(widget.getAttribute('report-params') || '{}') || {};
   } catch {
     params = {};
   }
-  const query = reportQuery(params);
+  const query = reportQuery({ ...params, ...(ask.values ?? {}) });
   if (componentId) query.set('componentId', componentId);
   const headers: Record<string, string> = {};
   const token = widget.getAttribute('embed-token');

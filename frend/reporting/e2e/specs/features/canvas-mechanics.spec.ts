@@ -6007,4 +6007,80 @@ test('(canvas mechanics) M80 On a phone the published dashboard is one column', 
   }
 });
 
+/** The rows the drill panel holds, read off its table's own data. */
+async function m81Rows(page: Page): Promise<Array<Record<string, unknown>>> {
+  const table = page.locator('#widgetDrillModal rb-tabulator');
+  if ((await table.count()) === 0) return [];
+  return table.first().evaluate((el) => ((el as unknown as { data?: Array<Record<string, unknown>> }).data ?? []));
+}
+
+test('(canvas mechanics) M81 A click on a bar or a table row opens the rows behind it', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M81 Rows behind a click', async (canvasId) => {
+      const cities = frozenRows('geo_cities');
+      const kept = (code: string) => cities.filter((c) => c.country_code === code && c.city !== 'Berlin');
+      expect(kept('DE').length, 'German cities other than Berlin').toBeGreaterThan(1);
+      expect(kept('FR').length, 'and French ones').toBeGreaterThan(1);
+      const rowsAre = async (code: string, message: string) => {
+        await expect.poll(async () => (await m81Rows(page)).length, { message, timeout: 30_000, intervals: [500] })
+          .toBe(kept(code).length);
+        const rows = await m81Rows(page);
+        expect(rows.every((r) => r.country_code === code && r.city !== 'Berlin'),
+          `${message}: the rows of ${code}, Berlin filtered out as the widget filters it`).toBe(true);
+      };
+
+      // A chart and a table of the cities per country, Berlin filtered out.
+      const chartW = await eNewVisualWidget(page, 'geo_cities');
+      await addVisualFilter(page, 0, 'city', 'not_equals', 'Berlin');
+      await addAggregation(page, 0, 'COUNT', 'city_id');
+      await addGroupBy(page, 'country_code');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      const tableW = await eNewVisualWidget(page, 'geo_cities');
+      await addVisualFilter(page, 0, 'city', 'not_equals', 'Berlin');
+      await addAggregation(page, 0, 'COUNT', 'city_id');
+      await addGroupBy(page, 'country_code');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+
+      // + Canvas: the bar DE opens the German rows, under the widget's own filter.
+      await pClickBar(page.locator(`[id="widgetViz-${chartW}"]`), 'DE');
+      await expect(page.locator('#widgetDrillModal'), 'the rows open').toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('#widgetDrillTitle'), 'and say which group').toContainText('country_code DE');
+      await rowsAre('DE', 'canvas, a bar');
+      await page.locator('#btnWidgetDrillClose').click();
+      await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
+
+      // + Canvas: the table's FR row opens the French rows; Escape puts them away.
+      await page.locator(`[id="widgetViz-${tableW}"] .tabulator-cell`, { hasText: /^FR$/ }).first().click();
+      await rowsAre('FR', 'canvas, a row');
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
+
+      // + published: the same clicks open the same rows, asked of the report.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.chart ?? []).length === 1 && (ids.tabulator ?? []).length === 1;
+      }, { message: 'the saved canvas names the chart and the table', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await pClickBar(page.locator(`[id="widgetChart-${ids.chart[0]}"]`), 'DE');
+      await expect(page.locator('#widgetDrillModal'), 'published, the rows open').toBeVisible({ timeout: 30_000 });
+      await rowsAre('DE', 'published, a bar');
+      await page.locator('#btnWidgetDrillClose').click();
+      await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
+      await page.locator(`[id^="tabCell-${ids.tabulator[0]}-"]`, { hasText: /^FR$/ }).first().click();
+      await rowsAre('FR', 'published, a row');
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
