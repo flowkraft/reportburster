@@ -3,6 +3,8 @@
 <script lang="ts">
   import { onMount, onDestroy, tick } from 'svelte';
   import { prepareDashboardHtml } from '../shared/dashboard-injection';
+  // The "⋯" menu on each tile (#19): added here, where every published dashboard is put on the page.
+  import { decorateTiles } from '../shared/tile-menu';
   import { fieldOf, SLICER_TAG, slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets,
            CROSS_FILTER_EVENT, DATA_WIDGET_TAGS,
            type SlicerSelection } from '../shared/slicer-selections';
@@ -450,6 +452,7 @@
         embedToken,
         reportParams: currentDashboardParams,
       });
+      decorateTiles(dashboardContainer);
     }
 
     // Listen for parameter events from rb-parameters inside the dashboard.
