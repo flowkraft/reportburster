@@ -5870,17 +5870,21 @@ test('(canvas mechanics) M79 The menu on a published tile: CSV, PNG, maximise, r
       const channels = [...new Set(orders.map((o) => o.channel))];
 
       // A chart and a table of orders per channel.
-      const chart = await eNewVisualWidget(page, 'orders');
+      await eNewVisualWidget(page, 'orders');
       await addAggregation(page, 0, 'COUNT', 'order_id');
       await addGroupBy(page, 'channel');
       await runVisualQuery(page);
       await switchToWidget(page, 'chart');
-      const table = await eNewVisualWidget(page, 'orders');
+      await eNewVisualWidget(page, 'orders');
       await addAggregation(page, 0, 'COUNT', 'order_id');
       await addGroupBy(page, 'channel');
       await runVisualQuery(page);
       await switchToWidget(page, 'tabulator');
       await eStoredWidgets(page, canvasId, (w) => w.length === 2);
+      // The published tiles carry the component ids the export gives the widgets.
+      const ids = await getCanvasComponentIds(page, canvasId);
+      const chart = ids.chart[0];
+      const table = ids.tabulator[0];
       const published = await publishDashboard(page);
       reportId = published.reportId;
       await openPublished(page, reportId);
