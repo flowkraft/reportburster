@@ -8,7 +8,8 @@ import { getFieldKind } from "@/lib/explore-data/field-utils";
 import { asTableRef } from "@/lib/explore-data/table-ref";
 import {
   AGGREGATIONS, HAVING_OPS, SHARE_LABEL, RUNNING_TOTAL_LABEL,
-  RUNNING_TOTAL_AGGREGATIONS, WHERE_LABEL, type AggregateCondition, type AggregateWhere,
+  RUNNING_TOTAL_AGGREGATIONS, WHERE_LABEL, QUICK_CALCS, QUICK_CALC_AGGREGATIONS,
+  type AggregateCondition, type AggregateWhere, type QuickCalc,
 } from "@/lib/explore-data/aggregations";
 import { NO_VALUE_OPS } from "@/lib/explore-data/filter-operators";
 import { getOperatorsForColumn } from "./FilterStep";
@@ -28,6 +29,8 @@ interface AggItem {
   runningTotal?: boolean;
   /** Count or sum only the rows that pass this ("Count where", "Sum where", #9). */
   where?: AggregateWhere;
+  /** Read as its change from the bucket before, or as its rank (#11). */
+  quickCalc?: QuickCalc;
 }
 
 /** Numeric binning presets — 4 fixed targets + Off. `numBins === null` =
@@ -418,7 +421,7 @@ export function SummarizeStep({
               id={`checkShare-${i}`}
               type="checkbox"
               checked={a.share ?? false}
-              onChange={(e) => updateAgg(i, { share: e.target.checked ? true : undefined })}
+              onChange={(e) => updateAgg(i, e.target.checked ? { share: true, quickCalc: undefined } : { share: undefined })}
               className="checkbox checkbox-xs"
             />
             {SHARE_LABEL}
@@ -434,11 +437,31 @@ export function SummarizeStep({
                 id={`checkRunningTotal-${i}`}
                 type="checkbox"
                 checked={a.runningTotal ?? false}
-                onChange={(e) => updateAgg(i, { runningTotal: e.target.checked ? true : undefined })}
+                onChange={(e) => updateAgg(i, e.target.checked ? { runningTotal: true, quickCalc: undefined } : { runningTotal: undefined })}
                 className="checkbox checkbox-xs"
               />
               {RUNNING_TOTAL_LABEL}
             </label>
+          )}
+          {/* Quick calcs (#11): the same aggregate read as its change from the bucket before (a
+              series over one time bucket only, as a running total) or as its rank among the
+              groups. One reading at a time: picking one clears the share and the running total.
+              The column it writes is `<alias>_change` / `<alias>_rank`. */}
+          {groupBy.length > 0 && QUICK_CALC_AGGREGATIONS.includes(a.aggregation) && (
+            <select
+              id={`selectQuickCalc-${i}`}
+              value={a.quickCalc ?? ""}
+              title="Read this aggregate as its change from the bucket before, or as its rank"
+              onChange={(e) => updateAgg(i, e.target.value
+                ? { quickCalc: e.target.value as QuickCalc, share: undefined, runningTotal: undefined }
+                : { quickCalc: undefined })}
+              className="text-xs bg-base-100 border border-base-300 rounded px-1 py-1 text-base-content/80"
+            >
+              <option value="">as is</option>
+              {QUICK_CALCS.filter((c) => c.value !== "change" || groupsByOneTimeBucket).map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
           )}
 
           <button id={`btnRemoveAgg-${i}`} onClick={() => removeAgg(i)} className="p-0.5 rounded hover:bg-error/10 text-base-content/60 hover:text-error">
