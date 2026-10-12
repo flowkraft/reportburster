@@ -6750,4 +6750,63 @@ test('(canvas mechanics) M91 One colour set for every chart of a dashboard, in t
   });
 });
 
+test('(canvas mechanics) M92 A filter value picked from the column\'s own values, and a day from a calendar', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M92 Filter value pickers', async () => {
+    const orders = frozenRows('orders');
+    const channels = [...new Set(orders.map((o) => o.channel))].sort();
+    expect(channels.length, 'enough channels to pick from').toBeGreaterThan(2);
+    const ofChannels = (...picked: string[]) => orders.filter((o) => picked.includes(o.channel)).length;
+
+    // A text column: its own values beside the box, every one of them, in order.
+    const id = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'channel', 'equals');
+    const pick = page.locator('#selectFilterValuePick-0');
+    const box = page.locator('#inputFilterValue-0');
+    await expect.poll(async () => (await pick.locator('option').allTextContents()).slice(1),
+      { message: 'the channels are offered', timeout: 30_000, intervals: [500] }).toEqual(channels);
+    await pick.selectOption(channels[0]);
+    await expect(box, 'the picked value is in the box').toHaveValue(channels[0]);
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id, ofChannels(channels[0]), 'the picked value filters');
+
+    // + "in": each pick adds to the list.
+    await page.locator('#selectFilterOp-0').selectOption('in');
+    await pick.selectOption(channels[1]);
+    await pick.selectOption(channels[1]);
+    await expect(box, 'a value is in the list once').toHaveValue(`${channels[0]}, ${channels[1]}`);
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id, ofChannels(channels[0], channels[1]), 'two picks, two channels');
+
+    // + typing still works.
+    await box.fill(channels[2]);
+    await runVisualQuery(page);
+    await g4ScalarIs(page, id, ofChannels(channels[2]), 'a typed value still filters');
+
+    // A date column: no list of values, a calendar instead, whose day goes into the box. The days
+    // are far outside the data, which is moved to today when it is seeded.
+    const promised = orders.filter((o) => /^\d{4}-\d{2}-\d{2}/.test(o.promised_date ?? '')).length;
+    const day = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'promised_date', 'greater_or_equal');
+    await expect(page.locator('#selectFilterValuePick-0'), 'a date column has no list of values').toHaveCount(0);
+    await page.locator('#inputFilterDatePick-0').fill('2000-01-01');
+    await expect(page.locator('#inputFilterValue-0'), 'the picked day is in the box').toHaveValue('2000-01-01');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, day, promised, 'every order is promised on or after 2000');
+    await page.locator('#inputFilterDatePick-0').fill('2100-01-01');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, day, 0, 'none is promised on or after 2100');
+
+    // + between: a calendar beside each box.
+    await page.locator('#selectFilterOp-0').selectOption('between');
+    await page.locator('#inputFilterDatePick-0').fill('2000-01-01');
+    await page.locator('#inputFilterDatePickTo-0').fill('2100-01-01');
+    await expect(page.locator('#inputFilterValueTo-0'), 'the second day is in the second box').toHaveValue('2100-01-01');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, day, promised, 'every order is promised between 2000 and 2100');
+  });
+});
+
 });
