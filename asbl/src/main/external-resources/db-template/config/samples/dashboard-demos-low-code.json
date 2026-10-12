@@ -59,6 +59,12 @@
       "id": "dd-fulfillment-low-code",
       "reportId": "g-dd-fulfillment-low-code",
       "title": "Fulfillment & Delivery (low-code)"
+    },
+    {
+      "of": "dd-support-quality",
+      "id": "dd-support-quality-low-code",
+      "reportId": "g-dd-support-quality-low-code",
+      "title": "Support Quality & Agents (low-code)"
     }
   ]
 }
