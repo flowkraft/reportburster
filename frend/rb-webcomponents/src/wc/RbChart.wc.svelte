@@ -248,6 +248,12 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
+  /** The colour set the dashboard this chart sits on names for all its charts (`data-palette`, #31). */
+  function rbDashboardPalette(): string {
+    const host = (container?.getRootNode() as ShadowRoot | undefined)?.host ?? container;
+    return host?.closest?.('[data-palette]')?.getAttribute('data-palette') ?? '';
+  }
+
   function rbReadThemeColors() {
     const cs = container ? getComputedStyle(container) : null;
     const text = (cs?.color || '').trim() || '#333';
@@ -255,8 +261,9 @@
     const grid = v('--rb-chart-grid') || rbToAlpha(text, 0.15);
     const pv = v('--rb-chart-palette');
     // The author's own pick first: a named set beats both the host's CSS contract and the house
-    // colours, because it is this chart's own setting rather than the page's.
-    const named = RB_NAMED_PALETTES[palette];
+    // colours, because it is this chart's own setting rather than the page's. A chart that names
+    // none is drawn in the set its dashboard names for all its charts (#31), if any.
+    const named = RB_NAMED_PALETTES[palette] ?? RB_NAMED_PALETTES[rbDashboardPalette()];
     const colors = named
       ? named
       : (pv ? pv.split(',').map((s) => s.trim()).filter(Boolean) : RB_DEFAULT_PALETTE);

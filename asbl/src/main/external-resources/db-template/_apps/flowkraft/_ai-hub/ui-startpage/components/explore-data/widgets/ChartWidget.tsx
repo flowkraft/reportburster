@@ -262,6 +262,8 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
   const updateWidgetDataSource = useCanvasStore((s) => s.updateWidgetDataSource);
   const updateWidgetDisplayConfig = useCanvasStore((s) => s.updateWidgetDisplayConfig);
   const changeWidgetRenderMode = useCanvasStore((s) => s.changeWidgetRenderMode);
+  // The colour set the dashboard names for every chart that names none of its own (#31).
+  const dashboardPalette = useCanvasStore((s) => s.dashboardSettings.palette);
   const { ref, el: chartEl, attach: attachChart } = useRbElement();
   const ready = useRbElementReady("rb-chart");
   // This chart's own clicks, when its author ticked the box in the Display tab.
@@ -344,7 +346,8 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
     // ── Read all chart config from the canonical DSL Map at displayConfig.dslConfig.
     const chartTitle      = readTitle(dslMap);
     const chartShowLegend = readLegend(dslMap);
-    const chartPalette    = (dslMap.palette as string | undefined) ?? "default";
+    // The chart's own colour set, or else the one its dashboard names for all its charts (#31).
+    const chartPalette    = (dslMap.palette as string | undefined) ?? dashboardPalette ?? "default";
     const paletteColors   = PALETTE_COLORS[chartPalette] ?? [];
     const configChartType = dslMap.type as string | undefined;
     const configXFields   = readXFields(dslMap);
@@ -558,7 +561,7 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       dslMap,
       canvasChartDefaults({ chartTitle, legendDisplay, isPieType, isGroupedBar }),
     );
-  }, [ready, result, widget?.displayConfig, vq?.groupBy, vq?.groupByBuckets, vq?.sort, showAutoSummarizePrompt]);
+  }, [ready, result, widget?.displayConfig, vq?.groupBy, vq?.groupByBuckets, vq?.sort, showAutoSummarizePrompt, dashboardPalette]);
 
   // ─── Render branches ──────────────────────────────────────────────────────
 

@@ -91,7 +91,7 @@ public class DashboardFileGenerator {
 
         return new GeneratedFiles(
             generateTemplate(widgets, !safeParams.isEmpty(), reportId, apiBaseUrl,
-                    autoRefreshMinutesOf(dashboardSettings)),
+                    autoRefreshMinutesOf(dashboardSettings), dashboardPaletteOf(dashboardSettings)),
             generateChartConfig(byType(widgets, "chart")),
             generateTabulatorConfig(byType(widgets, "tabulator")),
             generatePivotConfig(byType(widgets, "pivot")),
@@ -123,9 +123,21 @@ public class DashboardFileGenerator {
         return value >= 1 && value == Math.floor(value) && value <= 24 * 60 ? (int) value : 0;
     }
 
+    /** The named colour sets a chart can be drawn in, the ones rb-chart knows (#31, D5). */
+    static final Set<String> NAMED_PALETTES = Set.of("warm", "cool", "pastel", "mono");
+
+    /**
+     * The colour set every chart of the dashboard is drawn in unless it names its own (#31): one of
+     * the named sets, or "" for the house colours - which is what anything else means.
+     */
+    static String dashboardPaletteOf(Map<String, Object> dashboardSettings) {
+        Object palette = dashboardSettings == null ? null : dashboardSettings.get("palette");
+        return palette instanceof String name && NAMED_PALETTES.contains(name) ? name : "";
+    }
+
     private static String generateTemplate(List<Map<String, Object>> widgets,
                                            boolean hasParameters, String reportId, String apiBaseUrl,
-                                           int autoRefreshMinutes) {
+                                           int autoRefreshMinutes, String palette) {
         List<Map<String, Object>> sorted = widgets.stream()
             .sorted(Comparator.comparingInt((Map<String, Object> w) -> gridInt(w, "y"))
                               .thenComparingInt(w -> gridInt(w, "x")))
@@ -159,9 +171,11 @@ public class DashboardFileGenerator {
         return "<meta charset=\"utf-8\">\n" +
                // A dashboard its author set to refresh says how often on its root, where rb-dashboard
                // reads it (#22). Nothing at all on every other dashboard, which is written as it was.
-               (autoRefreshMinutes > 0
-                   ? "<div class=\"rb-dashboard-root\" data-auto-refresh=\"" + autoRefreshMinutes + "\">\n"
-                   : "<div class=\"rb-dashboard-root\">\n") +
+               // So does one with a colour set for all its charts (#31), where rb-chart reads it.
+               "<div class=\"rb-dashboard-root\""
+                   + (autoRefreshMinutes > 0 ? " data-auto-refresh=\"" + autoRefreshMinutes + "\"" : "")
+                   + (palette.isEmpty() ? "" : " data-palette=\"" + palette + "\"")
+                   + ">\n" +
                "  <style>\n" +
                "    .rb-dashboard-root {\n" +
                "      all: initial;\n" +
