@@ -63,6 +63,11 @@ describe('a table beyond Tabulator', () => {
     opts.rowFormatter(row);
     assert.equal(el.style.background, 'rgba(220, 38, 38, 0.25)');
     assert.equal(attrs['data-rb-highlight'], 'above');
+
+    const sums: any = { style: {}, setAttribute() { throw new Error('a total is not coloured'); }, removeAttribute() {} };
+    opts.rowFormatter({ getElement: () => ({ classList: { contains: (c: string) => c === 'tabulator-calcs' } }),
+      getCell: () => ({ getElement: () => sums, getValue: () => 99 }) });
+    assert.deepEqual(sums.style, {});
   });
 
   test('columns handed over later carry their totals', () => {

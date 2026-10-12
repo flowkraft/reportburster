@@ -142,6 +142,8 @@ export function applyTableExtras(opts: Record<string, any>): TableExtras | null 
     const authorRowFormatter = opts.rowFormatter;
     opts.rowFormatter = (row: any) => {
       if (typeof authorRowFormatter === 'function') authorRowFormatter(row);
+      // The totals row is drawn through the same formatter: its sums are not values to colour.
+      if (row.getElement?.()?.classList?.contains('tabulator-calcs')) return;
       if (!ranges) ranges = rangesOf(row.getTable?.().getData?.() ?? [], fields);
       for (const h of highlights) {
         const cell = row.getCell?.(h.field);
