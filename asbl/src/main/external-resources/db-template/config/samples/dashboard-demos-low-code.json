@@ -19,6 +19,12 @@
       "title": "Customer Base & Growth (low-code)"
     },
     {
+      "of": "dd-customer-360",
+      "id": "dd-customer-360-low-code",
+      "reportId": "g-dd-customer-360-low-code",
+      "title": "Customer 360 (low-code)"
+    },
+    {
       "of": "dd-invoices",
       "id": "dd-invoices-low-code",
       "reportId": "g-dd-invoices-low-code",
