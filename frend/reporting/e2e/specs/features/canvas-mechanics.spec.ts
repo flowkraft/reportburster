@@ -5880,9 +5880,12 @@ test('(canvas mechanics) M79 The menu on a published tile: CSV, PNG, maximise, r
       await addGroupBy(page, 'channel');
       await runVisualQuery(page);
       await switchToWidget(page, 'tabulator');
-      await eStoredWidgets(page, canvasId, (w) => w.length === 2);
       // The published tiles carry the component ids the export gives the widgets.
-      const ids = await getCanvasComponentIds(page, canvasId);
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.chart ?? []).length === 1 && (ids.tabulator ?? []).length === 1;
+      }, { message: 'the saved canvas names the chart and the table', timeout: 30_000, intervals: [1_000] }).toBe(true);
       const chart = ids.chart[0];
       const table = ids.tabulator[0];
       const published = await publishDashboard(page);
