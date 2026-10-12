@@ -1,0 +1,18 @@
+{
+  "gauge_conversion_avg_rate" : {
+    "field" : "conversion_avg",
+    "max" : 0.08,
+    "label" : "Conversion rate",
+    "format" : "percent",
+    "bands" : [ {
+      "to" : 0.03,
+      "color" : "#ef8c8c"
+    }, {
+      "to" : 0.05,
+      "color" : "#f9d45c"
+    }, {
+      "to" : 0.08,
+      "color" : "#88bf4d"
+    } ]
+  }
+}

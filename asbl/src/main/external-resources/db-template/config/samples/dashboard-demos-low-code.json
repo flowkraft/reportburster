@@ -25,6 +25,12 @@
       "title": "Customer 360 (low-code)"
     },
     {
+      "of": "dd-web-funnel",
+      "id": "dd-web-funnel-low-code",
+      "reportId": "g-dd-web-funnel-low-code",
+      "title": "Website Traffic & Conversion (low-code)"
+    },
+    {
       "of": "dd-invoices",
       "id": "dd-invoices-low-code",
       "reportId": "g-dd-invoices-low-code",
