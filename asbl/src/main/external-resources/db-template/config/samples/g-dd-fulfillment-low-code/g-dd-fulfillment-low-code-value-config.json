@@ -1,0 +1,11 @@
+{
+  "number_average_days_to_deliver_deliver" : {
+    "format" : "number",
+    "label" : "Average days to deliver"
+  },
+  "number_late_orders" : {
+    "field" : "Late",
+    "format" : "number",
+    "label" : "Late orders"
+  }
+}
