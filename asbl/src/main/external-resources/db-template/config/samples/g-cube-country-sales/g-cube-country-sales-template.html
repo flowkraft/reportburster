@@ -111,6 +111,11 @@
       justify-content: flex-end;
       margin-bottom: 12px;
     }
+    @media (max-width: 640px) {
+      .rb-dashboard-root { padding: 12px; }
+      .rb-dashboard-root .dashboard-grid { grid-template-columns: 1fr; }
+      .rb-dashboard-root .dashboard-grid > .grid-item { grid-column: 1 / -1 !important; grid-row: auto !important; }
+    }
   </style>
 
     <div class="rb-page-bar" id="pageBar">

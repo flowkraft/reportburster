@@ -242,6 +242,13 @@ public class DashboardFileGenerator {
                "      justify-content: flex-end;\n" +
                "      margin-bottom: 12px;\n" +
                "    }\n" +
+               // A phone: one column, every tile its full width, in the order the grid reads (the
+               // tiles come sorted by row, then column). The tiles place themselves inline, hence !important.
+               "    @media (max-width: 640px) {\n" +
+               "      .rb-dashboard-root { padding: 12px; }\n" +
+               "      .rb-dashboard-root .dashboard-grid { grid-template-columns: 1fr; }\n" +
+               "      .rb-dashboard-root .dashboard-grid > .grid-item { grid-column: 1 / -1 !important; grid-row: auto !important; }\n" +
+               "    }\n" +
                "  </style>\n\n" +
                (vendorHtml.isBlank() ? "" : vendorHtml + "\n") +
                (paramsHtml.isBlank() ? "" : paramsHtml + "\n") +
