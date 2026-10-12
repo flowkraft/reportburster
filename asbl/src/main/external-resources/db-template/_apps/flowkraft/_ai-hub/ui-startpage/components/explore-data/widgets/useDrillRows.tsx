@@ -93,6 +93,13 @@ export function useDrillRows(el: HTMLElement | null, widget: Widget | undefined)
     asked.current++;
     setDrill(null);
   }, []);
+
+  // Once its clicks filter the dashboard, the widget opens no rows, and the ones open are put away:
+  // left over the bars, they would take the very click that now selects.
+  useEffect(() => {
+    if (clicks) closeDrill();
+  }, [clicks, closeDrill]);
+
   return { drill, closeDrill };
 }
 

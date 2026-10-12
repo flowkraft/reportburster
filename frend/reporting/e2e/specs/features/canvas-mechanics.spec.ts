@@ -4451,16 +4451,21 @@ test('(canvas mechanics) M58 Clicks that filter the dashboard, in the Canvas and
       await setChartType(page, 'bar');
       await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
 
-      // - with the box unticked a click is just a click: nothing is selected and nothing moves, so
-      //   no dashboard made before this existed starts filtering by itself.
+      // - with the box unticked a click selects nothing and nothing moves, so no dashboard made
+      //   before this existed starts filtering by itself: it opens the rows behind the bar (#21).
       await pClickBar(cViz(page, chart), 'web');
+      await expect(page.locator('#widgetDrillModal'), 'an unticked chart opens the rows behind its bar')
+        .toBeVisible();
       await expect(page.locator('#selectionBar'), 'an unticked chart selects nothing').toHaveCount(0);
       await g4ScalarIs(page, kpi, pOrders.length, 'and the KPI still counts every order');
 
-      // + ticked, the same click selects the value its bar stands for, and every widget on the
-      //   table answers for it - the chart itself excepted, because a widget is not filtered by
-      //   the field its own clicks select. That is also what leaves a bar to click again.
+      // + ticked, the rows still open over the bars are put away, and the same click selects the
+      //   value its bar stands for, and every widget on the table answers for it - the chart itself
+      //   excepted, because a widget is not filtered by the field its own clicks select. That is
+      //   also what leaves a bar to click again.
       await setClicksFilter(page, 'chart', true);
+      await expect(page.locator('#widgetDrillModal'), 'ticking the box closes the rows that were open')
+        .toHaveCount(0);
       await pClickBar(cViz(page, chart), 'web');
       const web = (r: Record<string, string>) => r.channel === 'web';
       await g4ScalarIs(page, kpi, pCount(web), 'the KPI counts the web orders');
