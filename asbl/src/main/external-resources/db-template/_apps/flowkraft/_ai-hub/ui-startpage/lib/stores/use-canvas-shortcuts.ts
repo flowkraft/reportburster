@@ -12,7 +12,7 @@ export function useCanvasShortcuts({ onUndo, onRedo }: ShortcutHandlers) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't intercept when typing in inputs or rich-text editors (CodeMirror, etc.).
-      // A key typed inside a web component's shadow DOM (the filter pane's search box) reaches the
+      // A key typed inside a web component's shadow DOM (the slicer's search box) reaches the
       // window with the component itself as its target: the element typed in is the path's first.
       const el = ((e.composedPath?.()[0] ?? e.target) as HTMLElement);
       const tag = el?.tagName;
