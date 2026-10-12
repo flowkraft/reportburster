@@ -5124,6 +5124,8 @@ test('(canvas mechanics) M67 Need another table? A cube carries the joins and th
 
     // + On-Time % per carrier: a measure made of two others, answered as the frozen rows answer it.
     await applyCubeSelection(page, { dimensions: ['Carrier'], measures: ['Delivered', 'Late', 'OnTimePct'] });
+    // A dimension and measures make the widget a chart by itself; the rows are read off a table.
+    await switchToWidget(page, 'tabulator');
     const byCarrier = await g4RowsWhere(page, id,
       (rows) => rows.length === carriers.length && rows.every((r) => 'OnTimePct' in r), 'one row per carrier');
     for (const carrier of carriers) {
@@ -5138,6 +5140,7 @@ test('(canvas mechanics) M67 Need another table? A cube carries the joins and th
 
     // + Return Rate by the customer's segment: the cube joins the customers, the Visual tab never does.
     await applyCubeSelection(page, { dimensions: ['Segment'], measures: ['ReturnRatePct'] });
+    await switchToWidget(page, 'tabulator');
     const bySegment = await g4RowsWhere(page, id,
       (rows) => rows.length === segments.length && rows.every((r) => 'ReturnRatePct' in r), 'one row per segment');
     for (const segment of segments) {
