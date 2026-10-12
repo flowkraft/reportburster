@@ -5,6 +5,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo, TableSchema } from "@/lib/explore-data/types";
 import { executeQuery, executeScript, fetchSchema, getConnectionType, hasConnectionsCached, ensureConnectionsLoaded } from "@/lib/explore-data/rb-api";
 import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
+import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { slicerFilterPlanFor, slicerParamValues, wrapWithSlicerFilters } from "@/lib/explore-data/slicer-filters";
 import { asTableRef, findTable, tableKey, type TableRef } from "@/lib/explore-data/table-ref";
@@ -113,6 +114,9 @@ export function useWidgetData(widgetId: string) {
     return () => { cancelled = true; };
   }, [connectionsReady]);
 
+  // The same wait for the data's today: a relative date filter counts from it.
+  const { today, ready: todayReady } = useDataToday(connectionId);
+
   const dataSource = widget?.dataSource;
   const tableName = dataSource?.visualQuery?.table || "";
   const tableSchemaName = dataSource?.visualQuery?.tableSchema;
@@ -151,7 +155,7 @@ export function useWidgetData(widgetId: string) {
     if (!connectionId || !dataSource) return;
     // Wait for the connection list before building SQL — see connectionsReady
     // declaration above for why.
-    if (!connectionsReady) return;
+    if (!connectionsReady || !todayReady) return;
 
     const mode = dataSource.mode;
     const prev = LAST_EXEC.get(widgetId);
@@ -220,6 +224,7 @@ export function useWidgetData(widgetId: string) {
       // aggregation: that is the only place they can be right for a KPI, whose result has no
       // column of the field left to filter on.
       slicerPlan.filters,
+      today,
     );
     if (!raw) { clearWidgetQueryLoading(widgetId); return; }
 
@@ -297,7 +302,7 @@ export function useWidgetData(widgetId: string) {
     // `exploreVersion` is to a selection what `filterVersion` is to the filter bar: the one number
     // that says a selection changed - picked in a slicer or clicked on a widget - so every widget
     // asks again.
-  }, [connectionId, dataSource, filterValues, filterVersion, parametersConfig, widgetId, connectionsReady, tableSchema, widgets, exploreSelections, exploreVersion, updateWidgetDataSource, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
+  }, [connectionId, dataSource, filterValues, filterVersion, parametersConfig, widgetId, connectionsReady, todayReady, today, tableSchema, widgets, exploreSelections, exploreVersion, updateWidgetDataSource, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, clearWidgetQueryLoading]);
 
   return {
     result: cached?.result ?? null,

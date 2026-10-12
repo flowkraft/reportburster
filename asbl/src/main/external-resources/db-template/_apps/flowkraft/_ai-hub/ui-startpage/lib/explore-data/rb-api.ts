@@ -80,6 +80,37 @@ export async function fetchSchema(connectionId: string): Promise<SchemaInfo> {
   return res.json();
 }
 
+// The data's today, per connection: the day a `{dataToday}` filter default is read against
+// (`CubeDataToday` on the server), so a relative date filter of the Visual tab counts from the same
+// day. Null for a connection whose data has no day of its own. One fetch per connection per page
+// load: the day does not change while the page is open.
+const _dataToday = new Map<string, string | null>();
+const _dataTodayPromises = new Map<string, Promise<void>>();
+
+/** The day a relative date filter counts from on this connection, or undefined for the browser's own. */
+export function getDataToday(connectionId: string | null | undefined): string | undefined {
+  return connectionId ? _dataToday.get(connectionId) ?? undefined : undefined;
+}
+
+/** True once this connection's day is known (or there is no connection to ask about). */
+export function hasDataToday(connectionId: string | null | undefined): boolean {
+  return !connectionId || _dataToday.has(connectionId);
+}
+
+/** Idempotent: the in-flight or completed fetch of this connection's day. Never rejects. */
+export function ensureDataTodayLoaded(connectionId: string | null | undefined): Promise<void> {
+  if (!connectionId || _dataToday.has(connectionId)) return Promise.resolve();
+  const inFlight = _dataTodayPromises.get(connectionId);
+  if (inFlight) return inFlight;
+  const loading = fetch(`${RB_BASE}/queries/data-today/${encodeURIComponent(connectionId)}`)
+    .then((res) => (res.ok ? res.json() : { today: null }))
+    .then((body) => { _dataToday.set(connectionId, typeof body?.today === "string" ? body.today : null); })
+    .catch(() => { _dataToday.set(connectionId, null); })
+    .finally(() => { _dataTodayPromises.delete(connectionId); });
+  _dataTodayPromises.set(connectionId, loading);
+  return loading;
+}
+
 /** `${dp_user_id}` / `#{dp_attr_customer_id}` — the built-in variables a piece of SQL names. */
 const DP_VARIABLE = /[$#]\{(dp_[a-z0-9_]*)\}/g;
 

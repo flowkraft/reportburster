@@ -6,7 +6,7 @@ import { asDerivedWrite, useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
 import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
 import { IconSparkles as Sparkles } from "@/components/shared/Icons";
-import { fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
+import { ensureDataTodayLoaded, fetchSchema, getConnectionType, getDataToday } from "@/lib/explore-data/rb-api";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
 import { buildSql, columnKindsOf } from "@/lib/explore-data/sql-builder";
 import {
@@ -295,9 +295,11 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       }
       // autoSummarize is async — it probes date range + cardinality.
       const newVq = await autoSummarize(connectionId, tbl);
+      await ensureDataTodayLoaded(connectionId);
       const newSql = buildSql(newVq, {
         connectionType: getConnectionType(connectionId),
         columnKinds: columnKindsOf(tbl.columns),
+        today: getDataToday(connectionId),
       });
       updateWidgetDataSource(widget.id, { mode: "visual", visualQuery: newVq, generatedSql: newSql });
     } catch (e) {

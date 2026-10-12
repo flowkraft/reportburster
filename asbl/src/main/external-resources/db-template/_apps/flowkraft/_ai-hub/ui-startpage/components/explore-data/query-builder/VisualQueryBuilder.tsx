@@ -7,6 +7,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo } from "@/lib/explore-data/types";
 import { buildSql, columnClassOf, columnKindsOf, extractParamIds, extractParamTypes, sortableColumns } from "@/lib/explore-data/sql-builder";
 import { computedColumnSchemas } from "@/lib/explore-data/computed-columns";
+import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
 import { fetchCubes, fetchCube, parseCubeDsl, generateCubeSql, fetchCubeFilterOptions, fetchBuiltinParamNames, getConnectionType, type CubeInfo } from "@/lib/explore-data/rb-api";
 import { cubeBindableMembers, seedCubeColumnFormats, selectionOfEvent, selectionWithBindings } from "@/lib/explore-data/cube-selection";
@@ -99,6 +100,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
   // 4.6b — preview SQL must match the connection's dialect so the user sees
   // the same SQL that will actually execute (e.g. TO_CHAR on Postgres, not SQLite strftime).
   const connectionType = getConnectionType(connectionId);
+  const { today } = useDataToday(connectionId);
   const tables = schema.tables || [];
   const selectedTable = findTable(schema, refForQuery(query));
   const columns = selectedTable?.columns || [];
@@ -112,7 +114,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
   // The column types decide what a filter literal looks like: a number goes in
   // bare, a date as the vendor's date literal. Without them every value was a
   // string, which a numeric or date column rejects on the strict vendors.
-  const sql = isCube ? "" : buildSql(query, { connectionType, columnKinds: columnKindsOf(columns), paramTypes });
+  const sql = isCube ? "" : buildSql(query, { connectionType, columnKinds: columnKindsOf(columns), paramTypes, today });
 
   // Load cube config (DSL → parsed object) whenever the picked cube changes
   useEffect(() => {
@@ -272,10 +274,11 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
             connectionType: getConnectionType(connectionId),
             columnKinds: columnKindsOf(findTable(schema, refForQuery(updated))?.columns),
             paramTypes,
+            today,
           });
       onChange({ mode: "visual", visualQuery: updated, generatedSql: newSql });
     },
-    [query, dataSource, onChange, connectionId, schema, paramTypes]
+    [query, dataSource, onChange, connectionId, schema, paramTypes, today]
   );
 
   /**

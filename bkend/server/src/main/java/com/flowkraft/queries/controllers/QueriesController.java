@@ -80,6 +80,18 @@ public class QueriesController {
     }
 
     /**
+     * GET /api/queries/data-today/{connectionId} — the day the data on this connection calls today,
+     * {@code {today: "2026-09-30"}}, or {@code {today: null}} when it holds no demo marker table.
+     */
+    @GetMapping(value = "/data-today/{connectionId}", consumes = MediaType.ALL_VALUE)
+    public Mono<Map<String, Object>> getDataToday(@PathVariable String connectionId) throws Exception {
+        java.time.LocalDate today = queriesService.dataTodayOrNull(connectionId);
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("today", today == null ? null : today.toString());
+        return Mono.just(out);
+    }
+
+    /**
      * POST /api/queries/run-script — execute an inline Groovy script.
      *
      * <p>Reaching this endpoint IS code execution: the body is handed to a GroovyShell. It is therefore
