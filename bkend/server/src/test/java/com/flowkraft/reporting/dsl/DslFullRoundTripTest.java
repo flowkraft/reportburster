@@ -328,6 +328,24 @@ public class DslFullRoundTripTest {
             "and the chart the page is given carries it");
     }
 
+    /** #28: a table's totals, search, dragged columns and highlight rules survive the trip. */
+    @Test
+    public void roundTrip_tableTotalsSearchAndHighlights() throws Exception {
+        // The Map the Canvas's Display tab writes, as it hands it to the emitter.
+        Map<String, Object> table = new java.util.LinkedHashMap<>();
+        table.put("rbTotals", true);
+        table.put("movableColumns", true);
+        table.put("columnDefaults", Map.of("headerFilter", "input"));
+        table.put("rbHighlights", List.of(Map.of("field", "total", "kind", "bars"),
+                                          Map.of("field", "n", "kind", "above", "value", 100, "color", "green")));
+        table.put("autoColumns", true);
+
+        String emitted = BlockFormEmitter.emitNamed("tabulator", "orders", table, BlockFormRules.TABULATOR, true);
+        Map<String, Object> back = TabulatorOptionsParser.parseGroovyTabulatorDslCode(emitted).getNamedOptions().get("orders");
+        assertEquals(table, back, "the table's own keys survive the round trip:\n" + emitted);
+        assertDoesNotThrow(() -> new ObjectMapper().writeValueAsString(back));
+    }
+
     /** #24: the data labels are the rb-chart plugin's own option, carried in `options` as written. */
     @Test
     public void roundTrip_chartValueLabels() throws Exception {

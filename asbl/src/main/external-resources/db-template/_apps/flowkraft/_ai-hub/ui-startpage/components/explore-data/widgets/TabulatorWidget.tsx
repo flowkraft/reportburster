@@ -194,11 +194,14 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const tabulatorLayout = (dslMap.layout as string | undefined) ?? "fitDataStretch";
   const tabulatorPagination = dslMap.pagination !== false;
   const tabulatorPageSize = (dslMap.paginationSize as number | undefined) ?? 50;
+  // Totals, search, dragging columns and highlights (#28) are read when the table is built: a
+  // change of them builds it anew.
+  const tabulatorExtras = JSON.stringify([dslMap.rbTotals, dslMap.rbHighlights, dslMap.movableColumns, dslMap.columnDefaults]);
 
   return (
     <div className="h-full flex flex-col relative">
       {/* @ts-expect-error - Web component custom element */}
-      <rb-tabulator key={`${tabulatorTheme}|${tabulatorLayout}|${tabulatorPagination}|${tabulatorPageSize}`} ref={attachTable} id={`widgetViz-${widgetId}`} component-id={widgetId} theme={tabulatorTheme} style={{ display: "block", width: "100%", flex: 1 }} />
+      <rb-tabulator key={`${tabulatorTheme}|${tabulatorLayout}|${tabulatorPagination}|${tabulatorPageSize}|${tabulatorExtras}`} ref={attachTable} id={`widgetViz-${widgetId}`} component-id={widgetId} theme={tabulatorTheme} style={{ display: "block", width: "100%", flex: 1 }} />
       {atLimit && (
         <div className="shrink-0 px-2 py-0.5 text-[10px] text-base-content/60 bg-base-200/40 border-t border-base-300/50 text-right">
           showing first {limit} rows — add a filter or raise the limit to see more

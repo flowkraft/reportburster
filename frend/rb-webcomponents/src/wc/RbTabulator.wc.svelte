@@ -35,6 +35,7 @@
 </script>
 
 <script lang="ts">
+  import { applyTableExtras, type TableExtras } from '../shared/table-extras';
   import {
     onMount,
     afterUpdate,
@@ -402,12 +403,16 @@
     });
   }
 
+  // The table's own keys beyond Tabulator (#28: totals, highlights), turned into Tabulator once.
+  let tableExtras: TableExtras | null = null;
+  const withExtras = <T,>(cols: T): T => (tableExtras ? tableExtras.columns(cols) : cols);
+
   function updateTable() {
     if (!isReady || !table) return;
 
     try {
       if (resolvedColumns && resolvedColumns.length) {
-        table.setColumns(resolvedColumns);
+        table.setColumns(withExtras(resolvedColumns));
       }
 
       // Skip replaceData when data is empty and Tabulator's AJAX module owns the data.
@@ -658,6 +663,9 @@
       }
     }
 
+    // Totals and highlights (#28): the table's own keys, which Tabulator never sees.
+    tableExtras = applyTableExtras(opts as Record<string, any>);
+
     if (componentId) {
       const authorRowFormatter = (opts as any).rowFormatter;
       (opts as any).rowFormatter = (row: any) => {
@@ -678,6 +686,7 @@
         return;
       }
       table = new Tabulator(container, opts);
+      if (tableExtras) table.on('dataLoaded', tableExtras.dataChanged);
 
       table.on('tableBuilt', () => {
         isReady = true;
@@ -792,7 +801,7 @@
 
       if (isReady && table) {
         if (resolvedColumns && resolvedColumns.length) {
-          table.setColumns(resolvedColumns);
+          table.setColumns(withExtras(resolvedColumns));
         }
         table.replaceData(data);
       }

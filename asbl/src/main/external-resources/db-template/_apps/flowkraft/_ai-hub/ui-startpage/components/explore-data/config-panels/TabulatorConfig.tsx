@@ -1,9 +1,11 @@
 "use client";
 
 // lucide-react removed
+import { useEffect, useState } from "react";
 import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import type { TabulatorDslOptions } from "@/lib/explore-data/dsl-sync/tabulator-mapping";
+import { getFieldKind } from "@/lib/explore-data/field-utils";
 
 /**
  * ============================================================================
@@ -33,6 +35,29 @@ const THEMES = [
   { value: "bootstrap5", label: "Bootstrap 5" },
   { value: "bulma",      label: "Bulma" },
 ] as const;
+
+/** One highlight rule of a column (#28), as `rb-tabulator` reads it (`shared/table-extras.ts`). */
+export type TableHighlightKind = "scale" | "bars" | "above" | "below";
+export interface TableHighlight { field: string; kind: TableHighlightKind; value?: number; color?: string }
+
+const HIGHLIGHT_KINDS = [
+  { value: "", label: "None" },
+  { value: "scale", label: "Colour scale" },
+  { value: "bars", label: "Bars in the cells" },
+  { value: "above", label: "Colour values above…" },
+  { value: "below", label: "Colour values below…" },
+] as const;
+const HIGHLIGHT_COLORS = ["red", "green", "amber", "blue"] as const;
+
+/** Set, change or take away one column's rule; the list goes when it is empty. */
+export function setHighlight(map: TabulatorDslOptions, field: string, rule: TableHighlight | null): TabulatorDslOptions {
+  const others = ((map.rbHighlights as TableHighlight[] | undefined) ?? []).filter((h) => h.field !== field);
+  const list = rule ? [...others, rule] : others;
+  const next = { ...map } as Record<string, unknown>;
+  if (list.length) next.rbHighlights = list;
+  else delete next.rbHighlights;
+  return next as TabulatorDslOptions;
+}
 
 interface TabulatorConfigProps {
   config: WidgetDisplayConfig;
@@ -135,6 +160,59 @@ export function TabulatorConfig({ config, columns, onChange, rowCount }: Tabulat
     setDslMap(config, next as typeof map, onChange);
   };
 
+  // Totals, search and dragging columns (#28): one key each in the Map, gone when unticked, so a
+  // table that never used them reads exactly as it did. Search and dragging are Tabulator's own
+  // options; the totals are rb-tabulator's (`rbTotals`).
+  const totals = (map as Record<string, unknown>).rbTotals === true;
+  const columnDefaults = ((map as Record<string, unknown>).columnDefaults as Record<string, unknown> | undefined) ?? {};
+  const search = columnDefaults.headerFilter === "input";
+  const movable = (map as Record<string, unknown>).movableColumns === true;
+  const setFlag = (key: string, on: boolean) => {
+    const next = { ...map } as Record<string, unknown>;
+    if (on) next[key] = true;
+    else delete next[key];
+    setDslMap(config, next as typeof map, onChange);
+  };
+  const setSearch = (on: boolean) => {
+    const defaults = { ...columnDefaults };
+    if (on) defaults.headerFilter = "input";
+    else delete defaults.headerFilter;
+    const next = { ...map } as Record<string, unknown>;
+    if (Object.keys(defaults).length) next.columnDefaults = defaults;
+    else delete next.columnDefaults;
+    setDslMap(config, next as typeof map, onChange);
+  };
+
+  // Highlights (#28): one rule per column of numbers, picked here column by column.
+  const numberColumns = columns.filter((c) => getFieldKind(c) === "measure").map((c) => c.columnName);
+  const highlights = ((map as Record<string, unknown>).rbHighlights as TableHighlight[] | undefined) ?? [];
+  const [highlightField, setHighlightField] = useState("");
+  const field = numberColumns.includes(highlightField) ? highlightField : numberColumns[0] ?? "";
+  const rule = highlights.find((h) => h.field === field);
+  const [valueText, setValueText] = useState("");
+  useEffect(() => {
+    setValueText(rule?.value !== undefined ? String(rule.value) : "");
+    // Only when another column is picked: what is typed afterwards is the draft.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [field]);
+  const writeRule = (next: TableHighlight | null) => setDslMap(config, setHighlight(map, field, next), onChange);
+  const setKind = (kind: string) => {
+    if (!kind) return writeRule(null);
+    const k = kind as TableHighlightKind;
+    if (k === "above" || k === "below") {
+      const value = Number(valueText);
+      return writeRule({ field, kind: k, value: valueText.trim() !== "" && Number.isFinite(value) ? value : 0, color: rule?.color ?? "red" });
+    }
+    writeRule({ field, kind: k });
+  };
+  const typeValue = (text: string) => {
+    setValueText(text);
+    const value = Number(text);
+    if (rule && (rule.kind === "above" || rule.kind === "below") && text.trim() !== "" && Number.isFinite(value)) {
+      writeRule({ ...rule, value });
+    }
+  };
+
   return (
     <div id="configPanel-tabulator" className="space-y-4">
       {/* ── Layout ── */}
@@ -234,6 +312,82 @@ export function TabulatorConfig({ config, columns, onChange, rowCount }: Tabulat
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Totals, search, dragging columns (#28) */}
+      <div className="space-y-1.5">
+        {([
+          ["chkTableTotals", "Totals row", totals, (on: boolean) => setFlag("rbTotals", on)],
+          ["chkTableSearch", "Search in each column", search, setSearch],
+          ["chkTableMovableColumns", "Columns can be dragged", movable, (on: boolean) => setFlag("movableColumns", on)],
+        ] as const).map(([id, label, checked, set]) => (
+          <label key={id} className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
+            <input id={id} type="checkbox" checked={checked} onChange={(e) => set(e.target.checked)} className="rounded border-base-300" />
+            <span>{label}</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Highlights (#28): a colour scale, bars, or one above/below colour, per column of numbers */}
+      {numberColumns.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-xs text-base-content/60">Highlight</span>
+          <div className="grid grid-cols-2 gap-1.5">
+            <select
+              id="selectTableHighlightField"
+              value={field}
+              onChange={(e) => setHighlightField(e.target.value)}
+              className="w-full text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+            >
+              {numberColumns.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              id="selectTableHighlightKind"
+              value={rule?.kind ?? ""}
+              onChange={(e) => setKind(e.target.value)}
+              className="w-full text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+            >
+              {HIGHLIGHT_KINDS.map((k) => <option key={k.value || "none"} value={k.value}>{k.label}</option>)}
+            </select>
+          </div>
+          {rule && (rule.kind === "above" || rule.kind === "below") && (
+            <div className="grid grid-cols-2 gap-1.5">
+              <input
+                id="inputTableHighlightValue"
+                type="text"
+                inputMode="decimal"
+                value={valueText}
+                onChange={(e) => typeValue(e.target.value)}
+                className="w-full text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+              />
+              <select
+                id="selectTableHighlightColor"
+                value={rule.color ?? "red"}
+                onChange={(e) => writeRule({ ...rule, color: e.target.value })}
+                className="w-full text-xs bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+              >
+                {HIGHLIGHT_COLORS.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+          {highlights.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {highlights.map((h) => (
+                <span key={h.field} id={`tableHighlight-${h.field}`} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-base-200 text-[10px] text-base-content">
+                  {h.field}: {h.kind}{h.value !== undefined ? ` ${h.value}` : ""}
+                  <button
+                    id={`btnRemoveTableHighlight-${h.field}`}
+                    type="button"
+                    onClick={() => setDslMap(config, setHighlight(map, h.field, null), onChange)}
+                    className="text-base-content/60 hover:text-error"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
