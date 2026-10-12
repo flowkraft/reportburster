@@ -47,6 +47,12 @@
       "id": "dd-headcount-low-code",
       "reportId": "g-dd-headcount-low-code",
       "title": "Headcount & Attrition (low-code)"
+    },
+    {
+      "of": "dd-inventory",
+      "id": "dd-inventory-low-code",
+      "reportId": "g-dd-inventory-low-code",
+      "title": "Inventory & Stock Health (low-code)"
     }
   ]
 }
