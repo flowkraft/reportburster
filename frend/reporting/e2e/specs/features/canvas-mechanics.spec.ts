@@ -6514,10 +6514,13 @@ test('(canvas mechanics) M88 Tables: a totals row, search, dragged columns, high
       await page.locator('#chkTableSearch').check();
       const channelFilter = canvasTable.locator('.tabulator-col[tabulator-field="channel"] .tabulator-header-filter input');
       await expect(channelFilter, 'a search box over the channels').toBeVisible({ timeout: 30_000 });
+      // Tabulator searches as keys are let go: the box is typed into, not just filled.
       await channelFilter.fill('web');
+      await channelFilter.press('End');
       await expect.poll(async () => canvasTable.locator('.tabulator-row:not(.tabulator-calcs)').count(),
         { message: 'only the web row is left', timeout: 30_000, intervals: [1_000] }).toBe(1);
       await channelFilter.fill('');
+      await channelFilter.press('End');
 
       // + highlights: a bar in every count, then one colour above a line only the biggest channel crosses.
       await page.locator('#chkTableMovableColumns').check();
@@ -6551,10 +6554,12 @@ test('(canvas mechanics) M88 Tables: a totals row, search, dragged columns, high
         { message: 'the published highlight', timeout: 30_000, intervals: [1_000] }).toBe(1);
       const pubFilter = pub.locator('.tabulator-col[tabulator-field="channel"] .tabulator-header-filter input');
       await pubFilter.fill('web');
+      await pubFilter.press('End');
       await expect.poll(async () => pub.locator('.tabulator-row:not(.tabulator-calcs)').count(),
         { message: 'the published search', timeout: 30_000, intervals: [1_000] }).toBe(1);
       await expect(pub.locator('.tabulator-row:not(.tabulator-calcs)').first()).toContainText(webOrders.toLocaleString('en-US'));
       await pubFilter.fill('');
+      await pubFilter.press('End');
 
       // A column is dragged by holding it a moment, then moving it.
       const fields = async () => pub.locator('.tabulator-header .tabulator-col[tabulator-field]')
