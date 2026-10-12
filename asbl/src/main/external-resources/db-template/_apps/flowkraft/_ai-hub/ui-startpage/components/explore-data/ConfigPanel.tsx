@@ -855,25 +855,11 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
             <div className="pt-2 border-t border-base-300/50">
               {columns.length === 0 && (
                 <div className="mb-3 p-3 rounded-md border border-dashed border-base-300 bg-base-200/30 text-xs space-y-2">
+                  {/* A filter pane lists the values of one column of its table, and the columns come from the
+                      table's schema as soon as one is picked: there is no query of its own to run for them. */}
                   <p className="text-base-content/60">
-                    No columns yet. Pick a table in the Data tab, or click Run to load the columns.
+                    No columns yet. Pick a table in the Data tab: the filter pane lists the values of one of its columns.
                   </p>
-                  <button
-                    id="btnDetectColumnsSlicer"
-                    type="button"
-                    onClick={detectColumnsFromQuery}
-                    disabled={widgetQueryLoading || !connectionId || !selectedWidget.dataSource}
-                    className="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {widgetQueryLoading
-  ? <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3 animate-spin"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-  : <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" /></svg>
-}
-                    {widgetQueryLoading ? "Detecting..." : "Detect columns from query"}
-                  </button>
-                  {(detectError || widgetQueryError) && (
-                    <p className="text-error">{detectError || widgetQueryError}</p>
-                  )}
                 </div>
               )}
               <SlicerConfig config={selectedWidget.displayConfig} columns={columns} table={selectedWidget.dataSource?.visualQuery?.table} onChange={handleDisplayChange} />

@@ -85,7 +85,6 @@ const APPENDED_FROM = ['helpers/explore-data-test-helper.ts', '// ── Display
 const NO_USER_PATH = new Map<string, string>([
   ['btnAddElement', 'AddElementMenu.tsx is imported by nothing: it is never rendered (the live path is btnAddElement-<type> in the Elements tab)'],
   ['overlayAddElementMenu', 'AddElementMenu.tsx is imported by nothing: it is never rendered'],
-  ['btnDetectColumnsSlicer', 'only shown for a Slicer widget, which the Elements tab no longer offers'],
   ['btnRemoveSelection-*', 'the selection bar belongs to the Slicer, which the Elements tab no longer offers'],
   ['btnClearSelections', 'the selection bar belongs to the Slicer, which the Elements tab no longer offers'],
   ['btnRetryWidget-*', 'shown only after a widget crashes, and no user action crashes one (a test-only trigger is not invented)'],
