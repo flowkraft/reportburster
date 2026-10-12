@@ -41,6 +41,7 @@ import {
   aliasSafeColumnRef,
   bucketExpr,
   dateExpr,
+  daysBetweenExpr,
   decimalDivision,
   dialectFor,
   likeFilter,
@@ -52,7 +53,7 @@ import {
   type SqlLiteralKind,
   type TableRef,
 } from "./sql-dialects";
-import { matchesAnyFilter, valueBoxIsEmpty } from "./filter-operators";
+import { comparesColumns, matchesAnyFilter, valueBoxIsEmpty } from "./filter-operators";
 import { isDayParam, nextDayRef } from "./date-parameters";
 import { isRelativeDateOp, relativeDayRange, todayIso } from "./relative-dates";
 import { asTableRef } from "./table-ref";
@@ -200,6 +201,42 @@ export function columnClassOf(column: ColumnSchema | null | undefined): ColumnCl
 export function sqlLiteralKindOf(column: ColumnSchema | null | undefined): SqlLiteralKind {
   const kind = columnClassOf(column);
   return kind === "time" ? "string" : kind;
+}
+
+/** The SQL of the six comparisons a filter row may make between two columns (#10). */
+const COLUMN_COMPARISON_SQL: Record<string, string> = {
+  equals: "=", not_equals: "<>", greater_than: ">", greater_or_equal: ">=", less_than: "<", less_or_equal: "<=",
+};
+
+/**
+ * The WHERE conditions of filters that must all hold, with the OR groups (#10) made: a row
+ * joined to the one above it by "or" (`join: "or"`) is one condition with it, in brackets,
+ * and the groups are AND-ed - `(status = 'returned' OR status = 'cancelled') AND channel = 'web'`.
+ * A row not applied (a half-typed value) is left out of its group: the `1=1` that stands for it
+ * among AND-ed conditions would make an OR group answer every row. A lone row writes exactly
+ * what it always wrote.
+ */
+function orGroupedConditions<F extends { join?: string }>(
+  filters: F[],
+  conditionFor: (f: F) => string | null,
+  notApplied: string | null,
+): string[] {
+  const groups: (string | null)[][] = [];
+  filters.forEach((f, i) => {
+    if (i === 0 || f.join !== "or") groups.push([]);
+    groups[groups.length - 1].push(conditionFor(f));
+  });
+  const out: string[] = [];
+  for (const group of groups) {
+    if (group.length === 1) {
+      if (group[0] !== null) out.push(group[0]);
+      continue;
+    }
+    const applied = group.filter((c): c is string => c !== null && c !== notApplied);
+    if (applied.length === 1) out.push(applied[0]);
+    else if (applied.length > 1) out.push(`(${applied.join(" OR ")})`);
+  }
+  return out;
 }
 
 /** The kinds of a table's columns, in the form `BuildSqlOptions` takes. */
@@ -471,6 +508,17 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
    *  so a slicer's `in` list is quoted, typed, bound and vendor-written exactly as a filter row's is.
    */
   const conditionFor = (f: (typeof query.filters)[number]): string | null => {
+    // A column compared with another column (#10). Two dates are compared as whole days, as a
+    // typed date is: through the days from one to the other (`daysBetweenExpr`, the vendor
+    // layer), so `delivered_ts after promised_date` means a later day on all nine.
+    if (comparesColumns(f)) {
+      const other = String(f.valueColumn).trim();
+      const op = COLUMN_COMPARISON_SQL[f.operator];
+      if (isTemporal(f.column) && isTemporal(other)) {
+        return `${daysBetweenExpr(dateExpr(other, dialect), dateExpr(f.column, dialect), dialect)} ${op} 0`;
+      }
+      return `${refFor(f.column)} ${op} ${refFor(other)}`;
+    }
     // An empty value box means the filter is not applied (the owner,
     // 2026-09-27; the rule itself is `valueBoxIsEmpty`, next to the operator
     // lists). The filter is left out of the WHERE, so the query answers with
@@ -673,7 +721,9 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   // WHERE, the query's own filters.
   let hasWhere = false;
   if (query.filters.length > 0) {
-    const conditions = query.filters.map(conditionFor).filter((condition): condition is string => condition !== null);
+    const conditions = matchAny
+      ? query.filters.map(conditionFor).filter((condition): condition is string => condition !== null)
+      : orGroupedConditions(query.filters, conditionFor, notApplied);
     // Every filter left out (all of them half-typed) means no WHERE at all.
     if (conditions.length > 0) {
       sql += matchAny && conditions.length > 1

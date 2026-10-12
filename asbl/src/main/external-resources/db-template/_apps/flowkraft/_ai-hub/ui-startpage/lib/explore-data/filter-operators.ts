@@ -237,10 +237,24 @@ export function operatorTakesValue(operator: string): boolean {
  * `between` needs both bounds: one of them missing is the same half-typed
  * state.
  */
+/** The operators that may compare a column with another column instead of a value (#10):
+ *  the six comparisons. The LIKE family, lists and ranges read a value. */
+export const COLUMN_COMPARISON_OPS: ReadonlySet<string> = new Set([
+  "equals", "not_equals", "greater_than", "greater_or_equal", "less_than", "less_or_equal",
+]);
+
+/** True when a filter row compares its column with another column (#10): a column is picked,
+ *  and the operator is one of the six comparisons. */
+export function comparesColumns(filter: { operator: string; valueColumn?: string | null }): boolean {
+  return String(filter.valueColumn ?? "").trim() !== "" && COLUMN_COMPARISON_OPS.has(filter.operator);
+}
+
 export function valueBoxIsEmpty(
-  filter: { operator: string; value?: string | null; valueTo?: string | null },
+  filter: { operator: string; value?: string | null; valueTo?: string | null; valueColumn?: string | null },
 ): boolean {
   if (!operatorTakesValue(filter.operator)) return false;
+  // A row comparing two columns has no value box: the other column is its value.
+  if (comparesColumns(filter)) return false;
   if (String(filter.value ?? "").trim() === "") return true;
   if (filter.operator === "between") return String(filter.valueTo ?? "").trim() === "";
   return false;
