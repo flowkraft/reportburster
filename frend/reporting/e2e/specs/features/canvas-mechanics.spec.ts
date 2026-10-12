@@ -6007,6 +6007,13 @@ test('(canvas mechanics) M80 On a phone the published dashboard is one column', 
   }
 });
 
+/** Click the country cell of the row a table draws for `code` (`tabCell-<cid>-<row>-country_code`). */
+async function m81ClickCountry(page: Page, componentId: string, code: string): Promise<void> {
+  const cell = page.locator(`[id^="tabCell-${componentId}-"][id$="-country_code"]`, { hasText: code }).first();
+  await expect(cell, `the table draws a row for ${code}`).toBeVisible({ timeout: 30_000 });
+  await cell.click();
+}
+
 /** The rows the drill panel holds, read off its table's own data. */
 async function m81Rows(page: Page): Promise<Array<Record<string, unknown>>> {
   const table = page.locator('#widgetDrillModal rb-tabulator');
@@ -6054,7 +6061,7 @@ test('(canvas mechanics) M81 A click on a bar or a table row opens the rows behi
       await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
 
       // + Canvas: the table's FR row opens the French rows; Escape puts them away.
-      await page.locator(`[id="widgetViz-${tableW}"] .tabulator-cell`, { hasText: /^FR$/ }).first().click();
+      await m81ClickCountry(page, tableW, 'FR');
       await rowsAre('FR', 'canvas, a row');
       await page.keyboard.press('Escape');
       await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
@@ -6073,7 +6080,7 @@ test('(canvas mechanics) M81 A click on a bar or a table row opens the rows behi
       await rowsAre('DE', 'published, a bar');
       await page.locator('#btnWidgetDrillClose').click();
       await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
-      await page.locator(`[id^="tabCell-${ids.tabulator[0]}-"]`, { hasText: /^FR$/ }).first().click();
+      await m81ClickCountry(page, ids.tabulator[0], 'FR');
       await rowsAre('FR', 'published, a row');
       await page.keyboard.press('Escape');
       await expect(page.locator('#widgetDrillModal')).toHaveCount(0);
