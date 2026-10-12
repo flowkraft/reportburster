@@ -297,7 +297,39 @@ public class DashboardFileGenerator {
                "</div>\n";
     }
 
+    /** The data widgets a title and a subtitle can sit over (#23): every one but the layout pieces. */
+    private static final Set<String> HEADED_TYPES = Set.of(
+        "chart", "tabulator", "pivot", "number", "map", "sankey", "gauge", "trend", "progress", "detail");
+
+    /**
+     * A data widget's title and subtitle (#23), set in its Display tab, as the first lines of its
+     * tile: {@code tileTitle-<component id>} and {@code tileSubtitle-<component id>}. A widget with
+     * neither is written as it always was.
+     */
+    private static String withHeading(Map<String, Object> w, String id, String html) {
+        if (html.isEmpty() || !(HEADED_TYPES.contains(str(w, "type")) || LiveCubeWidgets.isLive(w))) return html;
+        Map<String, Object> dc = displayConfig(w);
+        String title    = strOr(dc, "widgetTitle", "").trim();
+        String subtitle = strOr(dc, "widgetSubtitle", "").trim();
+        if (title.isEmpty() && subtitle.isEmpty()) return html;
+        StringBuilder heading = new StringBuilder();
+        if (!title.isEmpty())
+            heading.append(String.format(
+                "      <div class=\"rb-tile-title\" id=\"tileTitle-%s\" style=\"font-size: 14px; font-weight: 600; margin: 0 0 2px 0;\">%s</div>\n",
+                id, escapeHtmlAttr(title)));
+        if (!subtitle.isEmpty())
+            heading.append(String.format(
+                "      <div class=\"rb-tile-subtitle\" id=\"tileSubtitle-%s\" style=\"font-size: 12px; opacity: 0.7; margin: 0 0 8px 0;\">%s</div>\n",
+                id, escapeHtmlAttr(subtitle)));
+        int open = html.indexOf(">\n");
+        return open < 0 ? html : html.substring(0, open + 2) + heading + html.substring(open + 2);
+    }
+
     private static String widgetHtml(Map<String, Object> w, String reportId, String apiBaseUrl) {
+        return withHeading(w, componentId(w), tileHtml(w, reportId, apiBaseUrl));
+    }
+
+    private static String tileHtml(Map<String, Object> w, String reportId, String apiBaseUrl) {
         String type  = str(w, "type");
         String id    = componentId(w);
         int    x     = gridInt(w, "x");

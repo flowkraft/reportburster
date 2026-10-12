@@ -35,6 +35,7 @@ import { DetailWidget } from "./DetailWidget";
 import { SlicerWidget } from "./SlicerWidget";
 import { CubeRendererWidget } from "./CubeRendererWidget";
 import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
+import { widgetHeadingOf } from "../config-panels/WidgetHeadingConfig";
 
 const WIDGET_META: Record<WidgetType, { label: string; icon: React.ElementType; color: string }> = {
   chart: { label: "Chart", icon: _BarChart3, color: "text-blue-500" },
@@ -98,6 +99,7 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
   const showsCube = widget?.dataSource?.visualQuery?.kind === "cube"
     && !!widget?.dataSource?.visualQuery?.showInDashboard;
   const textContent = (widget?.displayConfig?.textContent as string) || "";
+  const heading = widgetHeadingOf(widget?.displayConfig);
 
   // Divider — minimal chrome: just a line. Selectable for delete.
   if (type === "divider") {
@@ -211,12 +213,24 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
             </div>
           )
         ) : hasData ? (
-          <div className="p-2 h-full">
+          <div className="p-2 h-full flex flex-col">
+            {(heading.title || heading.subtitle) && (
+              <div className="px-1 pb-1 shrink-0">
+                {heading.title && (
+                  <div id={`widgetTitle-${widgetId}`} className="text-sm font-semibold text-base-content truncate">{heading.title}</div>
+                )}
+                {heading.subtitle && (
+                  <div id={`widgetSubtitle-${widgetId}`} className="text-xs text-base-content/60 truncate">{heading.subtitle}</div>
+                )}
+              </div>
+            )}
+            <div className="flex-1 min-h-0">
             <WidgetErrorBoundary resetKey={`${showsCube ? "cube" : type}:${widgetId}`} widgetId={widgetId}>
               {showsCube
                 ? <CubeRendererWidget widgetId={widgetId} />
                 : <LiveWidget widgetId={widgetId} type={type} />}
             </WidgetErrorBoundary>
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full p-2">
