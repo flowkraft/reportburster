@@ -3105,13 +3105,13 @@ test('(canvas mechanics) D01 every TODO 5e defect fix works', async () => {
       await expect(page.locator('#dlgFilterBarConfig')).not.toBeVisible();
       await expect(page.locator('#formReportParameters')).toHaveCount(0);
 
-      // + a parameter gets an id of its own, shown read-only.
+      // + a parameter shows its id in a box of its own, which the author may type over (M65 types one).
       await addFilterBarParam(page, G1_SMALL_DSL);
       await page.locator('#btnConfigureFilters').click();
       const idInput = page.locator('[id="inputParamId-channel"]');
       await expect(idInput).toBeVisible();
       await expect(idInput).toHaveValue('channel');
-      await expect(idInput, 'the id cannot be typed over').toHaveAttribute('readonly', '');
+      await expect(idInput, 'the id can be typed over').toBeEditable();
       await page.locator('#btnCloseFilterConfig').click();
       await expect(page.locator('#dlgFilterBarConfig')).not.toBeVisible();
       // − with a filter in place the empty-bar tile is gone.
