@@ -53,6 +53,12 @@
       "id": "dd-inventory-low-code",
       "reportId": "g-dd-inventory-low-code",
       "title": "Inventory & Stock Health (low-code)"
+    },
+    {
+      "of": "dd-fulfillment",
+      "id": "dd-fulfillment-low-code",
+      "reportId": "g-dd-fulfillment-low-code",
+      "title": "Fulfillment & Delivery (low-code)"
     }
   ]
 }

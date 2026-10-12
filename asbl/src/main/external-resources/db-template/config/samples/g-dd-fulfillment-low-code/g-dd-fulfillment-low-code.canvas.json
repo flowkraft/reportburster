@@ -1,0 +1,725 @@
+{
+  "id": "g-dd-fulfillment-low-code",
+  "name": "Fulfillment & Delivery (low-code)",
+  "description": "On-time delivery over a chosen window with the weekly trend, the average days to deliver and the late orders behind it; the late rate and the spread of delivery days per carrier; the late rate per country, blank where there are too few deliveries to rate; and the late orders themselves, worst first.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-fulfillment-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd20-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Fulfillment & Delivery\n\nLateness is a carrier, not a country: SwiftPost is late 12.3% of the time against 4.28% for the other two over every delivery on the books - 12.38% against 4.25% and 3.05% in the last 90 days - and it is the worse carrier in all 18 countries where it delivers at least 60 parcels a year, from 7.56% in the Netherlands to 20% in Sweden. When it is late the parcel arrives 3.51 days late, against about a day and a half for the others, which is why its delivery-days box has the long tail.\n\nAre we on time and which way it is going, then whether it is one carrier and how late its parcels are, then the map and the list: the map is flat when lateness is not a country problem, and the list is what to chase. **A country with fewer than 60 deliveries in the window has no rate and stays uncoloured** - one late parcel in three is not a fact. The window defaults to the last 90 days, the carrier review period."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd20-gauge-on-time-delivery",
+        "type": "gauge",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-delivery",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "OnTimePct"
+              ],
+              "segments": [],
+              "filters": [
+                {
+                  "member": "DeliveredAt",
+                  "operator": "lt",
+                  "values": [
+                    "${dateTo__next_day}"
+                  ]
+                }
+              ],
+              "granularities": {},
+              "order": [],
+              "limit": null,
+              "paramBindings": [
+                {
+                  "param": "dateFrom",
+                  "member": "DeliveredAt",
+                  "operator": "greater_or_equal"
+                },
+                {
+                  "param": "carrier",
+                  "member": "Carrier",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  1.0 * ((COUNT(CASE WHEN (dash_demo.orders.delivered_ts IS NOT NULL) THEN 1 END)) - (COUNT(CASE WHEN (CAST(dash_demo.orders.delivered_ts AS DATE) > dash_demo.orders.promised_date) THEN 1 END))) / NULLIF((COUNT(CASE WHEN (dash_demo.orders.delivered_ts IS NOT NULL) THEN 1 END)), 0) AS \"OnTimePct\"\nFROM dash_demo.orders\nWHERE dash_demo.orders.delivered_ts < ${dateTo__next_day}\n  AND dash_demo.orders.delivered_ts >= ${dateFrom}\n  AND dash_demo.orders.carrier IN (${carrier})"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "OnTimePct": {
+              "numberStyle": "percent"
+            }
+          },
+          "userPicked": true,
+          "field": "OnTimePct",
+          "label": "On-time delivery",
+          "min": 0.8,
+          "max": 1,
+          "gaugeFormat": "percent",
+          "gaugeBands": [
+            {
+              "to": 0.9,
+              "color": "#ef8c8c"
+            },
+            {
+              "to": 0.95,
+              "color": "#f9d45c"
+            },
+            {
+              "to": 1,
+              "color": "#88bf4d"
+            }
+          ]
+        },
+        "columns": [
+          {
+            "columnName": "OnTimePct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "OnTimePct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd20-kpi-average-days-to-deliver",
+        "type": "number",
+        "gridPosition": {
+          "x": 3,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(avg(date_diff('day', o.order_ts::DATE, o.delivered_ts::DATE)), 2) AS average_days_to_deliver\nFROM dash_demo.orders o\nWHERE o.delivered_ts IS NOT NULL\n  AND o.delivered_ts >= ${dateFrom}\n  AND o.delivered_ts < ${dateTo__next_day}\n  AND o.carrier IN (${carrier})",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "userPicked": true,
+          "numberField": "average_days_to_deliver",
+          "numberFormat": "number",
+          "numberLabel": "Average days to deliver"
+        },
+        "columns": [
+          {
+            "columnName": "average_days_to_deliver",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "average_days_to_deliver",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd20-kpi-late-orders",
+        "type": "number",
+        "gridPosition": {
+          "x": 6,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-delivery",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "Late"
+              ],
+              "segments": [],
+              "filters": [
+                {
+                  "member": "DeliveredAt",
+                  "operator": "lt",
+                  "values": [
+                    "${dateTo__next_day}"
+                  ]
+                }
+              ],
+              "granularities": {},
+              "order": [],
+              "limit": null,
+              "paramBindings": [
+                {
+                  "param": "dateFrom",
+                  "member": "DeliveredAt",
+                  "operator": "greater_or_equal"
+                },
+                {
+                  "param": "carrier",
+                  "member": "Carrier",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  COUNT(CASE WHEN (CAST(dash_demo.orders.delivered_ts AS DATE) > dash_demo.orders.promised_date) THEN 1 END) AS \"Late\"\nFROM dash_demo.orders\nWHERE dash_demo.orders.delivered_ts < ${dateTo__next_day}\n  AND dash_demo.orders.delivered_ts >= ${dateFrom}\n  AND dash_demo.orders.carrier IN (${carrier})"
+        },
+        "displayConfig": {
+          "numberField": "Late",
+          "_auto_numberField": true,
+          "numberFormat": "number",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Late orders"
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      },
+      {
+        "id": "w-dd20-trend-on-time-per-week",
+        "type": "trend",
+        "gridPosition": {
+          "x": 9,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-delivery",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [
+                "DeliveredAt.week"
+              ],
+              "measures": [
+                "OnTimePct"
+              ],
+              "segments": [],
+              "filters": [
+                {
+                  "member": "DeliveredAt",
+                  "operator": "lt",
+                  "values": [
+                    "${dateTo__next_day}"
+                  ]
+                }
+              ],
+              "granularities": {
+                "DeliveredAt": "week"
+              },
+              "order": [
+                {
+                  "member": "DeliveredAt",
+                  "dir": "asc"
+                }
+              ],
+              "limit": null,
+              "paramBindings": [
+                {
+                  "param": "dateFrom",
+                  "member": "DeliveredAt",
+                  "operator": "greater_or_equal"
+                },
+                {
+                  "param": "carrier",
+                  "member": "Carrier",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  CAST(DATE_TRUNC('week', dash_demo.orders.delivered_ts) AS DATE) AS \"DeliveredAt\",\n  1.0 * ((COUNT(CASE WHEN (dash_demo.orders.delivered_ts IS NOT NULL) THEN 1 END)) - (COUNT(CASE WHEN (CAST(dash_demo.orders.delivered_ts AS DATE) > dash_demo.orders.promised_date) THEN 1 END))) / NULLIF((COUNT(CASE WHEN (dash_demo.orders.delivered_ts IS NOT NULL) THEN 1 END)), 0) AS \"OnTimePct\"\nFROM dash_demo.orders\nWHERE dash_demo.orders.delivered_ts < ${dateTo__next_day}\n  AND dash_demo.orders.delivered_ts >= ${dateFrom}\n  AND dash_demo.orders.carrier IN (${carrier})\nGROUP BY\n  CAST(DATE_TRUNC('week', dash_demo.orders.delivered_ts) AS DATE)\nORDER BY\n  \"DeliveredAt\" ASC"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "OnTimePct": {
+              "numberStyle": "percent"
+            }
+          },
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "DeliveredAt",
+              "datasets": [
+                {
+                  "field": "OnTimePct",
+                  "label": "OnTimePct"
+                }
+              ]
+            }
+          },
+          "dateField": "DeliveredAt",
+          "_auto_dateField": true,
+          "userPicked": true,
+          "valueField": "OnTimePct",
+          "format": "percent",
+          "label": "On-time % per week"
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      },
+      {
+        "id": "w-dd20-chart-late-by-carrier",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 4,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT o.carrier AS carrier,\n       round(100.0 * count(CASE WHEN o.delivered_ts::DATE > o.promised_date THEN 1 END) / count(*), 2) AS late_pct\nFROM dash_demo.orders o\nWHERE o.delivered_ts IS NOT NULL\n  AND o.delivered_ts >= ${dateFrom}\n  AND o.delivered_ts < ${dateTo__next_day}\n  AND o.carrier IN (${carrier})\nGROUP BY o.carrier\nORDER BY late_pct DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "carrier",
+              "datasets": [
+                {
+                  "field": "late_pct",
+                  "label": "Late %"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Late % by carrier"
+                },
+                "legend": {
+                  "display": false
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "carrier",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "late_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "carrier",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "late_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd20-chart-boxplot-delivery-days-by-carrier",
+        "type": "chart",
+        "gridPosition": {
+          "x": 6,
+          "y": 4,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT o.carrier AS carrier,\n       date_diff('day', o.order_ts::DATE, o.delivered_ts::DATE) AS delivery_days\nFROM dash_demo.orders o\nWHERE o.delivered_ts IS NOT NULL\n  AND o.delivered_ts >= ${dateFrom}\n  AND o.delivered_ts < ${dateTo__next_day}\n  AND o.carrier IN (${carrier})\nORDER BY o.carrier, delivery_days",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "boxplot",
+            "data": {
+              "labelField": "carrier",
+              "datasets": [
+                {
+                  "field": "delivery_days",
+                  "label": "Days to deliver"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Delivery days by carrier"
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "carrier",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "delivery_days",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "carrier",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "delivery_days",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd20-map-late-by-country",
+        "type": "map",
+        "gridPosition": {
+          "x": 0,
+          "y": 8,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT g.country AS country,\n       CASE WHEN count(*) >= 60\n            THEN round(100.0 * count(CASE WHEN o.delivered_ts::DATE > o.promised_date THEN 1 END) / count(*), 2)\n       END AS late_pct\nFROM dash_demo.orders o\nJOIN dash_demo.geo_cities g ON g.city_id = o.city_id\nWHERE o.delivered_ts IS NOT NULL\n  AND o.delivered_ts >= ${dateFrom}\n  AND o.delivered_ts < ${dateTo__next_day}\n  AND o.carrier IN (${carrier})\nGROUP BY g.country\nORDER BY g.country",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "mapType": "region",
+          "_auto_mapType": true,
+          "region": "world_countries",
+          "_auto_region": true,
+          "dimension": "country",
+          "_auto_dimension": true,
+          "metric": "late_pct",
+          "_auto_metric": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "country",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "late_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "country",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": true,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "late_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd20-table-late-orders",
+        "type": "tabulator",
+        "gridPosition": {
+          "x": 6,
+          "y": 8,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT o.order_id AS order_id,\n       o.carrier AS carrier,\n       g.country AS country,\n       o.promised_date AS promised_date,\n       o.delivered_ts::DATE AS delivered_date,\n       date_diff('day', o.promised_date, o.delivered_ts::DATE) AS days_late\nFROM dash_demo.orders o\nJOIN dash_demo.geo_cities g ON g.city_id = o.city_id\nWHERE o.delivered_ts IS NOT NULL\n  AND o.delivered_ts >= ${dateFrom}\n  AND o.delivered_ts < ${dateTo__next_day}\n  AND o.carrier IN (${carrier})\n  AND o.delivered_ts::DATE > o.promised_date\nORDER BY days_late DESC, o.delivered_ts DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true,
+            "pagination": true,
+            "paginationSize": 10,
+            "theme": "modern"
+          },
+          "userPicked": true,
+          "columnSettings": {
+            "order_id": {
+              "columnTitle": "Order"
+            },
+            "promised_date": {
+              "columnTitle": "Promised"
+            },
+            "delivered_date": {
+              "columnTitle": "Delivered"
+            },
+            "days_late": {
+              "columnTitle": "Days late"
+            }
+          }
+        },
+        "columns": [
+          {
+            "columnName": "order_id",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "carrier",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "country",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "promised_date",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "delivered_date",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "days_late",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "carrier",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "country",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": true,
+              "isCoordinate": false
+            },
+            {
+              "name": "promised_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "delivered_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "days_late",
+              "kind": "measure"
+            }
+          ]
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "dateFrom",
+          "type": "Date",
+          "label": "From",
+          "description": "",
+          "defaultValue": "{dataToday:minus 90 days}",
+          "constraints": {
+            "required": true
+          },
+          "uiHints": {
+            "control": "datepicker"
+          }
+        },
+        {
+          "id": "dateTo",
+          "type": "Date",
+          "label": "To",
+          "description": "",
+          "defaultValue": "{dataToday}",
+          "constraints": {
+            "required": true
+          },
+          "uiHints": {
+            "control": "datepicker"
+          }
+        },
+        {
+          "id": "carrier",
+          "type": "String",
+          "label": "Carrier",
+          "description": "",
+          "defaultValue": [],
+          "constraints": {},
+          "uiHints": {
+            "control": "multiselect",
+            "options": "SELECT DISTINCT o.carrier AS value, o.carrier AS label FROM dash_demo.orders o WHERE o.carrier IS NOT NULL ORDER BY label"
+          }
+        }
+      ]
+    }
+  }
+}

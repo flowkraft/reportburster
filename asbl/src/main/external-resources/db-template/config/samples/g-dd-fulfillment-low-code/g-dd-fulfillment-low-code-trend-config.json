@@ -1,0 +1,8 @@
+{
+  "trend_deliveredat_week" : {
+    "dateField" : "DeliveredAt",
+    "valueField" : "OnTimePct",
+    "format" : "percent",
+    "label" : "On-time % per week"
+  }
+}
