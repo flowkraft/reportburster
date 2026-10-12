@@ -419,7 +419,9 @@ interface CanvasActions {
   /** Update the exportedReportCode after a successful "Save to DataPallas". */
   setExportedReportCode: (code: string | null) => void;
   // Associative exploration
-  toggleExploreSelection: (field: string, value: string) => void;
+  /** A pick in a slicer; a single-select slicer (`multiSelect` false) replaces its field's pick,
+   *  as the published page does (`slicer-selections.ts`). */
+  toggleExploreSelection: (field: string, value: string, multiSelect?: boolean) => void;
   clearExploreSelections: () => void;
   setExploreFieldStates: (states: FieldStates) => void;
   isExploreActive: () => boolean; // true when ≥1 slicer widget exists
@@ -843,12 +845,13 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     });
   },
 
-  toggleExploreSelection: (field, value) => {
+  toggleExploreSelection: (field, value, multiSelect = true) => {
     const state = get();
     const exists = state.exploreSelections.find((s) => s.field === field && s.value === value);
+    const kept = multiSelect ? state.exploreSelections : state.exploreSelections.filter((s) => s.field !== field);
     const next = exists
       ? state.exploreSelections.filter((s) => !(s.field === field && s.value === value))
-      : [...state.exploreSelections, { field, value }];
+      : [...kept, { field, value }];
     set({ exploreSelections: next, exploreVersion: state.exploreVersion + 1 });
   },
 
