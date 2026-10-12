@@ -26,12 +26,15 @@ export interface ParameterControlMeta {
 /** The names the filter bar draws a control for. Anything else is a text box. */
 export const KNOWN_CONTROLS: readonly string[] = [
   'text', 'date', 'datetime', 'integer', 'decimal', 'boolean', 'select', 'multi-select', 'radio',
+  // Two Date parameters, `<id>From` and `<id>To`, drawn as one range (`date-range.ts`).
+  'date-range',
 ];
 
 /** The dialog's words, and the DSL's older ones, in the names the template branches on. */
 const CONTROL_ALIASES: Readonly<Record<string, string>> = {
   multiselect: 'multi-select',
   datepicker: 'date',
+  daterange: 'date-range',
   // `double` is the name the backend conversion knows for a number with a fraction; without this
   // line a parameter declared that way fell through to a text box.
   double: 'decimal',

@@ -105,6 +105,7 @@ import {
 } from '../../helpers/dashboard-test-helper';
 import {
   openPublished,
+  reloadDashboard,
 } from '../../helpers/dashboard-demos/published-dashboard-checks';
 import {
   stateOf,
@@ -5636,6 +5637,84 @@ test('(canvas mechanics) M75 Chart axis min and max', async () => {
         .poll(async () => m75Bounds(page.locator(`[id="widgetChart-${ids.chart[0]}"]`), 'y'),
           { message: 'the published chart has the same bounds', timeout: 60_000, intervals: [1_000] })
         .toEqual({ min, max });
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M76 A date range: one control, two dates, presets from the data\'s today', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M76 Date range', async (canvasId) => {
+      // The demo data's today is 2026-09-30 (`dash_demo.as_of`): the presets count from it, as M66's
+      // relative dates do. Both days of a range are included.
+      const day = (r: Record<string, string>): string => r.order_ts.slice(0, 10);
+      const between = (from: string, to: string) => pCount((r) => day(r) >= from && day(r) <= to);
+      expect(between('2026-09-24', '2026-09-30'), 'the seeded data has orders in its own last week').toBeGreaterThan(0);
+
+      // + `dateFrom` asks for a range: it and `dateTo` are drawn as one control with presets.
+      await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'dateFrom', type: 'Date', label: 'Period', defaultValue: '2026-01-01') {
+    constraints(required: false)
+    ui(control: 'date-range')
+  }
+  parameter(id: 'dateTo', type: 'Date', label: 'To', defaultValue: '2026-09-30') {
+    constraints(required: false)
+  }
+}
+`);
+      const bar = page.locator('#formReportParameters');
+      await expect(bar.locator('#dateFrom_range'), 'one range control').toBeVisible();
+      await expect(bar.locator('#dateFrom_range #dateTo'), 'the last day is inside the range').toBeVisible();
+      await expect(bar.locator('label[for="dateTo"]'), 'and not drawn again on its own').toHaveCount(0);
+      await expect(bar.locator('#dateFrom_preset'), 'the defaults are days of the author\'s own').toHaveValue('');
+
+      // + a count of orders between the two dates, both ends bound.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addVisualFilter(page, 0, 'order_ts', 'between');
+      await bindVisualFilterToParam(page, 0, 'dateFrom');
+      await bindVisualFilterToParam(page, 0, 'dateTo', 'valueTo');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, between('2026-01-01', '2026-09-30'), 'the defaults: January to the data\'s today');
+
+      // + a preset fills both days at once, from the data's today.
+      await bar.locator('#dateFrom_preset').selectOption('last_7_days');
+      await expect(bar.locator('#dateFrom')).toHaveValue('2026-09-24');
+      await expect(bar.locator('#dateTo')).toHaveValue('2026-09-30');
+      await g4ScalarIs(page, kpi, between('2026-09-24', '2026-09-30'), 'the last 7 days end on the data\'s today');
+      await bar.locator('#dateFrom_preset').selectOption('last_year');
+      await expect(bar.locator('#dateFrom')).toHaveValue('2025-01-01');
+      await expect(bar.locator('#dateTo')).toHaveValue('2025-12-31');
+      await g4ScalarIs(page, kpi, between('2025-01-01', '2025-12-31'), 'last year is the year before the data\'s');
+
+      // − a day typed by hand is the reader's own: the preset says Custom, the count follows the days.
+      await bar.locator('#dateFrom_preset').selectOption('year_to_date');
+      await bar.locator('#dateFrom').fill('2026-09-02');
+      await expect(bar.locator('#dateFrom_preset')).toHaveValue('');
+      await g4ScalarIs(page, kpi, between('2026-09-02', '2026-09-30'), 'a typed first day');
+
+      // + published: the page's own range, counted from the same today.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length;
+      }, { message: 'the saved canvas holds the number widget', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubBar = page.locator('#parameterBarContainer');
+      await expect(pubBar.locator('#dateFrom_range'), 'published, the same range control').toBeVisible({ timeout: 30_000 });
+      await pPublishedNumberIs(page, ids.number[0], between('2026-01-01', '2026-09-30'), 'published, the defaults');
+      await pubBar.locator('#dateFrom_preset').selectOption('quarter_to_date');
+      await expect(pubBar.locator('#dateFrom')).toHaveValue('2026-07-01');
+      await expect(pubBar.locator('#dateTo')).toHaveValue('2026-09-30');
+      await reloadDashboard(pubBar);
+      await pPublishedNumberIs(page, ids.number[0], between('2026-07-01', '2026-09-30'),
+        'published, the quarter to the data\'s today');
     });
   } finally {
     if (reportId) await deleteReportAsAdmin(reportId);

@@ -6,6 +6,7 @@ import { useCanvasStore, type ParamMeta } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "@/components/explore-data/widgets/useRbElementReady";
 import { executeQuery } from "@/lib/explore-data/rb-api";
 import { filterValueApplies } from "@/lib/explore-data/filter-values";
+import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { FilterBarConfigPanel } from "@/components/explore-data/config-panels/FilterBarConfigPanel";
 
 // Re-export for callers (legacy import path).
@@ -40,6 +41,8 @@ export function FilterBar() {
   const editMode         = useCanvasStore((s) => s.editMode);
   const connectionId     = useCanvasStore((s) => s.connectionId);
   const setFilterValue   = useCanvasStore((s) => s.setFilterValue);
+  // A date range's presets count from the day the Visual tab's relative dates count from.
+  const { today: dataToday } = useDataToday(connectionId);
 
   const baseParameters = parametersConfig?.parameters ?? [];
 
@@ -130,8 +133,10 @@ export function FilterBar() {
     el.addEventListener("valueChange", handler);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (el as any).parameters = parameters;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (el as any).dataToday = dataToday ?? "";
     return () => el.removeEventListener("valueChange", handler);
-  }, [parameters, ready, setFilterValue]);
+  }, [parameters, ready, setFilterValue, dataToday]);
 
   const hasFilters = parameters.length > 0;
   if (!hasFilters && !editMode) return null;

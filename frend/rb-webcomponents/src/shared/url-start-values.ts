@@ -202,7 +202,7 @@ export function acceptValue(
   // A date carries what its picker can hold, or whatever a default of the same parameter would carry
   // (a `{dataToday:...}` token, as a story's values do) - nothing here expands a token, exactly as
   // nothing does for a default. Empty is a date nobody picked.
-  if (control === 'date' || control === 'datetime') {
+  if (control === 'date' || control === 'date-range' || control === 'datetime') {
     const t = text.trim();
     if (t !== '' && !DATE_VALUE.test(t) && !DATE_TOKEN.test(t)) return reject('it is not a date');
     return { ok: true, value: t };

@@ -218,6 +218,7 @@ public class ReportingService {
 			if (config.hasParameters && reportingConnCode != null && !reportingConnCode.isEmpty()) {
 				resolveRelativeParameterDefaults(config.parameters, reportingConnCode);
 				resolveParameterSqlOptions(config.parameters, reportingConnCode);
+				config.dataToday = dataTodayForRanges(config.parameters, reportingConnCode);
 			}
 		}
 		
@@ -823,6 +824,33 @@ public class ReportingService {
 		LocalDate dataToday = cubeDataToday.ofDashboards(connectionCode);
 		for (ReportParameter param : parameters)
 			param.defaultValue = CubeDates.resolve(param.defaultValue, dataToday);
+	}
+
+	/**
+	 * The day a date range's presets count from, for the filter bar to hold (#16): the data's today
+	 * on this connection, so "last 30 days" means the days a {@code {dataToday:minus 29 days}}
+	 * default means. Read only when a parameter asks for a {@code date-range} control (the DSL's
+	 * word) or a {@code daterange} one (the Canvas dialog's); null on a connection whose data has
+	 * no day of its own, where the browser's date stands, as it does for the Visual tab.
+	 */
+	String dataTodayForRanges(List<ReportParameter> parameters, String connectionCode) {
+
+		boolean anyRange = false;
+		for (ReportParameter param : parameters) {
+			Object control = param.uiHints == null ? null
+					: param.uiHints.getOrDefault("control", param.uiHints.get("widget"));
+			String name = control == null ? "" : control.toString().trim().toLowerCase();
+			anyRange = anyRange || name.equals("date-range") || name.equals("daterange");
+		}
+		if (!anyRange)
+			return null;
+
+		try {
+			LocalDate dataToday = cubeDataToday.ofDashboards(connectionCode);
+			return dataToday == null ? null : dataToday.toString();
+		} catch (IllegalArgumentException noMarkerTable) {
+			return null;
+		}
 	}
 
 	/**
