@@ -120,6 +120,8 @@ class DashboardDemosTwinsTest {
 			}
 		}
 
+		System.out.println(DashboardDemos.twins().size() + " twin(s): " + tiles + " tiles and " + claims
+				+ " claims compared with their originals");
 		assertTrue(wrong.isEmpty(), wrong.size() + " of " + tiles + " tiles and " + claims
 				+ " claims differ:\n" + String.join("\n", wrong));
 		if (!DashboardDemos.twins().isEmpty())

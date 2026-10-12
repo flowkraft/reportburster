@@ -1,0 +1,10 @@
+{
+  "twins": [
+    {
+      "of": "dd-invoices",
+      "id": "dd-invoices-low-code",
+      "reportId": "g-dd-invoices-low-code",
+      "title": "Invoices & Billing (low-code)"
+    }
+  ]
+}

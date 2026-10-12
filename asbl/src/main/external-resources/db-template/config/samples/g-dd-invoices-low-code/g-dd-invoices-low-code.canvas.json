@@ -1,0 +1,735 @@
+{
+  "id": "g-dd-invoices-low-code",
+  "name": "Invoices & Billing (low-code)",
+  "description": "Month end on one page: what was billed and collected this month, what is still open and how much of it is overdue, the monthly billing stack by status, where billing comes from, who is billed most, and the invoice list to reconcile.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-invoices-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd13-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Invoices & Billing\n\nSeptember billing is 1,098,189.32 - 98.9% of it from trade orders and 1.1% from Care plans - against 827,603.01 collected; 12.3% of the 1,637,606.29 still open is overdue.\n\nThe four numbers are the position: the first two always read the data's own month, and the open and overdue amounts are everything owed, whatever the filters say. The filters narrow the charts and the list. Invoices are one per trade order and one a month per Care-plan subscriber; consumer orders are paid at checkout and are never invoiced."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd13-kpi-billed-this-month",
+        "type": "number",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 3,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "invoices",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(sum(i.amount + i.tax_amount), 2) AS billed_this_month\nFROM dash_demo.invoices i\nWHERE date_trunc('month', i.issue_date) = date_trunc('month', (SELECT a.as_of FROM dash_demo.as_of a))",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "userPicked": true,
+          "numberField": "billed_this_month",
+          "numberFormat": "currency",
+          "numberLabel": "Billed this month"
+        },
+        "columns": [
+          {
+            "columnName": "billed_this_month",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "billed_this_month",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd13-kpi-collected-this-month",
+        "type": "number",
+        "gridPosition": {
+          "x": 3,
+          "y": 1,
+          "w": 3,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "invoice_payments",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(sum(p.amount), 2) AS collected_this_month\nFROM dash_demo.invoice_payments p\nWHERE date_trunc('month', p.paid_date) = date_trunc('month', (SELECT a.as_of FROM dash_demo.as_of a))",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "userPicked": true,
+          "numberField": "collected_this_month",
+          "numberFormat": "currency",
+          "numberLabel": "Collected this month"
+        },
+        "columns": [
+          {
+            "columnName": "collected_this_month",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "collected_this_month",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd13-kpi-open-amount",
+        "type": "number",
+        "gridPosition": {
+          "x": 6,
+          "y": 1,
+          "w": 3,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-finance",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "OpenAmount"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {},
+              "order": [],
+              "limit": null
+            }
+          },
+          "generatedSql": "SELECT\n  CAST(SUM(CASE WHEN (dash_demo.invoices.status IN ('open', 'overdue', 'partially_paid')) THEN dash_demo.invoices.amount + dash_demo.invoices.tax_amount END) AS DECIMAL(31,4)) AS \"OpenAmount\"\nFROM dash_demo.invoices"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "OpenAmount": {
+              "numberStyle": "currency",
+              "currency": "EUR"
+            }
+          },
+          "numberField": "OpenAmount",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Open amount"
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      },
+      {
+        "id": "w-dd13-kpi-overdue-amount",
+        "type": "number",
+        "gridPosition": {
+          "x": 9,
+          "y": 1,
+          "w": 3,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-finance",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "OverdueAmount"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {},
+              "order": [],
+              "limit": null
+            }
+          },
+          "generatedSql": "SELECT\n  CAST(SUM(CASE WHEN (dash_demo.invoices.status = 'overdue') THEN dash_demo.invoices.amount + dash_demo.invoices.tax_amount END) AS DECIMAL(31,4)) AS \"OverdueAmount\"\nFROM dash_demo.invoices"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "OverdueAmount": {
+              "numberStyle": "currency",
+              "currency": "EUR"
+            }
+          },
+          "numberField": "OverdueAmount",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Overdue amount"
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      },
+      {
+        "id": "w-dd13-chart-billed-per-month-by-status",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 3,
+          "w": 8,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-finance",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [
+                "IssuedAt.month",
+                "Status"
+              ],
+              "measures": [
+                "Billed"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {
+                "IssuedAt": "month"
+              },
+              "order": [
+                {
+                  "member": "IssuedAt",
+                  "dir": "asc"
+                },
+                {
+                  "member": "Status",
+                  "dir": "asc"
+                }
+              ],
+              "limit": 500,
+              "paramBindings": [
+                {
+                  "param": "issuedFrom",
+                  "member": "IssuedAt",
+                  "operator": "between",
+                  "paramTo": "issuedTo"
+                },
+                {
+                  "param": "status",
+                  "member": "Status",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  CAST(DATE_TRUNC('month', dash_demo.invoices.issue_date) AS DATE) AS \"IssuedAt\",\n  dash_demo.invoices.status AS \"Status\",\n  CAST(SUM(dash_demo.invoices.amount + dash_demo.invoices.tax_amount) AS DECIMAL(31,4)) AS \"Billed\"\nFROM dash_demo.invoices\nWHERE (dash_demo.invoices.issue_date >= ${issuedFrom} AND dash_demo.invoices.issue_date <= ${issuedTo})\n  AND dash_demo.invoices.status IN (${status})\nGROUP BY\n  CAST(DATE_TRUNC('month', dash_demo.invoices.issue_date) AS DATE),\n  dash_demo.invoices.status\nORDER BY\n  \"IssuedAt\" ASC,\n  \"Status\" ASC\nLIMIT 500"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "Billed": {
+              "numberStyle": "currency",
+              "currency": "EUR"
+            }
+          },
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "IssuedAt",
+              "datasets": [
+                {
+                  "field": "Billed",
+                  "label": "Billed"
+                }
+              ],
+              "seriesField": "Status"
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Billed per month by status"
+                }
+              },
+              "scales": {
+                "x": {
+                  "stacked": true
+                },
+                "y": {
+                  "stacked": true
+                }
+              }
+            }
+          },
+          "grouped": true,
+          "series": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "IssuedAt",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "Status",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "Billed",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "IssuedAt",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "Status",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "Billed",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd13-chart-billed-by-source",
+        "type": "chart",
+        "gridPosition": {
+          "x": 8,
+          "y": 3,
+          "w": 4,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "invoices",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "issue_date",
+                "operator": "between",
+                "value": "${issuedFrom}",
+                "valueTo": "${issuedTo}"
+              },
+              {
+                "column": "status",
+                "operator": "in",
+                "value": "${status}"
+              },
+              {
+                "column": "customer_id",
+                "operator": "equals",
+                "value": "${customerId}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "SUM",
+                "field": "billed",
+                "share": true
+              }
+            ],
+            "groupBy": [
+              "source"
+            ],
+            "sort": [
+              {
+                "column": "billed_sum_pct",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 500,
+            "computed": [
+              {
+                "name": "billed",
+                "left": "amount",
+                "operator": "+",
+                "right": "tax_amount"
+              }
+            ],
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT \"source\", (100.0 * CAST(CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) AS DECIMAL(20,4)) / NULLIF(SUM(CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4))) OVER (), 0)) AS \"billed_sum_pct\"\nFROM \"dash_demo\".\"invoices\"\nWHERE \"issue_date\" >= ${issuedFrom} AND \"issue_date\" < ${issuedTo__next_day}\n  AND \"status\" IN (${status})\n  AND \"customer_id\" = ${customerId}\nGROUP BY \"source\"\nORDER BY CASE WHEN CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "rowsSql": "SELECT \"invoices\".*, (\"amount\" + \"tax_amount\") AS \"billed\"\nFROM \"dash_demo\".\"invoices\"\nWHERE \"issue_date\" >= ${issuedFrom} AND \"issue_date\" < ${issuedTo__next_day}\n  AND \"status\" IN (${status})\n  AND \"customer_id\" = ${customerId}\n  AND \"source\" = ${__drill_source}\nLIMIT 500",
+          "rowsFields": [
+            "source"
+          ],
+          "sql": "SELECT \"source\", (100.0 * CAST(CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) AS DECIMAL(20,4)) / NULLIF(SUM(CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4))) OVER (), 0)) AS \"billed_sum_pct\"\nFROM \"dash_demo\".\"invoices\"\nWHERE \"issue_date\" >= ${issuedFrom} AND \"issue_date\" < ${issuedTo__next_day}\n  AND \"status\" IN (${status})\n  AND \"customer_id\" = ${customerId}\nGROUP BY \"source\"\nORDER BY CASE WHEN CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, CAST(SUM((\"amount\" + \"tax_amount\")) AS DECIMAL(31,4)) DESC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "doughnut",
+            "data": {
+              "datasets": [
+                {
+                  "field": "billed_sum_pct",
+                  "label": "Share of billing %"
+                }
+              ],
+              "labelField": "source"
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Billed by source: trade orders vs Care plans"
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "billed_sum_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "billed_sum_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd13-chart-top-10-customers-by-billed",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 7,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-finance",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [
+                "Customer"
+              ],
+              "measures": [
+                "Billed"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {},
+              "order": [
+                {
+                  "member": "Billed",
+                  "dir": "desc"
+                }
+              ],
+              "limit": 10,
+              "paramBindings": [
+                {
+                  "param": "issuedFrom",
+                  "member": "IssuedAt",
+                  "operator": "between",
+                  "paramTo": "issuedTo"
+                },
+                {
+                  "param": "status",
+                  "member": "Status",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  dash_demo.customers.name AS \"Customer\",\n  CAST(SUM(dash_demo.invoices.amount + dash_demo.invoices.tax_amount) AS DECIMAL(31,4)) AS \"Billed\"\nFROM dash_demo.invoices\nLEFT JOIN dash_demo.customers ON dash_demo.invoices.customer_id = dash_demo.customers.customer_id\nWHERE (dash_demo.invoices.issue_date >= ${issuedFrom} AND dash_demo.invoices.issue_date <= ${issuedTo})\n  AND dash_demo.invoices.status IN (${status})\nGROUP BY\n  dash_demo.customers.name\nORDER BY\n  \"Billed\" DESC\nLIMIT 10"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "Billed": {
+              "numberStyle": "currency",
+              "currency": "EUR"
+            }
+          },
+          "dslConfig": {
+            "type": "row",
+            "data": {
+              "labelField": "Customer",
+              "datasets": [
+                {
+                  "field": "Billed",
+                  "label": "Billed"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Top 10 customers by billed amount"
+                },
+                "legend": {
+                  "display": false
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "Customer",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "Billed",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "Customer",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "Billed",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd13-table-invoices",
+        "type": "tabulator",
+        "gridPosition": {
+          "x": 6,
+          "y": 7,
+          "w": 6,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "invoices",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "issue_date",
+                "operator": "between",
+                "value": "${issuedFrom}",
+                "valueTo": "${issuedTo}"
+              },
+              {
+                "column": "status",
+                "operator": "in",
+                "value": "${status}"
+              },
+              {
+                "column": "customer_id",
+                "operator": "equals",
+                "value": "${customerId}"
+              }
+            ],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [
+              {
+                "column": "issue_date",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 5000
+          },
+          "generatedSql": "SELECT *\nFROM \"dash_demo\".\"invoices\"\nWHERE \"issue_date\" >= ${issuedFrom} AND \"issue_date\" < ${issuedTo__next_day}\n  AND \"status\" IN (${status})\n  AND \"customer_id\" = ${customerId}\nORDER BY CASE WHEN \"issue_date\" IS NULL THEN 1 ELSE 0 END, \"issue_date\" DESC\nLIMIT 5000",
+          "sql": "SELECT *\nFROM \"dash_demo\".\"invoices\"\nWHERE \"issue_date\" >= ${issuedFrom} AND \"issue_date\" < ${issuedTo__next_day}\n  AND \"status\" IN (${status})\n  AND \"customer_id\" = ${customerId}\nORDER BY CASE WHEN \"issue_date\" IS NULL THEN 1 ELSE 0 END, \"issue_date\" DESC\nLIMIT 5000",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true,
+            "pagination": true,
+            "paginationSize": 12,
+            "theme": "simple"
+          },
+          "userPicked": true,
+          "columnSettings": {
+            "invoice_no": {
+              "columnTitle": "Invoice"
+            },
+            "issue_date": {
+              "columnTitle": "Issued"
+            },
+            "due_date": {
+              "columnTitle": "Due"
+            },
+            "tax_amount": {
+              "columnTitle": "Tax"
+            }
+          }
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "status",
+          "type": "String",
+          "label": "Status",
+          "description": "",
+          "defaultValue": [],
+          "constraints": {},
+          "uiHints": {
+            "control": "multiselect",
+            "options": "SELECT DISTINCT status AS value, status AS label FROM dash_demo.invoices ORDER BY label"
+          }
+        },
+        {
+          "id": "customerId",
+          "type": "Integer",
+          "label": "Customer",
+          "description": "",
+          "constraints": {},
+          "uiHints": {
+            "control": "select",
+            "options": "SELECT '' AS value, '-- All customers --' AS label UNION ALL SELECT CAST(c.customer_id AS VARCHAR) AS value, c.name AS label FROM dash_demo.customers c WHERE EXISTS (SELECT 1 FROM dash_demo.invoices i WHERE i.customer_id = c.customer_id) ORDER BY label"
+          }
+        },
+        {
+          "id": "issuedFrom",
+          "type": "Date",
+          "label": "Issued from",
+          "description": "",
+          "defaultValue": "{dataToday:startOf year}",
+          "constraints": {
+            "required": true
+          },
+          "uiHints": {
+            "control": "datepicker"
+          }
+        },
+        {
+          "id": "issuedTo",
+          "type": "Date",
+          "label": "Issued to",
+          "description": "",
+          "defaultValue": "{dataToday}",
+          "constraints": {
+            "required": true
+          },
+          "uiHints": {
+            "control": "datepicker"
+          }
+        }
+      ]
+    }
+  }
+}
