@@ -30,6 +30,9 @@ interface FilterItem {
   valueColumn?: string;
   /** How the row joins the one above (#10): "or" makes one group with it; absent is "and". */
   join?: "and" | "or";
+  /** A dashboard checkbox that switches the row (#12): the row applies while it is on, or off. */
+  switchParam?: string;
+  switchOn?: "on" | "off";
 }
 
 // Type detection from column schema
@@ -77,9 +80,11 @@ interface FilterStepProps {
   /** The `dp_` names the server sets for whoever is looking, offered next to them (R9). The
    *  names come from the server itself (`fetchBuiltinParamNames`), never from a list here. */
   builtinParams?: string[];
+  /** The dashboard's checkbox filters (Boolean parameters), any of which may switch a row (#12). */
+  switchParams?: string[];
 }
 
-export function FilterStep({ columns, filters, onChange, match = "all", onMatchChange, availableParams = [], builtinParams = [] }: FilterStepProps) {
+export function FilterStep({ columns, filters, onChange, match = "all", onMatchChange, availableParams = [], builtinParams = [], switchParams = [] }: FilterStepProps) {
   /** Everything a filter can be bound to: the dashboard's own first, the server's after them. */
   const offers = bindableParams(availableParams, builtinParams);
 
@@ -389,6 +394,28 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
               >
                 col
               </button>
+            )}
+            {/* Always, or only while a dashboard checkbox is on (or off) (#12). Offered only on a
+                dashboard that has a checkbox filter. */}
+            {switchParams.length > 0 && (
+              <select
+                id={`selectFilterSwitch-${i}`}
+                value={f.switchParam ? `${f.switchParam}:${f.switchOn ?? "on"}` : ""}
+                onChange={(e) => {
+                  const [param, on] = e.target.value.split(":");
+                  updateFilter(i, param
+                    ? { switchParam: param, switchOn: on === "off" ? "off" : "on" }
+                    : { switchParam: undefined, switchOn: undefined });
+                }}
+                title="Apply this row always, or only while a dashboard checkbox is ticked (or not)"
+                className={`text-[11px] bg-base-100 border rounded px-1 py-0.5 shrink-0 ${f.switchParam ? "border-primary/30 text-primary" : "border-base-300 text-base-content/60"}`}
+              >
+                <option value="">always</option>
+                {switchParams.flatMap((p) => [
+                  <option key={`${p}:on`} value={`${p}:on`}>if {p} on</option>,
+                  <option key={`${p}:off`} value={`${p}:off`}>if {p} off</option>,
+                ])}
+              </select>
             )}
             <button id={`btnRemoveFilter-${i}`} onClick={() => removeFilter(i)} className="p-0.5 rounded hover:bg-error/10 text-base-content/60 hover:text-error">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>

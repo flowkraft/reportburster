@@ -239,6 +239,22 @@ function orGroupedConditions<F extends { join?: string }>(
   return out;
 }
 
+/**
+ * A filter row switched by a dashboard checkbox (#12) - a Boolean filter's `${name}`:
+ * - `on`: the row applies while the box is ticked; unticked or not set, every row passes
+ *   ("Below reorder level only");
+ * - `off`: the row applies while the box is not ticked; ticked, every row passes
+ *   ("Include returns" switches `status <> 'returned'` off).
+ * ANSI around the vendor's Boolean literal (`sqlLiteral`): four of the nine have no Boolean
+ * type, and compare the bound value with 1 and 0.
+ */
+export function switchedCondition(condition: string, param: string, when: "on" | "off", dialect: SqlDialect): string {
+  const p = paramRefOf(param);
+  return when === "on"
+    ? `(${p} IS NULL OR ${p} = ${sqlLiteral(false, "boolean", dialect)} OR ${condition})`
+    : `(${p} = ${sqlLiteral(true, "boolean", dialect)} OR ${condition})`;
+}
+
 /** The kinds of a table's columns, in the form `BuildSqlOptions` takes. */
 export function columnKindsOf(
   columns: ColumnSchema[] | null | undefined,
@@ -507,7 +523,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
    *  Shared by the query's own filters and by the slicers' conditions (`options.slicerFilters`),
    *  so a slicer's `in` list is quoted, typed, bound and vendor-written exactly as a filter row's is.
    */
-  const conditionFor = (f: (typeof query.filters)[number]): string | null => {
+  const plainConditionFor = (f: (typeof query.filters)[number]): string | null => {
     // A column compared with another column (#10). Two dates are compared as whole days, as a
     // typed date is: through the days from one to the other (`daysBetweenExpr`, the vendor
     // layer), so `delivered_ts after promised_date` means a later day on all nine.
@@ -608,6 +624,15 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
       case "is_not_null":     return `${raw} IS NOT NULL`;
       default:                return param ? `${cmp} = ${f.value}`   : `${cmp} = ${lit(f.column, f.value)}`;
     }
+  };
+
+  /** One filter row's SQL, switched by a dashboard checkbox where the row says so (#12):
+   *  `switchedCondition`. A row not applied stays not applied. */
+  const conditionFor = (f: (typeof query.filters)[number]): string | null => {
+    const condition = plainConditionFor(f);
+    const param = String(f.switchParam ?? "").trim();
+    if (condition === null || condition === notApplied || !/^\w+$/.test(param)) return condition;
+    return switchedCondition(condition, param, f.switchOn === "off" ? "off" : "on", dialect);
   };
 
   /** The aggregate one Summarize entry writes, its own `where` applied (#9): the SELECT, the
@@ -843,8 +868,12 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     sql += `\nORDER BY ${parts.join(", ")}`;
   }
 
-  // Row limit — the clause has no one ANSI spelling, so the layer writes it.
-  if (query.limit > 0) {
+  // Row limit — the clause has no one ANSI spelling, so the layer writes it. Bound to a dashboard
+  // filter (#12), it is that filter's `${name}`.
+  const limitParam = String(query.limitParam ?? "").trim();
+  if (/^\w+$/.test(limitParam)) {
+    sql = limitClause(sql, paramRefOf(limitParam), dialect);
+  } else if (query.limit > 0) {
     sql = limitClause(sql, query.limit, dialect);
   }
 

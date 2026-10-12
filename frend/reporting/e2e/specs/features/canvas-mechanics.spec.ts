@@ -5495,4 +5495,62 @@ test('(canvas mechanics) M73 Quick calcs: the change from the month before, and 
   });
 });
 
+test('(canvas mechanics) M74 A limit bound to a dashboard filter, a filter row switched by a checkbox', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M74 Bound limit and switched filter', async () => {
+    const orders = frozenRows('orders');
+    expect(orders.some((o) => o.status === 'returned'), 'the demo has returned orders').toBe(true);
+    const topCounts = (rows: Record<string, string>[], n: number) => {
+      const perChannel = new Map<string, number>();
+      for (const o of rows) perChannel.set(o.channel, (perChannel.get(o.channel) ?? 0) + 1);
+      return [...perChannel.values()].sort((a, b) => b - a).slice(0, n);
+    };
+    const shownCounts = (rows: Record<string, unknown>[]) => rows.map((r) => Number(r.count)).sort((a, b) => b - a);
+
+    await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'includeReturns', type: 'Boolean', label: 'Include returns', defaultValue: false) {
+    constraints(required: false)
+    ui(control: 'checkbox')
+  }
+  parameter(id: 'topN', type: 'Integer', label: 'How many', defaultValue: 2) {
+    constraints(required: true)
+    ui(control: 'select', options: [[value: 2, label: '2'], [value: 3, label: '3']])
+  }
+}
+`);
+
+    // + returned orders left out unless the checkbox is ticked; as many channels as the filter asks for.
+    const id = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'status', 'not_equals', 'returned');
+    await page.locator('#selectFilterSwitch-0').selectOption('includeReturns:off');
+    await addAggregation(page, 0, 'COUNT', '*');
+    await addGroupBy(page, 'channel');
+    await addVisualSort(page, 0, 'count', 'DESC');
+    await page.locator('#selectBindLimit').selectOption('topN');
+    await expect(page.locator('#chipLimitParam'), 'the limit is bound to ${topN}').toBeVisible();
+    await expect(page.locator('#inputLimit'), 'no typed limit while bound').toHaveCount(0);
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+    const kept = orders.filter((o) => o.status !== 'returned');
+    let rows = await g4RowsWhere(page, id, (r) => r.length === 2, 'two channels');
+    expect(shownCounts(rows), 'the two busiest channels, returns left out').toEqual(topCounts(kept, 2));
+
+    // + three channels once the filter says 3.
+    await page.locator('#formReportParameters #topN').selectOption('3');
+    rows = await g4RowsWhere(page, id, (r) => r.length === 3, 'three channels');
+    expect(shownCounts(rows), 'the three busiest channels, returns left out').toEqual(topCounts(kept, 3));
+
+    // + ticking the checkbox switches the filter row off: returns are counted.
+    await page.locator('#formReportParameters #includeReturns').check();
+    rows = await g4RowsWhere(page, id,
+      (r) => r.length === 3 && shownCounts(r).join() === topCounts(orders, 3).join(), 'returns counted');
+    expect(shownCounts(rows), 'the three busiest channels, returns counted').toEqual(topCounts(orders, 3));
+
+    // − the chip's x unbinds the limit: a typed limit is asked for again.
+    await page.locator('#btnUnbindLimit').click();
+    await expect(page.locator('#chipLimitParam'), 'the chip is gone').toHaveCount(0);
+    await expect(page.locator('#inputLimit'), 'a typed limit again').toBeVisible();
+  });
+});
+
 });

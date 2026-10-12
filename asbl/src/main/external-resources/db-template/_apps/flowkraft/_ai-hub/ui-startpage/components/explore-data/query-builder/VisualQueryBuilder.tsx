@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CubeParamBinding, CubeSelection, VisualQuery, DataSource } from "@/lib/stores/canvas-store";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo } from "@/lib/explore-data/types";
-import { buildSql, columnClassOf, columnKindsOf, extractParamIds, extractParamTypes, sortableColumns } from "@/lib/explore-data/sql-builder";
+import { buildSql, columnClassOf, columnKindsOf, extractParamIds, extractParamTypes, paramRefOf, sortableColumns } from "@/lib/explore-data/sql-builder";
 import { computedColumnSchemas } from "@/lib/explore-data/computed-columns";
 import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
@@ -71,6 +71,10 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
   // Their declared types too: a filter bound to a Date parameter means the
   // whole day it names, so the preview SQL has to be written with them (F8).
   const paramTypes = useMemo(() => extractParamTypes(parametersConfig?.parameters), [parametersConfig]);
+  // #12: the dashboard filters a filter row can be switched by (checkboxes: Boolean), and the ones a
+  // limit can be bound to (whole numbers: a "How many" select).
+  const switchParams = availableParams.filter((id) => /^boolean$/i.test(paramTypes[id] ?? ""));
+  const limitParams = availableParams.filter((id) => /^(integer|int|long|short)$/i.test(paramTypes[id] ?? ""));
 
   // Cube renderer in-panel state
   const cubeRef = useRef<HTMLElement>(null);
@@ -465,7 +469,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
             computed={query.computed ?? []}
             onChange={(computed) => updateQuery({ computed })}
           />
-          <FilterStep columns={columnsWithComputed} filters={query.filters} match={query.filterMatch ?? "all"} onMatchChange={(filterMatch) => updateQuery({ filterMatch })} availableParams={availableParams} builtinParams={builtinParams} onChange={(filters) => updateQuery({ filters })} />
+          <FilterStep columns={columnsWithComputed} filters={query.filters} match={query.filterMatch ?? "all"} onMatchChange={(filterMatch) => updateQuery({ filterMatch })} availableParams={availableParams} builtinParams={builtinParams} switchParams={switchParams} onChange={(filters) => updateQuery({ filters })} />
           <SummarizeStep
             columns={columns}
             aggregateColumns={columnsWithComputed}
@@ -488,12 +492,40 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 text-base-content/60 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" /></svg>
             <span className="text-xs text-base-content/60">Limit</span>
-            <input
-              id="inputLimit"
-              type="number" min={1} max={10000} value={query.limit}
-              onChange={(e) => updateQuery({ limit: parseInt(e.target.value) || 500 })}
-              className="w-20 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
-            />
+            {query.limitParam ? (
+              /* Bound to a dashboard filter (#12): the reader picks how many */
+              <div title={`The dashboard filter ${paramRefOf(query.limitParam)} says how many rows`}
+                   className="flex items-center gap-1 bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5">
+                <span id="chipLimitParam" className="text-xs font-mono text-primary">{paramRefOf(query.limitParam)}</span>
+                <button id="btnUnbindLimit" type="button" onClick={() => updateQuery({ limitParam: undefined })}
+                        className="text-primary/50 hover:text-primary" title="Unbind — type a number instead">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-2.5 h-2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  id="inputLimit"
+                  type="number" min={1} max={10000} value={query.limit}
+                  onChange={(e) => updateQuery({ limit: parseInt(e.target.value) || 500 })}
+                  className="w-20 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+                />
+                {limitParams.length > 0 && (
+                  <select
+                    id="selectBindLimit"
+                    value=""
+                    onChange={(e) => { if (e.target.value) updateQuery({ limitParam: e.target.value }); }}
+                    className="text-[11px] font-mono bg-base-100 border border-base-300 rounded px-1 py-0.5 text-base-content/60 hover:text-primary"
+                    title="Bind the limit to a dashboard filter that says how many"
+                  >
+                    <option value="">{'${}'}</option>
+                    {limitParams.map((id) => (
+                      <option key={id} value={id}>{id}</option>
+                    ))}
+                  </select>
+                )}
+              </>
+            )}
           </div>
 
           <button
