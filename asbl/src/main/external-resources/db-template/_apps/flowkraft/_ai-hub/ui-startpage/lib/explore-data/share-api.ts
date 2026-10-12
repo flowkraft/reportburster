@@ -108,10 +108,49 @@ export async function revokeShareLink(id: number): Promise<void> {
   if (!res.ok) throw new Error("Could not revoke the share link");
 }
 
+/** The DataPallas server this app talks to, as a page outside this app reaches it. */
+export function serverBaseUrl(): string {
+  return `${window.location.protocol}//${window.location.hostname}:9090`;
+}
+
 /** Share links are relative to the DataPallas server, not to this app. */
 export function absoluteShareUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
-  return `${window.location.protocol}//${window.location.hostname}:9090${url}`;
+  return `${serverBaseUrl()}${url}`;
+}
+
+/**
+ * A short-lived embed token for one dashboard (`POST /api/embed/token`), carrying the same locks and
+ * attributes a share link would. It is what the embed code hands `<rb-dashboard>`. A portal that
+ * embeds the dashboard for real mints a fresh one for each page view with the same call, server to
+ * server, so no token outlives the page it was minted for.
+ */
+export async function mintEmbedToken(
+  reportId: string,
+  ttlSeconds: number,
+  lockedParams?: LockedParams,
+  attributes?: CallerAttributes,
+): Promise<{ token: string; expiresInSeconds: number }> {
+  const res = await fetch(`${RB_BASE}/embed/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reportId, ttlSeconds, lockedParams, attrs: attributes }),
+  });
+  if (!res.ok) throw new Error((await errorMessage(res)) || "Could not create the embed token");
+  return res.json();
+}
+
+/** What a web page pastes to show this dashboard: the components' script and the dashboard's tag. */
+export function embedSnippet(reportId: string, token: string): string {
+  const server = serverBaseUrl();
+  return [
+    `<script src="${server}/rb-webcomponents/rb-webcomponents.umd.js"></script>`,
+    `<rb-dashboard`,
+    `  report-id="${reportId}"`,
+    `  api-base-url="${server}/api"`,
+    `  embed-token="${token}">`,
+    `</rb-dashboard>`,
+  ].join("\n");
 }
 
 /** "customer_id = 4711" — what a link says its recipient is, in the links table. */
