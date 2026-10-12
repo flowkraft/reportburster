@@ -19,10 +19,12 @@
 //     committed case SQL can hold today = 2026-09-30 (the demo seed's `today`)
 //     and stay true tomorrow.
 //
-// "Today" is the day on the machine the canvas is open on - the browser's own
-// date, in the browser's own time zone, taken when the SQL is built. A user in
-// Auckland and a user in Los Angeles can therefore be a day apart on the same
-// canvas, which is what they each mean by "today".
+// "Today" is the data's today when the connection has one - the day a
+// `{dataToday}` filter default is read against (`getDataToday` in rb-api.ts,
+// `CubeDataToday` on the server) - so a relative date filter and a filter
+// default count from the same day. On a connection whose data has no day of its
+// own it is the day on the machine the canvas is open on - the browser's own
+// date, in the browser's own time zone, taken when the SQL is built.
 
 /** A half-open span of whole days: `from` is included, `to` is not. */
 export interface DayRange {

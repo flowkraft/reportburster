@@ -159,6 +159,21 @@ public class QueriesService {
 		return resolved;
 	}
 
+	/**
+	 * The day the data on this connection calls today (R7): the day a {@code {dataToday}} filter
+	 * default is read against, so a relative date filter of the Visual tab counts from the same day.
+	 * Null for a connection that holds no demo marker table: its data has no day of its own, and the
+	 * browser's date is today there.
+	 */
+	public java.time.LocalDate dataTodayOrNull(String connectionId) throws Exception {
+		limitsService.assertConnectionAllowed(connectionId);
+		try {
+			return cubeDataToday.ofDashboards(connectionId);
+		} catch (IllegalArgumentException noMarkerTable) {
+			return null;
+		}
+	}
+
 	/** One line per ad-hoc call, on its own logger so it can be routed to its own file. */
 	private void audit(String connectionId, String sql, String outcome, int rows, long startedAt, String detail) {
 

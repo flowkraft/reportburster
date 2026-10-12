@@ -5068,4 +5068,39 @@ test('(canvas mechanics) M65 The filter form names a filter, and writes its valu
   });
 });
 
+test('(canvas mechanics) M66 A relative date filter counts from the data\'s today, as a filter default does', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M66 Data today', async (canvasId) => {
+    // The demo data's today is the day it was seeded to, 2026-09-30 here (`dash_demo.as_of`), the
+    // same day a `{dataToday}` filter default is read against. The machine's own day is later: counted
+    // from it, "the last 7 days" of this data would hold no order at all.
+    const day = (r: Record<string, string>): string => r.order_ts.slice(0, 10);
+    const lastWeek = pCount((r) => day(r) >= '2026-09-24' && day(r) <= '2026-09-30');
+    const september = pCount((r) => day(r) >= '2026-09-01' && day(r) <= '2026-09-30');
+    expect(lastWeek, 'the seeded data has orders in its own last week').toBeGreaterThan(0);
+
+    const kpi = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'order_ts', 'last_n_days', '7');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'number');
+    await g4ScalarIs(page, kpi, lastWeek, 'the last 7 days end on the data\'s today');
+
+    // + a period: this month is the data's month.
+    await page.locator('#selectFilterOp-0').selectOption('this_month');
+    await runVisualQuery(page);
+    await g4ScalarIs(page, kpi, september, 'this month is the data\'s month');
+
+    // + published, the same day: the SQL written for the page counts from it too.
+    let ids: Record<string, string[]> = {};
+    await expect.poll(async () => {
+      ids = await getCanvasComponentIds(page, canvasId);
+      return (ids.number ?? []).length;
+    }, { message: 'the saved canvas holds the number widget', timeout: 30_000, intervals: [1_000] }).toBe(1);
+    const published = await publishDashboard(page);
+    await openPublished(page, published.reportId);
+    await pPublishedNumberIs(page, ids.number[0], september, 'published, this month is still the data\'s month');
+  });
+});
+
 });

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useCanvasStore, asDerivedWrite } from "@/lib/stores/canvas-store";
 import type { DataSource, WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 import type { ColumnSchema } from "@/lib/explore-data/types";
-import { fetchSchema, executeQuery, getConnectionType } from "@/lib/explore-data/rb-api";
+import { fetchSchema, executeQuery, getConnectionType, getDataToday } from "@/lib/explore-data/rb-api";
 import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { isTemporalExtraction, probeCardinality, probeSemanticType, pickDefaultAxes, canReuseAxisPicks, splitDimsAndMeasures, groupWidgetsByShape, groupWidgetsBySensibility, rankChartSubtypes, type CardinalityMap } from "@/lib/explore-data/smart-defaults";
 import { seedDisplayConfigForType, synthesizePostAggColumns, temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
@@ -206,6 +206,8 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
       columnKindsOf(schemaCols),
       // A Date parameter a filter is bound to means the whole day it names (F8).
       extractParamTypes(parametersConfig?.parameters),
+      undefined,
+      getDataToday(connectionId),
     );
     if (!sql) return;
 
@@ -362,6 +364,8 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
         temporalColumnNamesOf(selectedWidget?.shape),
         columnKindsOf(schemaCols),
         extractParamTypes(parametersConfig?.parameters),
+        undefined,
+        getDataToday(connectionId),
       );
       if (!sql) { setDetectError("Write or generate a query first"); return; }
       const nextVersion = (ds.executeVersion ?? 0) + 1;

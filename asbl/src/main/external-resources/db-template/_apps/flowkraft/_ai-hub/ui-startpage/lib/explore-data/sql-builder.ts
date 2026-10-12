@@ -324,9 +324,10 @@ export interface BuildSqlOptions {
    *  whole day (`date-parameters.ts`). Omit it and a bound filter keeps the
    *  form it had, which is the instant the parameter names. */
   paramTypes?: Record<string, string>;
-  /** The day a relative date filter counts back from, as `yyyy-mm-dd`. The
-   *  browser's own date when omitted; the tests and the committed case SQL pin
-   *  it, so their ranges stay true tomorrow. */
+  /** The day a relative date filter counts back from, as `yyyy-mm-dd`: the
+   *  data's today of the connection (`getDataToday`). The browser's own date
+   *  when omitted; the tests and the committed case SQL pin it, so their ranges
+   *  stay true tomorrow. */
   today?: string;
   /** The conditions the canvas's slicers add to this widget: one `in` filter per slicer field
    *  of the widget's table, each bound to that field's own parameter (`slicer-filters.ts`). They are
@@ -1201,9 +1202,10 @@ export function sqlForDataSource(
   columnKinds?: ReadonlyMap<string, SqlLiteralKind>,
   paramTypes?: Record<string, string>,
   slicerFilters?: readonly { column: string; operator: string; value: string }[],
+  today?: string,
 ): string | null {
   if (ds.mode === "visual" && ds.visualQuery) {
-    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes, slicerFilters });
+    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns, columnKinds, paramTypes, slicerFilters, today });
     if (built) return built;
     // buildSql returns "" for cube queries — fall through.
   }

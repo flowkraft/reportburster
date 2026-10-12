@@ -7,7 +7,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { usePublishStatusStore, publishSignature, rememberPublished } from "@/lib/stores/publish-status-store";
 import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
-import { getConnectionType, updateCanvas } from "@/lib/explore-data/rb-api";
+import { ensureDataTodayLoaded, getConnectionType, getDataToday, updateCanvas } from "@/lib/explore-data/rb-api";
 import { saveDashboardToDataPallas } from "./rbApiClient";
 
 interface ExportDialogProps {
@@ -46,6 +46,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     // waiting for autosave (1200 ms debounce) — avoids a race where /export
     // reads stale state from SQLite.
     const connectionType = getConnectionType(state.connectionId);
+    // A relative date filter counts from the data's today: known before any SQL is built here,
+    // not only when a widget on the canvas happened to ask for it first.
+    await ensureDataTodayLoaded(state.connectionId);
     const patchedWidgets = state.widgets.map((w) => {
       const ds = w.dataSource;
       if (!ds) return w;
@@ -64,6 +67,8 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
         columnKindsOf(w.columns),
         // A Date parameter a filter is bound to means the whole day it names (F8).
         extractParamTypes(state.parametersConfig?.parameters),
+        undefined,
+        getDataToday(state.connectionId),
       );
       return built ? { ...w, dataSource: { ...ds, generatedSql: built } } : w;
     });
