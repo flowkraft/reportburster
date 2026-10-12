@@ -58,7 +58,7 @@ import { isRelativeDateOp, relativeDayRange, todayIso } from "./relative-dates";
 import { asTableRef } from "./table-ref";
 import { nicerBinWidth } from "./smart-defaults";
 import { computedColumnsOf, isNumberOperand, type ComputedColumn } from "./computed-columns";
-import { isCompleteCondition, type AggregateCondition } from "./aggregations";
+import { isCompleteCondition, type AggregateCondition, type AggregateWhere } from "./aggregations";
 import type { ColumnSchema } from "./types";
 
 /** Returns true if the value is a canvas parameter reference: `${paramName}`. */
@@ -448,109 +448,8 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   // the two answer the same rows, and DISTINCT is what the question says.
   const distinctOnly = !hasAgg && query.groupBy.length > 0;
 
-  /** The name one aggregate is written under in this query. */
-  const aliasOf = (agg: SummarizeEntry): string =>
-    aggregateAlias(agg, runsAsRunningTotal(query, agg));
-
-  if (hasAgg || distinctOnly) {
-    for (const col of query.groupBy) {
-      selectParts.push(bucketSelect(col));
-    }
-  }
-  /** The order a running total accumulates in, as the window's ORDER BY reads
-   *  it: the grouped time bucket, NULLs last - written as `MIN(<column>)` and
-   *  not as the bucket expression itself.
-   *
-   *  A window's ORDER BY is read under the same rule as the query's own: MySQL
-   *  refuses an expression that WRAPS the grouped expression rather than being
-   *  it, and the NULLs-last CASE is exactly such a wrapper ("Expression #1 of
-   *  PARTITION BY or ORDER BY clause of window '<unnamed window>' is not in
-   *  GROUP BY clause", measured at G2a). An AGGREGATE is allowed there on all
-   *  nine, and the earliest date in a bucket orders the buckets the same way
-   *  the bucket does: a running total only exists over a day, week, month or
-   *  year bucket (`runsAsRunningTotal`), and truncating a date never reorders
-   *  two dates. A bucket of NULL dates has MIN NULL, so it still lands last -
-   *  a series with no date belongs at the end of it (T6). */
-  const runningOrder = (): string => {
-    const earliest = `MIN(${refFor(query.groupBy[0])})`;
-    return `CASE WHEN ${earliest} IS NULL THEN 1 ELSE 0 END, ${earliest}`;
-  };
-
-  /** What the SELECT writes for one aggregate: the number itself, the share it
-   *  holds of the whole result, or the total accumulated up to this bucket. */
-  const aggregateSelect = (agg: SummarizeEntry): string => {
-    const expr = aggregateExprOf(agg, dialect, refFor);
-    if (runsAsRunningTotal(query, agg)) return runningTotalExpr(expr, runningOrder());
-    return agg.share ? percentOfTotalExpr(expr) : expr;
-  };
-
-  if (hasAgg) {
-    for (const agg of query.summarize) {
-      selectParts.push(`${aggregateSelect(agg)} AS ${quote(aliasOf(agg))}`);
-    }
-  }
-
-  // Without Summarize the query answers with rows, so a computed column is one
-  // more select item beside the table's own columns. `t.*` and not `*`: Oracle
-  // rejects an unqualified `*` standing next to another select item. The star is
-  // qualified by the table's name alone, not by `schema.table`: DuckDB cannot parse
-  // `"schema"."table".*`, and the bare name finds the FROM's table on all nine.
-  if (!hasAgg && !distinctOnly && computedColumns.length > 0) {
-    selectParts.push(`${quoteIdent(tableRef.name, dialect)}.*`);
-    for (const one of computedColumns) {
-      selectParts.push(`${computedExpr(one, dialect)} AS ${quote(one.name)}`);
-    }
-  }
-
-  /** The aggregate a sort key names, by the alias it is written under in the
-   *  SELECT, or null when the sort key is not an aggregate. */
-  const aggregateSortedOn = (column: string): SummarizeEntry | null =>
-    (hasAgg ? query.summarize.find((agg) => aliasOf(agg) === column) : undefined) ?? null;
-
-  /** The expression a sort key stands for: the aggregate, the column's bucket or
-   *  bin expression, or the column itself - what the SELECT writes, never the
-   *  alias, so the expression can also go inside the null-ordering CASE. */
-  const sortExpr = (column: string): string => {
-    const agg = aggregateSortedOn(column);
-    // A share sorts by the aggregate underneath it: the total is one number for
-    // the whole result, so the two orders are the same one, and no window
-    // function has to go into the ORDER BY (nor into the HAVING, where no
-    // vendor allows one). A running total sorts by the same aggregate for the
-    // second reason alone - a cumulative series is read in the order it
-    // accumulates in, which is its time bucket, and that is the sort key a
-    // cumulative line carries.
-    return agg ? aggregateExprOf(agg, dialect, refFor) : bucketGroupBy(column);
-  };
-
-  /** True when the sort key is a COUNT, which is never NULL. */
-  const sortsOnACount = (column: string): boolean => {
-    const agg = aggregateSortedOn(column);
-    return agg !== null && agg.aggregation.toUpperCase().startsWith("COUNT");
-  };
-
-  /** True when this sort key is one an aggregated query may carry at all.
-   *
-   *  A grouped query can only sort by what it selects: one of the grouped
-   *  columns (by its own name, whatever expression stands behind it) or one of
-   *  the aggregates (by its alias). A key naming any other column is SQL the
-   *  strict databases refuse outright - MySQL and MariaDB under
-   *  `ONLY_FULL_GROUP_BY`, and PostgreSQL, Oracle and Db2 always - so the whole
-   *  query answered with an error instead of rows. Dropping just that key lets
-   *  the rest of it run. The Sort step no longer offers such a column
-   *  (`sortableColumns`), so what this catches is a canvas saved before it
-   *  stopped offering them, or one whose Summarize step was added afterwards.
-   */
-  const sortKeyIsWritable = (column: string): boolean =>
-    (!hasAgg && !distinctOnly) || aggregateSortedOn(column) !== null
-    || query.groupBy.includes(column);
-
-  const select = selectParts.length > 0 ? selectParts.join(", ") : "*";
-  // DISTINCT stands right after SELECT, which is also where SQL Server's TOP
-  // goes - `limitClause` writes it after the DISTINCT, never before it.
-  let sql = `SELECT ${distinctOnly ? "DISTINCT " : ""}${select}`
-    + `\nFROM ${quoteTableRef(tableRef, dialect)}`;
-
-  // WHERE
+  // The conditions a filter row writes, built before the SELECT because an aggregate's own
+  // `where` (#9) is written by the same code. The WHERE clause itself follows the FROM, below.
   //
   // The conditions are joined with AND, or with OR inside one pair of brackets
   // when the query matches any filter rather than all of them (F3). The
@@ -660,6 +559,114 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     }
   };
 
+  /** The aggregate one Summarize entry writes, its own `where` applied (#9): the SELECT, the
+   *  HAVING and the ORDER BY all ask here, so the three always write the same expression. A
+   *  condition the filter rules leave out (an empty value box) leaves the plain aggregate. */
+  const aggregateOf = (agg: SummarizeEntry): string =>
+    aggregateExprOf(agg, refFor, agg.where ? conditionFor(agg.where) : null);
+
+  /** The name one aggregate is written under in this query. */
+  const aliasOf = (agg: SummarizeEntry): string =>
+    aggregateAlias(agg, runsAsRunningTotal(query, agg));
+
+  if (hasAgg || distinctOnly) {
+    for (const col of query.groupBy) {
+      selectParts.push(bucketSelect(col));
+    }
+  }
+  /** The order a running total accumulates in, as the window's ORDER BY reads
+   *  it: the grouped time bucket, NULLs last - written as `MIN(<column>)` and
+   *  not as the bucket expression itself.
+   *
+   *  A window's ORDER BY is read under the same rule as the query's own: MySQL
+   *  refuses an expression that WRAPS the grouped expression rather than being
+   *  it, and the NULLs-last CASE is exactly such a wrapper ("Expression #1 of
+   *  PARTITION BY or ORDER BY clause of window '<unnamed window>' is not in
+   *  GROUP BY clause", measured at G2a). An AGGREGATE is allowed there on all
+   *  nine, and the earliest date in a bucket orders the buckets the same way
+   *  the bucket does: a running total only exists over a day, week, month or
+   *  year bucket (`runsAsRunningTotal`), and truncating a date never reorders
+   *  two dates. A bucket of NULL dates has MIN NULL, so it still lands last -
+   *  a series with no date belongs at the end of it (T6). */
+  const runningOrder = (): string => {
+    const earliest = `MIN(${refFor(query.groupBy[0])})`;
+    return `CASE WHEN ${earliest} IS NULL THEN 1 ELSE 0 END, ${earliest}`;
+  };
+
+  /** What the SELECT writes for one aggregate: the number itself, the share it
+   *  holds of the whole result, or the total accumulated up to this bucket. */
+  const aggregateSelect = (agg: SummarizeEntry): string => {
+    const expr = aggregateOf(agg);
+    if (runsAsRunningTotal(query, agg)) return runningTotalExpr(expr, runningOrder());
+    return agg.share ? percentOfTotalExpr(expr) : expr;
+  };
+
+  if (hasAgg) {
+    for (const agg of query.summarize) {
+      selectParts.push(`${aggregateSelect(agg)} AS ${quote(aliasOf(agg))}`);
+    }
+  }
+
+  // Without Summarize the query answers with rows, so a computed column is one
+  // more select item beside the table's own columns. `t.*` and not `*`: Oracle
+  // rejects an unqualified `*` standing next to another select item. The star is
+  // qualified by the table's name alone, not by `schema.table`: DuckDB cannot parse
+  // `"schema"."table".*`, and the bare name finds the FROM's table on all nine.
+  if (!hasAgg && !distinctOnly && computedColumns.length > 0) {
+    selectParts.push(`${quoteIdent(tableRef.name, dialect)}.*`);
+    for (const one of computedColumns) {
+      selectParts.push(`${computedExpr(one, dialect)} AS ${quote(one.name)}`);
+    }
+  }
+
+  /** The aggregate a sort key names, by the alias it is written under in the
+   *  SELECT, or null when the sort key is not an aggregate. */
+  const aggregateSortedOn = (column: string): SummarizeEntry | null =>
+    (hasAgg ? query.summarize.find((agg) => aliasOf(agg) === column) : undefined) ?? null;
+
+  /** The expression a sort key stands for: the aggregate, the column's bucket or
+   *  bin expression, or the column itself - what the SELECT writes, never the
+   *  alias, so the expression can also go inside the null-ordering CASE. */
+  const sortExpr = (column: string): string => {
+    const agg = aggregateSortedOn(column);
+    // A share sorts by the aggregate underneath it: the total is one number for
+    // the whole result, so the two orders are the same one, and no window
+    // function has to go into the ORDER BY (nor into the HAVING, where no
+    // vendor allows one). A running total sorts by the same aggregate for the
+    // second reason alone - a cumulative series is read in the order it
+    // accumulates in, which is its time bucket, and that is the sort key a
+    // cumulative line carries.
+    return agg ? aggregateOf(agg) : bucketGroupBy(column);
+  };
+
+  /** True when the sort key is a COUNT, which is never NULL. */
+  const sortsOnACount = (column: string): boolean => {
+    const agg = aggregateSortedOn(column);
+    return agg !== null && agg.aggregation.toUpperCase().startsWith("COUNT");
+  };
+
+  /** True when this sort key is one an aggregated query may carry at all.
+   *
+   *  A grouped query can only sort by what it selects: one of the grouped
+   *  columns (by its own name, whatever expression stands behind it) or one of
+   *  the aggregates (by its alias). A key naming any other column is SQL the
+   *  strict databases refuse outright - MySQL and MariaDB under
+   *  `ONLY_FULL_GROUP_BY`, and PostgreSQL, Oracle and Db2 always - so the whole
+   *  query answered with an error instead of rows. Dropping just that key lets
+   *  the rest of it run. The Sort step no longer offers such a column
+   *  (`sortableColumns`), so what this catches is a canvas saved before it
+   *  stopped offering them, or one whose Summarize step was added afterwards.
+   */
+  const sortKeyIsWritable = (column: string): boolean =>
+    (!hasAgg && !distinctOnly) || aggregateSortedOn(column) !== null
+    || query.groupBy.includes(column);
+
+  const select = selectParts.length > 0 ? selectParts.join(", ") : "*";
+  // DISTINCT stands right after SELECT, which is also where SQL Server's TOP
+  // goes - `limitClause` writes it after the DISTINCT, never before it.
+  let sql = `SELECT ${distinctOnly ? "DISTINCT " : ""}${select}`
+    + `\nFROM ${quoteTableRef(tableRef, dialect)}`;
+
   // WHERE, the query's own filters.
   let hasWhere = false;
   if (query.filters.length > 0) {
@@ -708,7 +715,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   if (hasAgg) {
     const kept = query.summarize
       .filter((agg) => isCompleteCondition(agg.having))
-      .map((agg) => `${aggregateExprOf(agg, dialect, refFor)} ${agg.having!.operator}`
+      .map((agg) => `${aggregateOf(agg)} ${agg.having!.operator}`
         + ` ${decimalLiteral(Number(agg.having!.value))}`);
     if (kept.length > 0) {
       sql += `\nHAVING ${kept.join("\n  AND ")}`;
@@ -798,7 +805,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
 /** One entry of the Summarize step: what to compute, over which column. */
 type SummarizeEntry = {
   aggregation: string; field: string; having?: AggregateCondition; share?: boolean;
-  runningTotal?: boolean;
+  runningTotal?: boolean; where?: AggregateWhere;
 };
 
 /**
@@ -900,14 +907,27 @@ export function aggregateColumnName(query: VisualQuery, agg: SummarizeEntry): st
  */
 function aggregateAlias(agg: SummarizeEntry, running = false): string {
   const fn = agg.aggregation.toUpperCase();
-  const plain = fn === "COUNT" && agg.field === "*"
+  const bare = fn === "COUNT" && agg.field === "*"
     ? "count" : `${agg.field}_${agg.aggregation.toLowerCase()}`;
+  const plain = agg.where ? `${bare}_${whereSuffix(agg.where)}` : bare;
   // A share and a running total are each a different number under a different
   // name, so the chart legend, the column header and a sort key all say which
   // of them they mean. A running total is the money so far and not a share of
   // anything, so it never carries both endings.
   if (running) return `${plain}_running`;
   return agg.share ? `${plain}_pct` : plain;
+}
+
+/**
+ * The words a `where` adds to its aggregate's name (#9): `count_where_status_returned`,
+ * `total_amount_sum_where_channel_web`, `count_where_total_amount_greater_than_100`. The column and
+ * the value say which rows; the operator is said too unless it is plain equality, so two
+ * conditions on one column never share a name. Letters, digits and `_` only, as every alias.
+ */
+function whereSuffix(where: AggregateWhere): string {
+  const words = [where.column, ...(where.operator === "equals" ? [] : [where.operator]), where.value ?? "", where.valueTo ?? ""];
+  const slug = words.join("_").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return `where_${slug}`.slice(0, 60).replace(/_+$/, "");
 }
 
 /**
@@ -949,11 +969,18 @@ export function sortableColumns(query: VisualQuery, columns: ColumnSchema[]): Co
  *  the difference between a column name and a computed one. */
 function aggregateExprOf(
   agg: SummarizeEntry,
-  dialect: SqlDialect,
   refFor: (column: string) => string,
+  where: string | null = null,
 ): string {
   const fn = agg.aggregation.toUpperCase();
   const isCountStar = fn === "COUNT" && agg.field === "*";
+  // "Count where" / "Sum where" (#9): the value is NULL on a row the condition does not keep,
+  // and every aggregate skips a NULL - so COUNT counts the kept rows, SUM adds them up, and AVG,
+  // MIN and MAX read them alone. ANSI on all nine; a count of rows counts a 1 per kept row.
+  if (where) {
+    const value = isCountStar ? "1" : refFor(agg.field);
+    return aggregateExpr(fn, `CASE WHEN ${where} THEN ${value} END`, false);
+  }
   return aggregateExpr(fn, isCountStar ? "*" : refFor(agg.field), isCountStar);
 }
 

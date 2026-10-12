@@ -111,6 +111,26 @@ export interface AggregateCondition {
   value: string;
 }
 
+/**
+ * The rows one aggregate is taken over ("Count where", "Sum where", #9): the
+ * returned orders counted beside all of them, the web revenue summed beside the
+ * total. It is a filter row of the aggregate's own - the Filter step's columns,
+ * operators and value rules, written by the same code (`sql-builder.ts`,
+ * `conditionFor`) - and the aggregate reads `CASE WHEN <condition> THEN <value>
+ * END`, so a row the condition does not keep counts as nothing. Unlike a filter
+ * it leaves the other aggregates of the query alone. Absent on every aggregate
+ * saved before this existed.
+ */
+export interface AggregateWhere {
+  column: string;
+  operator: string;
+  value: string;
+  valueTo?: string;
+}
+
+/** The label of the button that gives an aggregate its own condition. */
+export const WHERE_LABEL = "where";
+
 /** True when a condition is finished enough to go into a query: a comparison
  *  this list offers, and a value that is a number. Anything else - a half-typed
  *  box, a word, an operator nobody offered - leaves the query as it was, the

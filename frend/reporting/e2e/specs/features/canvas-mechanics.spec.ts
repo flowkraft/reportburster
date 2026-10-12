@@ -5153,4 +5153,52 @@ test('(canvas mechanics) M67 Need another table? A cube carries the joins and th
   });
 });
 
+test('(canvas mechanics) M68 Count where and Sum where sit beside the plain aggregate in one grouped query', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M68 Count where', async () => {
+    const orders = frozenRows('orders');
+    const channels = [...new Set(orders.map((o) => o.channel))];
+
+    // + per channel: every order, the returned ones, and the money of the completed ones - three
+    //   aggregates over different rows, which no WHERE can ask for at once.
+    const id = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', '*');
+    await addAggregation(page, 1, 'COUNT', '*');
+    await page.locator('#btnAggWhere-1').click();
+    await page.locator('#selectAggWhereCol-1').selectOption('status');
+    await page.locator('#selectAggWhereOp-1').selectOption('equals');
+    await page.locator('#inputAggWhereValue-1').fill('returned');
+    await addAggregation(page, 2, 'SUM', 'total_amount');
+    await page.locator('#btnAggWhere-2').click();
+    await page.locator('#selectAggWhereCol-2').selectOption('status');
+    await page.locator('#inputAggWhereValue-2').fill('completed');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+
+    const rows = await g4RowsWhere(page, id,
+      (r) => r.length === channels.length && r.every((x) => 'count_where_status_returned' in x && 'total_amount_sum_where_status_completed' in x),
+      'one row per channel, with the two conditional aggregates');
+    for (const channel of channels) {
+      const mine = orders.filter((o) => o.channel === channel);
+      const row = rows.find((r) => r.channel === channel);
+      expect(row, `a row for ${channel}`).toBeTruthy();
+      expect(Number(row!.count), `${channel}: every order`).toBe(mine.length);
+      expect(Number(row!.count_where_status_returned), `${channel}: the returned ones`)
+        .toBe(mine.filter((o) => o.status === 'returned').length);
+      const completed = mine.filter((o) => o.status === 'completed').reduce((sum, o) => sum + Number(o.total_amount), 0);
+      expect(Math.abs(Number(row!.total_amount_sum_where_status_completed) - completed), `${channel}: the completed money`)
+        .toBeLessThan(0.01);
+    }
+
+    // − the condition is the aggregate's own: without it the sum takes every order again.
+    await page.locator('#btnRemoveAggWhere-2').click();
+    await runVisualQuery(page);
+    await g4RowsWhere(page, id,
+      (r) => r.length === channels.length && r.every((x) => 'total_amount_sum' in x && Math.abs(Number(x.total_amount_sum)
+        - orders.filter((o) => o.channel === x.channel).reduce((sum, o) => sum + Number(o.total_amount), 0)) < 0.01),
+      'without its condition the sum is the plain sum of every order');
+  });
+});
+
 });

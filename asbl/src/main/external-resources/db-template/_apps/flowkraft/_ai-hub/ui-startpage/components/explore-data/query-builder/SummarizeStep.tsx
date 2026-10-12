@@ -8,8 +8,10 @@ import { getFieldKind } from "@/lib/explore-data/field-utils";
 import { asTableRef } from "@/lib/explore-data/table-ref";
 import {
   AGGREGATIONS, HAVING_OPS, SHARE_LABEL, RUNNING_TOTAL_LABEL,
-  RUNNING_TOTAL_AGGREGATIONS, type AggregateCondition,
+  RUNNING_TOTAL_AGGREGATIONS, WHERE_LABEL, type AggregateCondition, type AggregateWhere,
 } from "@/lib/explore-data/aggregations";
+import { NO_VALUE_OPS } from "@/lib/explore-data/filter-operators";
+import { getOperatorsForColumn } from "./FilterStep";
 import {
   nicerBinWidth, probeNumericRange, probeDateRange,
   guessTimeBucket, isTemporal,
@@ -24,6 +26,8 @@ interface AggItem {
   share?: boolean;
   /** Read this aggregate as the total accumulated up to this bucket (F10). */
   runningTotal?: boolean;
+  /** Count or sum only the rows that pass this ("Count where", "Sum where", #9). */
+  where?: AggregateWhere;
 }
 
 /** Numeric binning presets — 4 fixed targets + Off. `numBins === null` =
@@ -126,6 +130,14 @@ export function SummarizeStep({
    *  That is the only shape a running total has an order to accumulate in, and
    *  it is the same rule `runsAsRunningTotal` applies to the SQL. */
   const groupsByOneTimeBucket = groupBy.length === 1 && Boolean(groupByBuckets[groupBy[0]]);
+
+  /** A fresh condition on `column`: its first operator, an empty value - which the SQL leaves out
+   *  until it is typed, the way an empty filter value box is. */
+  const whereOn = (column: string): AggregateWhere => ({
+    column,
+    operator: getOperatorsForColumn(colByName[column])[0]?.value ?? "equals",
+    value: "",
+  });
 
   const removeAgg = (i: number) => {
     onChange(summarize.filter((_, idx) => idx !== i), groupBy, groupByNumericBuckets, groupByBuckets);
@@ -303,6 +315,71 @@ export function SummarizeStep({
               <option key={c.columnName} value={c.columnName}>{c.columnName}</option>
             ))}
           </select>
+          {/* "Count where" / "Sum where" (#9): this aggregate counts or sums only the rows
+              that pass a condition of its own - a filter row with the Filter step's
+              operators, which leaves the other aggregates of the query alone. */}
+          {a.where ? (
+            <>
+              <span className="text-xs text-base-content/60">{WHERE_LABEL}</span>
+              <select
+                id={`selectAggWhereCol-${i}`}
+                value={a.where.column}
+                onChange={(e) => updateAgg(i, { where: whereOn(e.target.value) })}
+                className="text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content min-w-0"
+              >
+                {columns.map((c) => (
+                  <option key={c.columnName} value={c.columnName}>{c.columnName}</option>
+                ))}
+              </select>
+              <select
+                id={`selectAggWhereOp-${i}`}
+                value={a.where.operator}
+                onChange={(e) => updateAgg(i, { where: { ...a.where!, operator: e.target.value } })}
+                className="text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content"
+              >
+                {getOperatorsForColumn(colByName[a.where.column]).map((op) => (
+                  <option key={op.value} value={op.value}>{op.label}</option>
+                ))}
+              </select>
+              {!NO_VALUE_OPS.includes(a.where.operator) && (
+                <input
+                  id={`inputAggWhereValue-${i}`}
+                  type="text"
+                  value={a.where.value}
+                  placeholder="value"
+                  onChange={(e) => updateAgg(i, { where: { ...a.where!, value: e.target.value } })}
+                  className="w-24 text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content"
+                />
+              )}
+              {a.where.operator === "between" && (
+                <input
+                  id={`inputAggWhereValueTo-${i}`}
+                  type="text"
+                  value={a.where.valueTo ?? ""}
+                  placeholder="to"
+                  onChange={(e) => updateAgg(i, { where: { ...a.where!, valueTo: e.target.value } })}
+                  className="w-24 text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content"
+                />
+              )}
+              <button
+                id={`btnRemoveAggWhere-${i}`}
+                onClick={() => updateAgg(i, { where: undefined })}
+                title="Count or sum every row again"
+                className="p-0.5 rounded hover:bg-base-200 text-base-content/60 hover:text-base-content"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+              </button>
+            </>
+          ) : (
+            <button
+              id={`btnAggWhere-${i}`}
+              onClick={() => updateAgg(i, { where: whereOn(columns[0]?.columnName || "") })}
+              title="Count or sum only the rows that pass a condition"
+              className="text-xs text-base-content/60 hover:text-base-content underline"
+            >
+              + {WHERE_LABEL}
+            </button>
+          )}
           {/* The condition on this aggregate: "of more than 150 deals". The
               value box appears only once a comparison is picked, and both are
               needed before the query says anything different (F2). */}

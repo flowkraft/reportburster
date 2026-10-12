@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { ColumnSchema, QueryResult, TableSchema } from "@/lib/explore-data/types";
 import type { ComputedColumn } from "@/lib/explore-data/computed-columns";
-import type { AggregateCondition } from "@/lib/explore-data/aggregations";
+import type { AggregateCondition, AggregateWhere } from "@/lib/explore-data/aggregations";
 import type { FilterMatch } from "@/lib/explore-data/filter-operators";
 import type { PickShape } from "@/lib/explore-data/smart-defaults/widget-picker";
 import type { CardinalityMap } from "@/lib/explore-data/smart-defaults/classification";
@@ -123,9 +123,13 @@ export interface VisualQuery {
   // existed, which therefore generates the SQL it did.
   // `share` reads an aggregate as the % of the whole result (F9); absent means
   // the plain aggregate, which is what every canvas saved before means.
+  // `where` counts or sums only the rows that pass one filter row of its own
+  // ("Count where", "Sum where"): the aggregate's value is CASE WHEN <condition>,
+  // so plain and conditional aggregates sit side by side in one grouped query.
+  // Absent on every canvas saved before this existed.
   summarize: {
     aggregation: string; field: string; having?: AggregateCondition;
-    share?: boolean; runningTotal?: boolean;
+    share?: boolean; runningTotal?: boolean; where?: AggregateWhere;
   }[];
   groupBy: string[];
   // Optional per-column time bucket. When set and the column is in `groupBy`,
