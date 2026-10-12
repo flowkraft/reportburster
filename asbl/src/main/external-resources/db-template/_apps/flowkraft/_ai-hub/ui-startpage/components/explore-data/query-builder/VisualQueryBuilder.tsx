@@ -5,11 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CubeParamBinding, CubeSelection, VisualQuery, DataSource } from "@/lib/stores/canvas-store";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo } from "@/lib/explore-data/types";
-import { buildSql, columnClassOf, columnKindsOf, extractParamIds, extractParamTypes, paramRefOf, sortableColumns } from "@/lib/explore-data/sql-builder";
+import { buildDistinctValuesSql, buildSql, columnClassOf, columnKindsOf, extractParamIds, extractParamTypes, paramRefOf, sortableColumns } from "@/lib/explore-data/sql-builder";
 import { computedColumnSchemas } from "@/lib/explore-data/computed-columns";
 import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
-import { fetchCubes, fetchCube, parseCubeDsl, generateCubeSql, fetchCubeFilterOptions, fetchBuiltinParamNames, getConnectionType, type CubeInfo } from "@/lib/explore-data/rb-api";
+import { fetchCubes, fetchCube, parseCubeDsl, generateCubeSql, fetchCubeFilterOptions, fetchBuiltinParamNames, getConnectionType, executeQuery, type CubeInfo } from "@/lib/explore-data/rb-api";
+import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { cubeBindableMembers, seedCubeColumnFormats, selectionOfEvent, selectionWithBindings } from "@/lib/explore-data/cube-selection";
 import type { ColumnSettingsMap } from "@/lib/explore-data/column-settings";
 import { useRbElementReady } from "../widgets/useRbElementReady";
@@ -41,6 +42,9 @@ function liveVisualQuery(widgetId: string): VisualQuery | undefined {
 /** A widget that is the cube itself needs room for the field tree and a result under it; grown
  *  once, on the first check, and the author's own size is kept from then on. */
 const CUBE_WIDGET_MIN_ROWS = 8;
+
+/** How many of a column's values a filter row offers to pick from (#32); past it, typing. */
+const FILTER_VALUES_LIMIT = 200;
 
 interface VisualQueryBuilderProps {
   widgetId: string;
@@ -115,6 +119,17 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
   // this step is for.
   const numericColumns = columns.filter((c) => columnClassOf(c) === "number");
   const columnsWithComputed = [...columns, ...computedColumnSchemas(query.computed, columnKindsOf(columns))];
+  // A text column's own values, offered beside a filter row's value box (#32): the slicer's query
+  // (`buildDistinctValuesSql`), capped, on the table's own columns only - a computed one has none.
+  const valuesTable = `${query.tableSchema ?? ""}.${query.table}`;
+  const valuesColumns = columns.map((c) => c.columnName).join(",");
+  const loadFilterValues = useCallback(async (column: string): Promise<string[]> => {
+    if (!connectionId || !query.table || !valuesColumns.split(",").includes(column)) return [];
+    const sql = buildDistinctValuesSql(refForQuery(query), column, FILTER_VALUES_LIMIT, dialectFor(connectionType));
+    const res = await executeQuery(connectionId, sql);
+    return res.data.map((row) => String(Object.values(row)[0] ?? "")).filter((v) => v !== "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionId, connectionType, valuesTable, valuesColumns]);
   // The column types decide what a filter literal looks like: a number goes in
   // bare, a date as the vendor's date literal. Without them every value was a
   // string, which a numeric or date column rejects on the strict vendors.
@@ -469,7 +484,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
             computed={query.computed ?? []}
             onChange={(computed) => updateQuery({ computed })}
           />
-          <FilterStep columns={columnsWithComputed} filters={query.filters} match={query.filterMatch ?? "all"} onMatchChange={(filterMatch) => updateQuery({ filterMatch })} availableParams={availableParams} builtinParams={builtinParams} switchParams={switchParams} onChange={(filters) => updateQuery({ filters })} />
+          <FilterStep columns={columnsWithComputed} filters={query.filters} match={query.filterMatch ?? "all"} onMatchChange={(filterMatch) => updateQuery({ filterMatch })} availableParams={availableParams} builtinParams={builtinParams} switchParams={switchParams} loadValues={loadFilterValues} onChange={(filters) => updateQuery({ filters })} />
           <SummarizeStep
             columns={columns}
             aggregateColumns={columnsWithComputed}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 // lucide-react removed
 import type { ColumnSchema } from "@/lib/explore-data/types";
 import { bindableParams, columnClassOf, isParamRef, paramRefOf, type BindableParam } from "@/lib/explore-data/sql-builder";
@@ -82,9 +83,41 @@ interface FilterStepProps {
   builtinParams?: string[];
   /** The dashboard's checkbox filters (Boolean parameters), any of which may switch a row (#12). */
   switchParams?: string[];
+  /** A text column's own values, offered beside a row's value box (#32); absent, none are. */
+  loadValues?: (column: string) => Promise<string[]>;
 }
 
-export function FilterStep({ columns, filters, onChange, match = "all", onMatchChange, availableParams = [], builtinParams = [], switchParams = [] }: FilterStepProps) {
+/** A day as a date box holds it, and as a filter row's value box takes it. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** An `in` list with one more value picked into it (#32), once. */
+function withListValue(list: string, value: string): string {
+  const values = list.split(",").map((v) => v.trim()).filter((v) => v !== "");
+  return (values.includes(value) ? values : [...values, value]).join(", ");
+}
+
+export function FilterStep({ columns, filters, onChange, match = "all", onMatchChange, availableParams = [], builtinParams = [], switchParams = [], loadValues }: FilterStepProps) {
+  // The values of the text columns the rows filter on (#32), fetched once per column and kept
+  // while the loader is the same one - another table is another loader, and starts with none.
+  const [fetched, setFetched] = useState<{ load?: FilterStepProps["loadValues"]; values: Record<string, string[]> }>({ values: {} });
+  const valuesOf = fetched.load === loadValues ? fetched.values : {};
+  const isText = (column: string) => {
+    const col = columns.find((c) => c.columnName === column);
+    return !!col && getColumnType(col) === "string";
+  };
+  const wanted = [...new Set(filters.map((f) => f.column))].filter((c) => isText(c) && !(c in valuesOf)).join("\u0000");
+  useEffect(() => {
+    if (!loadValues || !wanted) return;
+    let live = true;
+    for (const column of wanted.split("\u0000")) {
+      const keep = (values: string[]) => {
+        if (live) setFetched((f) => ({ load: loadValues, values: { ...(f.load === loadValues ? f.values : {}), [column]: values } }));
+      };
+      loadValues(column).then(keep, () => keep([]));
+    }
+    return () => { live = false; };
+  }, [wanted, loadValues]);
+
   /** Everything a filter can be bound to: the dashboard's own first, the server's after them. */
   const offers = bindableParams(availableParams, builtinParams);
 
@@ -176,7 +209,7 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
    *  and the control that binds it. A date range on a dashboard is two Date
    *  parameters, one per box, so each box binds on its own; the single-value
    *  operators keep their own markup below. */
-  const betweenBox = (i: number, field: "value" | "valueTo", value: string, placeholder: string) => {
+  const betweenBox = (i: number, field: "value" | "valueTo", value: string, placeholder: string, dates = false) => {
     const id = field === "value" ? "" : "To";
     if (isParamRef(value)) {
       return (
@@ -203,6 +236,7 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
           placeholder={placeholder}
           className="text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content min-w-0 flex-1"
         />
+        {dates && datePick(`inputFilterDatePick${id}-${i}`, value, (day) => updateFilter(i, { [field]: day }))}
         {offers.length > 0 && (
           offers.length === 1 ? (
             <button
@@ -230,6 +264,19 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
       </>
     );
   };
+
+  /** A calendar beside a date column's value box (#32): the picked day goes into the box, which
+   *  still takes typing. Only its button shows; the box beside it holds the value. */
+  const datePick = (id: string, value: string, pick: (day: string) => void) => (
+    <input
+      id={id}
+      type="date"
+      value={ISO_DAY.test(value) ? value : ""}
+      onChange={(e) => { if (e.target.value) pick(e.target.value); }}
+      title="Pick a day"
+      className="w-6 shrink-0 text-xs bg-transparent text-base-content/60 hover:text-primary [&::-webkit-datetime-edit]:hidden"
+    />
+  );
 
   return (
     <div className="space-y-1.5">
@@ -266,6 +313,9 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
         const canBind = offers.length > 0 && PARAM_BINDABLE_OPS.has(f.operator) && !boundToParam && !byColumn;
         const canCompareColumns = COLUMN_COMPARISON_OPS.has(f.operator) && !boundToParam
           && comparableColumns(f.column).length > 0;
+        // #32: a text column's own values to pick from, and a calendar for a date column's day.
+        const picks = isText(f.column) ? (valuesOf[f.column] ?? []) : [];
+        const dates = !!col && (columnClassOf(col) === "date" || columnClassOf(col) === "timestamp");
         return (
           <div key={i} className="space-y-1.5">
           {/* How this row joins the one above (#10): "and", or "or" to make one group with it.
@@ -309,9 +359,9 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
             {/* Value area */}
             {f.operator === "between" ? (
               <div className="flex items-center gap-1 flex-1 min-w-0">
-                {betweenBox(i, "value", f.value, "min")}
+                {betweenBox(i, "value", f.value, "min", dates)}
                 <span className="text-[10px] text-base-content/60 shrink-0">and</span>
-                {betweenBox(i, "valueTo", f.valueTo || "", "max")}
+                {betweenBox(i, "valueTo", f.valueTo || "", "max", dates)}
               </div>
             ) : byColumn ? (
               /* Compared with another column of the same kind (#10) */
@@ -355,6 +405,23 @@ export function FilterStep({ columns, filters, onChange, match = "all", onMatchC
                     }
                     className="text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content min-w-0 flex-1"
                   />
+                  {picks.length > 0 && (
+                    <select
+                      id={`selectFilterValuePick-${i}`}
+                      value=""
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v) updateFilter(i, { value: f.operator === "in" || f.operator === "not_in" ? withListValue(f.value, v) : v });
+                      }}
+                      title="Pick one of the column's own values"
+                      className="text-[11px] bg-base-100 border border-base-300 rounded px-1 py-0.5 text-base-content/60 hover:text-primary shrink-0 w-16"
+                    >
+                      <option value="">values…</option>
+                      {picks.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  )}
+                  {dates && COLUMN_COMPARISON_OPS.has(f.operator)
+                    && datePick(`inputFilterDatePick-${i}`, f.value, (day) => updateFilter(i, { value: day }))}
                   {/* Param bind toggle — only shown when params exist and operator supports it */}
                   {canBind && (
                     offers.length === 1 ? (
