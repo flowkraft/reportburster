@@ -6170,4 +6170,69 @@ test('(canvas mechanics) M82 Dashboard settings: refresh every N minutes; a page
   }
 });
 
+test('(canvas mechanics) M83 A click still filters after Apply and after a tile\'s Refresh', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M83 Clicks after Apply', async (canvasId) => {
+      const web = (r: Record<string, string>) => r.channel === 'web';
+
+      // A filter bar, a KPI of the orders, and a bar chart whose clicks filter the dashboard.
+      await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'minTotal', type: 'Integer', label: 'Minimum total', defaultValue: 0) {
+    constraints(required: false)
+  }
+}
+`);
+      await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await setClicksFilter(page, 'chart', true);
+
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length === 1 && (ids.chart ?? []).length === 1;
+      }, { message: 'the saved canvas names the KPI and the chart', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      const kpi = ids.number[0];
+      const chart = ids.chart[0];
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const chartEl = () => page.locator(`[id="widgetChart-${chart}"]`);
+      const bar = page.locator('#parameterBarContainer');
+      await pPublishedNumberIs(page, kpi, pOrders.length, 'every order');
+
+      // + a click selects the web orders.
+      await pClickBar(chartEl(), 'web');
+      await pPublishedNumberIs(page, kpi, pCount(web), 'a click: the web orders');
+
+      // + Apply keeps the click's selection: the tiles come back still filtered by it.
+      await reloadDashboard(bar);
+      await pPublishedNumberIs(page, kpi, pCount(web), 'after Apply, still the web orders');
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'and its chip').toBeVisible();
+
+      // + the chart Apply put on the page still hears clicks: a second click takes the selection back.
+      await pClickBar(chartEl(), 'web');
+      await pPublishedNumberIs(page, kpi, pOrders.length, 'a click after Apply brings every order back');
+      await expect(page.locator('#selectionBar')).toHaveCount(0);
+
+      // + a tile's Refresh puts a new chart in its place, and its clicks filter too.
+      await page.locator(`[id="widgetMenu-${chart}"]`).click();
+      await page.locator(`[id="widgetMenuRefresh-${chart}"]`).click();
+      await pClickBar(chartEl(), 'web');
+      await pPublishedNumberIs(page, kpi, pCount(web), 'a click after Refresh: the web orders');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
