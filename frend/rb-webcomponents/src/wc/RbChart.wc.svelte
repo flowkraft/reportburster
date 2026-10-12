@@ -22,6 +22,7 @@
   import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
   import { VALUE_LABELS_PLUGIN_ID, valueLabelsPlugin } from '../shared/value-labels';
   import { applyStackPercent } from '../shared/stack-percent';
+  import { applyTopN, isOtherIndex } from '../shared/top-n';
   import { applyChartNumberFormat, drawModeOf } from '../shared/chart-number-format';
 
   // DEBUG: counters for lifecycle events
@@ -640,7 +641,8 @@
       if (!ChartCtor.registry?.plugins?.get?.(VALUE_LABELS_PLUGIN_ID)) ChartCtor.register(valueLabelsPlugin);
 
       const config = buildConfig();
-      // 100% stacked (#25): the shares replace the values once the config is built, for every type.
+      // Top N plus Other (#29), then 100% stacked (#25): both rework the built config's data.
+      applyTopN(config);
       applyStackPercent(config);
       // Its numbers in the format its DSL names (#26): the value axis, the tooltips, the labels.
       applyChartNumberFormat(config);
@@ -660,6 +662,8 @@
           const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false) || [];
           if (points.length) {
             const p = points[0];
+            // "Other" (#29) is many values at once: a click on it selects and opens nothing.
+            if (isOtherIndex(chart, p.index)) return;
             dispatch('chartClick', {
               event: evt,
               datasetIndex: p.datasetIndex,
@@ -875,6 +879,7 @@
           mergedOptions = Object.assign({}, mergedOptions, options);
         }
         chart.config.options = mergedOptions;
+        applyTopN(chart.config);
         applyStackPercent(chart.config);
         applyChartNumberFormat(chart.config);
         rbApplyThemeColors(chart.config);

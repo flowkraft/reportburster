@@ -6,6 +6,7 @@
  */
 import { formatMeasure } from './cube-format.ts';
 import { stackPercentOn } from './stack-percent.ts';
+import { topNOf } from './top-n.ts';
 
 export const NUMBER_FORMAT_KEY = 'rbNumberFormat';
 
@@ -20,7 +21,7 @@ export function chartNumberFormatOf(options: unknown): string {
 
 /** What decides how a chart is drawn beyond its data: a change of it draws the chart anew. */
 export function drawModeOf(options: unknown): string {
-  return `${stackPercentOn(options) ? '100%' : ''}|${chartNumberFormatOf(options)}`;
+  return `${stackPercentOn(options) ? '100%' : ''}|${chartNumberFormatOf(options)}|${topNOf(options)}`;
 }
 
 const PIE_TYPES = new Set(['pie', 'doughnut', 'polarArea']);

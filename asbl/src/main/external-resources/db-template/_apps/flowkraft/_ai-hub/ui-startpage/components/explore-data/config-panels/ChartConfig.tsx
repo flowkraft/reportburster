@@ -188,6 +188,26 @@ export function setNumberFormat(map: ChartDslOptions, fmt: string): ChartDslOpti
   return next;
 }
 
+/** Read the chart's top N (`options.rbTopN`, #29); undefined when every row is drawn. */
+export function readTopN(map: ChartDslOptions): number | undefined {
+  const n = (map.options as Record<string, unknown> | undefined)?.rbTopN;
+  return typeof n === "number" && Number.isInteger(n) && n >= 1 ? n : undefined;
+}
+
+/** Set or clear the chart's top N, pruning what it empties. */
+export function setTopN(map: ChartDslOptions, n: number | undefined): ChartDslOptions {
+  const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
+  if (n !== undefined) opts.rbTopN = n;
+  else delete opts.rbTopN;
+  const next: ChartDslOptions = { ...map };
+  if (Object.keys(opts).length > 0) next.options = opts;
+  else delete next.options;
+  return next;
+}
+
+/** The chart types a top N folds (one value per category): bars, rows, pies and donuts. */
+export const TOP_N_TYPES = new Set(["bar", "row", "pie", "doughnut"]);
+
 /** How a chart stacks (#25): not at all, stacked, or each stack as 100%. An area chart stacks
  *  unless it says `stacked false`; a bar chart only when it says `stacked true`. */
 export type StackMode = "off" | "on" | "percent";
@@ -416,6 +436,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
     || ((chartType === "bar" || chartType === "row") && (hasSeriesSplit || yFields.length >= 2));
   const valueLabels = readValueLabels(map);
   const numberFormat = readNumberFormat(map);
+  const topN = readTopN(map);
   const valueAxis = valueAxisOf(chartType);
   const axisMin = valueAxis ? readAxisBound(map, valueAxis, "min") : undefined;
   const axisMax = valueAxis ? readAxisBound(map, valueAxis, "max") : undefined;
@@ -467,6 +488,13 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   // off takes the key away, so a chart that never had them reads exactly as it did.
   const setValueLabels = (on: boolean) =>
     setDslMap(config, setPluginOption(map, "rbValueLabels", on ? { display: true } : undefined), onChange);
+  // Top N plus Other (#29): a whole number from 1 up, or nothing for every row.
+  const setChartTopN = (text: string) => {
+    const t = text.trim();
+    if (t === "") return setDslMap(config, setTopN(map, undefined), onChange);
+    if (!/^\d+$/.test(t) || Number(t) < 1) return;
+    setDslMap(config, setTopN(map, Number(t)), onChange);
+  };
   // The number format is read by rb-chart for the value axis, the tooltips and the labels (#26).
   const setChartNumberFormat = (fmt: string) => setDslMap(config, setNumberFormat(map, fmt), onChange);
   // Stacking is two Chart.js keys, written into the same Map the published page
@@ -828,6 +856,26 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
           {axisMin !== undefined && axisMax !== undefined && axisMin >= axisMax && (
             <p id="chartAxisBoundsError" className="mt-1 text-[10px] text-error">The min must be below the max.</p>
           )}
+        </div>
+      )}
+
+      {TOP_N_TYPES.has(chartType) && (
+        <div>
+          <span className="text-xs text-base-content/60">Show the top</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <input
+              id="inputChartTopN"
+              type="text"
+              inputMode="numeric"
+              defaultValue={topN ?? ""}
+              key={topN ?? "all"}
+              onBlur={(e) => setChartTopN(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") setChartTopN((e.target as HTMLInputElement).value); }}
+              placeholder="all"
+              className="w-16 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1 text-base-content"
+            />
+            <span className="text-xs text-base-content/60">and fold the rest into "Other"</span>
+          </div>
         </div>
       )}
 
