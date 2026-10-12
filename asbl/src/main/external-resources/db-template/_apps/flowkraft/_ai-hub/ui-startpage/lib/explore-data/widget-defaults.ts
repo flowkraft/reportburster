@@ -9,7 +9,7 @@
 // choices) that are consumed imperatively by store mutators, not just
 // classifier-side.
 
-import type { DataSource, VisualQuery, WidgetDisplayConfig, WidgetType } from "@/lib/stores/canvas-store";
+import type { DataSource, TimeBucket, VisualQuery, WidgetDisplayConfig, WidgetType } from "@/lib/stores/canvas-store";
 import type { ColumnSchema, QueryResult, TableSchema } from "./types";
 import {
   autoSlicerField, autoPickMeasure, autoPivotLayout,
@@ -403,12 +403,18 @@ export function computeWidgetShape(
   // splitDimsAndMeasures cannot distinguish a GROUP BY TINYINT from an aggregated DOUBLE.
   const dimNames = vq?.groupBy?.length ? vq.groupBy : dimCols.map((c) => c.columnName);
   const measureNames = measureCols.map((c) => c.columnName);
+  // A cube's time dimension truncated to a granularity is a time axis, as a Visual query's time
+  // bucket is, though its dates arrive as text like any other JSON date. Cube granularities are
+  // the Visual tab's truncations (day, week, month, quarter, year: CubeSqlDialect.GRANULARITIES).
+  const buckets = vq?.kind === "cube"
+    ? vq.cubeSelection?.granularities as Record<string, TimeBucket> | undefined
+    : vq?.groupByBuckets;
   // shapeFromResult honors temporal-extraction buckets (day-of-week etc.) and
   // cross-references the schema for semantic hints — see display.ts.
   const shape = shapeFromResult(
     allNames,
     dimNames,
-    vq?.groupByBuckets,
+    buckets,
     measureNames,
     null,
     undefined,
