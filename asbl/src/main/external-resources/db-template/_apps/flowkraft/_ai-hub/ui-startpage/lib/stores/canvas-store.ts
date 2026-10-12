@@ -133,6 +133,8 @@ export interface VisualQuery {
   summarize: {
     aggregation: string; field: string; having?: AggregateCondition;
     share?: boolean; runningTotal?: boolean; where?: AggregateWhere;
+    /** Read as its change from the bucket before, or as its rank (#11). */
+    quickCalc?: "change" | "rank";
   }[];
   groupBy: string[];
   // Optional per-column time bucket. When set and the column is in `groupBy`,

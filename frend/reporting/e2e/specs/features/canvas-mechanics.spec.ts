@@ -43,6 +43,7 @@ import {
   addFilterBarParam,
   addSlicer,
   addGroupBy,
+  setTimeBucket,
   addTableToCanvas,
   addUIElement,
   addVisualFilter,
@@ -5447,6 +5448,50 @@ test('(canvas mechanics) M72 A filter compares two columns, and two filter rows 
     await g4ScalarIs(page, id,
       orders.filter((o) => o.status === s1 || o.status === s2 || o.channel === 'web').length,
       'any of the three');
+  });
+});
+
+test('(canvas mechanics) M73 Quick calcs: the change from the month before, and a rank', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M73 Quick calcs', async () => {
+    const orders = frozenRows('orders');
+    const perMonth = new Map<string, number>();
+    for (const o of orders) perMonth.set(o.order_ts.slice(0, 7), (perMonth.get(o.order_ts.slice(0, 7)) ?? 0) + Number(o.total_amount));
+    const sums = [...perMonth.keys()].sort().map((m) => perMonth.get(m)!);
+
+    // + money per month read as its change from the month before: the first month has none.
+    const id = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'SUM', 'total_amount');
+    await addGroupBy(page, 'order_ts');
+    await setTimeBucket(page, 'order_ts', 'month');
+    await page.locator('#selectQuickCalc-0').selectOption('change');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+    const rows = await g4RowsWhere(page, id,
+      (r) => r.length === sums.length && r.every((x) => 'total_amount_sum_change' in x), 'one row per month, with its change');
+    const changes = [...rows].sort((a, b) => String(a.order_ts).localeCompare(String(b.order_ts)))
+      .map((r) => r.total_amount_sum_change);
+    expect(changes[0] === null || changes[0] === undefined || changes[0] === '', 'the first month has no month before').toBe(true);
+    for (let i = 1; i < sums.length; i++) {
+      expect(Math.abs(Number(changes[i]) - (sums[i] - sums[i - 1])), `month ${i + 1}: its change`).toBeLessThan(0.01);
+    }
+
+    // + orders per channel read as a rank: the busiest channel is 1; no change offered without a time bucket.
+    const perChannel = new Map<string, number>();
+    for (const o of orders) perChannel.set(o.channel, (perChannel.get(o.channel) ?? 0) + 1);
+    const rid = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', '*');
+    await addGroupBy(page, 'channel');
+    await expect(page.locator('#selectQuickCalc-0 option[value="change"]'), 'a change needs a time bucket').toHaveCount(0);
+    await page.locator('#selectQuickCalc-0').selectOption('rank');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+    const ranked = await g4RowsWhere(page, rid,
+      (r) => r.length === perChannel.size && r.every((x) => 'count_rank' in x), 'one row per channel, with its rank');
+    for (const [channel, count] of perChannel) {
+      const expected = 1 + [...perChannel.values()].filter((n) => n > count).length;
+      expect(Number(ranked.find((r) => r.channel === channel)?.count_rank), `${channel}: its rank`).toBe(expected);
+    }
   });
 });
 

@@ -77,6 +77,24 @@ export const RUNNING_TOTAL_LABEL = "running total";
  *  total of an average or of a MIN is not a number anyone asked for. */
 export const RUNNING_TOTAL_AGGREGATIONS = ["SUM", "COUNT", "COUNT DISTINCT"];
 
+/**
+ * The quick calculations an aggregate can be read as (#11), one at a time:
+ * - `change`: its change from the bucket before, in a series over one time bucket
+ *   (the same shape a running total needs); the first bucket has none (NULL);
+ * - `rank`: its rank among the groups, the largest 1 (ties share a rank).
+ * Like the share and the running total, a way of reading the aggregate the query
+ * already has; `sql-builder.ts` writes it (`changeExpr`, `rankExpr`, ANSI) under
+ * `<alias>_change` / `<alias>_rank`, and only where it means something
+ * (`quickCalcOf`, the one rule). Absent on every aggregate saved before it.
+ */
+export type QuickCalc = "change" | "rank";
+export const QUICK_CALCS: { value: QuickCalc; label: string }[] = [
+  { value: "change", label: "change vs previous" },
+  { value: "rank", label: "rank" },
+];
+/** The aggregations a quick calculation is offered on: numbers that add or average. */
+export const QUICK_CALC_AGGREGATIONS = ["SUM", "AVG", "COUNT", "COUNT DISTINCT"];
+
 /** One entry of the condition dropdown beside an aggregate (F2). */
 export interface HavingOpDef {
   value: string;

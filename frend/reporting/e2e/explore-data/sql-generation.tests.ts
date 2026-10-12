@@ -22,12 +22,14 @@
 import {
   buildDistinctValuesSql,
   buildSql,
+  changeExpr,
   decimalLiteral,
   extractParamIds,
   extractParamTypes,
   nextDay,
   numericBinExpr,
   percentOfTotalExpr,
+  rankExpr,
   runningTotalExpr,
   runsAsRunningTotal,
   sortableColumns,
@@ -3820,5 +3822,70 @@ describe("VENDOR LAYER — two date columns compared as whole days (#10)", () =>
       const days = unquoted(daysBetweenExpr(dateExpr("created_at", vendor), dateExpr("closed_on", vendor), vendor));
       expect(sql).withContext(vendor).toContain(`WHERE ${days} > 0`);
     }
+  });
+});
+
+// ── 36 ───────────────────────────────────────────────────────────────────────
+
+describe("ANSI — quick calcs: change vs the bucket before, and rank (#11)", () => {
+
+  const monthly = (patch: Record<string, unknown>) => query({
+    groupBy: ["closed_on"],
+    groupByBuckets: { closed_on: "month" },
+    summarize: [{ aggregation: "SUM", field: "amount", ...patch }],
+  } as Partial<VisualQuery>);
+
+  const byTitle = (patch: Record<string, unknown>, extra: Partial<VisualQuery> = {}) => query({
+    groupBy: ["title"],
+    summarize: [{ aggregation: "SUM", field: "amount", ...patch }],
+    ...extra,
+  } as Partial<VisualQuery>);
+
+  it("writes a change as the aggregate minus the aggregate of exactly the row before", () => {
+    expect(changeExpr("SUM(amount)", "m"))
+      .toBe("(SUM(amount) - SUM(SUM(amount)) OVER (ORDER BY m ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING))");
+  });
+
+  it("orders the change's window by the bucket, NULLs last, on every vendor, and names it _change", () => {
+    for (const vendor of EVERY_VENDOR) {
+      const sql = unquoted(sqlOn(monthly({ quickCalc: "change" }), vendor));
+      expect(sql).withContext(vendor).toContain(
+        "(CAST(SUM(amount) AS DECIMAL(31,4)) - SUM(CAST(SUM(amount) AS DECIMAL(31,4))) OVER (ORDER BY CASE WHEN MIN(");
+      expect(sql).withContext(vendor).toContain(" ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING)) AS amount_sum_change");
+    }
+  });
+
+  it("writes a rank as RANK() over the aggregate, largest first, NULLs last, and names it _rank", () => {
+    expect(oneAnsiTextFor(byTitle({ quickCalc: "rank" }))).toContain(
+      "RANK() OVER (ORDER BY CASE WHEN CAST(SUM(amount) AS DECIMAL(31,4)) IS NULL THEN 1 ELSE 0 END, "
+      + "CAST(SUM(amount) AS DECIMAL(31,4)) DESC) AS amount_sum_rank");
+  });
+
+  it("sorts by a rank as by its aggregate turned round, keeping the window out of the ORDER BY", () => {
+    const ansi = oneAnsiTextFor(byTitle({ quickCalc: "rank" }, { sort: [{ column: "amount_sum_rank", direction: "ASC" }] }));
+    expect(ansi).toContain("ORDER BY CASE WHEN (0 - CAST(SUM(amount) AS DECIMAL(31,4))) IS NULL THEN 1 ELSE 0 END, (0 - CAST(SUM(amount) AS DECIMAL(31,4))) ASC");
+    expect(ansi.split("ORDER BY CASE")[1]).not.toContain("OVER (");
+  });
+
+  it("offers the Sort step the rank, and not the change", () => {
+    const columns = [{ columnName: "closed_on", typeName: "date", isNullable: true }];
+    expect(sortableColumns(monthly({ quickCalc: "change" }), columns).map((c) => c.columnName)).toEqual(["closed_on"]);
+    expect(sortableColumns(byTitle({ quickCalc: "rank" }), [{ columnName: "title", typeName: "text", isNullable: true }])
+      .map((c) => c.columnName)).toEqual(["title", "amount_sum_rank"]);
+  });
+
+  it("is the plain aggregate where it means nothing: a change without a time bucket, a MIN, a running total", () => {
+    const plain = oneAnsiTextFor(byTitle({}));
+    expect(oneAnsiTextFor(byTitle({ quickCalc: "change" }))).toBe(plain);
+    const min = oneAnsiTextFor(query({ groupBy: ["title"], summarize: [{ aggregation: "MIN", field: "amount", quickCalc: "rank" }] } as Partial<VisualQuery>));
+    expect(min).not.toContain("RANK()");
+    const running = unquoted(sqlOn(monthly({ quickCalc: "change", runningTotal: true }), "postgres"));
+    expect(running).toContain("ROWS UNBOUNDED PRECEDING) AS amount_sum_running");
+    expect(running).not.toContain("1 PRECEDING AND 1 PRECEDING");
+  });
+
+  it("changes nothing for an aggregate without one (every canvas saved until now)", () => {
+    expect(oneAnsiTextFor(byTitle({ quickCalc: undefined }))).toBe(oneAnsiTextFor(byTitle({})));
+    expect(rankExpr("x")).toBe("RANK() OVER (ORDER BY CASE WHEN x IS NULL THEN 1 ELSE 0 END, x DESC)");
   });
 });

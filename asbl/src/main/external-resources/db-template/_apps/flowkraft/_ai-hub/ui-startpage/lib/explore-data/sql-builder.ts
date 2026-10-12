@@ -60,7 +60,7 @@ import { asTableRef } from "./table-ref";
 import { nicerBinWidth } from "./smart-defaults";
 import { computedColumnsOf, isFormulaColumn, isNumberOperand, isTextComputedColumn, type ComputedColumn } from "./computed-columns";
 import { formulaSql, parseFormula } from "./formula";
-import { isCompleteCondition, type AggregateCondition, type AggregateWhere } from "./aggregations";
+import { isCompleteCondition, QUICK_CALC_AGGREGATIONS, type AggregateCondition, type AggregateWhere, type QuickCalc } from "./aggregations";
 import type { ColumnSchema } from "./types";
 
 /** Returns true if the value is a canvas parameter reference: `${paramName}`. */
@@ -618,7 +618,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
 
   /** The name one aggregate is written under in this query. */
   const aliasOf = (agg: SummarizeEntry): string =>
-    aggregateAlias(agg, runsAsRunningTotal(query, agg));
+    aggregateAlias(agg, runsAsRunningTotal(query, agg), quickCalcOf(query, agg));
 
   if (hasAgg || distinctOnly) {
     for (const col of query.groupBy) {
@@ -649,6 +649,9 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   const aggregateSelect = (agg: SummarizeEntry): string => {
     const expr = aggregateOf(agg);
     if (runsAsRunningTotal(query, agg)) return runningTotalExpr(expr, runningOrder());
+    const calc = quickCalcOf(query, agg);
+    if (calc === "change") return changeExpr(expr, runningOrder());
+    if (calc === "rank") return rankExpr(expr);
     return agg.share ? percentOfTotalExpr(expr) : expr;
   };
 
@@ -687,6 +690,9 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     // second reason alone - a cumulative series is read in the order it
     // accumulates in, which is its time bucket, and that is the sort key a
     // cumulative line carries.
+    // A rank sorts by its aggregate turned round - rank 1 is the largest - which keeps the
+    // window out of the ORDER BY too.
+    if (agg && quickCalcOf(query, agg) === "rank") return `(0 - ${aggregateOf(agg)})`;
     return agg ? aggregateOf(agg) : bucketGroupBy(column);
   };
 
@@ -858,7 +864,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
 /** One entry of the Summarize step: what to compute, over which column. */
 type SummarizeEntry = {
   aggregation: string; field: string; having?: AggregateCondition; share?: boolean;
-  runningTotal?: boolean; where?: AggregateWhere;
+  runningTotal?: boolean; where?: AggregateWhere; quickCalc?: QuickCalc;
 };
 
 /**
@@ -950,7 +956,43 @@ export function runsAsRunningTotal(query: VisualQuery, agg: SummarizeEntry): boo
  * and a running total included. Whatever names a result column before the result is there asks here.
  */
 export function aggregateColumnName(query: VisualQuery, agg: SummarizeEntry): string {
-  return aggregateAlias(agg, runsAsRunningTotal(query, agg));
+  return aggregateAlias(agg, runsAsRunningTotal(query, agg), quickCalcOf(query, agg));
+}
+
+/**
+ * The quick calculation one Summarize entry is written as (#11), for one query, or null for the
+ * aggregate itself. A change needs a series to have a "before": the query grouped by ONE
+ * time-bucketed column, as a running total does; a rank needs groups to rank. Only an aggregate
+ * that is a number that adds or averages takes either, and a running total wins over both. One
+ * rule, read by the SELECT and the alias alike, so a canvas regrouped afterwards simply answers
+ * the plain aggregate under the plain name.
+ */
+export function quickCalcOf(query: VisualQuery, agg: SummarizeEntry): QuickCalc | null {
+  if (!agg.quickCalc || runsAsRunningTotal(query, agg)) return null;
+  if (!QUICK_CALC_AGGREGATIONS.includes(agg.aggregation.toUpperCase())) return null;
+  if (agg.quickCalc === "change") {
+    return query.groupBy.length === 1 && Boolean((query.groupByBuckets ?? {})[query.groupBy[0]]) ? "change" : null;
+  }
+  if (agg.quickCalc === "rank") return query.groupBy.length > 0 ? "rank" : null;
+  return null;
+}
+
+/**
+ * One aggregate read as its change from the bucket before (#11): the aggregate minus the
+ * aggregate of the row before, which is a SUM over a frame of exactly that one row. ANSI on all
+ * nine (no `LAG`, which ClickHouse does not have), ordered as a running total is (`runningOrder`).
+ * The first bucket has no row before it, and its change is NULL.
+ */
+export function changeExpr(aggregate: string, bucketOrder: string): string {
+  return `(${aggregate} - SUM(${aggregate}) OVER (ORDER BY ${bucketOrder} ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING))`;
+}
+
+/**
+ * One aggregate read as its rank among the groups (#11): 1 for the largest, ties sharing a rank,
+ * the groups with no value last on every vendor (the same CASE every sort carries). ANSI on all nine.
+ */
+export function rankExpr(aggregate: string): string {
+  return `RANK() OVER (ORDER BY CASE WHEN ${aggregate} IS NULL THEN 1 ELSE 0 END, ${aggregate} DESC)`;
 }
 
 /**
@@ -958,7 +1000,7 @@ export function aggregateColumnName(query: VisualQuery, agg: SummarizeEntry): st
  * COUNT(*), `<field>_<fn>` for every other one - which is also the name a sort
  * key uses to ask for it.
  */
-function aggregateAlias(agg: SummarizeEntry, running = false): string {
+function aggregateAlias(agg: SummarizeEntry, running = false, calc: QuickCalc | null = null): string {
   const fn = agg.aggregation.toUpperCase();
   const bare = fn === "COUNT" && agg.field === "*"
     ? "count" : `${agg.field}_${agg.aggregation.toLowerCase()}`;
@@ -968,6 +1010,7 @@ function aggregateAlias(agg: SummarizeEntry, running = false): string {
   // of them they mean. A running total is the money so far and not a share of
   // anything, so it never carries both endings.
   if (running) return `${plain}_running`;
+  if (calc) return `${plain}_${calc}`;
   return agg.share ? `${plain}_pct` : plain;
 }
 
@@ -1007,8 +1050,10 @@ export function sortableColumns(query: VisualQuery, columns: ColumnSchema[]): Co
   const grouped = query.groupBy.map(
     (col) => byName.get(col) ?? { columnName: col, typeName: "text", isNullable: true },
   );
-  const aggregates = query.summarize.map((agg) => ({
-    columnName: aggregateAlias(agg, runsAsRunningTotal(query, agg)),
+  // A change is not offered as a sort key: its order is the window's, which stays out of the
+  // ORDER BY (a rank sorts by its aggregate turned round, `sortExpr`).
+  const aggregates = query.summarize.filter((agg) => quickCalcOf(query, agg) !== "change").map((agg) => ({
+    columnName: aggregateAlias(agg, runsAsRunningTotal(query, agg), quickCalcOf(query, agg)),
     typeName: "numeric",
     isNullable: agg.aggregation.toUpperCase().startsWith("COUNT") ? false : true,
   }));
