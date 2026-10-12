@@ -35,6 +35,12 @@
       "id": "dd-invoices-low-code",
       "reportId": "g-dd-invoices-low-code",
       "title": "Invoices & Billing (low-code)"
+    },
+    {
+      "of": "dd-subscriptions-mrr",
+      "id": "dd-subscriptions-mrr-low-code",
+      "reportId": "g-dd-subscriptions-mrr-low-code",
+      "title": "Subscriptions: MRR & Churn (low-code)"
     }
   ]
 }
