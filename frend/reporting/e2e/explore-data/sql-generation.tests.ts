@@ -495,9 +495,10 @@ describe("VENDOR LAYER — the row cap", () => {
     }
   });
 
-  it("puts SQL Server's TOP after DISTINCT in the slicer's query", () => {
+  it("puts SQL Server's TOP after SELECT in the slicer's query, which counts each value's rows", () => {
     expect(buildDistinctValuesSql("crm_deals", "stage", 1000, "sqlserver"))
-      .toContain("SELECT DISTINCT TOP 1000 [stage]");
+      .toContain("SELECT TOP 1000 [stage], COUNT(*) AS [slicer_count]");
+    expect(buildDistinctValuesSql("crm_deals", "stage", 1000, "sqlserver")).toContain("GROUP BY [stage]");
     expect(buildDistinctValuesSql("crm_deals", "stage", 1000, "sqlite")).toContain("LIMIT 1000");
   });
 
