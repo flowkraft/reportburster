@@ -861,7 +861,13 @@
     // watch their slicer selection undo itself. A slicer parameter is the slicer's own name and never a
     // name the author declared, so adding them here cannot overwrite a filter-bar value, a value
     // locked by a share link or anything an embed token fixed: the slicers only ever narrow.
-    const slicerPicks = slicerSelectionsFor(reportId).paramValues(slicerFieldsOnPage(hostElement));
+    // A click that filters is a pick too, of a field that may have no slicer on the page: its field
+    // rides along as well, or Apply would drop the click's selection while its chip stays up (the
+    // same fields rb-dashboard's own refresh sends).
+    const selections = slicerSelectionsFor(reportId);
+    const fields = [...slicerFieldsOnPage(hostElement)];
+    for (const field of selections.fields()) if (!fields.includes(field)) fields.push(field);
+    const slicerPicks = selections.paramValues(fields);
     refreshDataWidgets(hostElement, { ...values, ...slicerPicks });
   }
 
