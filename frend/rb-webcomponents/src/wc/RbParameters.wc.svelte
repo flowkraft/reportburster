@@ -6,7 +6,7 @@
   import { onMount, createEventDispatcher, tick } from 'svelte';
   // Which control each declared type is filled in with lives in its own module, so `npm test`
   // can ask it directly - see src/shared/parameter-controls.test.ts.
-  import { controlTypeOf, defaultForType } from '../shared/parameter-controls';
+  import { controlTypeOf, defaultForType, isTicked } from '../shared/parameter-controls';
   import { slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets } from '../shared/slicer-selections';
   // Starting values a link carries, and the address bar kept on the view that is on screen. This
   // component is the only one that reads or writes the URL for parameters - see
@@ -939,7 +939,7 @@
               type="checkbox"
               id={p.id}
               disabled={isLocked(p)}
-              checked={formValues[p.id] || false}
+              checked={isTicked(formValues[p.id])}
               title={p.description || ''}
               on:change={(e) => handleChange(p, e)}
             />
