@@ -102,6 +102,8 @@ export function useDrillRows(el: HTMLElement | null, widget: Widget | undefined)
  */
 export function DrillRowsPanel({ drill, onClose }: { drill: DrillRows | null; onClose: () => void }) {
   const host = useRef<HTMLDivElement | null>(null);
+  const closing = useRef(onClose);
+  closing.current = onClose;
 
   useEffect(() => {
     const target = host.current;
@@ -111,6 +113,9 @@ export function DrillRowsPanel({ drill, onClose }: { drill: DrillRows | null; on
       panel = document.createElement("rb-drill-rows") as HTMLElement & Record<string, unknown>;
       panel.idPrefix = "widgetDrill";
       panel.closeId = "btnWidgetDrillClose";
+      // The panel's close reaches only a listener on the panel itself: a Svelte element calls it,
+      // no DOM event goes up the page.
+      panel.addEventListener("close", () => closing.current());
       target.appendChild(panel);
     }
     panel.heading = drill.heading;
@@ -121,18 +126,10 @@ export function DrillRowsPanel({ drill, onClose }: { drill: DrillRows | null; on
   }, [drill]);
 
   useEffect(() => {
-    const target = host.current;
-    if (!target) return;
-    const onPanelClose = () => onClose();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    // The panel's own event does not bubble: it is heard on the way down.
-    target.addEventListener("close", onPanelClose, true);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closing.current(); };
     window.addEventListener("keydown", onKey);
-    return () => {
-      target.removeEventListener("close", onPanelClose, true);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (drill) return;
