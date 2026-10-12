@@ -6644,4 +6644,49 @@ test('(canvas mechanics) M89 The top N bars and one "Other", in the Canvas and p
   }
 });
 
+test('(canvas mechanics) M90 The words a widget says when its query answers no rows, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M90 No data message', async (canvasId) => {
+      const words = 'No orders on this channel yet';
+      // A KPI that has rows, and a table whose query answers none; both are given the same words.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputNoDataMessage').fill(words);
+      await page.locator('#btnDataTab').click();
+
+      const empty = await fAddTabulator(page, 'dash_demo.orders',
+        "SELECT channel, COUNT(*) AS n FROM dash_demo.orders WHERE channel = 'nowhere' GROUP BY channel");
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputNoDataMessage').fill(words);
+
+      // + the table with no rows says the words; the KPI, which has rows, shows its number.
+      await expect(page.locator(`[id="widgetNoData-${empty}"]`)).toHaveText(words, { timeout: 30_000 });
+      await expect(page.locator(`[id="widgetNoData-${kpi}"]`), 'a widget with rows shows them').toHaveCount(0);
+
+      // + published, the same.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length === 1 && (ids.tabulator ?? []).length === 1;
+      }, { message: 'the saved canvas names both widgets', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await eStoredWidgets(page, canvasId, (w) => w.filter((x) => x.displayConfig?.noDataMessage === words).length === 2);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await pPublishedNumberIs(page, ids.number[0], pOrders.length, 'the published KPI counts every order');
+      await expect(page.locator(`[id="tileNoData-${ids.tabulator[0]}"]`), 'the published table says the words')
+        .toHaveText(words, { timeout: 60_000 });
+      await expect(page.locator(`[id="tileNoData-${ids.number[0]}"]`)).toHaveCount(0);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });

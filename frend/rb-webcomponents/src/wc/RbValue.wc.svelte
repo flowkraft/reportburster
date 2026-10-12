@@ -22,9 +22,11 @@
 </script>
 
 <script lang="ts">
-  import { onMount, onDestroy, tick } from 'svelte';
+  import { onMount, onDestroy, tick, createEventDispatcher } from 'svelte';
   import { reportQuery } from '../shared/report-query';
   import { formatMeasure } from '../shared/cube-format';
+
+  const dispatch = createEventDispatcher();
 
   // ============================================================================
   // Two usage modes:
@@ -146,6 +148,8 @@
 
       const dataResult = await fetchDataCached(dataUrl, headers);
       const rows = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
+      // Said the way every other data widget says it: a dashboard shows its words for no rows (#30).
+      dispatch('dataFetched', { data: rows });
 
       const resolvedField = field || (rows.length > 0 ? Object.keys(rows[0])[0] : '');
       if (resolvedField && rows.length > 0 && resolvedField in rows[0]) {

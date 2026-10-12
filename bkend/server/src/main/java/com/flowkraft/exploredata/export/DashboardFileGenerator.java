@@ -325,8 +325,22 @@ public class DashboardFileGenerator {
         return open < 0 ? html : html.substring(0, open + 2) + heading + html.substring(open + 2);
     }
 
+    /**
+     * The words a data widget's tile shows when its query answers no rows (#30), set in its Display
+     * tab, on the tile itself ({@code data-no-data}); rb-dashboard shows them in the widget's place.
+     * A widget with none set is written as it always was.
+     */
+    private static String withNoDataMessage(Map<String, Object> w, String html) {
+        if (html.isEmpty() || !(HEADED_TYPES.contains(str(w, "type")) || LiveCubeWidgets.isLive(w))) return html;
+        String message = strOr(displayConfig(w), "noDataMessage", "").trim();
+        if (message.isEmpty()) return html;
+        return html.replaceFirst("<div class=\"(grid-item[^\"]*)\"",
+            java.util.regex.Matcher.quoteReplacement("<div class=\"") + "$1"
+                + java.util.regex.Matcher.quoteReplacement("\" data-no-data=\"" + escapeHtmlAttr(message) + "\""));
+    }
+
     private static String widgetHtml(Map<String, Object> w, String reportId, String apiBaseUrl) {
-        return withHeading(w, componentId(w), tileHtml(w, reportId, apiBaseUrl));
+        return withNoDataMessage(w, withHeading(w, componentId(w), tileHtml(w, reportId, apiBaseUrl)));
     }
 
     private static String tileHtml(Map<String, Object> w, String reportId, String apiBaseUrl) {

@@ -68,6 +68,13 @@ class WidgetHeadingExportTest {
 	}
 
 	@Test
+	void the_words_for_no_rows_ride_on_the_tile() throws Exception {
+		String template = templateOf(widget("tabulator", Map.of("noDataMessage", "No \"orders\" yet")));
+		assertTrue(template.contains("<div class=\"grid-item\" data-no-data=\"No &quot;orders&quot; yet\" style=\""), template);
+		assertFalse(templateOf(widget("tabulator", Map.of())).contains("data-no-data"), "none set, none written");
+	}
+
+	@Test
 	void a_layout_piece_has_no_heading() throws Exception {
 		assertFalse(templateOf(widget("divider", Map.of("widgetTitle", "Section"))).contains("rb-tile-title"));
 	}
