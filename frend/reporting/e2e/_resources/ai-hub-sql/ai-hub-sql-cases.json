@@ -1055,6 +1055,325 @@
       ]
     },
     {
+      "id": "a43-a-formula-column-the-won-money",
+      "group": "A",
+      "proves": "a formula column (#8): `won_amount = IF(stage = 'Closed Won', amount, 0)` is written as an ANSI CASE on all nine, and summed it is exactly the money of the 402 won deals, 11971500",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "computed": [{ "name": "won_amount", "left": "", "operator": "", "right": "", "formula": "IF(stage = 'Closed Won', amount, 0)" }],
+        "filters": [],
+        "summarize": [{ "aggregation": "SUM", "field": "won_amount" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "stage": "string", "amount": "number" },
+      "rows": [[11971500]]
+    },
+    {
+      "id": "a44-grouped-by-a-formula-column",
+      "group": "A",
+      "proves": "a formula column is a column to group by (#35): `deal_size = IF(amount >= 50000, 'big', 'small')` in the SELECT under its name and the expression itself in the GROUP BY, 223 big deals and 977 small ones",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "computed": [{ "name": "deal_size", "left": "", "operator": "", "right": "", "formula": "IF(amount >= 50000, 'big', 'small')" }],
+        "filters": [],
+        "groupBy": ["deal_size"],
+        "sort": [{ "column": "deal_size", "direction": "ASC" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "limit": 0
+      },
+      "columnKinds": { "amount": "number" },
+      "ordered": true,
+      "rows": [["big", 223], ["small", 977]]
+    },
+    {
+      "id": "a45-closed-after-the-expected-day",
+      "group": "A",
+      "proves": "one column compared with another (#10): `close_date after expected_close_date` is written through the vendor layer's whole days between the two dates, 298 deals; a deal with no close date compares as unknown and is not kept",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [{ "column": "close_date", "operator": "greater_than", "value": "", "valueColumn": "expected_close_date" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "close_date": "date", "expected_close_date": "date" },
+      "temporalColumns": ["close_date", "expected_close_date"],
+      "rows": [[298]]
+    },
+    {
+      "id": "a46-rows-joined-by-or",
+      "group": "A",
+      "proves": "a filter row joined to the one above by `or` (#10) makes one bracket with it: (Closed Lost OR Closed Won) AND amount > 80000 answers 49 deals, where an `or` around the whole WHERE would answer every closed deal",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [
+          { "column": "stage", "operator": "equals", "value": "Closed Lost" },
+          { "column": "stage", "operator": "equals", "value": "Closed Won", "join": "or" },
+          { "column": "amount", "operator": "greater_than", "value": "80000" }
+        ],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "stage": "string", "amount": "number" },
+      "rows": [[49]]
+    },
+    {
+      "id": "a47-the-change-from-the-month-before",
+      "group": "A",
+      "proves": "a quick calc (#11): the monthly count of closed deals minus the count of the month before, a SUM over a frame of exactly the row before (no LAG, which ClickHouse has not got), ordered as a running total is - the first month has none, and the open deals' bucket at the end is 554 - 33",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "summarize": [
+          { "aggregation": "COUNT", "field": "*" },
+          { "aggregation": "COUNT", "field": "*", "quickCalc": "change" }
+        ],
+        "groupBy": ["close_date"],
+        "groupByBuckets": { "close_date": "month" },
+        "sort": [{ "column": "close_date", "direction": "ASC" }],
+        "limit": 0
+      },
+      "ordered": true,
+      "rows": [
+        ["2025-01", 1, null],
+        ["2025-02", 6, 5],
+        ["2025-03", 15, 9],
+        ["2025-04", 35, 20],
+        ["2025-05", 39, 4],
+        ["2025-06", 35, -4],
+        ["2025-07", 40, 5],
+        ["2025-08", 48, 8],
+        ["2025-09", 53, 5],
+        ["2025-10", 50, -3],
+        ["2025-11", 34, -16],
+        ["2025-12", 41, 7],
+        ["2026-01", 28, -13],
+        ["2026-02", 35, 7],
+        ["2026-03", 33, -2],
+        ["2026-04", 31, -2],
+        ["2026-05", 27, -4],
+        ["2026-06", 28, 1],
+        ["2026-07", 18, -10],
+        ["2026-08", 16, -2],
+        ["2026-09", 33, 17],
+        [null, 554, 521]
+      ]
+    },
+    {
+      "id": "a48-the-rank-of-each-stage",
+      "group": "A",
+      "proves": "a quick calc (#11): each stage's money and its rank among the stages, the largest 1, `RANK() OVER (ORDER BY <the aggregate> DESC)` with NULLs last, the same text on all nine",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "summarize": [
+          { "aggregation": "SUM", "field": "amount" },
+          { "aggregation": "SUM", "field": "amount", "quickCalc": "rank" }
+        ],
+        "groupBy": ["stage"],
+        "sort": [{ "column": "stage", "direction": "ASC" }],
+        "limit": 0
+      },
+      "columnKinds": { "amount": "number" },
+      "ordered": true,
+      "rows": [
+        ["Closed Lost", 9037500, 2],
+        ["Closed Won", 11971500, 1],
+        ["Negotiation", 5822000, 4],
+        ["Proposal", 5873000, 3],
+        ["Prospecting", 2839500, 6],
+        ["Qualification", 5572500, 5]
+      ]
+    },
+    {
+      "id": "a49-a-row-switched-on-by-a-ticked-box",
+      "group": "A",
+      "proves": "a filter row switched by a dashboard checkbox (#12), the box ticked: the row applies, 99 deals above 80000 - the Boolean parameter is bound as a boolean, through the product's own QueriesService.prepare",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [{ "column": "amount", "operator": "greater_than", "value": "80000", "switchParam": "bigOnly", "switchOn": "on" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "amount": "number" },
+      "params": { "bigOnly": "true" },
+      "paramTypes": { "bigOnly": "Boolean" },
+      "rows": [[99]]
+    },
+    {
+      "id": "a49-a-row-switched-off-by-an-unticked-box",
+      "group": "A",
+      "proves": "the same row, the box not ticked (#12): the row does not apply, and every one of the 1200 deals is counted",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [{ "column": "amount", "operator": "greater_than", "value": "80000", "switchParam": "bigOnly", "switchOn": "on" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "amount": "number" },
+      "params": { "bigOnly": "false" },
+      "paramTypes": { "bigOnly": "Boolean" },
+      "rows": [[1200]]
+    },
+    {
+      "id": "a50-a-limit-a-dashboard-filter-sets",
+      "group": "A",
+      "proves": "a limit bound to a dashboard filter (#12): `${topN}` where the number goes - LIMIT, FETCH FIRST, or SQL Server's TOP in brackets - bound as an Integer, 2 stages",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "groupBy": ["stage"],
+        "sort": [{ "column": "count", "direction": "DESC" }],
+        "limit": 500,
+        "limitParam": "topN",
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }]
+      },
+      "params": { "topN": "2" },
+      "paramTypes": { "topN": "Integer" },
+      "ordered": true,
+      "rows": [["Closed Won", 402], ["Closed Lost", 244]]
+    },
+    {
+      "id": "a51-the-median-amount-of-each-stage",
+      "group": "A",
+      "proves": "the median (#33), the vendor's own: PERCENTILE_CONT(0.5) WITHIN GROUP on PostgreSQL, Oracle and Db2, MEDIAN on DuckDB, quantileExactInclusive on ClickHouse. SQL Server, MariaDB, MySQL and SQLite have no median aggregate, and the Summarize step does not offer one there",
+      "vendors": ["postgres", "oracle", "db2", "duckdb", "clickhouse"],
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "summarize": [{ "aggregation": "MEDIAN", "field": "amount" }],
+        "groupBy": ["stage"],
+        "sort": [{ "column": "stage", "direction": "ASC" }],
+        "limit": 0
+      },
+      "columnKinds": { "amount": "number" },
+      "ordered": true,
+      "rows": [
+        ["Closed Lost", 22000],
+        ["Closed Won", 19500],
+        ["Negotiation", 19000],
+        ["Proposal", 23000],
+        ["Prospecting", 20000],
+        ["Qualification", 28500]
+      ]
+    },
+    {
+      "id": "a52-a-moving-average-over-three-months",
+      "group": "A",
+      "proves": "a moving average (#33): the deals created each month averaged with the two months before, `AVG(...) OVER (ORDER BY <month bucket> ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)`, ANSI on all nine; the first two months average what there is",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "summarize": [
+          { "aggregation": "COUNT", "field": "*" },
+          { "aggregation": "COUNT", "field": "*", "quickCalc": "moving" }
+        ],
+        "groupBy": ["created_date"],
+        "groupByBuckets": { "created_date": "month" },
+        "sort": [{ "column": "created_date", "direction": "ASC" }],
+        "limit": 0
+      },
+      "ordered": true,
+      "rows": [
+        ["2025-01", 39, 39],
+        ["2025-02", 36, 37.5],
+        ["2025-03", 43, 39.33],
+        ["2025-04", 52, 43.67],
+        ["2025-05", 57, 50.67],
+        ["2025-06", 61, 56.67],
+        ["2025-07", 52, 56.67],
+        ["2025-08", 52, 55],
+        ["2025-09", 54, 52.67],
+        ["2025-10", 58, 54.67],
+        ["2025-11", 55, 55.67],
+        ["2025-12", 55, 56],
+        ["2026-01", 69, 59.67],
+        ["2026-02", 49, 57.67],
+        ["2026-03", 67, 61.67],
+        ["2026-04", 67, 61],
+        ["2026-05", 72, 68.67],
+        ["2026-06", 76, 71.67],
+        ["2026-07", 68, 72],
+        ["2026-08", 60, 68],
+        ["2026-09", 58, 62]
+      ]
+    },
+    {
+      "id": "a53-the-stages-that-do-not-contain-closed",
+      "group": "A",
+      "proves": "does not contain (#34): the vendor layer's own contains, turned round, whatever the case of the letters - the 554 deals that are not Closed Won or Closed Lost",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [{ "column": "stage", "operator": "not_contains", "value": "closed" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "stage": "string" },
+      "rows": [[554]]
+    },
+    {
+      "id": "a54-closed-in-the-previous-quarter",
+      "group": "A",
+      "proves": "the previous quarter (#34), counted from today = 2026-09-30 (the demo seed's): close_date >= 2026-04-01 and < 2026-07-01, the same half-open range of whole days on all nine, 86 deals",
+      "today": "2026-09-30",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [{ "column": "close_date", "operator": "previous_quarter", "value": "" }],
+        "summarize": [{ "aggregation": "COUNT", "field": "*" }],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "close_date": "date" },
+      "temporalColumns": ["close_date"],
+      "rows": [[86]]
+    },
+    {
+      "id": "a55-counted-where-yesterday-and-the-year-before",
+      "group": "A",
+      "proves": "yesterday and the previous year (#34) in an aggregate's own condition (#9), counted from today = 2026-09-30: 1 deal closed on 2026-09-29 and 397 in 2025, side by side in one row",
+      "today": "2026-09-30",
+      "query": {
+        "table": "crm_deals",
+        "tableSchema": "cube_demo",
+        "filters": [],
+        "summarize": [
+          { "aggregation": "COUNT", "field": "*", "where": { "column": "close_date", "operator": "yesterday", "value": "" } },
+          { "aggregation": "COUNT", "field": "*", "where": { "column": "close_date", "operator": "previous_year", "value": "" } }
+        ],
+        "groupBy": [],
+        "sort": [],
+        "limit": 0
+      },
+      "columnKinds": { "close_date": "date" },
+      "temporalColumns": ["close_date"],
+      "rows": [[1, 397]]
+    },
+    {
       "id": "p1a-deals-closed-by-date",
       "group": "A",
       "proves": "a Date dashboard parameter is bound as a date, not as the text it arrives as: the same comparison bound as text is an error on PostgreSQL and the wrong rows on SQLite",
