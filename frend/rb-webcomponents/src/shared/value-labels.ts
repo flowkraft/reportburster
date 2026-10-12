@@ -5,6 +5,8 @@
  * by `rb-chart` and quiet on every chart that does not ask for it.
  */
 
+import { formatPercent, stackPercentOn } from './stack-percent.ts';
+
 export const VALUE_LABELS_PLUGIN_ID = 'rbValueLabels';
 
 /** The number a data point holds: a plain number, or the measured coordinate of a point object. */
@@ -69,6 +71,8 @@ export const valueLabelsPlugin = {
     const horizontal = chart.options?.indexAxis === 'y';
     const scales = chart.options?.scales || {};
     const stacked = !!(scales.x?.stacked || scales.y?.stacked);
+    // A 100% stacked chart (#25) holds shares: its labels say so.
+    const percent = stackPercentOn(chart.config?.options);
     const written: string[] = [];
     ctx.save();
     ctx.font = '11px system-ui, sans-serif';
@@ -83,7 +87,7 @@ export const valueLabelsPlugin = {
         const value = valueOf(dataset.data?.[j], horizontal);
         if (value === null || !el || el.skip) return;
         const at = labelPlacement(elementType, el, horizontal, stacked);
-        const text = formatValueLabel(value);
+        const text = percent ? formatPercent(value) : formatValueLabel(value);
         ctx.textAlign = at.align;
         ctx.textBaseline = at.baseline;
         ctx.fillText(text, at.x, at.y);
