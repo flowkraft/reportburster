@@ -6477,4 +6477,103 @@ test('(canvas mechanics) M87 A chart written in a number format, in the Canvas a
   }
 });
 
+/** The text of a table's totals row in one column, digits only. */
+async function tTotal(table: Locator, field: string): Promise<string> {
+  const cell = table.locator(`.tabulator-calcs-bottom .tabulator-cell[tabulator-field="${field}"]`).first();
+  if ((await cell.count()) === 0) return '';
+  return (await cell.innerText()).replace(/[^0-9]/g, '');
+}
+
+/** How many of a table's drawn cells carry a highlight of this kind. */
+async function tHighlighted(table: Locator, kind: string): Promise<number> {
+  return table.locator(`.tabulator-row:not(.tabulator-calcs) [data-rb-highlight="${kind}"]`).count();
+}
+
+test('(canvas mechanics) M88 Tables: a totals row, search, dragged columns, highlights; Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M88 Table extras', async (canvasId) => {
+      const webOrders = pCount((r) => r.channel === 'web');
+      const largest = Math.max(...pChannels.map((c) => pCount((r) => r.channel === c)));
+      const table = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+      await pWaitRows(page, table, (rows) => rows.length === pChannels.length, 'a row per channel');
+      const canvasTable = page.locator(`[id="widgetViz-${table}"]`);
+      await page.locator('#btnDisplayTab').click();
+
+      // + the totals row sums the counts: every order.
+      await page.locator('#chkTableTotals').check();
+      await expect.poll(async () => tTotal(page.locator(`[id="widgetViz-${table}"]`), 'order_id_count'),
+        { message: 'the Canvas totals row', timeout: 30_000, intervals: [1_000] }).toBe(String(pOrders.length));
+
+      // + a search box over each column narrows the rows.
+      await page.locator('#chkTableSearch').check();
+      const channelFilter = canvasTable.locator('.tabulator-col[tabulator-field="channel"] .tabulator-header-filter input');
+      await expect(channelFilter, 'a search box over the channels').toBeVisible({ timeout: 30_000 });
+      await channelFilter.fill('web');
+      await expect.poll(async () => canvasTable.locator('.tabulator-row:not(.tabulator-calcs)').count(),
+        { message: 'only the web row is left', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await channelFilter.fill('');
+
+      // + highlights: a bar in every count, then one colour above a line only the biggest channel crosses.
+      await page.locator('#chkTableMovableColumns').check();
+      await page.locator('#selectTableHighlightField').selectOption('order_id_count');
+      await page.locator('#selectTableHighlightKind').selectOption('bars');
+      await expect.poll(async () => tHighlighted(page.locator(`[id="widgetViz-${table}"]`), 'bars'),
+        { message: 'a bar in every count', timeout: 30_000, intervals: [1_000] }).toBe(pChannels.length);
+      await page.locator('#selectTableHighlightKind').selectOption('above');
+      await page.locator('#inputTableHighlightValue').fill(String(largest - 1));
+      await expect(page.locator('[id="tableHighlight-order_id_count"]')).toContainText(`above ${largest - 1}`);
+      await expect.poll(async () => tHighlighted(page.locator(`[id="widgetViz-${table}"]`), 'above'),
+        { message: 'one count above the line', timeout: 30_000, intervals: [1_000] }).toBe(1);
+
+      // + the published table: the same totals, search, highlight, and its columns can be dragged.
+      let tables: string[] = [];
+      await expect.poll(async () => (tables = (await getCanvasComponentIds(page, canvasId)).tabulator ?? []).length,
+        { message: 'the saved canvas names the table', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await eStoredWidgets(page, canvasId, (w) => {
+        const dsl = w[0]?.displayConfig?.dslConfig ?? {};
+        return dsl.rbTotals === true && dsl.movableColumns === true && dsl.columnDefaults?.headerFilter === 'input'
+          && dsl.rbHighlights?.[0]?.value === largest - 1;
+      });
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pub = page.locator(`[component-id="${tables[0]}"]`);
+      await pWaitCells(page, tables[0], (cells) => cells.length === pChannels.length, 'the published rows');
+      await expect.poll(async () => tTotal(pub, 'order_id_count'),
+        { message: 'the published totals row', timeout: 30_000, intervals: [1_000] }).toBe(String(pOrders.length));
+      await expect.poll(async () => tHighlighted(pub, 'above'),
+        { message: 'the published highlight', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const pubFilter = pub.locator('.tabulator-col[tabulator-field="channel"] .tabulator-header-filter input');
+      await pubFilter.fill('web');
+      await expect.poll(async () => pub.locator('.tabulator-row:not(.tabulator-calcs)').count(),
+        { message: 'the published search', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await expect(pub.locator('.tabulator-row:not(.tabulator-calcs)').first()).toContainText(webOrders.toLocaleString('en-US'));
+      await pubFilter.fill('');
+
+      // A column is dragged by holding it a moment, then moving it.
+      const fields = async () => pub.locator('.tabulator-header .tabulator-col[tabulator-field]')
+        .evaluateAll((cols) => cols.map((c) => c.getAttribute('tabulator-field')));
+      expect((await fields())[0], 'the channels come first').toBe('channel');
+      const from = await pub.locator('.tabulator-col[tabulator-field="order_id_count"] .tabulator-col-title').boundingBox();
+      const to = await pub.locator('.tabulator-col[tabulator-field="channel"] .tabulator-col-title').boundingBox();
+      await page.mouse.move(from!.x + 5, from!.y + from!.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(400);
+      await page.mouse.move(to!.x + 20, to!.y + to!.height / 2, { steps: 10 });
+      await page.mouse.move(to!.x + 2, to!.y + to!.height / 2, { steps: 5 });
+      await page.mouse.up();
+      await expect.poll(async () => (await fields())[0],
+        { message: 'the count, dragged first', timeout: 15_000, intervals: [500] }).toBe('order_id_count');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
