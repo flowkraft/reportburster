@@ -674,6 +674,8 @@
         // the table's own rows are named.
         const el = row.getElement();
         if (!el?.classList?.contains('tabulator-row')) return;
+        // A totals row (#28) is drawn through the same formatter, and has no place among the rows.
+        if (el.classList.contains('tabulator-calcs')) return;
         drawnRows.set(el, row);
         tagRow(row, el);
       };
