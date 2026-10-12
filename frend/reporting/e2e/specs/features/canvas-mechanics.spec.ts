@@ -6557,7 +6557,8 @@ test('(canvas mechanics) M88 Tables: a totals row, search, dragged columns, high
       await pubFilter.press('End');
       await expect.poll(async () => pub.locator('.tabulator-row:not(.tabulator-calcs)').count(),
         { message: 'the published search', timeout: 30_000, intervals: [1_000] }).toBe(1);
-      await expect(pub.locator('.tabulator-row:not(.tabulator-calcs)').first()).toContainText(webOrders.toLocaleString('en-US'));
+      expect((await pub.locator('.tabulator-row:not(.tabulator-calcs)').first().innerText()).replace(/[^0-9]/g, ''),
+        'the row left is the web orders').toBe(String(webOrders));
       await pubFilter.fill('');
       await pubFilter.press('End');
 
