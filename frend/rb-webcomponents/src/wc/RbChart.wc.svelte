@@ -20,6 +20,7 @@
   import { onMount, afterUpdate, onDestroy, tick, createEventDispatcher } from 'svelte';
   import { reportQuery } from '../shared/report-query';
   import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
+  import { VALUE_LABELS_PLUGIN_ID, valueLabelsPlugin } from '../shared/value-labels';
 
   // DEBUG: counters for lifecycle events
   let _afterUpdateCount = 0;
@@ -632,6 +633,8 @@
 
       const wantsBoxplot = (type || chartConfig?.type) === 'boxplot';
       if (wantsBoxplot) await ensureBoxPlotRegistered(ChartCtor);
+      // The data labels (#24): on every chart, drawing only where its options ask for them.
+      if (!ChartCtor.registry?.plugins?.get?.(VALUE_LABELS_PLUGIN_ID)) ChartCtor.register(valueLabelsPlugin);
 
       const config = buildConfig();
       rbApplyThemeColors(config);
