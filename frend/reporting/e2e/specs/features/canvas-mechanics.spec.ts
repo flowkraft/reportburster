@@ -42,9 +42,8 @@ import {
   addComputedColumn,
   addCubeToCanvas,
   addFilterBarParam,
-  addSlicer,
   addGroupBy,
-  setTimeBucket,
+  addSlicer,
   addTableToCanvas,
   addUIElement,
   addVisualFilter,
@@ -57,6 +56,7 @@ import {
   createFreshCanvas,
   getLastWidgetId,
   goToVisualTab,
+  layoutWidgetsByDrag,
   openDslEditor,
   pickVisualCube,
   pickVisualTable,
@@ -76,6 +76,7 @@ import {
   setProgressConfig,
   setSankeyFields,
   setTabulatorOptions,
+  setTimeBucket,
   setTrendConfig,
   setVisualLimit,
   setWidgetDsl,
@@ -5937,6 +5938,70 @@ test('(canvas mechanics) M79 The menu on a published tile: CSV, PNG, maximise, r
       await pWaitCells(page, table, (cells) => cells.length === channels.length, 'the refreshed table has its rows');
     });
   } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+/** Where each tile of the published grid sits, against the grid's own width. */
+async function m80Tiles(page: Page): Promise<Array<{ share: number; left: number; top: number; bottom: number }>> {
+  return page.evaluate(() => {
+    const grid = document.querySelector('.dashboard-grid') as HTMLElement;
+    const g = grid.getBoundingClientRect();
+    return Array.from(grid.children).map((tile) => {
+      const r = tile.getBoundingClientRect();
+      return { share: r.width / g.width, left: r.left - g.left, top: r.top, bottom: r.bottom };
+    });
+  });
+}
+
+test('(canvas mechanics) M80 On a phone the published dashboard is one column', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  const wideViewport = page.viewportSize();
+  try {
+    await withFreshCanvas(page, 'E2E mech M80 Phone layout', async (canvasId) => {
+      const channels = new Set(frozenRows('orders').map((o) => o.channel));
+
+      // A chart and a table of orders per channel, side by side.
+      await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await layoutWidgetsByDrag(page, [{ x: 0, y: 0, w: 6, h: 4 }, { x: 6, y: 0, w: 6, h: 4 }]);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      let tables: string[] = [];
+      await expect.poll(async () => (tables = (await getCanvasComponentIds(page, canvasId)).tabulator ?? []).length,
+        { message: 'the saved canvas names the table', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const table = tables[0];
+      await openPublished(page, reportId);
+      await pWaitCells(page, table, (cells) => cells.length === channels.size, 'the table has its rows');
+
+      // + on a wide screen the two tiles share the row.
+      const wide = await m80Tiles(page);
+      expect(wide.length).toBe(2);
+      expect(wide[0].share, 'half the row').toBeLessThan(0.6);
+      expect(wide[1].top, 'the same row').toBeCloseTo(wide[0].top, 0);
+
+      // + on a phone each tile is the full width, one under the other, in the canvas's order.
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect.poll(async () => (await m80Tiles(page)).every((t) => t.share > 0.98 && Math.abs(t.left) < 1),
+        { message: 'every tile takes the full width', timeout: 15_000, intervals: [500] }).toBe(true);
+      const narrow = await m80Tiles(page);
+      expect(narrow[1].top, 'the table under the chart').toBeGreaterThanOrEqual(narrow[0].bottom);
+      expect(await page.evaluate(() => {
+        const root = document.querySelector('.rb-dashboard-root') as HTMLElement;
+        return root.scrollWidth <= root.clientWidth + 1;
+      }), 'nothing runs off the side').toBe(true);
+      await pWaitCells(page, table, (cells) => cells.length === channels.size, 'the table still shows its rows');
+    });
+  } finally {
+    if (wideViewport) await page.setViewportSize(wideViewport);
     if (reportId) await deleteReportAsAdmin(reportId);
   }
 });
