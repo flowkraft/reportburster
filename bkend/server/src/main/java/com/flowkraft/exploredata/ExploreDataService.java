@@ -180,6 +180,78 @@ public class ExploreDataService {
         deleteCanvas(id, false);
     }
 
+    // ── The shipped demo canvases (#36, "New from a demo") ────────────────────
+
+    /** Where the dashboard demos ship, each canvas beside its settings: config/samples/<id>/<id>.canvas.json. */
+    private static java.nio.file.Path samplesDir() {
+        return java.nio.file.Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples");
+    }
+
+    /** One shipped demo's canvas, read whole; empty when the id names none (or names a path). */
+    public Optional<Map<String, Object>> demoCanvas(String demoId) throws java.io.IOException {
+        if (demoId == null || !demoId.matches("[A-Za-z0-9_-]+"))
+            return Optional.empty();
+        java.nio.file.Path file = samplesDir().resolve(demoId).resolve(demoId + ".canvas.json");
+        if (!java.nio.file.Files.isRegularFile(file))
+            return Optional.empty();
+        return Optional.of(new com.fasterxml.jackson.databind.ObjectMapper().readValue(file.toFile(),
+                new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+                }));
+    }
+
+    /**
+     * The canvases the dashboard demos ship, by name: what "New from a demo" offers. Their id, name
+     * and description only - a canvas itself is read when it is picked.
+     */
+    public List<Map<String, Object>> listDemoCanvases() throws java.io.IOException {
+        List<Map<String, Object>> demos = new ArrayList<>();
+        java.nio.file.Path dir = samplesDir();
+        if (!java.nio.file.Files.isDirectory(dir))
+            return demos;
+        List<java.nio.file.Path> folders;
+        try (var listing = java.nio.file.Files.list(dir)) {
+            folders = listing.toList();
+        }
+        for (java.nio.file.Path folder : folders) {
+            String id = folder.getFileName().toString();
+            Optional<Map<String, Object>> canvas = demoCanvas(id);
+            if (canvas.isEmpty())
+                continue;
+            Map<String, Object> demo = new LinkedHashMap<>();
+            demo.put("id", id);
+            demo.put("name", String.valueOf(canvas.get().getOrDefault("name", id)));
+            demo.put("description", canvas.get().get("description"));
+            demos.add(demo);
+        }
+        demos.sort(Comparator.comparing(demo -> String.valueOf(demo.get("name"))));
+        return demos;
+    }
+
+    /**
+     * A new canvas that is a copy of one shipped demo's (#36): its name, description, connection and
+     * widgets under a new id, published nowhere - the demo's own dashboard stays the demo's.
+     */
+    public Map<String, Object> createCanvasFromDemo(Map<String, Object> demo) throws Exception {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("name", String.valueOf(demo.getOrDefault("name", "Untitled Canvas")));
+        body.put("description", demo.get("description") == null ? null : String.valueOf(demo.get("description")));
+        body.put("connectionId", demo.get("connection_id") == null ? null : String.valueOf(demo.get("connection_id")));
+        Map<String, Object> created = createCanvas(body);
+        // What a canvas saves of itself, and nothing else: a shipped file also carries the demo's id,
+        // its published report code and its last results, none of which belongs to the copy.
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        Object shipped = demo.get("state");
+        if (shipped instanceof String text)
+            shipped = mapper.readValue(text, Map.class);
+        Map<String, Object> state = new LinkedHashMap<>();
+        if (shipped instanceof Map<?, ?> fields)
+            for (String key : List.of("widgets", "parametersConfig", "dashboardSettings"))
+                if (fields.containsKey(key))
+                    state.put(key, fields.get(key));
+        return updateCanvas(String.valueOf(created.get("id")), Map.of("state", mapper.writeValueAsString(state)))
+                .orElseThrow();
+    }
+
     /**
      * Delete a canvas, and with it the dashboard it published - unless the person said to keep it.
      *

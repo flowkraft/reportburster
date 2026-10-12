@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // lucide-react removed — icons replaced with inline heroicons below
 import type { Canvas } from "@/lib/db/schema";
-import { listCanvases, createCanvas as apiCreateCanvas, deleteCanvas as apiDeleteCanvas } from "@/lib/explore-data/rb-api";
+import {
+  listCanvases, createCanvas as apiCreateCanvas, deleteCanvas as apiDeleteCanvas,
+  duplicateCanvas, updateCanvas, listDemoCanvases, createCanvasFromDemo,
+} from "@/lib/explore-data/rb-api";
 import { listShareLinks } from "@/lib/explore-data/share-api";
 import { ShareDialog } from "@/components/explore-data/export/ShareDialog";
 
@@ -24,6 +27,13 @@ export default function DataCanvasListPage() {
   // this canvas published (null while it is not known), and whether the person wants it kept.
   const [publishedLinks, setPublishedLinks] = useState<number | null>(null);
   const [keepPublished, setKeepPublished] = useState(false);
+  // #36: the search box over the names, the canvas whose name is being typed again, and the demos
+  // "New from a demo" offers (null while its dialog is closed).
+  const [search, setSearch] = useState("");
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
+  const [demos, setDemos] = useState<{ id: string; name: string; description?: string | null }[] | null>(null);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   const fetchCanvases = async () => {
     const data = await listCanvases();
@@ -39,6 +49,45 @@ export default function DataCanvasListPage() {
     const canvas = await apiCreateCanvas("Untitled Canvas");
     router.push(`/explore-data/${canvas.id}`);
   };
+
+  /** A copy of the canvas, "<name> (copy)", listed beside it (#36). */
+  const handleDuplicate = async (canvas: Canvas, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await duplicateCanvas(canvas.id);
+    await fetchCanvases();
+  };
+
+  const startRename = (canvas: Canvas, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenameText(canvas.name);
+    setRenaming(canvas.id);
+  };
+
+  /** The typed name is kept on Enter or when the box is left; an empty one changes nothing. */
+  const commitRename = async (canvas: Canvas) => {
+    const name = renameText.trim();
+    setRenaming(null);
+    if (!name || name === canvas.name) return;
+    setCanvases((prev) => prev.map((c) => (c.id === canvas.id ? { ...c, name } : c)));
+    await updateCanvas(canvas.id, { name });
+  };
+
+  const openDemos = async () => {
+    setDemos(await listDemoCanvases());
+  };
+
+  /** A new canvas, a copy of the demo's, opened at once (#36). */
+  const createFromDemo = async (demoId: string) => {
+    setDemoBusy(true);
+    try {
+      const canvas = await createCanvasFromDemo(demoId);
+      router.push(`/explore-data/${canvas.id}`);
+    } finally {
+      setDemoBusy(false);
+    }
+  };
+
+  const shown = canvases.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   const handleDeleteClick = (canvas: Canvas, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -109,6 +158,15 @@ export default function DataCanvasListPage() {
             Build interactive dashboards visually
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        <button
+          id="btnNewFromDemo"
+          onClick={openDemos}
+          title="Start from a copy of one of the shipped dashboard demos"
+          className="px-4 py-2 rounded-lg border border-base-300 text-base-content text-sm font-medium hover:bg-base-200 transition-colors"
+        >
+          New from a demo
+        </button>
         <button
           id="btnNewCanvas"
           onClick={handleCreate}
@@ -117,7 +175,22 @@ export default function DataCanvasListPage() {
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           New Canvas
         </button>
+        </div>
       </div>
+
+      {canvases.length > 0 && (
+        <input
+          id="inputSearchCanvases"
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search canvases by name"
+          className="w-full mb-4 text-sm bg-base-100 border border-base-300 rounded-lg px-3 py-2 text-base-content"
+        />
+      )}
+      {canvases.length > 0 && shown.length === 0 && (
+        <p id="txtNoCanvasMatch" className="text-sm text-base-content/60 mb-4">No canvas is named like that.</p>
+      )}
 
       {canvases.length === 0 ? (
         <div className="border border-dashed border-base-300 rounded-xl p-12 text-center">
@@ -137,7 +210,7 @@ export default function DataCanvasListPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {canvases.map((canvas) => {
+          {shown.map((canvas) => {
             const state = JSON.parse(canvas.state || "{}");
             const widgetCount = state.widgets?.length || 0;
             // The published report code is its own column on the canvas, returned at the top
@@ -153,9 +226,44 @@ export default function DataCanvasListPage() {
                 className="group relative border border-base-300 rounded-xl p-5 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all bg-base-100"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-medium text-base-content text-sm truncate pr-6">
-                    {canvas.name}
-                  </h3>
+                  {renaming === canvas.id ? (
+                    <input
+                      id={`inputRenameCanvas-${canvas.id}`}
+                      autoFocus
+                      value={renameText}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setRenameText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitRename(canvas);
+                        if (e.key === "Escape") setRenaming(null);
+                      }}
+                      onBlur={() => commitRename(canvas)}
+                      className="font-medium text-sm text-base-content bg-base-100 border border-primary/40 rounded px-1 py-0.5 mr-24 min-w-0 flex-1"
+                    />
+                  ) : (
+                    <h3 id={`canvasName-${canvas.id}`} className="font-medium text-base-content text-sm truncate pr-24">
+                      {canvas.name}
+                    </h3>
+                  )}
+                  {/* #36: rename and duplicate, beside share and delete. */}
+                  <button
+                    id={`btnRenameCanvas-${canvas.id}`}
+                    onClick={(e) => startRename(canvas, e)}
+                    aria-label={`Rename canvas ${canvas.name}`}
+                    title="Rename"
+                    className="absolute top-4 right-[4.75rem] p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-primary/10 text-base-content/60 hover:text-primary transition-all"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" /></svg>
+                  </button>
+                  <button
+                    id={`btnDuplicateCanvas-${canvas.id}`}
+                    onClick={(e) => handleDuplicate(canvas, e)}
+                    aria-label={`Duplicate canvas ${canvas.name}`}
+                    title="Duplicate"
+                    className="absolute top-4 right-[3.25rem] p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-primary/10 text-base-content/60 hover:text-primary transition-all"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" /></svg>
+                  </button>
                   {/* Share — only for canvases that have actually been published, since a share
                       link points at /dashboard/{reportId} and that only exists after Publish. */}
                   {exportedReportCode && (
@@ -167,7 +275,7 @@ export default function DataCanvasListPage() {
                       }}
                       aria-label={`Share dashboard ${canvas.name}`}
                       title="Let people without an account open this dashboard"
-                      className="absolute top-4 right-11 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-primary/10 text-base-content/60 hover:text-primary transition-all"
+                      className="absolute top-4 right-[1.75rem] p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-primary/10 text-base-content/60 hover:text-primary transition-all"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
                     </button>
@@ -264,6 +372,52 @@ export default function DataCanvasListPage() {
               >
                 {deleting && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3 h-3 animate-spin"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>}
                 {deleting ? "Deleting…" : "Delete canvas"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {demos !== null && (
+        <div
+          id="overlayNewFromDemo"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => !demoBusy && setDemos(null)}
+        >
+          <div
+            id="dlgNewFromDemo"
+            className="bg-base-100 border border-base-300 rounded-xl shadow-lg w-full max-w-lg mx-4 p-5 max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-sm font-semibold text-base-content">New from a demo</h2>
+            <p className="text-xs text-base-content/60 mt-1">A copy of the demo&apos;s canvas, yours to change; the demo itself stays as it is.</p>
+            <div className="mt-3 overflow-auto space-y-1">
+              {demos.length === 0 && <p className="text-xs text-base-content/60">No demo canvases are installed.</p>}
+              {demos.map((demo) => (
+                <button
+                  id={`btnDemoCanvas-${demo.id}`}
+                  key={demo.id}
+                  type="button"
+                  disabled={demoBusy}
+                  onClick={() => createFromDemo(demo.id)}
+                  className="w-full text-left px-3 py-2 rounded-md border border-base-300 hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+                >
+                  <span className="block text-sm font-medium text-base-content">{demo.name}</span>
+                  {demo.description && <span className="block text-xs text-base-content/60 line-clamp-2">{demo.description}</span>}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end mt-3">
+              <button
+                id="btnCloseNewFromDemo"
+                type="button"
+                onClick={() => setDemos(null)}
+                disabled={demoBusy}
+                className="px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 text-base-content hover:bg-base-200"
+              >
+                Cancel
               </button>
             </div>
           </div>

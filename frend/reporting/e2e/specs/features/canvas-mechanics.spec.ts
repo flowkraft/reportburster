@@ -6904,4 +6904,102 @@ test('(canvas mechanics) M94 More filter operators: does not contain, today, yes
   });
 });
 
+test('(canvas mechanics) M95 Duplicate a widget; duplicate, rename and search canvases; a new canvas from a demo', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  const api = 'http://localhost:9090/api/explorations';
+  const name = `E2E mech M95 Authoring ${Date.now()}`;
+  const made: string[] = [];
+  type Saved = { id: string; name: string; state: string; connectionId: string | null; exportedReportCode: string | null };
+  const saved = async (id: string): Promise<Saved> => (await page.request.get(`${api}/${id}`)).json();
+  try {
+    await withFreshCanvas(page, name, async (canvasId) => {
+      // A widget with settings of its own: its query and a title.
+      const id = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+      await clickDisplayTab(page);
+      await page.locator('#inputWidgetTitle').fill('Orders by channel');
+      await expect(page.locator(`#widgetTitle-${id}`)).toHaveText('Orders by channel');
+      const rows = await eWidgetRows(page, id);
+
+      // + Duplicate, in the widget's "⋯" menu: a new id, the same settings, next to it.
+      await page.locator(`#btnWidgetActions-${id}`).click();
+      await page.locator(`#btnDuplicateWidget-${id}`).click();
+      const copy = await getLastWidgetId(page);
+      expect(copy, 'the copy has an id of its own').not.toBe(id);
+      await expect(page.locator(`#widgetTitle-${copy}`), 'the copy keeps the title').toHaveText('Orders by channel');
+      expect(await eWidgetRows(page, copy), 'the copy answers the same rows').toEqual(rows);
+      await expect.poll(async () => {
+        const widgets = (JSON.parse((await saved(canvasId)).state).widgets ?? []) as Array<{
+          id: string; type: string; gridPosition: { x: number; y: number; w: number; h: number };
+        }>;
+        const a = widgets.find((w) => w.id === id)?.gridPosition;
+        const b = widgets.find((w) => w.id === copy);
+        if (!a || !b) return 'not saved yet';
+        const beside = b.gridPosition.y === a.y && b.gridPosition.x === a.x + a.w;
+        const under = b.gridPosition.x === a.x && b.gridPosition.y >= a.y + a.h;
+        return `${b.type} placed ${beside || under ? 'next to it' : 'elsewhere'}`;
+      }, { message: 'the canvas keeps the copy, next to the widget', timeout: 30_000, intervals: [1_000] })
+        .toBe('tabulator placed next to it');
+
+      // The canvas list: a search box over the names.
+      await page.goto(CANVAS_LIST_URL);
+      const search = page.locator('#inputSearchCanvases');
+      await search.fill(name);
+      await expect(page.locator('[id^="canvasCard-"]'), 'the search finds the canvas by its name').toHaveCount(1);
+      await expect(page.locator(`#canvasCard-${canvasId}`)).toBeVisible();
+      await search.fill(`${name} and no other`);
+      await expect(page.locator('#txtNoCanvasMatch'), 'a name nothing has says so').toBeVisible();
+      await search.fill(name.toUpperCase());
+      await expect(page.locator('[id^="canvasCard-"]'), 'whatever the case').toHaveCount(1);
+
+      // + Duplicate: "<name> (copy)", the same widgets, published nowhere.
+      await page.locator(`#btnDuplicateCanvas-${canvasId}`).click({ force: true });
+      await expect(page.locator('[id^="canvasCard-"]'), 'the copy is listed beside it').toHaveCount(2);
+      const all = (await (await page.request.get(api)).json()) as Saved[];
+      const dup = all.find((c) => c.name === `${name} (copy)`);
+      expect(dup, 'the copy is named after the canvas').toBeTruthy();
+      made.push(dup!.id);
+      expect((JSON.parse(dup!.state).widgets as Array<{ id: string }>).map((w) => w.id), 'the copy holds the same widgets')
+        .toEqual((JSON.parse((await saved(canvasId)).state).widgets as Array<{ id: string }>).map((w) => w.id));
+      expect(dup!.exportedReportCode, 'the copy is published nowhere').toBeFalsy();
+
+      // + Rename the copy: Enter keeps the typed name.
+      await page.locator(`#btnRenameCanvas-${dup!.id}`).click({ force: true });
+      await page.locator(`#inputRenameCanvas-${dup!.id}`).fill(`${name} renamed`);
+      await page.locator(`#inputRenameCanvas-${dup!.id}`).press('Enter');
+      await expect(page.locator(`#canvasName-${dup!.id}`)).toHaveText(`${name} renamed`);
+      await expect.poll(async () => (await saved(dup!.id)).name,
+        { message: 'the new name is saved', timeout: 20_000, intervals: [500] }).toBe(`${name} renamed`);
+
+      // + New from a demo: the shipped demo canvases, and a copy of one, opened at once.
+      await page.locator('#btnNewFromDemo').click();
+      await expect(page.locator('#dlgNewFromDemo')).toBeVisible();
+      await expect(page.locator('[id^="btnDemoCanvas-"]'), 'the 25 demos are offered').toHaveCount(25);
+      await page.locator('#btnDemoCanvas-g-dd-fulfillment').click();
+      await page.waitForURL(/\/explore-data\/canvas-/, { timeout: 30_000 });
+      const fromDemo = page.url().split('/explore-data/')[1].split(/[?#]/)[0];
+      made.push(fromDemo);
+      const fs = await import('fs');
+      const path = await import('path');
+      const { E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH } = await import('../../utils/paths');
+      const shipped = JSON.parse(fs.readFileSync(path.join(E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH,
+        'db-template/config/samples/g-dd-fulfillment/g-dd-fulfillment.canvas.json'), 'utf8'));
+      const opened = await saved(fromDemo);
+      expect(opened.name, 'named as the demo').toBe(shipped.name);
+      expect(opened.connectionId, 'on the demo\'s connection').toBe(shipped.connection_id);
+      expect(opened.exportedReportCode, 'published nowhere: the demo\'s dashboard stays the demo\'s').toBeFalsy();
+      expect((JSON.parse(opened.state).widgets as Array<{ id: string }>).map((w) => w.id), 'the demo\'s widgets')
+        .toEqual((shipped.state.widgets as Array<{ id: string }>).map((w) => w.id));
+      await expect(page.locator('[id^="widget-w-"]').first(), 'the copy opens with its widgets').toBeVisible({ timeout: 60_000 });
+    });
+  } finally {
+    for (const id of made) {
+      await adminFetch(`${api}/${id}`, { method: 'DELETE' });
+    }
+  }
+});
+
 });

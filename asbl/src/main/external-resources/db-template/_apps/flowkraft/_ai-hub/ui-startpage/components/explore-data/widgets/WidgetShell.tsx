@@ -63,6 +63,7 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
   const selectedWidgetId = useCanvasStore((s) => s.selectedWidgetId);
   const selectWidget = useCanvasStore((s) => s.selectWidget);
   const removeWidget = useCanvasStore((s) => s.removeWidget);
+  const duplicateWidget = useCanvasStore((s) => s.duplicateWidget);
   const editMode = useCanvasStore((s) => s.editMode);
   const widget = useCanvasStore((s) => s.widgets.find((w) => w.id === widgetId));
   const widgets = useCanvasStore((s) => s.widgets);
@@ -79,6 +80,9 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
   const [pressedSelected, setPressedSelected] = useState(false);
   useEffect(() => { if (!isSelected) setPressedSelected(false); }, [isSelected]);
   const showSelected = pressedSelected || isSelected;
+  // The widget's "⋯" menu (#36), closed again whenever the widget is no longer the selected one.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { if (!isSelected) setMenuOpen(false); }, [isSelected]);
 
   const handlePress = () => {
     if (!editMode) return;
@@ -165,18 +169,48 @@ export function WidgetShell({ widgetId, type }: WidgetShellProps) {
           )}
         </div>
         {editMode && isSelected && (
-          <button
-            id={`btnDeleteWidget-${widgetId}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              removeWidget(widgetId);
-            }}
-            className="p-0.5 rounded hover:bg-error/10 text-base-content/60 hover:text-error transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-          </button>
+          <div className="flex items-center gap-0.5">
+            {/* The widget's "⋯" menu (#36): what is done TO the widget, beside the delete. */}
+            <button
+              id={`btnWidgetActions-${widgetId}`}
+              type="button"
+              title="More"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((open) => !open); }}
+              className="px-1 rounded hover:bg-base-200 text-base-content/60 hover:text-base-content text-xs leading-none"
+            >
+              ⋯
+            </button>
+            <button
+              id={`btnDeleteWidget-${widgetId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeWidget(widgetId);
+              }}
+              className="p-0.5 rounded hover:bg-error/10 text-base-content/60 hover:text-error transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
         )}
       </div>
+      {editMode && isSelected && menuOpen && (
+        <div
+          id={`widgetActions-${widgetId}`}
+          className="absolute right-2 top-8 z-20 min-w-[8rem] rounded-md border border-base-300 bg-base-100 shadow-lg py-1"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            id={`btnDuplicateWidget-${widgetId}`}
+            type="button"
+            onClick={() => { setMenuOpen(false); duplicateWidget(widgetId); }}
+            className="w-full text-left px-3 py-1 text-xs text-base-content hover:bg-base-200"
+          >
+            Duplicate
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-0 h-[calc(100%-33px)]">
