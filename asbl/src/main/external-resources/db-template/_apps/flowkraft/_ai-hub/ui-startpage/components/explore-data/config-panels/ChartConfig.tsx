@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 // lucide-react removed
 import type { WidgetDisplayConfig } from "@/lib/stores/canvas-store";
 
@@ -181,6 +182,94 @@ export function setStackedOption(map: ChartDslOptions, stacked: boolean): ChartD
   return next;
 }
 
+/** The axis a chart's values are measured along: a row chart lays its bars along x. A pie, a
+ *  donut and a funnel have no value axis to bound. */
+export function valueAxisOf(chartType: string): "x" | "y" | null {
+  if (chartType === "pie" || chartType === "doughnut" || chartType === "funnel") return null;
+  return chartType === "row" ? "x" : "y";
+}
+
+/** One end of the value axis (`options.scales.<axis>.min|max`); undefined when Chart.js picks it. */
+export function readAxisBound(map: ChartDslOptions, axis: "x" | "y", bound: "min" | "max"): number | undefined {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const scales = opts?.scales as Record<string, unknown> | undefined;
+  const value = (scales?.[axis] as Record<string, unknown> | undefined)?.[bound];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+/** Set or clear one end of an axis immutably, pruning what it empties. */
+export function setAxisBound(
+  map: ChartDslOptions,
+  axis: "x" | "y",
+  bound: "min" | "max",
+  value: number | undefined,
+): ChartDslOptions {
+  const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
+  const scales = { ...((opts.scales as Record<string, unknown> | undefined) ?? {}) };
+  const one = { ...((scales[axis] as Record<string, unknown> | undefined) ?? {}) };
+  if (value === undefined) delete one[bound];
+  else one[bound] = value;
+  if (Object.keys(one).length > 0) scales[axis] = one;
+  else delete scales[axis];
+  if (Object.keys(scales).length > 0) opts.scales = scales;
+  else delete opts.scales;
+  const next: ChartDslOptions = { ...map };
+  if (Object.keys(opts).length > 0) next.options = opts;
+  else delete next.options;
+  return next;
+}
+
+/** A new chart type can measure its values along the other axis (bar to row): the bounds go with them,
+ *  and go away for a type that has no value axis. */
+export function moveAxisBounds(map: ChartDslOptions, from: "x" | "y" | null, to: "x" | "y" | null): ChartDslOptions {
+  if (from === null || from === to) return map;
+  let next = map;
+  for (const bound of ["min", "max"] as const) {
+    const value = readAxisBound(map, from, bound);
+    if (value === undefined) continue;
+    next = setAxisBound(next, from, bound, undefined);
+    if (to !== null) next = setAxisBound(next, to, bound, value);
+  }
+  return next;
+}
+
+/** What is typed into an axis bound: a number, undefined for an empty box (Chart.js picks), or
+ *  null while it is not a number yet ("-", "1e"). */
+export function parseAxisBound(text: string): number | undefined | null {
+  const t = text.trim();
+  if (t === "") return undefined;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** One end of the value axis. The text is kept while it is typed, so a "-" on its way to "-5" is not lost. */
+function AxisBoundInput({ id, value, placeholder, onCommit }: {
+  id: string;
+  value: number | undefined;
+  placeholder: string;
+  onCommit: (value: number | undefined) => void;
+}) {
+  const [draft, setDraft] = useState(value === undefined ? "" : String(value));
+  useEffect(() => {
+    setDraft((d) => (parseAxisBound(d) === value ? d : value === undefined ? "" : String(value)));
+  }, [value]);
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const next = parseAxisBound(e.target.value);
+        if (next !== null) onCommit(next);
+      }}
+      className="w-full text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content placeholder:text-base-content/60/40"
+    />
+  );
+}
+
 /** Update options.plugins.* immutably. */
 function setPluginOption(map: ChartDslOptions, key: "title" | "legend", value: unknown): ChartDslOptions {
   const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
@@ -259,6 +348,9 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
 
   const hasSeriesSplit = xFields.length >= 2;
   const stacked = readStacked(map);
+  const valueAxis = valueAxisOf(chartType);
+  const axisMin = valueAxis ? readAxisBound(map, valueAxis, "min") : undefined;
+  const axisMax = valueAxis ? readAxisBound(map, valueAxis, "max") : undefined;
   const datasets = (map.data as ChartDataBlock | undefined)?.datasets ?? [];
 
   const replaceAt = (arr: string[], idx: number, value: string): string[] => {
@@ -276,7 +368,9 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   const removeXSlot = (idx: number) => setXFields(xFields.filter((_, i) => i !== idx));
   const removeYSlot = (idx: number) => setYFields(yFields.filter((_, i) => i !== idx));
 
-  const setChartType = (type: string) => setDslMap(config, { ...map, type }, onChange);
+  // A bar chart turned into a row chart keeps its axis bounds, now on x (`moveAxisBounds`).
+  const setChartType = (type: string) =>
+    setDslMap(config, moveAxisBounds({ ...map, type }, valueAxisOf(chartType), valueAxisOf(type)), onChange);
 
   const setBubbleSizeField = (f: string) => {
     const next: ChartDslOptions = { ...map };
@@ -304,6 +398,10 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   // Stacking is two Chart.js keys, written into the same Map the published page
   // reads, so the bars stack in the Canvas and on the dashboard by one route.
   const setStacked = (on: boolean) => setDslMap(config, setStackedOption(map, on), onChange);
+  // The axis bounds are Chart.js's own `scales.<axis>.min|max`, in the same Map the published page reads.
+  const setAxis = (bound: "min" | "max", value: number | undefined) => {
+    if (valueAxis) setDslMap(config, setAxisBound(map, valueAxis, bound, value), onChange);
+  };
   // The clicks setting lives in the canonical Map beside every other display setting, so it
   // travels into the published config file with them (Principle 4). Unticked takes the key away
   // again, so a dashboard that never used it reads exactly as it did.
@@ -620,6 +718,22 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {valueAxis && (
+        <div>
+          <span className="text-xs text-base-content/60">Value axis</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <AxisBoundInput id="inputChartAxisMin" value={axisMin} placeholder="min: auto"
+              onCommit={(v) => setAxis("min", v)} />
+            <span className="text-xs text-base-content/60">to</span>
+            <AxisBoundInput id="inputChartAxisMax" value={axisMax} placeholder="max: auto"
+              onCommit={(v) => setAxis("max", v)} />
+          </div>
+          {axisMin !== undefined && axisMax !== undefined && axisMin >= axisMax && (
+            <p id="chartAxisBoundsError" className="mt-1 text-[10px] text-error">The min must be below the max.</p>
+          )}
         </div>
       )}
 

@@ -5553,4 +5553,93 @@ test('(canvas mechanics) M74 A limit bound to a dashboard filter, a filter row s
   });
 });
 
+/** The bounds a chart's axis is drawn with (`chart.scales.<axis>`); on the Canvas the locator is the
+ *  chart itself, published it is the chart's box inside the chart's shadow root. */
+async function m75Bounds(chart: Locator, axis: 'x' | 'y'): Promise<{ min: number; max: number } | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el, a) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    const scale = instance?.scales?.[a];
+    return scale ? { min: Number(scale.min), max: Number(scale.max) } : null;
+  }, axis);
+}
+
+test('(canvas mechanics) M75 Chart axis min and max', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M75 Chart axis bounds', async (canvasId) => {
+      const orders = frozenRows('orders');
+      const perChannel = new Map<string, number>();
+      for (const o of orders) perChannel.set(o.channel, (perChannel.get(o.channel) ?? 0) + 1);
+      const most = Math.max(...perChannel.values());
+      const min = 5;
+      const max = most * 2;
+
+      // + a bar chart's value axis drawn from the typed min and max; both stored on y.
+      const id = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputChartAxisMin').fill(String(min));
+      await page.locator('#inputChartAxisMax').fill(String(max));
+      await expect.poll(async () => m75Bounds(cViz(page, id), 'y'), { timeout: 15_000 }).toEqual({ min, max });
+      let stored = await eStoredWidgets(page, canvasId,
+        (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.y?.max === max);
+      expect(stored[0].displayConfig.dslConfig.options.scales.y, 'stored on y').toEqual({ min, max });
+
+      // + a row chart measures along x: the bounds go with the values.
+      await setChartType(page, 'row');
+      await expect.poll(async () => m75Bounds(cViz(page, id), 'x'), { timeout: 15_000 }).toEqual({ min, max });
+      stored = await eStoredWidgets(page, canvasId,
+        (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.x?.max === max);
+      expect(stored[0].displayConfig.dslConfig.options.scales.y, 'nothing left on y').toBeUndefined();
+
+      // − a min above the max is pointed out; emptied boxes give the axis back to the chart.
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputChartAxisMin').fill(String(max + 1));
+      await expect(page.locator('#chartAxisBoundsError')).toBeVisible();
+      await page.locator('#inputChartAxisMin').fill('');
+      await page.locator('#inputChartAxisMax').fill('');
+      await expect(page.locator('#chartAxisBoundsError')).toHaveCount(0);
+      stored = await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.scales === undefined);
+      expect(stored[0].displayConfig.dslConfig.options?.scales, 'no bounds stored').toBeUndefined();
+      await expect.poll(async () => (await m75Bounds(cViz(page, id), 'x'))?.max, { timeout: 15_000 }).not.toBe(max);
+
+      // − a pie has no value axis to bound.
+      await setChartType(page, 'pie');
+      await page.locator('#btnDisplayTab').click();
+      await expect(page.locator('#inputChartAxisMin')).toHaveCount(0);
+
+      // + a bar chart again, bounded, draws the same once published.
+      await setChartType(page, 'bar');
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputChartAxisMin').fill(String(min));
+      await page.locator('#inputChartAxisMax').fill(String(max));
+      await expect.poll(async () => m75Bounds(cViz(page, id), 'y'), { timeout: 15_000 }).toEqual({ min, max });
+      await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.y?.max === max);
+      let ids: Record<string, string[]> = {};
+      await expect
+        .poll(async () => {
+          ids = await getCanvasComponentIds(page, canvasId);
+          return (ids.chart ?? []).length === 1;
+        }, { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] })
+        .toBe(true);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect
+        .poll(async () => m75Bounds(page.locator(`[id="widgetChart-${ids.chart[0]}"]`), 'y'),
+          { message: 'the published chart has the same bounds', timeout: 60_000, intervals: [1_000] })
+        .toEqual({ min, max });
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
