@@ -32,6 +32,7 @@ class DashboardDemosTwinsTest {
 
 	/** How near two numbers must be to be the same number on a tile: a currency's cent. */
 	private static final double CENT = 0.005;
+	private static final double HUNDREDTH_OF_A_PERCENT = 0.00005;
 
 	@Test
 	@DisplayName("Every twin is named after its original and has its widgets, in order and type, and its stories")
@@ -146,12 +147,16 @@ class DashboardDemosTwinsTest {
 		return null;
 	}
 
-	/** Two cells: numbers to the cent, anything else as its text. */
+	/**
+	 * Two cells: a number the same at the precision a tile shows it (a cent, or a hundredth of a
+	 * percent for a fraction under 1, which a tile shows as a percent), anything else as its text.
+	 */
 	static boolean same(Object a, Object b) {
 		if (a == null || b == null)
 			return a == b;
 		if (a instanceof Number x && b instanceof Number y)
-			return Math.abs(x.doubleValue() - y.doubleValue()) <= CENT;
+			return Math.abs(x.doubleValue() - y.doubleValue())
+					<= (Math.abs(x.doubleValue()) < 1 ? HUNDREDTH_OF_A_PERCENT : CENT);
 		return String.valueOf(a).equals(String.valueOf(b));
 	}
 
@@ -173,5 +178,9 @@ class DashboardDemosTwinsTest {
 		assertEquals("row 1, column 1: the original has 201234.56, the twin 201234.58",
 				difference(want, List.of(Map.of("OverdueAmount", 201234.58))));
 		assertEquals("the original has 1 rows, the twin 0", difference(want, List.of()));
+		List<Map<String, Object>> share = List.of(Map.of("on_time_rate", 0.9333));
+		assertEquals(null, difference(share, List.of(Map.of("OnTimePct", 0.93334))));
+		assertEquals("row 1, column 1: the original has 0.9333, the twin 0.9334",
+				difference(share, List.of(Map.of("OnTimePct", 0.9334))));
 	}
 }

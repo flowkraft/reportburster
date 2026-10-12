@@ -466,6 +466,38 @@ function originalName(row: Record<string, unknown>, field: string, names: string
   return at >= 0 && at < names.length ? names[at] : field;
 }
 
+/**
+ * Where two answers of the same tile first part, or null when they are the same: the same rows in
+ * the same order, the columns matched by position (a twin names its columns itself), a number the
+ * same at the precision a tile shows it (a cent, or a hundredth of a percent for a fraction under 1).
+ */
+export function rowsDifference(
+  want: Array<Record<string, unknown>>,
+  got: Array<Record<string, unknown>>,
+): string | null {
+  if (want.length !== got.length) return `the original answers ${want.length} rows, the twin ${got.length}`;
+  for (let r = 0; r < want.length; r++) {
+    const left = Object.values(want[r]);
+    const right = Object.values(got[r]);
+    if (left.length !== right.length)
+      return `row ${r + 1}: the original has ${left.length} columns (${Object.keys(want[r]).join(', ')}),`
+        + ` the twin ${right.length} (${Object.keys(got[r]).join(', ')})`;
+    for (let c = 0; c < left.length; c++) {
+      if (!sameCell(left[c], right[c]))
+        return `row ${r + 1}, column ${c + 1}: the original has ${JSON.stringify(left[c])}, the twin ${JSON.stringify(right[c])}`;
+    }
+  }
+  return null;
+}
+
+function sameCell(a: unknown, b: unknown): boolean {
+  if (a === null || a === undefined || b === null || b === undefined) return (a ?? null) === (b ?? null);
+  const x = typeof a === 'number' ? a : typeof a === 'string' && a.trim() !== '' && !isNaN(Number(a)) ? Number(a) : null;
+  const y = typeof b === 'number' ? b : typeof b === 'string' && b.trim() !== '' && !isNaN(Number(b)) ? Number(b) : null;
+  if (x !== null && y !== null) return Math.abs(x - y) <= (Math.abs(x) < 1 ? 0.00005 : 0.005);
+  return String(a) === String(b);
+}
+
 /** The column names a dashboard's widget answers with, in order: the first row's. */
 export async function columnsOf(
   root: Locator,
