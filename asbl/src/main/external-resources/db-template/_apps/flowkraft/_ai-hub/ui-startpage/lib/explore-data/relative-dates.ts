@@ -37,7 +37,8 @@ export const RELATIVE_DATE_N_OPS = ["last_n_days", "last_n_weeks", "last_n_month
 
 /** The relative periods that take no value at all - today's date is enough. */
 export const RELATIVE_DATE_PERIOD_OPS = [
-  "this_month", "previous_month", "this_quarter", "this_year", "year_to_date",
+  "today", "yesterday", "this_month", "previous_month", "this_quarter", "previous_quarter",
+  "this_year", "previous_year", "year_to_date",
 ];
 
 /** Every relative date operator, in the order the dropdown offers them. */
@@ -112,8 +113,9 @@ function periodCount(value: string | null | undefined): number | null {
  * reading "the last 7 days" on a dashboard this afternoon means - so they span
  * exactly N periods back from today: the last 7 days of 2026-09-30 are
  * 2026-09-24 through 2026-09-30, and its last 3 months are 2026-07-01 through
- * 2026-09-30. The fixed periods are the calendar's own: this month, the month
- * before it, this quarter, this year, and this year up to and including today.
+ * 2026-09-30. The fixed periods are the calendar's own: today, the day before it,
+ * this month, the month before it, this quarter, the quarter before it, this
+ * year, the year before it, and this year up to and including today.
  *
  * Returns null when the operator is not a relative one, when `today` is not a
  * plain `yyyy-mm-dd`, and when a "last N" operator has no positive whole number
@@ -129,6 +131,10 @@ export function relativeDayRange(
   if (!t) return null;
   const tomorrow = addDays(t, 1);
   switch (operator) {
+    case "today":
+      return { from: iso(t.y, t.m, t.d), to: tomorrow };
+    case "yesterday":
+      return { from: addDays(t, -1), to: iso(t.y, t.m, t.d) };
     case "last_n_days": {
       const n = periodCount(value);
       return n === null ? null : { from: addDays(t, -(n - 1)), to: tomorrow };
@@ -154,8 +160,15 @@ export function relativeDayRange(
       const next = addMonths({ y: t.y, m: first, d: 1 }, 3);
       return { from: iso(t.y, first, 1), to: iso(next.y, next.m, 1) };
     }
+    case "previous_quarter": {
+      const first = t.m - ((t.m - 1) % 3);
+      const prev = addMonths({ y: t.y, m: first, d: 1 }, -3);
+      return { from: iso(prev.y, prev.m, 1), to: iso(t.y, first, 1) };
+    }
     case "this_year":
       return { from: iso(t.y, 1, 1), to: iso(t.y + 1, 1, 1) };
+    case "previous_year":
+      return { from: iso(t.y - 1, 1, 1), to: iso(t.y, 1, 1) };
     case "year_to_date":
       return { from: iso(t.y, 1, 1), to: tomorrow };
     default:

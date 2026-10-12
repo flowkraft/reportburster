@@ -1155,10 +1155,10 @@ describe("ANSI — every filter operator the Filter step offers", () => {
     // The date and boolean dropdowns are left out on purpose: a date literal
     // and a boolean literal ARE vendor forms (`sqlLiteral`, block 6), and the
     // specs below hold the generator to composing them, never to writing one.
-    // The three LIKE filters are left out for the same reason: their ESCAPE
+    // The four LIKE filters are left out for the same reason: their ESCAPE
     // clause is the vendor layer's (`likeFilter`, block 4 - ClickHouse has no
     // ESCAPE clause at all and escapes with a backslash instead).
-    const LIKE_OPS = ["contains", "starts_with", "ends_with"];
+    const LIKE_OPS = ["contains", "not_contains", "starts_with", "ends_with"];
     for (const list of LISTS.filter((l) => l.name === "string" || l.name === "number")) {
       for (const op of list.ops.filter((one) => !LIKE_OPS.includes(one.value))) {
         const text = oneAnsiTextFor(filterQuery(
@@ -2016,6 +2016,11 @@ describe("ANSI — a relative date filter is a computed range of whole days", ()
     ["this_quarter", "", "2026-07-01", "2026-10-01"],
     ["this_year", "", "2026-01-01", "2027-01-01"],
     ["year_to_date", "", "2026-01-01", "2026-10-01"],
+    // #34: the day itself, the day before, and the quarter and the year before.
+    ["today", "", "2026-09-30", "2026-10-01"],
+    ["yesterday", "", "2026-09-29", "2026-09-30"],
+    ["previous_quarter", "", "2026-04-01", "2026-07-01"],
+    ["previous_year", "", "2025-01-01", "2026-01-01"],
   ];
 
   it("writes every relative span as one half-open range, the same text on all nine", () => {
@@ -2064,6 +2069,16 @@ describe("ANSI — a relative date filter is a computed range of whole days", ()
     ];
     for (const [operator, from, to] of december) {
       expect(ansiWhere({ column: "closed_on", operator, value: "" }, from, to, "2026-12-15"))
+        .withContext(operator).toBe(RANGE);
+    }
+    // New Year's Day: yesterday, the previous quarter and the previous year are all last year's.
+    const newYear: [string, string, string][] = [
+      ["yesterday", "2026-12-31", "2027-01-01"],
+      ["previous_quarter", "2026-10-01", "2027-01-01"],
+      ["previous_year", "2026-01-01", "2027-01-01"],
+    ];
+    for (const [operator, from, to] of newYear) {
+      expect(ansiWhere({ column: "closed_on", operator, value: "" }, from, to, "2027-01-01"))
         .withContext(operator).toBe(RANGE);
     }
     // January's previous month is December of the year before.
@@ -4002,5 +4017,21 @@ describe("VENDOR LAYER — the median, and a moving average next to the running 
     expect(oneAnsiTextFor(byTitle({ quickCalc: "moving" }))).toBe(oneAnsiTextFor(byTitle({})));
     const columns = [{ columnName: "closed_on", typeName: "date", isNullable: true }];
     expect(sortableColumns(monthly({ quickCalc: "moving" }), columns).map((c) => c.columnName)).toEqual(["closed_on"]);
+  });
+});
+
+// ── 39 ───────────────────────────────────────────────────────────────────────
+
+describe("VENDOR LAYER — does not contain (#34)", () => {
+
+  it("is the vendor's own contains, turned round, on every vendor", () => {
+    for (const vendor of EVERY_VENDOR) {
+      const contains = buildSql(query({ filters: [{ column: "title", operator: "contains", value: "Acme" }] } as Partial<VisualQuery>),
+        { connectionType: vendor, columnKinds: COLUMN_KINDS }).split("\nWHERE ")[1];
+      const not = buildSql(query({ filters: [{ column: "title", operator: "not_contains", value: "Acme" }] } as Partial<VisualQuery>),
+        { connectionType: vendor, columnKinds: COLUMN_KINDS }).split("\nWHERE ")[1];
+      expect(not).withContext(vendor).toBe(`NOT (${contains})`);
+    }
+    expect(STRING_OPS.find((op) => op.value === "not_contains")?.label).toBe("does not contain");
   });
 });
