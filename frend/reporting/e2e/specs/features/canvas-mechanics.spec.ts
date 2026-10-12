@@ -7002,4 +7002,38 @@ test('(canvas mechanics) M95 Duplicate a widget; duplicate, rename and search ca
   }
 });
 
+// #38: every SQL and script widget's answer is held to a row cap and a statement timeout on the
+// server, set in one place (DataPallas.widgets.* in application.properties: 100,000 rows, 60 s).
+// Going over is said on the widget, in words, instead of a browser drowning or a spinner forever.
+test('(canvas mechanics) M96 A runaway widget says so instead of hanging', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M96 Row cap and timeout', async () => {
+    await addTableToCanvas(page, 'dash_demo.orders');
+    const id = await getLastWidgetId(page);
+    const error = page.locator(`#widgetError-${id}`);
+
+    // + one row past the cap: the widget says how many rows a widget shows.
+    await runSqlQuery(page, 'SELECT range AS n FROM range(100001)');
+    await expect(error, 'an answer over the cap is refused on the widget').toContainText('more than 100,000 rows', { timeout: 60_000 });
+
+    // − an answer under the cap is drawn as before, and the error is gone.
+    await runSqlQuery(page, 'SELECT order_id, channel FROM dash_demo.orders LIMIT 5');
+    await expect(dRowCount(page)).toContainText('5 rows returned', { timeout: 30_000 });
+    await expect(error, 'a query under the cap leaves no widget error').toHaveCount(0);
+
+    // + a script whose answer is over the cap is refused the same way.
+    await runGroovyScript(page, 'return (1..100001).collect { [n: it] }');
+    await expect(error, 'a script answer over the cap is refused on the widget').toContainText('more than 100,000 rows', { timeout: 60_000 });
+
+    // + a statement still running at the timeout is stopped, and the widget says so.
+    await runSqlQuery(page, 'SELECT count(*) AS n FROM range(1000000) a, range(1000000) b, range(1000000) c');
+    await expect(error, 'a statement past the timeout is stopped and named').toContainText('ran longer than 60 seconds', { timeout: 150_000 });
+
+    // − and the widget answers again at once.
+    await runSqlQuery(page, 'SELECT order_id, channel FROM dash_demo.orders LIMIT 5');
+    await expect(dRowCount(page)).toContainText('5 rows returned', { timeout: 30_000 });
+    await expect(error).toHaveCount(0);
+  });
+});
+
 });

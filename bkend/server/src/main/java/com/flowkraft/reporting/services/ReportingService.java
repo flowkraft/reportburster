@@ -31,6 +31,7 @@ import com.flowkraft.cubes.CubeDates;
 import com.flowkraft.cubes.DashboardParameters;
 import com.flowkraft.queries.ConnectionFactory;
 import com.flowkraft.queries.SqlOptionRows;
+import com.flowkraft.queries.WidgetLimits;
 import com.flowkraft.queries.services.QueriesService;
 import com.flowkraft.reporting.dtos.ReportFullConfigDto;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
@@ -60,6 +61,9 @@ public class ReportingService {
 	@Autowired
 	SamplesFrendOnlyService samplesFrendOnlyService;
 
+	@Autowired
+	private WidgetLimits widgetLimits = WidgetLimits.NONE;
+
 	/** The data's today, read from the data. Held as a field so a test can pin the day. */
 	private CubeDataToday cubeDataToday = new CubeDataToday();
 
@@ -70,9 +74,15 @@ public class ReportingService {
 
 	public ReportDataResult fetchData(String configurationFilePath, Map<String, String> parameters, boolean testMode)
 			throws Exception {
+		return fetchData(configurationFilePath, parameters, testMode, 0);
+	}
+
+	/** The same, holding every statement the report runs to {@code timeoutSeconds}; 0 lets them run. */
+	public ReportDataResult fetchData(String configurationFilePath, Map<String, String> parameters, boolean testMode,
+			int timeoutSeconds) throws Exception {
 		CliJob cliJob = new CliJob(configurationFilePath);
 
-		return cliJob.doFetchData(parameters, testMode);
+		return cliJob.doFetchData(parameters, testMode, timeoutSeconds);
 	}
 
 	/**
@@ -624,7 +634,16 @@ public class ReportingService {
 		
 		// Fetch the report data (entityCode flows through as a parameter to SQL/Script)
 		log.debug("fetchReportData - about to call fetchData with cfgFilePath=" + cfgFilePath);
-		ReportDataResult result = fetchData(cfgFilePath, parameters, testMode);
+		// One widget's own data (a dashboard asks per component) is held to what a widget may show;
+		// a whole report's rows, read for a viewer or a job, are not a widget's answer.
+		boolean widget = parameters != null && parameters.get("componentId") != null;
+		ReportDataResult result = fetchData(cfgFilePath, parameters, testMode,
+				widget ? widgetLimits.timeoutSeconds() : 0);
+		if (widget && widgetLimits.over(result.reportData)) {
+			result.reportData = widgetLimits.overRow();
+			result.reportColumnNames = new java.util.ArrayList<>(List.of("ERROR_MESSAGE"));
+			result.totalRows = 0;
+		}
 		log.debug("fetchReportData - fetchData returned, reportData size=" + (result.reportData != null ? result.reportData.size() : "null"));
 		
 		// Check if entityCode was provided for single-entity HTML rendering

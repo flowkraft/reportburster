@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.ScriptOptions; // Adjust import if needed
@@ -102,9 +103,11 @@ public class ScriptedReporter extends AbstractReporter {
 				} else {
 					dbSql = Sql.newInstance(dbs.url, dbs.userid, decryptedPassword, dbs.driver);
 				}
+				SqlExecutor.timeLimit(dbSql, statementTimeoutSeconds);
 				ctx.dbSql = dbSql;
 				log.debug("Created and provided dbSql for connection code: {}", connectionCode);
 			}
+			ctx.statementTimeoutSeconds = statementTimeoutSeconds;
 
 			// Initialize reportData and reportColumnNames in context BEFORE script
 			// execution
@@ -155,6 +158,8 @@ public class ScriptedReporter extends AbstractReporter {
 			if (cause != null && cause.getClass().getName().contains("groovy")) {
 				errorMessage = "Error in Groovy script '" + scriptName + "': " + cause.getMessage();
 			}
+			if (statementTimeoutSeconds > 0 && SqlExecutor.timedOut(e))
+				errorMessage = SqlExecutor.ranTooLong(statementTimeoutSeconds);
 			throw new RuntimeException(errorMessage, e); // Re-throw for AbstractBurster to handle
 		} finally {
 			// Ensure groovy Sql is closed
