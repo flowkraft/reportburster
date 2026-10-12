@@ -855,10 +855,10 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
             <div className="pt-2 border-t border-base-300/50">
               {columns.length === 0 && (
                 <div className="mb-3 p-3 rounded-md border border-dashed border-base-300 bg-base-200/30 text-xs space-y-2">
-                  {/* A filter pane lists the values of one column of its table, and the columns come from the
+                  {/* A slicer lists the values of one column of its table, and the columns come from the
                       table's schema as soon as one is picked: there is no query of its own to run for them. */}
                   <p className="text-base-content/60">
-                    No columns yet. Pick a table in the Data tab: the filter pane lists the values of one of its columns.
+                    No columns yet. Pick a table in the Data tab: the slicer lists the values of one of its columns.
                   </p>
                 </div>
               )}

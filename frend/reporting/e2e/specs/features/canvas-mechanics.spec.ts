@@ -7889,7 +7889,7 @@ test('(canvas mechanics) M105 A map of US states', async () => {
   }
 });
 
-test('(canvas mechanics) M106 A filter pane picking one value at a time, with its label, order, counts and a cap on its values', async () => {
+test('(canvas mechanics) M106 A slicer picking one value at a time, with its label, order, counts and a cap on its values', async () => {
   test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
   let reportId: string | undefined;
 
@@ -8031,7 +8031,7 @@ test('(canvas mechanics) M106 A filter pane picking one value at a time, with it
   }
 });
 
-test('(canvas mechanics) M107 A filter pane\'s search box, height and code view', async () => {
+test('(canvas mechanics) M107 A slicer\'s search box, height and code view', async () => {
   test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
   // The truths, counted in the frozen rows the seed loads (`pOrders`), never typed in:
