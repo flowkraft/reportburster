@@ -23,6 +23,9 @@
 #                                   E2E_STALL_MS (10 min), E2E_REPEAT_EACH (1), E2E_SLOW_MO (0 ms, the config default everywhere; 750 = watch in slow motion). 0 switches one off.
 #                                   `e2e` is the REAL e2e, the release check (Jenkins job dp-ci-e2e-release): the package is rebuilt whenever its stamp is not this
 #                                   clean commit (26-40 min); E2E_PACKAGE does not apply to it.
+#                                   E2E_DD_SCREENSHOTS=1 (off by default): the dashboard-demo specs also take the "How it was built" pictures. They are
+#                                   written into the docs site's public/images/docs (DOCS_SITE, default <all-repos>/src/company-biz/flowkraft/www/
+#                                   reportburster.com), mounted where the e2e helpers look for it (docs-screenshot-helper.ts, DOCS_IMAGES_DIR).
 #   E2E_SPEC=<regex> E2E_GREP=<regex> [E2E_PACKAGE=<mode>] bash asbl/ci/dp-ci.sh e2e-loop
 #                                   the fix-and-retry LOOP (Jenkins job dp-ci-e2e-loop): the same run as `e2e`, targeted (E2E_SPEC or E2E_GREP is required), on the web
 #                                   target (default) or electron-linux (E2E_TARGET=electron-linux), and it NEVER rebuilds the package. The jars and the UI are built from
@@ -1977,6 +1980,16 @@ if [ "$TASK" = "e2e" ]; then
   # host network: specs start app containers whose published ports must answer on localhost
   E2E_FLAGS="--network host --shm-size=2g"
 fi
+# The "How it was built" pictures: the helpers write them next to the docs site checkout as it sits beside this
+# repo on a developer's machine (<parent of the repo>/kraft-src-company-biz/...); here that folder is the docs
+# site's own, mounted at that place, so the pictures land in the site and outlive the run's container.
+DOCS_FLAGS=""
+if [ "${E2E_DD_SCREENSHOTS:-}" = 1 ]; then
+  DOCS_SITE="${DOCS_SITE:-$(dirname "$(dirname "$REPO")")/company-biz/flowkraft/www/reportburster.com}"
+  [ -d "$DOCS_SITE/public" ] || { echo "FAIL  E2E_DD_SCREENSHOTS=1: no docs site at $DOCS_SITE (set DOCS_SITE)"; exit 2; }
+  mkdir -p "$DOCS_SITE/public/images/docs"
+  DOCS_FLAGS="-v $DOCS_SITE/public/images/docs:$(dirname "$REPO")/kraft-src-company-biz/flowkraft/www/reportburster.com/public/images/docs"
+fi
 
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ)-$TASK-$SHA.log"
@@ -2002,7 +2015,7 @@ fi
 # chromium-1097, gone since the pinned chrome-for-testing) and left 536 MB of browser memory sitting
 # in frend/reporting/, one `git add -A` away from being committed. Crashes still show up as
 # "[RENDERER crash]" in the run log, which is the part worth keeping.
-docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS --ulimit core=0 \
+docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --ulimit core=0 \
   -v "$REPO":"$REPO" -w "$REPO" \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v dp-ci-m2:/root/.m2 -v dp-ci-npm:/root/.npm -v dp-ci-cache:/root/.cache \
@@ -2018,7 +2031,7 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS --ulimit core=0
   -e E2E_LICENSE_INSTANCE_ID="${E2E_LICENSE_INSTANCE_ID:-}" \
   -e DEBUG="${DEBUG:-}" \
   -e E2E_CHROMIUM_EXECUTABLE="${E2E_CHROMIUM_EXECUTABLE:-}" \
-  -e E2E_SLOW_MO="${E2E_SLOW_MO:-}" \
+  -e E2E_SLOW_MO="${E2E_SLOW_MO:-}" -e E2E_DD_SCREENSHOTS="${E2E_DD_SCREENSHOTS:-}" \
   -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" \
   -e PUBLISH_TAG="$PUBLISH_TAG" -e PUBLISH_RESET="$PUBLISH_RESET" -e DRY_RUN="${DRY_RUN:-0}" -e FORCE="${FORCE:-0}" -e SMOKE_TIMEOUT_SECS="${SMOKE_TIMEOUT_SECS:-300}" \
   -e TARGET_HOST="${TARGET_HOST:-}" -e TARGET_COMPOSE_DIR="${TARGET_COMPOSE_DIR:-}" -e TARGET_DATA_DIR="${TARGET_DATA_DIR:-}" \
