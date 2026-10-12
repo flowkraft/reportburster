@@ -1080,6 +1080,13 @@ if [ "${1:-}" = "--inside" ]; then
             t0=$SECONDS
             # Step 1 (maven_setup) drops the project's own artifacts from ~/.m2, so the asbl module's dependencies are installed
             # first (no clean, no tests: what an earlier run compiled is reused), then only the content is packaged again.
+            # The packaging copies rb-reporting.jar and rb-server.jar from the tree. dp-dev, restarted after every run, cleans
+            # and rebuilds bkend/server/target, so a run started while it rebuilds finds no jar (build 15, 2026-10-12):
+            # build the two jars first when either is missing (no clean, no tests).
+            if [ ! -f bkend/reporting/target/rb-reporting.jar ] || [ ! -f bkend/server/target/rb-server.jar ]; then
+              echo "package: the jars are not in the tree (dp-dev was rebuilding them) - building them first"
+              mvn -B install -pl bkend/server -am -DskipTests || return 1
+            fi
             { mvn -B install -pl asbl -am -DskipTests && mvn -B test -pl asbl -Dtest=AssemblerTest#refreshContentForE2E; } || return 1
             # The package now holds this tree's content: a later rsync compares against this commit; the second line still rules
             # it out as a clean build of any commit.
