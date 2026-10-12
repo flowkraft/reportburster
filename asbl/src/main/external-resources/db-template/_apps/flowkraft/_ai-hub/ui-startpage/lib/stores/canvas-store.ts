@@ -119,7 +119,12 @@ export interface VisualQuery {
   // A filter row may compare its column with another column (`valueColumn`, #10), and may be
   // joined to the row above it by OR (`join: "or"`, #10): such rows make one bracketed OR
   // group, and the groups are AND-ed. Both absent on every canvas saved before them.
-  filters: { column: string; operator: string; value: string; valueTo?: string; valueColumn?: string; join?: "and" | "or" }[];
+  // A row may also be switched on or off by a dashboard checkbox (`switchParam`, a Boolean
+  // filter's id, and `switchOn`: the row applies while it is "on", or while it is "off"; #12).
+  filters: {
+    column: string; operator: string; value: string; valueTo?: string; valueColumn?: string; join?: "and" | "or";
+    switchParam?: string; switchOn?: "on" | "off";
+  }[];
   // An aggregate may carry a condition (`having`): the rows it keeps are the
   // groups whose aggregate passes it ("customers with more than 5 orders"),
   // which is what a WHERE cannot say. Absent on every canvas saved before this
@@ -146,6 +151,9 @@ export interface VisualQuery {
   // for numeric columns — the SQL builder emits FLOOR(col/width)*width.
   groupByNumericBuckets?: Record<string, NumericBucket>;
   sort: { column: string; direction: "ASC" | "DESC" }[];
+  /** The limit bound to a dashboard filter (#12): its id, e.g. `topN` for a "How many" select.
+   *  While set, the SQL limits to `${topN}` and `limit` waits for it to be unbound. */
+  limitParam?: string;
   limit: number;
   // For kind === "cube" — the cube's own selection, kept beside the table query's steps because
   // a cube widget has no columns, filters or sort of its own: the field tree holds all of it.

@@ -3889,3 +3889,56 @@ describe("ANSI — quick calcs: change vs the bucket before, and rank (#11)", ()
     expect(rankExpr("x")).toBe("RANK() OVER (ORDER BY CASE WHEN x IS NULL THEN 1 ELSE 0 END, x DESC)");
   });
 });
+
+// ── 37 ───────────────────────────────────────────────────────────────────────
+
+describe("VENDOR LAYER — a limit bound to a dashboard filter, a filter row switched by a checkbox (#12)", () => {
+
+  it("limits to the filter's ${name}: LIMIT, FETCH FIRST, or SQL Server's TOP in brackets", () => {
+    const limit = "LIMIT ${topN}";
+    const fetch = "FETCH FIRST ${topN} ROWS ONLY";
+    for (const [vendor, expected] of eachVendor({
+      sqlite: `SELECT a FROM t\n${limit}`, duckdb: `SELECT a FROM t\n${limit}`, mysql: `SELECT a FROM t\n${limit}`,
+      mariadb: `SELECT a FROM t\n${limit}`, clickhouse: `SELECT a FROM t\n${limit}`,
+      postgres: `SELECT a FROM t\n${fetch}`, oracle: `SELECT a FROM t\n${fetch}`, db2: `SELECT a FROM t\n${fetch}`,
+      sqlserver: "SELECT TOP (${topN}) a FROM t",
+    })) {
+      expect(limitClause("SELECT a FROM t", "${topN}", vendor)).withContext(vendor).toBe(expected);
+      // Any other text is no limit at all: nothing typed reaches the SQL.
+      expect(limitClause("SELECT a FROM t", "10; DROP TABLE t", vendor)).withContext(vendor).toBe("SELECT a FROM t");
+    }
+  });
+
+  it("writes the bound limit in place of the typed one, and the typed one once unbound", () => {
+    for (const vendor of EVERY_VENDOR) {
+      const bound = sqlOn(query({ limit: 500, limitParam: "topN" } as Partial<VisualQuery>), vendor);
+      expect(bound).withContext(vendor).toContain("${topN}");
+      expect(bound).withContext(vendor).not.toContain("500");
+      expect(sqlOn(query({ limit: 500, limitParam: "" } as Partial<VisualQuery>), vendor)).withContext(vendor).toContain("500");
+    }
+  });
+
+  it("applies a row switched on only while the box is ticked, and one switched off only while it is not", () => {
+    for (const vendor of EVERY_VENDOR) {
+      const on = unquoted(sqlOn(query({
+        filters: [{ column: "qty", operator: "less_than", value: "5", switchParam: "belowReorderOnly", switchOn: "on" }],
+      } as Partial<VisualQuery>), vendor));
+      expect(on).withContext(vendor).toContain(
+        `WHERE (\${belowReorderOnly} IS NULL OR \${belowReorderOnly} = ${sqlLiteral(false, "boolean", vendor)} OR qty < 5)`);
+      const off = unquoted(sqlOn(query({
+        filters: [{ column: "title", operator: "not_equals", value: "returned", switchParam: "includeReturns", switchOn: "off" }],
+      } as Partial<VisualQuery>), vendor));
+      expect(off).withContext(vendor).toContain(
+        `WHERE (\${includeReturns} = ${sqlLiteral(true, "boolean", vendor)} OR title <> 'returned')`);
+    }
+  });
+
+  it("leaves a half-typed switched row out, and changes nothing for a row without a switch", () => {
+    expect(oneAnsiTextFor(query({
+      filters: [{ column: "title", operator: "equals", value: "", switchParam: "includeReturns", switchOn: "off" }],
+    } as Partial<VisualQuery>))).not.toContain("WHERE");
+    const filters = [{ column: "amount", operator: "greater_than", value: "100" }];
+    expect(oneAnsiTextFor(query({ filters: filters.map((f) => ({ ...f, switchParam: "" })) } as Partial<VisualQuery>)))
+      .toBe(oneAnsiTextFor(query({ filters } as Partial<VisualQuery>)));
+  });
+});

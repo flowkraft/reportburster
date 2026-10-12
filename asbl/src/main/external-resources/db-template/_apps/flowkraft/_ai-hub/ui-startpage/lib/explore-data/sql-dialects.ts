@@ -519,9 +519,18 @@ export function quoteTableRef(ref: TableRef | string, dialect: SqlDialect = DEFA
  * takes `TOP n` after SELECT and SQLite, DuckDB, MySQL, MariaDB and ClickHouse
  * take `LIMIT n`. A limit of 0 or less leaves the SQL untouched.
  */
-export function limitClause(sql: string, rows: number, dialect: SqlDialect = DEFAULT_DIALECT): string {
-  const n = Math.trunc(rows);
-  if (!Number.isFinite(n) || n <= 0) return sql;
+export function limitClause(sql: string, rows: number | string, dialect: SqlDialect = DEFAULT_DIALECT): string {
+  // A limit bound to a dashboard filter (#12) is its `${name}`, which the server binds as it binds
+  // any filter value; SQL Server takes it in brackets (`TOP (@p)`). Any other text is no limit.
+  let n: string;
+  if (typeof rows === "string") {
+    if (!/^\$\{\w+\}$/.test(rows.trim())) return sql;
+    n = rows.trim();
+  } else {
+    const k = Math.trunc(rows);
+    if (!Number.isFinite(k) || k <= 0) return sql;
+    n = String(k);
+  }
   switch (dialect) {
     case "postgres":
     case "oracle":
@@ -531,7 +540,7 @@ export function limitClause(sql: string, rows: number, dialect: SqlDialect = DEF
       // TOP goes after SELECT, and after DISTINCT when the query has one.
       const head = /^\s*SELECT\s+(?:DISTINCT\s+)?/i.exec(sql);
       if (!head) return sql;
-      return `${sql.slice(0, head[0].length)}TOP ${n} ${sql.slice(head[0].length)}`;
+      return `${sql.slice(0, head[0].length)}TOP ${typeof rows === "string" ? `(${n})` : n} ${sql.slice(head[0].length)}`;
     }
     case "sqlite":
     case "duckdb":
