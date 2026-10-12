@@ -376,6 +376,8 @@ interface CanvasActions {
   addWidgetFromCube: (cubeId: string) => string;
   changeWidgetRenderMode: (id: string, newType: WidgetType) => void;
   removeWidget: (id: string) => void;
+  /** A copy of a widget (#36): a new id, the same settings, placed next to it; returns the new id. */
+  duplicateWidget: (id: string) => string;
   updateWidgetPosition: (id: string, position: { x: number; y: number; w: number; h: number }) => void;
   updateWidgetDataSource: (id: string, dataSource: DataSource) => void;
   updateWidgetDisplayConfig: (id: string, config: WidgetDisplayConfig) => void;
@@ -606,6 +608,20 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
       queryResults: nextQueryResults,
       selectedWidgetId: state.selectedWidgetId === id ? null : state.selectedWidgetId,
     });
+  },
+
+  duplicateWidget: (id) => {
+    const widgets = get().widgets;
+    const source = widgets.find((w) => w.id === id);
+    if (!source) return "";
+    const newId = `w-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    // Beside it while the row has room in the grid's 12 columns, else right under it; the grid moves
+    // whatever was there out of the way.
+    const { x, y, w, h } = source.gridPosition;
+    const gridPosition = x + 2 * w <= 12 ? { x: x + w, y, w, h } : { x, y: y + h, w, h };
+    const copy: Widget = { ...structuredClone(source), id: newId, gridPosition };
+    set({ widgets: [...widgets, copy], selectedWidgetId: newId });
+    return newId;
   },
 
   updateWidgetPosition: (id, position) => {
@@ -853,7 +869,7 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     // other non-serializable runtime fields.
     const { selectedWidgetId, editMode, filterValues, filterVersion, exploreSelections, exploreFieldStates, exploreVersion, exportedReportCode, queryResults, ...rest } = get();
     // Strip store actions — only keep data properties
-    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setParametersConfig, setDashboardSettings, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
+    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, duplicateWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setParametersConfig, setDashboardSettings, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
     return state;
   },
 }));

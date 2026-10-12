@@ -58,6 +58,23 @@ public class ExploreDataController {
         return ResponseEntity.status(201).body(service.createCanvas(body));
     }
 
+    /** GET /api/explorations/demos — the canvases the dashboard demos ship, to start one from (#36). */
+    @GetMapping("/demos")
+    public List<Map<String, Object>> listDemoCanvases() throws Exception {
+        return service.listDemoCanvases();
+    }
+
+    /** POST /api/explorations/demos/{demoId} — a new canvas, a copy of that demo's (#36). */
+    @PostMapping("/demos/{demoId}")
+    public ResponseEntity<Map<String, Object>> createCanvasFromDemo(@PathVariable String demoId)
+            throws Exception {
+        var demo = service.demoCanvas(demoId);
+        if (demo.isEmpty())
+            return ResponseEntity.notFound().build();
+        assertWidgetsAllowed(java.util.Collections.singletonMap("state", demo.get().get("state")));
+        return ResponseEntity.status(201).body(service.createCanvasFromDemo(demo.get()));
+    }
+
     /** GET /api/explorations/{id} — get one canvas by ID. */
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getCanvas(@PathVariable String id) throws Exception {

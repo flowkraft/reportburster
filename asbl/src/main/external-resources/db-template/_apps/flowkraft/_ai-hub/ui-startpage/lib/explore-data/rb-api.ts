@@ -375,6 +375,35 @@ export async function createCanvas(name: string): Promise<{ id: string }> {
   return res.json();
 }
 
+/** The canvases the dashboard demos ship (#36): what "New from a demo" offers. */
+export async function listDemoCanvases(): Promise<{ id: string; name: string; description?: string | null }[]> {
+  const res = await fetch(`${RB_BASE}/explorations/demos`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+/** A new canvas, a copy of one shipped demo's (#36). */
+export async function createCanvasFromDemo(demoId: string): Promise<{ id: string }> {
+  const res = await fetch(`${RB_BASE}/explorations/demos/${encodeURIComponent(demoId)}`, { method: "POST" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+/** A copy of a canvas (#36): its widgets, filters and settings under a new id and "<name> (copy)",
+ *  published nowhere. */
+export async function duplicateCanvas(canvasId: string): Promise<{ id: string }> {
+  const source = (await fetchCanvas(canvasId)) as {
+    name?: string; description?: string | null; connectionId?: string | null; state?: string | null;
+  };
+  const copy = await createCanvas(`${source.name ?? "Untitled Canvas"} (copy)`);
+  await updateCanvas(copy.id, {
+    description: source.description ?? null,
+    connectionId: source.connectionId ?? null,
+    ...(source.state ? { state: source.state } : {}),
+  });
+  return copy;
+}
+
 export async function fetchCanvas(canvasId: string): Promise<unknown> {
   const res = await fetch(`${RB_BASE}/explorations/${encodeURIComponent(canvasId)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
