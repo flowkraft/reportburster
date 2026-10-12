@@ -513,9 +513,18 @@ async function dragPivotField(page: Page, field: string, zone: 'rows' | 'cols' |
   const target = page.locator(`[id="pivotZone-${zone}"]`);
   await chip.waitFor({ state: 'visible', timeout: 10_000 });
   await target.waitFor({ state: 'visible', timeout: 10_000 });
+  // A mouse cannot press below the window: with many fields the chip sits under the fold, so it is
+  // scrolled up first, and the zone it goes to must still be on screen with it.
+  await target.scrollIntoViewIfNeeded();
+  await chip.scrollIntoViewIfNeeded();
   const from = await chip.boundingBox();
   const to = await target.boundingBox();
   if (!from || !to) throw new Error(`cannot drag ${field} to ${zone}: a box is missing`);
+  const height = page.viewportSize()?.height ?? Infinity;
+  for (const [what, box] of [[field, from], [zone, to]] as const) {
+    if (box.y < 0 || box.y + box.height > height)
+      throw new Error(`cannot drag ${field} to ${zone}: ${what} is off screen (y ${box.y}, window ${height})`);
+  }
   // dnd-kit's pointer sensor needs a real press, a few moves and a release.
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
   await page.mouse.down();
