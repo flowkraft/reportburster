@@ -63,6 +63,7 @@ GET /api/cubes/dialects -> REPORT_AUTHOR
 GET /api/cubes/{cubeId} -> REPORT_AUTHOR
 GET /api/embed/share-link -> REPORT_AUTHOR
 GET /api/explorations -> REPORT_AUTHOR
+GET /api/explorations/demos -> REPORT_AUTHOR
 GET /api/explorations/{id} -> REPORT_AUTHOR
 GET /api/iam/dashboards -> ADMIN
 GET /api/iam/groups -> ADMIN
@@ -191,6 +192,7 @@ POST /api/embed/share-link -> REPORT_AUTHOR
 # the person minting it could run.
 POST /api/embed/token -> JOB_OPERATOR
 POST /api/explorations -> REPORT_AUTHOR
+POST /api/explorations/demos/{demoId} -> REPORT_AUTHOR
 POST /api/explorations/{id}/export -> REPORT_AUTHOR
 POST /api/iam/groups -> ADMIN
 POST /api/iam/tenants -> ADMIN
