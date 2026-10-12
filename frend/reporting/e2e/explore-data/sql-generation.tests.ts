@@ -24,6 +24,7 @@ import {
   buildSql,
   changeExpr,
   decimalLiteral,
+  movingAverageExpr,
   extractParamIds,
   extractParamTypes,
   nextDay,
@@ -61,6 +62,7 @@ import {
   AGGREGATION_VALUES,
   HAVING_OPS,
   HAVING_OP_VALUES,
+  MOVING_AVERAGE_BUCKETS,
   RUNNING_TOTAL_AGGREGATIONS,
   RUNNING_TOTAL_LABEL,
   SHARE_LABEL,
@@ -97,7 +99,9 @@ import {
   likeFilter,
   dateExpr,
   decimalDivision,
+  hasMedian,
   limitClause,
+  medianExpr,
   quoteIdent,
   quoteTableRef,
   sqlLiteral,
@@ -2163,9 +2167,12 @@ describe("ANSI — every aggregate the Summarize step offers", () => {
     summarize: [{ aggregation, field: aggregation === "COUNT" ? "*" : "amount" }],
   } as Partial<VisualQuery>);
 
+  // The median is the vendor layer's, one text per vendor: block 38 states it.
+  const ONE_TEXT = AGGREGATION_VALUES.filter((aggregation) => aggregation !== "MEDIAN");
+
   it("writes the SQL this block states, as one text on all nine", () => {
-    expect(Object.keys(EXPECTED).sort()).toEqual([...AGGREGATION_VALUES].sort());
-    for (const aggregation of AGGREGATION_VALUES) {
+    expect(Object.keys(EXPECTED).sort()).toEqual([...ONE_TEXT].sort());
+    for (const aggregation of ONE_TEXT) {
       expect(oneAnsiTextFor(counted(aggregation))).withContext(aggregation)
         .toContain(EXPECTED[aggregation]);
     }
@@ -3940,5 +3947,60 @@ describe("VENDOR LAYER — a limit bound to a dashboard filter, a filter row swi
     const filters = [{ column: "amount", operator: "greater_than", value: "100" }];
     expect(oneAnsiTextFor(query({ filters: filters.map((f) => ({ ...f, switchParam: "" })) } as Partial<VisualQuery>)))
       .toBe(oneAnsiTextFor(query({ filters } as Partial<VisualQuery>)));
+  });
+});
+
+// ── 38 ───────────────────────────────────────────────────────────────────────
+
+describe("VENDOR LAYER — the median, and a moving average next to the running total (#33)", () => {
+
+  const median = query({ groupBy: ["title"], summarize: [{ aggregation: "MEDIAN", field: "amount" }] } as Partial<VisualQuery>);
+  const ordered = "PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)";
+
+  it("writes the median the vendor's way, and has none where the vendor has none", () => {
+    for (const [vendor, expected] of eachVendor<string | null>({
+      postgres: ordered, oracle: ordered, db2: ordered,
+      duckdb: "MEDIAN(amount)",
+      clickhouse: "quantileExactInclusive(0.5)(toFloat64(amount))",
+      sqlite: null, mysql: null, mariadb: null, sqlserver: null,
+    })) {
+      expect(medianExpr("amount", vendor)).withContext(vendor).toBe(expected);
+      expect(hasMedian(vendor)).withContext(vendor).toBe(expected !== null);
+      if (expected !== null) {
+        expect(withoutOwnTableQualifier(unquoted(sqlOn(median, vendor)), "crm_deals")).withContext(vendor)
+          .toContain(`CAST(${expected} AS DECIMAL(31,4)) AS amount_median`);
+      }
+    }
+  });
+
+  it("offers the median in the Summarize list, as a word", () => {
+    expect(AGGREGATIONS.find((a) => a.value === "MEDIAN")?.label).toBe("Median");
+  });
+
+  const monthly = (patch: Record<string, unknown>) => query({
+    groupBy: ["closed_on"],
+    groupByBuckets: { closed_on: "month" },
+    summarize: [{ aggregation: "SUM", field: "amount", ...patch }],
+  } as Partial<VisualQuery>);
+
+  it("writes a moving average over this bucket and the two before, ordered by the bucket on every vendor, as _moving", () => {
+    expect(MOVING_AVERAGE_BUCKETS).toBe(3);
+    expect(movingAverageExpr("SUM(amount)", "m")).toBe(
+      "CAST(AVG(CAST(SUM(amount) AS DECIMAL(31,4))) OVER (ORDER BY m ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS DECIMAL(31,4))");
+    for (const vendor of EVERY_VENDOR) {
+      const sql = unquoted(sqlOn(monthly({ quickCalc: "moving" }), vendor));
+      expect(sql).withContext(vendor).toContain(
+        "CAST(AVG(CAST(CAST(SUM(amount) AS DECIMAL(31,4)) AS DECIMAL(31,4))) OVER (ORDER BY CASE WHEN MIN(");
+      expect(sql).withContext(vendor).toContain(" ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS DECIMAL(31,4)) AS amount_sum_moving");
+    }
+  });
+
+  it("is the plain aggregate without a time bucket, and never a sort key", () => {
+    const byTitle = (patch: Record<string, unknown>) => query({
+      groupBy: ["title"], summarize: [{ aggregation: "SUM", field: "amount", ...patch }],
+    } as Partial<VisualQuery>);
+    expect(oneAnsiTextFor(byTitle({ quickCalc: "moving" }))).toBe(oneAnsiTextFor(byTitle({})));
+    const columns = [{ columnName: "closed_on", typeName: "date", isNullable: true }];
+    expect(sortableColumns(monthly({ quickCalc: "moving" }), columns).map((c) => c.columnName)).toEqual(["closed_on"]);
   });
 });

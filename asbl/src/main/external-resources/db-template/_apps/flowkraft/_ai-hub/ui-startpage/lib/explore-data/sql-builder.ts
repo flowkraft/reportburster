@@ -46,6 +46,7 @@ import {
   dialectFor,
   likeFilter,
   limitClause,
+  medianExpr,
   quoteIdent,
   quoteTableRef,
   sqlLiteral,
@@ -60,7 +61,7 @@ import { asTableRef } from "./table-ref";
 import { nicerBinWidth } from "./smart-defaults";
 import { computedColumnsOf, isFormulaColumn, isNumberOperand, isTextComputedColumn, type ComputedColumn } from "./computed-columns";
 import { formulaSql, parseFormula } from "./formula";
-import { isCompleteCondition, QUICK_CALC_AGGREGATIONS, type AggregateCondition, type AggregateWhere, type QuickCalc } from "./aggregations";
+import { isCompleteCondition, MOVING_AVERAGE_BUCKETS, QUICK_CALC_AGGREGATIONS, type AggregateCondition, type AggregateWhere, type QuickCalc } from "./aggregations";
 import type { ColumnSchema } from "./types";
 
 /** Returns true if the value is a canvas parameter reference: `${paramName}`. */
@@ -639,7 +640,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
    *  HAVING and the ORDER BY all ask here, so the three always write the same expression. A
    *  condition the filter rules leave out (an empty value box) leaves the plain aggregate. */
   const aggregateOf = (agg: SummarizeEntry): string =>
-    aggregateExprOf(agg, refFor, agg.where ? conditionFor(agg.where) : null);
+    aggregateExprOf(agg, refFor, agg.where ? conditionFor(agg.where) : null, dialect);
 
   /** The name one aggregate is written under in this query. */
   const aliasOf = (agg: SummarizeEntry): string =>
@@ -676,6 +677,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     if (runsAsRunningTotal(query, agg)) return runningTotalExpr(expr, runningOrder());
     const calc = quickCalcOf(query, agg);
     if (calc === "change") return changeExpr(expr, runningOrder());
+    if (calc === "moving") return movingAverageExpr(expr, runningOrder());
     if (calc === "rank") return rankExpr(expr);
     return agg.share ? percentOfTotalExpr(expr) : expr;
   };
@@ -999,11 +1001,22 @@ export function aggregateColumnName(query: VisualQuery, agg: SummarizeEntry): st
 export function quickCalcOf(query: VisualQuery, agg: SummarizeEntry): QuickCalc | null {
   if (!agg.quickCalc || runsAsRunningTotal(query, agg)) return null;
   if (!QUICK_CALC_AGGREGATIONS.includes(agg.aggregation.toUpperCase())) return null;
-  if (agg.quickCalc === "change") {
-    return query.groupBy.length === 1 && Boolean((query.groupByBuckets ?? {})[query.groupBy[0]]) ? "change" : null;
+  // A moving average (#33) is read over the same series a change is.
+  if (agg.quickCalc === "change" || agg.quickCalc === "moving") {
+    return query.groupBy.length === 1 && Boolean((query.groupByBuckets ?? {})[query.groupBy[0]]) ? agg.quickCalc : null;
   }
   if (agg.quickCalc === "rank") return query.groupBy.length > 0 ? "rank" : null;
   return null;
+}
+
+/**
+ * One aggregate read as its moving average (#33): the average of it over this bucket and the
+ * `MOVING_AVERAGE_BUCKETS - 1` before it, a frame of rows ordered as a running total is
+ * (`runningOrder`); the first buckets average what there is. ANSI on all nine, cast as AVG is.
+ */
+export function movingAverageExpr(aggregate: string, bucketOrder: string): string {
+  return `CAST(AVG(CAST(${aggregate} AS DECIMAL(31,4))) OVER (ORDER BY ${bucketOrder} `
+    + `ROWS BETWEEN ${MOVING_AVERAGE_BUCKETS - 1} PRECEDING AND CURRENT ROW) AS DECIMAL(31,4))`;
 }
 
 /**
@@ -1079,9 +1092,12 @@ export function sortableColumns(query: VisualQuery, columns: ColumnSchema[]): Co
   const grouped = query.groupBy.map(
     (col) => byName.get(col) ?? { columnName: col, typeName: "text", isNullable: true },
   );
-  // A change is not offered as a sort key: its order is the window's, which stays out of the
-  // ORDER BY (a rank sorts by its aggregate turned round, `sortExpr`).
-  const aggregates = query.summarize.filter((agg) => quickCalcOf(query, agg) !== "change").map((agg) => ({
+  // A change or a moving average is not offered as a sort key: its order is the window's, which
+  // stays out of the ORDER BY (a rank sorts by its aggregate turned round, `sortExpr`).
+  const aggregates = query.summarize.filter((agg) => {
+    const calc = quickCalcOf(query, agg);
+    return calc !== "change" && calc !== "moving";
+  }).map((agg) => ({
     columnName: aggregateAlias(agg, runsAsRunningTotal(query, agg), quickCalcOf(query, agg)),
     typeName: "numeric",
     isNullable: agg.aggregation.toUpperCase().startsWith("COUNT") ? false : true,
@@ -1097,7 +1113,8 @@ export function sortableColumns(query: VisualQuery, columns: ColumnSchema[]): Co
 function aggregateExprOf(
   agg: SummarizeEntry,
   refFor: (column: string) => string,
-  where: string | null = null,
+  where: string | null,
+  dialect: SqlDialect,
 ): string {
   const fn = agg.aggregation.toUpperCase();
   const isCountStar = fn === "COUNT" && agg.field === "*";
@@ -1106,9 +1123,9 @@ function aggregateExprOf(
   // MIN and MAX read them alone. ANSI on all nine; a count of rows counts a 1 per kept row.
   if (where) {
     const value = isCountStar ? "1" : refFor(agg.field);
-    return aggregateExpr(fn, `CASE WHEN ${where} THEN ${value} END`, false);
+    return aggregateExpr(fn, `CASE WHEN ${where} THEN ${value} END`, false, dialect);
   }
-  return aggregateExpr(fn, isCountStar ? "*" : refFor(agg.field), isCountStar);
+  return aggregateExpr(fn, isCountStar ? "*" : refFor(agg.field), isCountStar, dialect);
 }
 
 /**
@@ -1125,7 +1142,7 @@ function aggregateExprOf(
  * or of text, and a COUNT is already an exact integer. That is why `ROUND(…, 4)`
  * around everything had to go: it rounded a date.
  */
-function aggregateExpr(fn: string, ref: string, isCountStar: boolean): string {
+function aggregateExpr(fn: string, ref: string, isCountStar: boolean, dialect: SqlDialect): string {
   if (isCountStar) return "COUNT(*)";
   const c = ref;
   switch (fn) {
@@ -1136,6 +1153,11 @@ function aggregateExpr(fn: string, ref: string, isCountStar: boolean): string {
       return `CAST(SUM(${c}) AS DECIMAL(31,4))`;
     case "AVG":
       return `CAST(AVG(CAST(${c} AS DECIMAL(31,4))) AS DECIMAL(31,4))`;
+    case "MEDIAN": {
+      // The vendor's own (#33), cast as AVG is; a vendor with none is never offered it.
+      const median = medianExpr(c, dialect);
+      return median ? `CAST(${median} AS DECIMAL(31,4))` : `MEDIAN(${c})`;
+    }
     default:
       return `${fn}(${c})`;
   }

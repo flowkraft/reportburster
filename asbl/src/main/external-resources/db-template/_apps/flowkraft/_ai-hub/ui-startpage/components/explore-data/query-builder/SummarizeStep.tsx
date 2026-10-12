@@ -6,9 +6,11 @@ import type { ColumnSchema } from "@/lib/explore-data/types";
 import type { NumericBucket, TimeBucket } from "@/lib/stores/canvas-store";
 import { getFieldKind } from "@/lib/explore-data/field-utils";
 import { asTableRef } from "@/lib/explore-data/table-ref";
+import { dialectFor, hasMedian } from "@/lib/explore-data/sql-dialects";
+import { getConnectionType } from "@/lib/explore-data/rb-api";
 import {
   AGGREGATIONS, HAVING_OPS, SHARE_LABEL, RUNNING_TOTAL_LABEL,
-  RUNNING_TOTAL_AGGREGATIONS, WHERE_LABEL, QUICK_CALCS, QUICK_CALC_AGGREGATIONS,
+  RUNNING_TOTAL_AGGREGATIONS, WHERE_LABEL, QUICK_CALCS, QUICK_CALC_AGGREGATIONS, MOVING_AVERAGE_LABEL,
   type AggregateCondition, type AggregateWhere, type QuickCalc,
 } from "@/lib/explore-data/aggregations";
 import { NO_VALUE_OPS } from "@/lib/explore-data/filter-operators";
@@ -134,6 +136,9 @@ export function SummarizeStep({
    *  That is the only shape a running total has an order to accumulate in, and
    *  it is the same rule `runsAsRunningTotal` applies to the SQL. */
   const groupsByOneTimeBucket = groupBy.length === 1 && Boolean(groupByBuckets[groupBy[0]]);
+
+  /** Whether this connection's database has a median (#33): offered only where it does. */
+  const medianOffered = hasMedian(dialectFor(getConnectionType(connectionId ?? null)));
 
   /** A fresh condition on `column`: its first operator, an empty value - which the SQL leaves out
    *  until it is typed, the way an empty filter value box is. */
@@ -299,7 +304,7 @@ export function SummarizeStep({
             })}
             className="text-xs bg-base-100 border border-base-300 rounded px-1.5 py-1 text-base-content w-28"
           >
-            {AGGREGATIONS.map((agg) => (
+            {AGGREGATIONS.filter((agg) => agg.value !== "MEDIAN" || medianOffered || a.aggregation === "MEDIAN").map((agg) => (
               <option key={agg.value} value={agg.value}>{agg.label}</option>
             ))}
           </select>
@@ -443,6 +448,23 @@ export function SummarizeStep({
               {RUNNING_TOTAL_LABEL}
             </label>
           )}
+          {/* "Moving average" (#33): the same aggregate averaged over this bucket and the two before
+              it, under the running total's rule (one series over time). One reading at a time: it
+              clears the share, the running total and a quick calc. The column is `<alias>_moving`. */}
+          {groupsByOneTimeBucket && QUICK_CALC_AGGREGATIONS.includes(a.aggregation) && (
+            <label className="flex items-center gap-1 text-xs text-base-content/60 whitespace-nowrap">
+              <input
+                id={`checkMovingAverage-${i}`}
+                type="checkbox"
+                checked={a.quickCalc === "moving"}
+                onChange={(e) => updateAgg(i, e.target.checked
+                  ? { quickCalc: "moving", share: undefined, runningTotal: undefined }
+                  : { quickCalc: undefined })}
+                className="checkbox checkbox-xs"
+              />
+              {MOVING_AVERAGE_LABEL}
+            </label>
+          )}
           {/* Quick calcs (#11): the same aggregate read as its change from the bucket before (a
               series over one time bucket only, as a running total) or as its rank among the
               groups. One reading at a time: picking one clears the share and the running total.
@@ -450,7 +472,7 @@ export function SummarizeStep({
           {groupBy.length > 0 && QUICK_CALC_AGGREGATIONS.includes(a.aggregation) && (
             <select
               id={`selectQuickCalc-${i}`}
-              value={a.quickCalc ?? ""}
+              value={a.quickCalc === "moving" ? "" : (a.quickCalc ?? "")}
               title="Read this aggregate as its change from the bucket before, or as its rank"
               onChange={(e) => updateAgg(i, e.target.value
                 ? { quickCalc: e.target.value as QuickCalc, share: undefined, runningTotal: undefined }

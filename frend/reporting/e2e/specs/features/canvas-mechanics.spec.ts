@@ -6809,4 +6809,64 @@ test('(canvas mechanics) M92 A filter value picked from the column\'s own values
   });
 });
 
+test('(canvas mechanics) M93 The median, and a moving average next to the running total', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M93 Median and moving average', async () => {
+    const orders = frozenRows('orders');
+    const medianOf = (values: number[]) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
+
+    // The median of the order totals per channel, as the frozen rows have it.
+    const med = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'MEDIAN', 'total_amount');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    const channels = [...new Set(orders.map((o) => o.channel))];
+    const medians = await g4RowsWhere(page, med, (r) => r.length === channels.length && 'total_amount_median' in r[0],
+      'one median per channel');
+    for (const channel of channels) {
+      const row = medians.find((r) => r.channel === channel);
+      const want = medianOf(orders.filter((o) => o.channel === channel).map((o) => Number(o.total_amount)));
+      expect(Number(row?.total_amount_median), `the median of ${channel}`).toBeCloseTo(want, 2);
+    }
+
+    // The order totals per month, and beside them their moving average: each month's is the mean
+    // of it and the two months before (the first months, of what there is). The months are read off
+    // the answer itself, because the data is moved to today when it is seeded.
+    const mov = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'SUM', 'total_amount');
+    await addAggregation(page, 1, 'SUM', 'total_amount');
+    await addGroupBy(page, 'order_ts');
+    await setTimeBucket(page, 'order_ts', 'month');
+    await page.locator('#checkMovingAverage-1').check();
+    await runVisualQuery(page);
+    const months = (await g4RowsWhere(page, mov, (r) => r.length > 3 && 'total_amount_sum_moving' in r[0],
+      'a moving average per month'))
+      .sort((a, b) => String(a.order_ts).localeCompare(String(b.order_ts)));
+    months.forEach((row, i) => {
+      const window = months.slice(Math.max(0, i - 2), i + 1).map((m) => Number(m.total_amount_sum));
+      expect(Number(row.total_amount_sum_moving), `the moving average of ${String(row.order_ts)}`)
+        .toBeCloseTo(window.reduce((a, b) => a + b, 0) / window.length, 2);
+    });
+
+    // + one reading at a time: the running total clears it.
+    await page.locator('#checkRunningTotal-1').check();
+    await expect(page.locator('#checkMovingAverage-1')).not.toBeChecked();
+  });
+
+  // On a database with no median, the step does not offer one.
+  await withFreshCanvas(page, 'E2E mech M93 No median on SQLite', async () => {
+    await addTableToCanvas(page, 'Orders');
+    await page.locator('#btnQueryTab-visual').click();
+    await addAggregation(page, 0, 'COUNT', '*');
+    const offered = await page.locator('#selectAggFunc-0 option').evaluateAll((options) =>
+      options.map((o) => (o as HTMLOptionElement).value));
+    expect(offered, 'the other aggregates are offered').toContain('AVG');
+    expect(offered, 'no median on SQLite').not.toContain('MEDIAN');
+  }, 'rbt-sample-northwind-sqlite-4f2');
+});
+
 });
