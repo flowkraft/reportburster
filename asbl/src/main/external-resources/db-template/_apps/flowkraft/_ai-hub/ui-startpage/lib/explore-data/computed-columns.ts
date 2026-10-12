@@ -18,10 +18,16 @@
 // An operand is a number or a column name, nothing else, so nothing the user
 // types can reach the SQL as SQL - a name goes in quoted as an identifier, a
 // number goes in as a number, and anything else makes the column incomplete and
-// it is left out of the query entirely. `CASE`, string and date functions stay
-// what they have always been: the SQL mode's business (T10).
+// it is left out of the query entirely.
+//
+// A computed column may instead be written as a one-line formula (#8,
+// `formula.ts`): chained arithmetic, IF and CASE, bins, the days between two
+// dates, rounding, text joined together. That one does have a parser - its own,
+// which reads the text into a tree and writes the tree out, so the rule above
+// still holds: what the user typed never reaches the SQL as SQL.
 
 import type { ColumnSchema } from "./types";
+import { parseFormula, type FormulaColumns } from "./formula";
 
 /** One computed column, as a widget stores it: the name it is known by in
  *  Filter, Summarize and Sort, and the one arithmetic step behind it. Each
@@ -31,6 +37,14 @@ export interface ComputedColumn {
   left: string;
   operator: string;
   right: string;
+  /** The one-line formula (#8). Present means this column IS the formula, and the one
+   *  step above is not read; absent on every column saved before formulas existed. */
+  formula?: string;
+}
+
+/** True when this computed column is written as a formula rather than as one step. */
+export function isFormulaColumn(computed: ComputedColumn | null | undefined): boolean {
+  return typeof computed?.formula === "string";
 }
 
 /** One entry of the operator dropdown: the operator stored in the widget - which
@@ -74,9 +88,14 @@ export function isNumberOperand(operand: string): boolean {
 /** True when a computed column is finished: it has a name, an operator the
  *  generator writes SQL for, and both operands filled in. An unfinished one is
  *  left out of the query, the way a filter with an empty value box is. */
-export function isCompleteComputedColumn(computed: ComputedColumn | null | undefined): boolean {
+export function isCompleteComputedColumn(
+  computed: ComputedColumn | null | undefined,
+  columns?: FormulaColumns,
+): boolean {
   if (!computed) return false;
   const name = String(computed.name ?? "").trim();
+  // A formula is finished when it reads: a name, and a formula the parser accepts.
+  if (isFormulaColumn(computed)) return name !== "" && parseFormula(computed.formula!, columns).ok;
   const left = String(computed.left ?? "").trim();
   const right = String(computed.right ?? "").trim();
   return name !== "" && left !== "" && right !== "" && ARITHMETIC_OP_VALUES.includes(computed.operator);
@@ -89,17 +108,30 @@ export function isCompleteComputedColumn(computed: ComputedColumn | null | undef
  */
 export function computedColumnsOf(
   computed: ComputedColumn[] | null | undefined,
+  columns?: FormulaColumns,
 ): ComputedColumn[] {
   const out: ComputedColumn[] = [];
   const seen = new Set<string>();
   for (const one of computed ?? []) {
-    if (!isCompleteComputedColumn(one)) continue;
+    if (!isCompleteComputedColumn(one, columns)) continue;
     const name = one.name.trim();
     if (seen.has(name)) continue;
     seen.add(name);
-    out.push({ name, left: one.left.trim(), operator: one.operator, right: one.right.trim() });
+    out.push(isFormulaColumn(one)
+      ? { name, left: "", operator: "", right: "", formula: one.formula!.trim() }
+      : { name, left: one.left.trim(), operator: one.operator, right: one.right.trim() });
   }
   return out;
+}
+
+/** The type name a computed column whose formula gives a text is described with. */
+export const COMPUTED_TEXT_TYPE_NAME = "VARCHAR";
+
+/** True when a computed column gives a text: a formula whose value is text (CONCAT, an IF of two texts). */
+export function isTextComputedColumn(one: ComputedColumn, columns?: FormulaColumns): boolean {
+  if (!isFormulaColumn(one)) return false;
+  const read = parseFormula(one.formula!, columns);
+  return read.ok && read.type === "text";
 }
 
 /**
@@ -110,10 +142,11 @@ export function computedColumnsOf(
  */
 export function computedColumnSchemas(
   computed: ComputedColumn[] | null | undefined,
+  columns?: FormulaColumns,
 ): ColumnSchema[] {
-  return computedColumnsOf(computed).map((one) => ({
+  return computedColumnsOf(computed, columns).map((one) => ({
     columnName: one.name,
-    typeName: COMPUTED_COLUMN_TYPE_NAME,
+    typeName: isTextComputedColumn(one, columns) ? COMPUTED_TEXT_TYPE_NAME : COMPUTED_COLUMN_TYPE_NAME,
     isNullable: true,
   }));
 }

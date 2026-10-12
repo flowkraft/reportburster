@@ -5201,4 +5201,66 @@ test('(canvas mechanics) M68 Count where and Sum where sit beside the plain aggr
   });
 });
 
+test('(canvas mechanics) M69 A formula column: a condition, days between two dates and joined texts, summed and grouped', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M69 Formula', async () => {
+    const orders = frozenRows('orders');
+    const channels = [...new Set(orders.map((o) => o.channel))];
+    const day = (text: string) => Date.parse(String(text).slice(0, 10)) / 86400000;
+
+    // − a formula that does not read says why, in words, and is not in the query.
+    const id = await eNewVisualWidget(page, 'orders');
+    await page.locator('#btnAddFormula').click();
+    await page.locator('#inputComputedName-0').fill('returned_money');
+    await page.locator('#inputComputedFormula-0').fill('IF(status = 1, total_amount, 0)');
+    await expect(page.locator('#computedFormulaError-0'), 'a text compared with a number is refused')
+      .toContainText('a text cannot be compared with a number');
+
+    // + per channel: the money of the returned orders (a condition) and the most days an
+    //   order arrived after its promised date (DAYS between a date and a timestamp).
+    await page.locator('#inputComputedFormula-0').fill("IF(status = 'returned', total_amount, 0)");
+    await expect(page.locator('#computedFormulaError-0'), 'the corrected formula reads').toHaveCount(0);
+    await page.locator('#btnAddFormula').click();
+    await page.locator('#inputComputedName-1').fill('days_late');
+    await page.locator('#inputComputedFormula-1').fill('DAYS(promised_date, delivered_ts)');
+    await expect(page.locator('#computedFormulaError-1')).toHaveCount(0);
+    await addAggregation(page, 0, 'SUM', 'returned_money');
+    await addAggregation(page, 1, 'MAX', 'days_late');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+
+    const rows = await g4RowsWhere(page, id,
+      (r) => r.length === channels.length && r.every((x) => 'returned_money_sum' in x && 'days_late_max' in x),
+      'one row per channel, with the two formula aggregates');
+    for (const channel of channels) {
+      const mine = orders.filter((o) => o.channel === channel);
+      const row = rows.find((r) => r.channel === channel);
+      expect(row, `a row for ${channel}`).toBeTruthy();
+      const returned = mine.filter((o) => o.status === 'returned').reduce((sum, o) => sum + Number(o.total_amount), 0);
+      expect(Math.abs(Number(row!.returned_money_sum) - returned), `${channel}: the returned money`).toBeLessThan(0.01);
+      const late = Math.max(...mine.filter((o) => o.delivered_ts).map((o) => day(o.delivered_ts) - day(o.promised_date)));
+      expect(Number(row!.days_late_max), `${channel}: the most days late`).toBe(late);
+    }
+
+    // + a text formula is a column to group by: one row per channel and device, joined.
+    const route = await eNewVisualWidget(page, 'orders');
+    await page.locator('#btnAddFormula').click();
+    await page.locator('#inputComputedName-0').fill('route');
+    await page.locator('#inputComputedFormula-0').fill("CONCAT(channel, ' / ', device)");
+    await addAggregation(page, 0, 'COUNT', '*');
+    await addGroupBy(page, 'route');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'tabulator');
+    const routes = new Map<string, number>();
+    for (const o of orders) routes.set(`${o.channel} / ${o.device}`, (routes.get(`${o.channel} / ${o.device}`) ?? 0) + 1);
+    const byRoute = await g4RowsWhere(page, route,
+      (r) => r.length === routes.size && r.every((x) => 'route' in x),
+      'one row per channel and device');
+    for (const [name, count] of routes) {
+      expect(Number(byRoute.find((r) => r.route === name)?.count), `${name}: its orders`).toBe(count);
+    }
+  });
+});
+
 });

@@ -57,7 +57,8 @@ import { isDayParam, nextDayRef } from "./date-parameters";
 import { isRelativeDateOp, relativeDayRange, todayIso } from "./relative-dates";
 import { asTableRef } from "./table-ref";
 import { nicerBinWidth } from "./smart-defaults";
-import { computedColumnsOf, isNumberOperand, type ComputedColumn } from "./computed-columns";
+import { computedColumnsOf, isFormulaColumn, isNumberOperand, isTextComputedColumn, type ComputedColumn } from "./computed-columns";
+import { formulaSql, parseFormula } from "./formula";
 import { isCompleteCondition, type AggregateCondition, type AggregateWhere } from "./aggregations";
 import type { ColumnSchema } from "./types";
 
@@ -360,7 +361,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   // The computed columns this query really has - the finished ones. An
   // unfinished one (no name yet, an empty operand box) is left out entirely,
   // the way a filter with an empty value box is.
-  const computedColumns = computedColumnsOf(query.computed);
+  const computedColumns = computedColumnsOf(query.computed, columnKinds);
   const computed = new Map(computedColumns.map((one) => [one.name, one]));
 
   /** How a column name becomes SQL. The name of a computed column stands for its
@@ -368,7 +369,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
    *  every other name is the quoted column it has always been. */
   const refFor = (column: string): string => {
     const one = computed.get(column);
-    return one ? computedExpr(one, dialect) : quote(column);
+    return one ? computedExpr(one, dialect, columnKinds, today) : quote(column);
   };
 
   /** The kind of literal a value compared against this column must take. A
@@ -378,7 +379,9 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   const kindFor = (column: string, value: string): SqlLiteralKind => {
     // A computed column is arithmetic over numbers, so it is compared against a
     // number - nothing reported it, because no database has it as a column.
-    const kind = computed.has(column) ? "number" : columnKinds?.get(column);
+    // ... unless its formula gives a text (#8), which is compared against a text.
+    const one = computed.get(column);
+    const kind = one ? (isTextComputedColumn(one, columnKinds) ? "string" : "number") : columnKinds?.get(column);
     if (kind === "number") {
       const text = String(value ?? "").trim();
       return text !== "" && Number.isFinite(Number(text)) ? "number" : "string";
@@ -615,7 +618,7 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   if (!hasAgg && !distinctOnly && computedColumns.length > 0) {
     selectParts.push(`${quoteIdent(tableRef.name, dialect)}.*`);
     for (const one of computedColumns) {
-      selectParts.push(`${computedExpr(one, dialect)} AS ${quote(one.name)}`);
+      selectParts.push(`${computedExpr(one, dialect, columnKinds, today)} AS ${quote(one.name)}`);
     }
   }
 
@@ -1035,7 +1038,18 @@ function aggregateExpr(fn: string, ref: string, isCountStar: boolean): string {
  * as a decimal literal, anything else is quoted as an identifier. So there is no
  * expression to parse and nothing the user types can arrive as SQL.
  */
-function computedExpr(one: ComputedColumn, dialect: SqlDialect): string {
+function computedExpr(
+  one: ComputedColumn,
+  dialect: SqlDialect,
+  columnKinds: ReadonlyMap<string, SqlLiteralKind> | undefined,
+  today: string,
+): string {
+  // A formula (#8) is read again here and written out by `formula.ts`; `computedColumnsOf`
+  // has already left out every formula that does not read, so this one does.
+  if (isFormulaColumn(one)) {
+    const read = parseFormula(one.formula!, columnKinds);
+    if (read.ok) return formulaSql(read.node, { dialect, today });
+  }
   const operand = (text: string): string =>
     isNumberOperand(text) ? decimalLiteral(Number(text)) : quoteIdent(text, dialect);
   const l = operand(one.left);

@@ -40,6 +40,12 @@
 //                   ClickHouse resolves an unqualified name in SELECT and
 //                   GROUP BY to a SELECT alias of the same name instead of
 //                   to the column (verified)
+//   daysBetweenExpr ANSI has no difference of two dates in days: each vendor
+//                   has its own function or subtraction (a formula's DAYS, #8)
+//   textExpr        a number as text: MySQL and MariaDB cast only to CHAR,
+//                   ClickHouse and Oracle have their own functions
+//   concatExpr      ANSI `||` joins texts, but MySQL and MariaDB read it as OR
+//                   and SQL Server has no such operator: they take CONCAT()
 //
 // Coverage: SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, ClickHouse, SQL Server,
 // Oracle, DB2. The `dbserver.type` string returned by /api/connections/database
@@ -218,6 +224,69 @@ export function decimalDivision(
 ): string {
   const asDecimal = dialect === "sqlite" ? "REAL" : "DECIMAL(31,4)";
   return `(CAST(${left} AS ${asDecimal}) / NULLIF(${right}, 0))`;
+}
+
+/**
+ * The whole days from one date to another, end minus start - a formula's
+ * `DAYS(start, end)` (#8). Both sides are date expressions already (`dateExpr`,
+ * a date literal), and a time of day does not count: from Monday 23:00 to
+ * Tuesday 01:00 is one day.
+ *
+ * Why not ANSI: ANSI has no date difference in days. DuckDB and ClickHouse take
+ * `date_diff`/`dateDiff`, MySQL and MariaDB `DATEDIFF(end, start)`, SQL Server
+ * `DATEDIFF(day, start, end)`, Db2 counts `DAYS()`, PostgreSQL and Oracle
+ * subtract two dates (Oracle after `TRUNC`, which drops the time), and SQLite
+ * subtracts Julian days.
+ */
+export function daysBetweenExpr(start: string, end: string, dialect: SqlDialect = DEFAULT_DIALECT): string {
+  switch (dialect) {
+    case "duckdb":     return `date_diff('day', CAST(${start} AS DATE), CAST(${end} AS DATE))`;
+    case "clickhouse": return `dateDiff('day', toDate(${start}), toDate(${end}))`;
+    case "mysql":
+    case "mariadb":    return `DATEDIFF(${end}, ${start})`;
+    case "sqlserver":  return `DATEDIFF(day, ${start}, ${end})`;
+    case "db2":        return `(DAYS(${end}) - DAYS(${start}))`;
+    case "oracle":     return `(TRUNC(${end}) - TRUNC(${start}))`;
+    case "sqlite":     return `CAST(julianday(${end}) - julianday(${start}) AS INTEGER)`;
+    default:           return `(CAST(${end} AS DATE) - CAST(${start} AS DATE))`;
+  }
+}
+
+/**
+ * A value read as text, so it can be joined to other text (`concatExpr`).
+ *
+ * Why not ANSI: `CAST(x AS VARCHAR(255))` is ANSI and runs on six of the nine,
+ * but MySQL and MariaDB cast only to `CHAR`, ClickHouse writes `toString`, and
+ * Oracle's `TO_CHAR` keeps a decimal's digits as they are.
+ */
+export function textExpr(value: string, dialect: SqlDialect = DEFAULT_DIALECT): string {
+  switch (dialect) {
+    case "mysql":
+    case "mariadb":    return `CAST(${value} AS CHAR)`;
+    case "clickhouse": return `toString(${value})`;
+    case "oracle":     return `TO_CHAR(${value})`;
+    case "sqlserver":  return `CAST(${value} AS NVARCHAR(4000))`;
+    default:           return `CAST(${value} AS VARCHAR(255))`;
+  }
+}
+
+/**
+ * Texts joined into one - a formula's `CONCAT(a, b, ...)` (#8). An empty part
+ * is joined as nothing, on every vendor alike: `COALESCE(part, '')`, so one
+ * missing value does not empty the whole text (it would with `||` on most).
+ *
+ * Why not ANSI: ANSI joins with `||`, which MySQL and MariaDB read as OR and
+ * SQL Server does not have; those three take `CONCAT()`, which Oracle and Db2
+ * limit to two values, so the other six keep `||`.
+ */
+export function concatExpr(parts: string[], dialect: SqlDialect = DEFAULT_DIALECT): string {
+  const safe = parts.map((p) => `COALESCE(${p}, '')`);
+  switch (dialect) {
+    case "mysql":
+    case "mariadb":
+    case "sqlserver":  return `CONCAT(${safe.join(", ")})`;
+    default:           return `(${safe.join(" || ")})`;
+  }
 }
 
 function sqliteBucket(c: string, b: TimeBucket): string {
