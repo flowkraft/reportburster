@@ -65,6 +65,12 @@
       "id": "dd-support-quality-low-code",
       "reportId": "g-dd-support-quality-low-code",
       "title": "Support Quality & Agents (low-code)"
+    },
+    {
+      "of": "dd-segment-vs-all",
+      "id": "dd-segment-vs-all-low-code",
+      "reportId": "g-dd-segment-vs-all-low-code",
+      "title": "Segment vs Everyone (low-code)"
     }
   ]
 }
