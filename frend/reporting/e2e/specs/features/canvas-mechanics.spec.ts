@@ -6903,10 +6903,12 @@ test('(canvas mechanics) M95 Duplicate a widget; duplicate, rename and search ca
   const saved = async (id: string): Promise<Saved> => (await page.request.get(`${api}/${id}`)).json();
   try {
     await withFreshCanvas(page, name, async (canvasId) => {
-      // A widget with settings of its own: its query and a title.
+      // A widget with settings of its own: its query and a title. Sorted, so the original and its copy
+      // answer in one order (a GROUP BY alone leaves the order to the database).
       const id = await eNewVisualWidget(page, 'orders');
       await addAggregation(page, 0, 'COUNT', 'order_id');
       await addGroupBy(page, 'channel');
+      await addVisualSort(page, 0, 'channel');
       await runVisualQuery(page);
       await switchToWidget(page, 'tabulator');
       await clickDisplayTab(page);
