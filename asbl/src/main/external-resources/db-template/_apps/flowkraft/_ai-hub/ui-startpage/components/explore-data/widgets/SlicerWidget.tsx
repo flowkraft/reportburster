@@ -224,9 +224,9 @@ export function SlicerWidget({ widgetId }: SlicerWidgetProps) {
     const el = slicerEl;
 
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { field: string; value: string };
+      const detail = (e as CustomEvent).detail as { field: string; value: string; multiSelect?: boolean };
       if (detail?.field && detail?.value !== undefined) {
-        toggleExploreSelection(detail.field, detail.value);
+        toggleExploreSelection(detail.field, detail.value, detail.multiSelect !== false);
       }
     };
 
