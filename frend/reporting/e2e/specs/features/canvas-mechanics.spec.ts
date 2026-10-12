@@ -7506,4 +7506,898 @@ test('(canvas mechanics) M101 A cube answer by clicks: dimensions and measures t
   });
 });
 
+/**
+ * The points a scatter draws, as Chart.js placed them on its two number axes (its own parsed x and y), each
+ * as `x|y` to the cent, sorted. A point Chart.js could not place (an x that is no number) is not drawn and
+ * not listed. Canvas: the locator is the chart itself (`widgetViz-<id>`); published: the chart's own box
+ * (`widgetChart-<cid>`), inside the chart's shadow root.
+ */
+async function cScatterPoints(chart: Locator): Promise<{ type: string; points: string[] } | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    if (!instance) return null;
+    const cents = (n: number) => Math.round(n * 100) / 100;
+    const points: string[] = [];
+    (instance.data.datasets ?? []).forEach((_: unknown, i: number) => {
+      const parsed: Array<{ x: number; y: number }> = instance.getDatasetMeta(i)?._parsed ?? [];
+      for (const p of parsed) {
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) points.push(`${cents(p.x)}|${cents(p.y)}`);
+      }
+    });
+    return { type: String(instance.config.type), points: points.sort() };
+  });
+}
+
+test('(canvas mechanics) M102 A scatter chart, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M102 Scatter', async (canvasId) => {
+      // One point per channel: its order total across, its shipping fees up. Summed in the seeded rows:
+      //   SELECT channel, SUM(total_amount), SUM(shipping_fee) FROM dash_demo.orders GROUP BY channel;
+      //   marketplace 10603243.77  770.61 | mobile_app 7039053.91  2480.79
+      //   sales_rep   12058675.58  297.49 | web        36379909.08 3196.67
+      const cents = (n: number) => Math.round(n * 100) / 100;
+      const sumOf = (channel: string, field: string) =>
+        pOrders.filter((r) => r.channel === channel).reduce((s, r) => s + Number(r[field]), 0);
+      const pointsOf = (x: string, y: string) =>
+        pChannels.map((c) => `${cents(sumOf(c, x))}|${cents(sumOf(c, y))}`).sort();
+      const totalAcross = pointsOf('total_amount', 'shipping_fee');
+      const shippingAcross = pointsOf('shipping_fee', 'total_amount');
+      expect(totalAcross.length, 'a point per channel').toBe(4);
+      const drawn = (want: string[]) => (s: { type: string; points: string[] } | null) =>
+        !!s && s.type === 'scatter' && JSON.stringify(s.points) === JSON.stringify(want);
+      // Both sums before the group, as M07 explains: the chart keeps the metrics of its first grouped answer.
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'SUM', 'total_amount');
+      await addAggregation(page, 1, 'SUM', 'shipping_fee');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'scatter');
+
+      // + X the order total, Y the shipping fees, picked in the chart's own pickers: one point per channel,
+      //   at its two sums.
+      await setChartAxes(page, { x: 'total_amount_sum', y: 'shipping_fee_sum' });
+      await page.locator('#btnDisplayTab').click();
+      await expect(page.locator('#btnChartType-scatter'), 'the chart is a scatter').toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('#selectChartXAxis-0')).toHaveValue('total_amount_sum');
+      await expect(page.locator('#selectChartYAxis-0')).toHaveValue('shipping_fee_sum');
+      await expect(page.locator('#selectChartYAxis-1'), 'one measure up').toHaveCount(0);
+      await expect.poll(async () => drawn(totalAcross)(await cScatterPoints(cViz(page, chart))),
+        { message: 'the Canvas draws each channel at (total, shipping)', timeout: 30_000, intervals: [1_000] }).toBe(true);
+
+      // - The pickers, not the order of the query, decide the axes: swapped, every point moves to
+      //   (shipping, total) and none is left where it was.
+      await setChartAxes(page, { x: 'shipping_fee_sum', y: 'total_amount_sum' });
+      await expect.poll(async () => drawn(shippingAcross)(await cScatterPoints(cViz(page, chart))),
+        { message: 'swapped, each channel is drawn at (shipping, total)', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      const swapped = await cScatterPoints(cViz(page, chart));
+      expect(swapped.points.filter((p) => totalAcross.includes(p)), 'no point is left at (total, shipping)').toEqual([]);
+
+      // + Published, the scatter as it was saved: the same four points.
+      let charts: string[] = [];
+      await expect.poll(async () => (charts = (await getCanvasComponentIds(page, canvasId)).chart ?? []).length,
+        { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const stored = await eStoredWidgets(page, canvasId, (w) => {
+        const dsl = w[0]?.displayConfig?.dslConfig ?? {};
+        return dsl.type === 'scatter' && dsl.data?.labelField === 'shipping_fee_sum'
+          && JSON.stringify((dsl.data?.datasets ?? []).map((d: { field?: string }) => d.field)) === '["total_amount_sum"]';
+      });
+      expect(stored[0].displayConfig.dslConfig.type, 'the canvas keeps the scatter').toBe('scatter');
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect.poll(async () => drawn(shippingAcross)(await cScatterPoints(page.locator(`[id="widgetChart-${charts[0]}"]`))),
+        { message: 'the published scatter draws each channel at (shipping, total)', timeout: 60_000, intervals: [1_000] }).toBe(true);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+/** One drawn cell of a highlighted column: the kind `rb-tabulator` marked it with ('' for none) and its colour. */
+interface THighlightCell { kind: string; rgba: number[] }
+
+/**
+ * Every row a table draws (the totals row left out), keyed by its channel: the highlight its `field` cell
+ * carries (`data-rb-highlight`, written by `shared/table-extras.ts`) and that cell's background as
+ * [r, g, b, a], read off the page as a reader's browser paints it.
+ */
+async function tHighlightCells(table: Locator, field: string): Promise<Record<string, THighlightCell>> {
+  const rows = await table.locator('.tabulator-row:not(.tabulator-calcs)').evaluateAll((els, f) => els.map((row) => {
+    const cell = row.querySelector(`.tabulator-cell[tabulator-field="${f}"]`) as HTMLElement | null;
+    const channel = (row.querySelector('.tabulator-cell[tabulator-field="channel"]') as HTMLElement | null)?.innerText.trim() ?? '';
+    const colour = cell ? getComputedStyle(cell).backgroundColor : '';
+    return { channel, kind: cell?.getAttribute('data-rb-highlight') ?? '', rgba: (colour.match(/[\d.]+/g) ?? []).map(Number) };
+  }), field);
+  const out: Record<string, THighlightCell> = {};
+  for (const r of rows) out[r.channel] = { kind: r.kind, rgba: r.rgba };
+  return out;
+}
+
+test('(canvas mechanics) M103 Table highlights: a colour scale, below a value in a chosen colour, and removed', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M103 Table highlights', async (canvasId) => {
+      // The orders and their total per channel, counted in the seeded rows:
+      //   SELECT channel, COUNT(order_id), SUM(total_amount) FROM dash_demo.orders GROUP BY channel;
+      //   marketplace 3723 10603243.77 | mobile_app 4932 7039053.91 | sales_rep 2176 12058675.58 | web 13169 36379909.08
+      const counts = pPerChannel();
+      const totals: Record<string, number> = {};
+      for (const r of pOrders) totals[r.channel] = (totals[r.channel] ?? 0) + Number(r.total_amount);
+      // A colour scale (`highlightStyle` in shared/table-extras.ts): blue (80, 158, 227), from alpha 0.08 at
+      // the smallest count (sales_rep) to 0.65 at the biggest (web), in proportion between.
+      const low = Math.min(...pChannels.map((c) => counts[c]));
+      const high = Math.max(...pChannels.map((c) => counts[c]));
+      const alphaOf = (c: string) => 0.08 + 0.57 * (counts[c] - low) / (high - low);
+      // "Below": a line just over the second smallest total (10603244), so two channels are under it.
+      const line = Math.ceil(pChannels.map((c) => totals[c]).sort((a, b) => a - b)[1]);
+      const under = pChannels.filter((c) => totals[c] < line);
+      expect(under.sort(), 'marketplace and mobile_app are under the line').toEqual(['marketplace', 'mobile_app']);
+      const rgbOf = (cell: THighlightCell | undefined) => (cell?.rgba ?? []).slice(0, 3).join(',');
+      const alpha = (cell: THighlightCell | undefined) => (cell?.rgba.length === 4 ? cell.rgba[3] : 1);
+      const scaled = (cells: Record<string, THighlightCell>) => pChannels.every((c) =>
+        cells[c]?.kind === 'scale' && rgbOf(cells[c]) === '80,158,227' && Math.abs(alpha(cells[c]) - alphaOf(c)) <= 0.011);
+      const belowIn = (rgb: string) => (cells: Record<string, THighlightCell>) => pChannels.every((c) => (under.includes(c)
+        ? cells[c]?.kind === 'below' && rgbOf(cells[c]) === rgb && Math.abs(alpha(cells[c]) - 0.25) <= 0.011
+        : cells[c]?.kind === ''));
+      const unmarked = (cells: Record<string, THighlightCell>) =>
+        pChannels.every((c) => cells[c] !== undefined && cells[c].kind === '');
+
+      const table = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addAggregation(page, 1, 'SUM', 'total_amount');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+      await pWaitRows(page, table, (rows) => rows.length === pChannels.length, 'a row per channel');
+      const canvasTable = page.locator(`[id="widgetViz-${table}"]`);
+      await page.locator('#btnDisplayTab').click();
+      // - nothing is coloured before a highlight is picked.
+      await expect.poll(async () => unmarked(await tHighlightCells(canvasTable, 'order_id_count')),
+        { message: 'no highlight yet', timeout: 30_000, intervals: [1_000] }).toBe(true);
+
+      // + a colour scale on the counts: every count coloured, the bigger the count the stronger the blue.
+      await page.locator('#selectTableHighlightField').selectOption('order_id_count');
+      await page.locator('#selectTableHighlightKind').selectOption('scale');
+      await expect(page.locator('[id="tableHighlight-order_id_count"]')).toContainText('order_id_count: scale');
+      await expect.poll(async () => scaled(await tHighlightCells(canvasTable, 'order_id_count')),
+        { message: 'the Canvas colours each count by its size', timeout: 30_000, intervals: [1_000] }).toBe(true);
+
+      // + "below" on the totals: only the two channels under the line, red until another colour is picked.
+      await page.locator('#selectTableHighlightField').selectOption('total_amount_sum');
+      await page.locator('#selectTableHighlightKind').selectOption('below');
+      await page.locator('#inputTableHighlightValue').fill(String(line));
+      await expect(page.locator('[id="tableHighlight-total_amount_sum"]')).toContainText(`total_amount_sum: below ${line}`);
+      await expect.poll(async () => belowIn('220,38,38')(await tHighlightCells(canvasTable, 'total_amount_sum')),
+        { message: 'the totals under the line, in red', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await page.locator('#selectTableHighlightColor').selectOption('green');
+      await expect.poll(async () => belowIn('22,163,74')(await tHighlightCells(canvasTable, 'total_amount_sum')),
+        { message: 'the same two totals, now in green', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      // - the scale on the counts is untouched by the second rule.
+      expect(scaled(await tHighlightCells(canvasTable, 'order_id_count')), 'the counts keep their scale').toBe(true);
+
+      // The two rules, as the canvas stores them.
+      const both = [
+        { field: 'order_id_count', kind: 'scale' },
+        { field: 'total_amount_sum', kind: 'below', value: line, color: 'green' },
+      ];
+      const stored = await eStoredWidgets(page, canvasId,
+        (w) => JSON.stringify(w[0]?.displayConfig?.dslConfig?.rbHighlights ?? []).includes('"green"'));
+      expect(stored[0].displayConfig.dslConfig.rbHighlights, 'the stored rules').toEqual(both);
+
+      // + Published: the same scale and the same two green totals.
+      let tables: string[] = [];
+      await expect.poll(async () => (tables = (await getCanvasComponentIds(page, canvasId)).tabulator ?? []).length,
+        { message: 'the saved canvas names the table', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pub = page.locator(`[component-id="${tables[0]}"]`);
+      await pWaitCells(page, tables[0], (cells) => cells.length === pChannels.length, 'the published rows');
+      await expect.poll(async () => scaled(await tHighlightCells(pub, 'order_id_count')),
+        { message: 'the published counts carry the scale', timeout: 60_000, intervals: [1_000] }).toBe(true);
+      await expect.poll(async () => belowIn('22,163,74')(await tHighlightCells(pub, 'total_amount_sum')),
+        { message: 'the published totals under the line, in green', timeout: 60_000, intervals: [1_000] }).toBe(true);
+
+      // - Removed: the scale goes from the Canvas and from the stored rules, the other rule stays.
+      await fReopenCanvas(page, canvasId, table);
+      await fSelectWidget(page, table);
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('[id="btnRemoveTableHighlight-order_id_count"]').click();
+      await expect(page.locator('[id="tableHighlight-order_id_count"]'), 'the scale is no longer listed').toHaveCount(0);
+      await expect.poll(async () => unmarked(await tHighlightCells(canvasTable, 'order_id_count')),
+        { message: 'no count is coloured any more', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await expect.poll(async () => belowIn('22,163,74')(await tHighlightCells(canvasTable, 'total_amount_sum')),
+        { message: 'the green totals stay', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      let left = await eStoredWidgets(page, canvasId, (w) => (w[0]?.displayConfig?.dslConfig?.rbHighlights ?? []).length === 1);
+      expect(left[0].displayConfig.dslConfig.rbHighlights, 'only the totals rule is stored').toEqual([both[1]]);
+
+      // - and the last one: nothing coloured, and no rules stored at all.
+      await page.locator('[id="btnRemoveTableHighlight-total_amount_sum"]').click();
+      await expect.poll(async () => unmarked(await tHighlightCells(canvasTable, 'total_amount_sum')),
+        { message: 'no total is coloured any more', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      left = await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.rbHighlights === undefined);
+      expect(left[0].displayConfig.dslConfig.rbHighlights, 'the rules are gone from the canvas').toBeUndefined();
+
+      // - Published again, the dashboard colours nothing either; its rows are all still there.
+      const again = await publishDashboard(page);
+      expect(again.reportId, 'publishing again keeps the report').toBe(reportId);
+      await openPublished(page, reportId);
+      await pWaitCells(page, tables[0], (cells) => cells.length === pChannels.length, 'the republished rows');
+      await expect.poll(async () => {
+        const counted = await tHighlightCells(pub, 'order_id_count');
+        const summed = await tHighlightCells(pub, 'total_amount_sum');
+        return unmarked(counted) && unmarked(summed);
+      }, { message: 'the republished table colours nothing', timeout: 60_000, intervals: [1_000] }).toBe(true);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M104 A number tile shows the value field the author picks', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M104 Number value field', async (canvasId) => {
+      // One answer, two measures, counted in the seeded rows:
+      //   SELECT COUNT(order_id) AS order_id_count, SUM(qty) AS qty_sum FROM dash_demo.order_lines;  -> 59996, 140435
+      const lines = frozenRows('order_lines');
+      const lineCount = lines.filter((r) => r.order_id !== '').length;
+      const units = lines.reduce((s, r) => s + Number(r.qty || 0), 0);
+      expect(units, 'the two measures differ, so the tile can only show one of them').not.toBe(lineCount);
+      const shown = (n: number) => n.toLocaleString('en-US');
+
+      const tile = await eNewVisualWidget(page, 'order_lines');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addAggregation(page, 1, 'SUM', 'qty');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await clickDisplayTab(page);
+      // A plain number, so what the tile writes is the value itself.
+      await page.locator('#selectNumberFormat').selectOption('number');
+      // As it comes: the first measure of the answer.
+      await expect(page.locator(`#widgetViz-${tile}`), 'before a pick the tile shows the first measure')
+        .toHaveText(shown(lineCount), { timeout: 30_000 });
+
+      // + the second measure picked as the value field: the tile shows the units, not the line count.
+      await page.locator('#selectNumberField').selectOption('qty_sum');
+      await expect(page.locator(`#widgetViz-${tile}`), 'the Canvas shows the units')
+        .toHaveText(shown(units), { timeout: 30_000 });
+
+      // - picked back, the first measure shows again.
+      await page.locator('#selectNumberField').selectOption('order_id_count');
+      await expect(page.locator(`#widgetViz-${tile}`), 'picked back, the line count again')
+        .toHaveText(shown(lineCount), { timeout: 30_000 });
+
+      // + the units once more, stored, and published.
+      await page.locator('#selectNumberField').selectOption('qty_sum');
+      await expect(page.locator(`#widgetViz-${tile}`)).toHaveText(shown(units), { timeout: 30_000 });
+      const stored = await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.numberField === 'qty_sum');
+      expect(stored[0].displayConfig.numberField, 'the canvas keeps the pick').toBe('qty_sum');
+      let numbers: string[] = [];
+      await expect.poll(async () => (numbers = (await getCanvasComponentIds(page, canvasId)).number ?? []).length,
+        { message: 'the saved canvas names the tile', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await pPublishedNumberIs(page, numbers[0], units, 'the published tile shows the units, not the line count');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+/**
+ * The regions a map coloured with data (`rb-map` draws a region that has a row at fill opacity 0.85, one
+ * without at 0.35), each with the number its tooltip gives, keyed by the region's name in the GeoJSON.
+ * Read off the Leaflet map `rb-map` hands out (`getMapInstance`). Canvas: the locator is the map itself
+ * (`widgetViz-<id>`); published: the map's own box (`widgetMap-<cid>`), inside the `rb-map` element.
+ */
+async function mColouredRegions(map: Locator): Promise<Record<string, number> | null> {
+  if ((await map.count()) === 0) return null;
+  return map.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const leaflet = ((el.closest('rb-map') ?? el) as any).getMapInstance?.();
+    if (!leaflet) return null;
+    const out: Record<string, number> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    leaflet.eachLayer((layer: any) => {
+      if (!layer.feature || layer.options?.fillOpacity !== 0.85) return;
+      const props = layer.feature.properties ?? {};
+      const name = String(props.name ?? props.NAME ?? props.ADMIN ?? layer.feature.id ?? '');
+      const tip = String(layer.getTooltip?.()?.getContent?.() ?? '');
+      const value = tip.match(/:\s*([\d.,]+)\s*$/);
+      out[name] = value ? Number(value[1].replace(/,/g, '')) : NaN;
+    });
+    return out;
+  });
+}
+
+test('(canvas mechanics) M105 A map of US states', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M105 US states map', async (canvasId) => {
+      // dash_demo has no US state column (its places are country codes, and geo_cities.region is
+      // APAC / EMEA / LATAM / NA). The same shipped DuckDB connection carries Northwind Company at scale S
+      // (schema northwind_co_s, loaded by AcademyDatasetsSeeder and checked against its checksums), whose
+      // orders to the USA name their state in two letters, and to Canada their province:
+      //   SELECT ShipRegion, COUNT(*) FROM northwind_co_s.Orders
+      //   WHERE ShipCountry IN ('USA', 'Canada') GROUP BY ShipRegion ORDER BY ShipRegion;
+      //   -> BC 117 | MA 62 | OR 904 | QC 302 | WA 236
+      const STATES: Record<string, number> = { Massachusetts: 62, Oregon: 904, Washington: 236 };
+      const US_SHAPES = 52; // public/geojson/us-states.geojson: the 50 states, DC and Puerto Rico
+      const SQL = 'SELECT ShipRegion AS state, COUNT(*) AS orders FROM northwind_co_s.Orders\n'
+        + "WHERE ShipCountry IN ('USA', 'Canada') GROUP BY ShipRegion ORDER BY ShipRegion";
+      // Compared as sorted [name, number] pairs, whatever order the GeoJSON lists its regions in.
+      const canonical = (o: Record<string, number> | null) =>
+        (o ? JSON.stringify(Object.keys(o).sort().map((name) => [name, o[name]])) : 'no map yet');
+      const coloured = async (map: Locator) => canonical(await mColouredRegions(map));
+
+      await addTableToCanvas(page, 'dash_demo.orders');
+      const mapId = await getLastWidgetId(page);
+      await runSqlQuery(page, SQL);
+      await expect(dRowCount(page), 'two provinces and three states').toContainText('5 rows returned', { timeout: 30_000 });
+      await switchToWidget(page, 'map');
+
+      // + Region "US states": the map is the 52 US shapes, and the three states the orders went to are
+      //   coloured, each with its count; the two Canadian provinces colour nothing.
+      await setMapConfig(page, { type: 'region', region: 'us_states', dimension: 'state', metric: 'orders' });
+      await expect.poll(() => eMapShapes(page, mapId), { message: 'the US map, state by state', timeout: 60_000, intervals: [1_000] })
+        .toBe(US_SHAPES);
+      await expect.poll(() => coloured(page.locator(`[id="widgetViz-${mapId}"]`)),
+        { message: 'MA, OR and WA coloured with their orders', timeout: 60_000, intervals: [1_000] })
+        .toBe(canonical(STATES));
+
+      // - Region "World countries": the same answer draws the world, and no US state is among what it colours.
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#selectMapRegion').selectOption('world_countries');
+      await expect.poll(() => eMapShapes(page, mapId), { message: 'the world map', timeout: 60_000, intervals: [1_000] })
+        .toBeGreaterThan(US_SHAPES);
+      const asCountries = await mColouredRegions(page.locator(`[id="widgetViz-${mapId}"]`));
+      expect(Object.keys(asCountries ?? {}).filter((name) => name in STATES), 'no US state on a world map').toEqual([]);
+      await page.locator('#selectMapRegion').selectOption('us_states');
+      await expect.poll(() => eMapShapes(page, mapId), { timeout: 60_000, intervals: [1_000] }).toBe(US_SHAPES);
+
+      // The region, the location and the metric, as the canvas stores them.
+      const stored = await eStoredWidgets(page, canvasId,
+        (w) => w[0]?.type === 'map' && w[0]?.displayConfig?.region === 'us_states' && w[0]?.displayConfig?.metric === 'orders');
+      expect(stored[0].displayConfig).toMatchObject({ mapType: 'region', region: 'us_states', dimension: 'state', metric: 'orders' });
+
+      // + Published: the same US map, the same three states with the same numbers.
+      let maps: string[] = [];
+      await expect.poll(async () => (maps = (await getCanvasComponentIds(page, canvasId)).map ?? []).length,
+        { message: 'the saved canvas names the map', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubMap = page.locator(`[id="widgetMap-${maps[0]}"]`);
+      await expect.poll(() => eMapShapes(page, maps[0]), { message: 'published, the US map', timeout: 60_000, intervals: [1_000] })
+        .toBe(US_SHAPES);
+      await expect.poll(() => coloured(pubMap),
+        { message: 'published, MA, OR and WA coloured with their orders', timeout: 60_000, intervals: [1_000] })
+        .toBe(canonical(STATES));
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M106 A filter pane picking one value at a time, with its label, order, counts and a cap on its values', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+
+  // The truths, counted in the frozen rows the seed loads (`pOrders`), never typed in. With the data
+  // seeded for 2026-09-30 they are:
+  //   SELECT channel, COUNT(*) FROM dash_demo.orders GROUP BY channel ORDER BY 2 DESC
+  //     -> web 13169, mobile_app 4932, marketplace 3723, sales_rep 2176   (24000 in all)
+  const perChannel: Record<string, number> = Object.fromEntries(
+    pChannels.map((c) => [c, pCount((r) => r.channel === c)]));
+  // "Alphabetical ↑" is the channels as text: marketplace, mobile_app, sales_rep, web.
+  const alphabetical = [...pChannels].sort((a, b) => a.localeCompare(b));
+  // "Count (most first)": web, mobile_app, marketplace, sales_rep.
+  const byCount = [...pChannels].sort((a, b) => perChannel[b] - perChannel[a]);
+  // The values a slicer draws, in the order it draws them, read off their own ids (`slicerValue-<slicer>-<value>`).
+  const drawn = async (slicer: string): Promise<string[]> =>
+    page.locator(`[id^="slicerValue-${slicer}-"]`).evaluateAll(
+      (els, prefix) => els.map((el) => el.id.slice(prefix.length)), `slicerValue-${slicer}-`);
+  // The count a value carries next to it: the digits of its button (a channel's name has none).
+  const countOf = async (slicer: string, value: string): Promise<string> => bDigits(await pValue(page, slicer, value).innerText());
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M106 Single-pick slicer', async (canvasId) => {
+      // A KPI of the orders, then a slicer on their channel: the slicer is the widget the panel shows.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+      const slicer = await addSlicer(page, 'orders', 'channel');
+      const box = page.locator(`[id="slicer-${slicer}"]`);
+      const footer = page.locator(`[id="slicerCount-${slicer}"]`);
+      await expect(pValue(page, slicer, 'web'), 'the slicer lists the channels').toBeVisible({ timeout: 30_000 });
+
+      // ── The label ─────────────────────────────────────────────────────────
+      // − with no label typed the slicer is headed by its field.
+      await expect(box, 'no label yet: no custom heading').not.toContainText('Sales channel');
+      // + the label typed is the slicer's heading.
+      await page.locator('#inputSlicerLabel').fill('Sales channel');
+      await expect(box, 'the slicer is headed by the label typed').toContainText('Sales channel', { timeout: 15_000 });
+
+      // ── The cap on its values, and the footer that counts them ────────────
+      await expect(footer, 'the footer counts every channel').toHaveText(`${pChannels.length} values`);
+      await page.locator('#selectSlicerSort').selectOption('asc');
+      await page.locator('#inputSlicerMaxValues').fill('2');
+      // + a cap of 2 keeps the first two in the slicer's own order, and the footer says 2.
+      await expect(footer, 'the footer counts what the cap leaves').toHaveText('2 values', { timeout: 15_000 });
+      await expect.poll(async () => drawn(slicer), { message: 'the first two channels as text', timeout: 15_000 })
+        .toEqual(alphabetical.slice(0, 2));
+      // − what the cap cut is not on the list at all (not greyed: gone).
+      for (const cut of alphabetical.slice(2)) {
+        await expect(pValue(page, slicer, cut), `${cut} is past the cap`).toHaveCount(0);
+      }
+
+      // ── One value at a time ───────────────────────────────────────────────
+      const [first, second] = alphabetical.slice(0, 2); // marketplace, mobile_app
+      await page.locator('#chkSlicerMultiSelect').uncheck();
+      await pClick(page, slicer, first);
+      await g4ScalarIs(page, kpi, perChannel[first], `the KPI counts the ${first} orders`);
+      // + a second pick REPLACES the first: the KPI is the second value's orders alone, not the two summed.
+      await pClick(page, slicer, second);
+      await g4ScalarIs(page, kpi, perChannel[second], `a second pick replaces the first: the ${second} orders alone`);
+      await expect(page.locator(`[id="btnRemoveSelection-channel-${second}"]`), 'one chip, for the value on').toBeVisible();
+      await expect(page.locator(`[id="btnRemoveSelection-channel-${first}"]`), 'the first pick is gone').toHaveCount(0);
+      await expect(pValue(page, slicer, first), 'and is no longer shown as picked').not.toHaveAttribute('data-state', 'selected');
+      // − picking the value that is on drops it, so the reader can always get back to no filter.
+      await pClick(page, slicer, second);
+      await g4ScalarIs(page, kpi, pOrders.length, 'the same value again: every order');
+      await expect(page.locator('#selectionBar'), 'nothing is picked').toHaveCount(0);
+
+      // ── Sorted by count, with the counts shown ────────────────────────────
+      await page.locator('#inputSlicerMaxValues').fill('1000');
+      await expect(footer, 'the cap lifted: every channel').toHaveText(`${pChannels.length} values`, { timeout: 15_000 });
+      // − counts are off by default: a value is its name alone.
+      expect(await countOf(slicer, 'web'), 'no count while the box is unticked').toBe('');
+      await page.locator('#selectSlicerSort').selectOption('count_desc');
+      await page.locator('#chkSlicerShowCount').check();
+      // + the most orders first: web, mobile_app, marketplace, sales_rep.
+      await expect.poll(async () => drawn(slicer), { message: 'the channels with the most orders first', timeout: 15_000 })
+        .toEqual(byCount);
+      // + each value carries its own number of orders.
+      for (const channel of pChannels) {
+        await expect.poll(async () => countOf(slicer, channel), { message: `${channel} shows its orders`, timeout: 15_000 })
+          .toBe(String(perChannel[channel]));
+      }
+      // + the cap now cuts by count: the three biggest channels stay.
+      await page.locator('#inputSlicerMaxValues').fill('3');
+      await expect(footer).toHaveText('3 values', { timeout: 15_000 });
+      await expect.poll(async () => drawn(slicer), { message: 'the three biggest channels', timeout: 15_000 })
+        .toEqual(byCount.slice(0, 3));
+
+      // The saved slicer says all of it, the way the published one will read it.
+      await expect.poll(async () => {
+        const saved = (await getCanvasComponentIds(page, canvasId))['slicer'] ?? [];
+        return saved.join(',');
+      }, { message: 'the saved canvas names the slicer after its field', timeout: 30_000, intervals: [1_000] })
+        .toMatch(/^slicer_channel_[^,]+$/);
+      const ids = await getCanvasComponentIds(page, canvasId);
+      const pubKpi = ids.number[0];
+      const pubSlicer = ids['slicer'][0];
+
+      // ── The same slicer, published ────────────────────────────────────────
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pubBox = page.locator(`[id="slicer-${pubSlicer}"]`);
+      await expect(pValue(page, pubSlicer, 'mobile_app'), 'the published slicer lists its values')
+        .toBeVisible({ timeout: 60_000 });
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
+
+      // + its label and its cap.
+      await expect(pubBox, 'the published slicer has the label').toContainText('Sales channel');
+      await expect(page.locator(`[id="slicerCount-${pubSlicer}"]`), 'and the cap of 3').toHaveText('3 values');
+
+      // + one value at a time here too: the second pick replaces the first. (mobile_app and marketplace
+      //   are among the three biggest channels, so both are on the list.)
+      await pClick(page, pubSlicer, 'mobile_app');
+      await pPublishedNumberIs(page, pubKpi, perChannel.mobile_app, 'the published KPI counts the mobile_app orders');
+      await pClick(page, pubSlicer, 'marketplace');
+      await pPublishedNumberIs(page, pubKpi, perChannel.marketplace, 'a second pick replaces the first');
+      await expect(page.locator('[id="btnRemoveSelection-channel-marketplace"]'), 'one chip, for the value on').toBeVisible();
+      await expect(page.locator('[id="btnRemoveSelection-channel-mobile_app"]'), 'the first pick is gone').toHaveCount(0);
+      // − and the value that is on, picked again, drops it.
+      await pClick(page, pubSlicer, 'marketplace');
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'every order again');
+      await expect(page.locator('#selectionBar'), 'nothing is picked').toHaveCount(0);
+
+      // + the order and the counts, as on the canvas.
+      await expect.poll(async () => drawn(pubSlicer), { message: 'the published slicer: most orders first', timeout: 30_000 })
+        .toEqual(byCount.slice(0, 3));
+      for (const channel of byCount.slice(0, 3)) {
+        await expect.poll(async () => countOf(pubSlicer, channel), { message: `published, ${channel} shows its orders`, timeout: 30_000 })
+          .toBe(String(perChannel[channel]));
+      }
+      // − the channel the cap cut is not on the published list either.
+      await expect(pValue(page, pubSlicer, byCount[3]), `${byCount[3]} is past the cap`).toHaveCount(0);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M107 A filter pane\'s search box, height and code view', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+  // The truths, counted in the frozen rows the seed loads (`pOrders`), never typed in:
+  //   SELECT COUNT(DISTINCT country_code) FROM dash_demo.orders                        -> 18
+  //   SELECT DISTINCT country_code FROM dash_demo.orders WHERE lower(country_code) LIKE '%e%'
+  //                                                                                   -> DE, ES, IE, SE
+  //   SELECT COUNT(*) FROM dash_demo.orders WHERE device = 'tablet'                     -> 2392
+  const countries = [...new Set(pOrders.map((r) => r.country_code))].filter((c) => c !== '').sort();
+  const withE = countries.filter((c) => c.toLowerCase().includes('e'));
+  const tablets = pCount((r) => r.device === 'tablet');
+  expect(countries.length, 'more countries than the 10 a search box comes with by itself').toBeGreaterThan(10);
+  expect(withE.length, 'some, not all, countries have an e').toBeGreaterThan(0);
+  expect(withE.length).toBeLessThan(countries.length);
+
+  /** The values a slicer draws, read off their own ids (`slicerValue-<slicer>-<value>`), sorted. */
+  const drawn = async (slicer: string): Promise<string[]> =>
+    (await page.locator(`[id^="slicerValue-${slicer}-"]`).evaluateAll(
+      (els, prefix) => els.map((el) => el.id.slice(prefix.length)), `slicerValue-${slicer}-`)).sort();
+  /** How tall the slicer's value list is drawn, and how tall its values would be uncut. */
+  const listHeight = async (slicer: string): Promise<{ height: number; content: number }> =>
+    page.locator(`[id="slicer-${slicer}"]`).evaluate((el) => {
+      const list = el.querySelector('.slicer-list') as HTMLElement | null;
+      return list
+        ? { height: Math.round(list.getBoundingClientRect().height), content: list.scrollHeight }
+        : { height: -1, content: -1 };
+    });
+
+  await withFreshCanvas(page, 'E2E mech M107 Slicer search height DSL', async (canvasId) => {
+    const kpi = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'number');
+    await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+
+    const slicer = await addSlicer(page, 'orders', 'country_code');
+    const search = page.locator(`[id="slicerSearch-${slicer}"]`);
+    await expect(pValue(page, slicer, 'DE'), 'the slicer lists the countries').toBeVisible({ timeout: 30_000 });
+    await expect(page.locator(`[id="slicerCount-${slicer}"]`), 'every country, counted')
+      .toHaveText(`${countries.length} values`);
+
+    // ── The search box ────────────────────────────────────────────────────
+    // + "Auto" (the default) gives a long list its search box by itself.
+    await expect(search, 'auto: more than 10 values come with a search box').toBeVisible();
+    // − "Always off" takes it away, however long the list.
+    await page.locator('#selectSlicerSearch').selectOption('off');
+    await expect(search, 'off: no search box').toHaveCount(0, { timeout: 15_000 });
+    // + "Always on" brings it back, and what is typed narrows the list to the values that hold it.
+    await page.locator('#selectSlicerSearch').selectOption('on');
+    await expect(search, 'on: the search box').toBeVisible({ timeout: 15_000 });
+    await search.fill('e');
+    await expect.poll(async () => drawn(slicer), { message: 'only the countries with an e', timeout: 15_000 })
+      .toEqual(withE);
+    await expect(pValue(page, slicer, 'US'), 'a country without one is not listed').toHaveCount(0);
+    await expect(page.locator(`[id="slicerCount-${slicer}"]`), 'the search narrows the view, not the values')
+      .toHaveText(`${countries.length} values`);
+    // − an emptied box shows every value again.
+    await search.fill('');
+    await expect.poll(async () => drawn(slicer), { message: 'every country again', timeout: 15_000 })
+      .toEqual(countries);
+
+    // ── The height ────────────────────────────────────────────────────────
+    // + "Auto" grows with the values up to 300 px: 18 countries are taller, so the list stops at 300.
+    await expect.poll(async () => (await listHeight(slicer)).height, { message: 'auto: the list stops at 300 px', timeout: 15_000 })
+      .toBe(300);
+    expect((await listHeight(slicer)).content, 'the values are taller than the list').toBeGreaterThan(300);
+    // + "Fixed" gives the list the height in the box next to it, 240 px until it is changed.
+    await page.locator('#btnSlicerHeightFixed').click();
+    await expect.poll(async () => (await listHeight(slicer)).height, { message: 'fixed: 240 px', timeout: 15_000 })
+      .toBe(240);
+    await expect.poll(async () => (await cStoredWidget(page, canvasId, slicer))?.displayConfig?.dslConfig?.height,
+      { message: 'the canvas keeps the fixed height', timeout: 30_000, intervals: [1_000] }).toBe('240px');
+    // − back to "Auto": the fixed height goes with it.
+    await page.locator('#btnSlicerHeightAuto').click();
+    await expect.poll(async () => (await listHeight(slicer)).height, { message: 'auto again: 300 px', timeout: 15_000 })
+      .toBe(300);
+
+    // ── The code view ─────────────────────────────────────────────────────
+    // + the slicer's settings, written as code: its field among them.
+    await openDslEditor(page);
+    await expect(page.locator('#dslEditorInput'), 'the code names the field')
+      .toContainText("field 'country_code'", { timeout: 15_000 });
+    // + the code is the setting: written by hand, it gives the slicer another field and a label.
+    await page.locator('#dslEditorInput').click();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.insertText("slicer {\n  field 'device'\n  label 'Device'\n}\n");
+    await page.waitForTimeout(3_000);
+    await expect(page.locator('#selectSlicerField'), 'the field picker follows the code').toHaveValue('device', { timeout: 15_000 });
+    await expect(page.locator('#inputSlicerLabel'), 'and so does the label box').toHaveValue('Device');
+    await expect(page.locator(`[id="slicer-${slicer}"]`), 'the slicer is headed by the new label')
+      .toContainText('Device', { timeout: 15_000 });
+    await expect.poll(async () => drawn(slicer), { message: 'the slicer lists the devices now', timeout: 30_000 })
+      .toEqual(pDevices);
+    await expect(pValue(page, slicer, 'DE'), 'and no country any more').toHaveCount(0);
+    // − what the code no longer says is back to its default: three devices are too few for a search box.
+    await expect(search, 'no search box for three values').toHaveCount(0);
+    // + and the new field filters: a tablet pick counts the tablet orders.
+    await pClick(page, slicer, 'tablet');
+    await g4ScalarIs(page, kpi, tablets, 'the KPI counts the orders made on a tablet');
+    await expect(page.locator('[id="btnRemoveSelection-device-tablet"]'), 'the chip names the new field').toBeVisible();
+    await pClick(page, slicer, 'tablet');
+    await g4ScalarIs(page, kpi, pOrders.length, 'dropped again: every order');
+  });
+});
+
+/**
+ * Click the region a country code names on a map (`widgetMap-<id>`: the widget id on the Canvas, the
+ * component id published - the same box either way).
+ *
+ * `rb-map` draws its regions on one canvas (`preferCanvas`), so there is no element per country to
+ * find by id. The map itself is asked where that country's shape is (its feature carries the code,
+ * under one of the keys `rb-map` reads a world map by), and the mouse is clicked in the middle of
+ * it, the way pClickBar clicks a bar. Polled, because a published tile is replaced by a copy of itself
+ * whenever the selections change, and the copy draws its map again from scratch.
+ */
+async function m108ClickRegion(page: Page, mapId: string, code: string): Promise<void> {
+  const box = () => page.locator(`[id="widgetMap-${mapId}"]`);
+  let at: { x: number; y: number } | null = null;
+  await expect
+    .poll(async () => {
+      if ((await box().count()) === 0) return false;
+      await box().scrollIntoViewIfNeeded().catch(() => {});
+      at = await box().evaluate((el, wanted) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const map = ((el.closest('rb-map') ?? el) as any).getMapInstance?.();
+        if (!map) return null;
+        const keys = ['ISO3166-1-Alpha-2', 'ISO_A2', 'iso_a2', 'ISO2', 'A2'];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let region: any = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        map.eachLayer((layer: any) => {
+          const feature = layer.feature;
+          if (region || !feature || typeof layer.getBounds !== 'function') return;
+          const names = [feature.id, ...keys.map((k) => feature.properties?.[k])]
+            .map((v) => String(v ?? '').toUpperCase());
+          if (names.includes(wanted)) region = layer;
+        });
+        if (!region) return null;
+        const point = map.latLngToContainerPoint(region.getBounds().getCenter());
+        const rect = map.getContainer().getBoundingClientRect();
+        if (point.x < 0 || point.y < 0 || point.x > rect.width || point.y > rect.height) return null;
+        return { x: rect.x + point.x, y: rect.y + point.y };
+      }, code);
+      return at !== null;
+    }, { message: `the map draws ${code}`, timeout: 60_000, intervals: [1_000] })
+    .toBe(true);
+  await page.mouse.click(at!.x, at!.y);
+  await page.waitForTimeout(500);
+}
+
+// Indented like its neighbours M56-M97 (at the describe's own level, column 0).
+
+test('(canvas mechanics) M108 A table row and a map region filter the dashboard, and one chip is taken off', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+
+  // The truths, counted in the frozen rows the seed loads (`pOrders`), never typed in:
+  //   SELECT COUNT(*) FROM dash_demo.orders WHERE channel = 'web'                        -> 13169
+  //   SELECT COUNT(*) FROM dash_demo.orders WHERE country_code = 'BR'                    -> 987
+  //   SELECT COUNT(*) FROM dash_demo.orders WHERE channel = 'web' AND country_code = 'BR' -> 542
+  //   SELECT channel, COUNT(*) FROM dash_demo.orders WHERE country_code = 'BR' GROUP BY 1
+  //     -> marketplace 140, mobile_app 196, sales_rep 109, web 542
+  // Brazil, because its shape is large and its middle is inside it, so a click there lands on it.
+  const COUNTRY = 'BR';
+  const web = (r: Record<string, string>) => r.channel === 'web';
+  const inCountry = (r: Record<string, string>) => r.country_code === COUNTRY;
+  const webCount = pCount(web);
+  const countryCount = pCount(inCountry);
+  const bothCount = pCount((r) => web(r) && inCountry(r));
+  const countryPerChannel: Record<string, number> = {};
+  for (const r of pOrders) if (inCountry(r)) countryPerChannel[r.channel] = (countryPerChannel[r.channel] ?? 0) + 1;
+  expect(bothCount, 'web orders were shipped to the country').toBeGreaterThan(0);
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M108 Table and map clicks', async (canvasId) => {
+      // A KPI to be filtered; a table of the orders per channel and a map of them per country, both
+      // built in the Visual tab on the same table, so a click on either reaches the other and the KPI.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      await g4ScalarIs(page, kpi, pOrders.length, 'the KPI counts every order');
+
+      const table = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+      await pWaitRows(page, table, (rows) => rows.length === pChannels.length, 'a row per channel');
+      await setClicksFilter(page, 'table', true);
+
+      const map = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'country_code');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'map');
+      await setMapConfig(page, {
+        type: 'region', region: 'world_countries', dimension: 'country_code', metric: 'order_id_count',
+      });
+      await expect.poll(() => eMapShapes(page, map), { message: 'the map draws its countries', timeout: 60_000, intervals: [1_000] })
+        .toBeGreaterThan(0);
+
+      // − a map whose box is unticked selects nothing when a country is clicked.
+      await m108ClickRegion(page, map, COUNTRY);
+      await expect(page.locator('#selectionBar'), 'an unticked map selects nothing').toHaveCount(0);
+      await g4ScalarIs(page, kpi, pOrders.length, 'and the KPI still counts every order');
+      await setClicksFilter(page, 'map', true);
+
+      // + a click on the table's web row selects web: the KPI counts the web orders.
+      const canvasCell = page.locator(`[id^="tabCell-${table}-"][id$="-channel"]`, { hasText: /^\s*web\s*$/ }).first();
+      await expect(canvasCell, 'the table draws a web row').toBeVisible({ timeout: 30_000 });
+      await canvasCell.click();
+      await g4ScalarIs(page, kpi, webCount, 'a table row: the web orders');
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'a chip for the row clicked').toBeVisible();
+      // − the table is not filtered by its own clicks: every channel is still there to click.
+      await pWaitRows(page, table, (rows) => rows.length === pChannels.length, 'the clicked table keeps every channel');
+
+      // + a click on the country ANDs with the row: the web orders of that country.
+      await m108ClickRegion(page, map, COUNTRY);
+      await g4ScalarIs(page, kpi, bothCount, `a region too: the web orders of ${COUNTRY}`);
+      await expect(page.locator(`[id="btnRemoveSelection-country_code-${COUNTRY}"]`), 'a chip for the country').toBeVisible();
+      // + and the table answers for that country, channel by channel.
+      await pWaitRows(page, table,
+        (rows) => rows.length === Object.keys(countryPerChannel).length
+          && rows.every((r) => Number(r.order_id_count) === countryPerChannel[String(r.channel)]),
+        `the table counts the orders of ${COUNTRY} per channel`);
+
+      // + one chip taken off drops that selection alone: the country's orders, every channel.
+      await page.locator('[id="btnRemoveSelection-channel-web"]').click();
+      await g4ScalarIs(page, kpi, countryCount, `the row's chip off: every order of ${COUNTRY}`);
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'that chip is gone').toHaveCount(0);
+      await expect(page.locator(`[id="btnRemoveSelection-country_code-${COUNTRY}"]`), 'the other one stays').toBeVisible();
+      // − and the last chip off leaves nothing selected.
+      await page.locator(`[id="btnRemoveSelection-country_code-${COUNTRY}"]`).click();
+      await g4ScalarIs(page, kpi, pOrders.length, 'no chip: every order');
+      await expect(page.locator('#selectionBar')).toHaveCount(0);
+
+      // ── The same clicks, on the published page ─────────────────────────────
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length === 1 && (ids.tabulator ?? []).length === 1 && (ids.map ?? []).length === 1;
+      }, { message: 'the saved canvas names the KPI, the table and the map', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      const pubKpi = ids.number[0];
+      const pubTable = ids.tabulator[0];
+      const pubMap = ids.map[0];
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await pPublishedNumberIs(page, pubKpi, pOrders.length, 'the published KPI counts every order');
+      await pWaitCells(page, pubTable, (cells) => cells.length === pChannels.length, 'the published table has a row per channel');
+
+      // + the web row: the web orders.
+      const pubCell = page.locator(`[id^="tabCell-${pubTable}-"][id$="-channel"]`, { hasText: /^\s*web\s*$/ }).first();
+      await expect(pubCell, 'the published table draws a web row').toBeVisible({ timeout: 30_000 });
+      await pubCell.click();
+      await pPublishedNumberIs(page, pubKpi, webCount, 'published, a table row: the web orders');
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'its chip').toBeVisible();
+
+      // + the country too: the web orders of that country, and the table per channel for it.
+      await m108ClickRegion(page, pubMap, COUNTRY);
+      await pPublishedNumberIs(page, pubKpi, bothCount, `published, a region too: the web orders of ${COUNTRY}`);
+      await expect(page.locator(`[id="btnRemoveSelection-country_code-${COUNTRY}"]`), 'its chip').toBeVisible();
+      await pWaitCells(page, pubTable,
+        (cells) => cells.length === Object.keys(countryPerChannel).length
+          && cells.every((row) => bDigits(row[1] ?? '') === String(countryPerChannel[row[0]])),
+        `the published table counts the orders of ${COUNTRY} per channel`);
+
+      // + one chip off: the country's orders; the country's chip stays.
+      await page.locator('[id="btnRemoveSelection-channel-web"]').click();
+      await pPublishedNumberIs(page, pubKpi, countryCount, `published, the row's chip off: every order of ${COUNTRY}`);
+      await expect(page.locator('[id="btnRemoveSelection-channel-web"]'), 'that chip is gone').toHaveCount(0);
+      await expect(page.locator(`[id="btnRemoveSelection-country_code-${COUNTRY}"]`), 'the other one stays').toBeVisible();
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+test('(canvas mechanics) M109 A viewer sorts and pages a published table; Unpublish can be called off', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+
+  // The truths, read off the frozen rows the seed loads (`frozenRows('products')`), never typed in.
+  // unit_cost has 200 different values for 200 products, so every order of it is one order:
+  //   SELECT MIN(unit_cost), MAX(unit_cost) FROM dash_demo.products                      -> 10.16, 1554.16
+  //   SELECT product_id FROM dash_demo.products ORDER BY unit_cost DESC LIMIT 10 OFFSET 10
+  //     -> 5095, 5076, 5091, 5079, 5086, 5118, 5115, 5109, 5101, 5105   (rows 11-20, the second page)
+  const products = frozenRows('products');
+  const byCostDesc = [...products].sort((a, b) => Number(b.unit_cost) - Number(a.unit_cost));
+  expect(new Set(products.map((p) => p.unit_cost)).size, 'no two products cost the same').toBe(products.length);
+  const cheapest = Number(byCostDesc[byCostDesc.length - 1].unit_cost);
+  const dearest = Number(byCostDesc[0].unit_cost);
+  const PAGE = 10;
+  const firstPage = byCostDesc.slice(0, PAGE).map((p) => p.product_id);
+  const secondPage = byCostDesc.slice(PAGE, 2 * PAGE).map((p) => p.product_id);
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M109 Viewer sorts and pages', async (canvasId) => {
+      // Every product, in a table of 10 rows a page.
+      await addTableToCanvas(page, 'dash_demo.products');
+      await switchToWidget(page, 'tabulator');
+      await setTabulatorOptions(page, { pagination: true, pageSize: PAGE });
+
+      let tables: string[] = [];
+      await expect.poll(async () => (tables = (await getCanvasComponentIds(page, canvasId)).tabulator ?? []).length,
+        { message: 'the saved canvas names the table', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const table = tables[0];
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      const link = await createPlainShareLink(page);
+      expect(await shareLinkStatus(page, link), 'the published dashboard answers').toBe(200);
+
+      // ── Unpublish, called off ─────────────────────────────────────────────
+      // + the dialog says what would go, and Cancel leaves everything as it was.
+      await page.locator('#btnUnpublishDashboard').click();
+      const dialog = page.locator('#dlgUnpublishDashboard');
+      await expect(dialog, 'Unpublish asks first').toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('#txtUnpublishConsequences'), 'and names the dashboard')
+        .toContainText(`/dashboard/${reportId}`);
+      // − a click inside the dialog is not a click on its backdrop: it stays open.
+      await page.locator('#txtUnpublishConsequences').click();
+      await expect(dialog, 'a click on the question keeps it open').toBeVisible();
+      await page.locator('#btnCancelUnpublish').click();
+      await expect(dialog, 'Cancel closes it').toHaveCount(0);
+      await expect(page.locator('#btnUnpublishDashboard'), 'the dashboard is still there to unpublish').toBeVisible();
+      expect(await shareLinkStatus(page, link), 'after Cancel the dashboard still answers').toBe(200);
+      // + a click on the backdrop closes it the same way, and takes nothing down either.
+      await page.locator('#btnUnpublishDashboard').click();
+      await expect(dialog).toBeVisible({ timeout: 10_000 });
+      await page.locator('#overlayUnpublishDashboard').click({ position: { x: 5, y: 5 } });
+      await expect(dialog, 'the backdrop closes it').toHaveCount(0);
+      await expect(page.locator('#btnShareDashboard'), 'the dashboard can still be shared').toBeVisible();
+      expect(await shareLinkStatus(page, link), 'after the backdrop the dashboard still answers').toBe(200);
+
+      // ── A viewer sorts and pages the published table ──────────────────────
+      await openPublished(page, reportId);
+      await pWaitCells(page, table, (cells) => cells.length === PAGE, `the published table shows ${PAGE} rows a page`);
+      const pub = page.locator(`[component-id="${table}"]`);
+      // The column's header: Tabulator draws it without an id of its own (M88 reaches it the same way).
+      const costHeader = pub.locator('.tabulator-col[tabulator-field="unit_cost"]');
+      /** The product ids of the rows the table draws now, top to bottom. */
+      const drawnIds = async (): Promise<string[]> =>
+        (await page.locator(`[id^="tabCell-${table}-"][id$="-product_id"]`).allInnerTexts()).map((t) => bDigits(t));
+
+      // + a click on the header sorts by it, cheapest first.
+      await costHeader.click();
+      await expect.poll(async () => cFirstRowCell(page, table, 'unit_cost'),
+        { message: 'one click: the cheapest product first', timeout: 30_000, intervals: [1_000] }).toBeCloseTo(cheapest, 2);
+      // + a second click turns the order round: the dearest first, then the next nine.
+      await costHeader.click();
+      await expect.poll(async () => cFirstRowCell(page, table, 'unit_cost'),
+        { message: 'a second click: the dearest product first', timeout: 30_000, intervals: [1_000] }).toBeCloseTo(dearest, 2);
+      await expect.poll(drawnIds, { message: 'page 1 is the ten dearest products', timeout: 30_000, intervals: [1_000] })
+        .toEqual(firstPage);
+      // − the 11th dearest is not on page 1.
+      expect(await drawnIds(), 'the 11th product waits for page 2').not.toContain(secondPage[0]);
+
+      // + page 2 holds rows 11-20 of that same order.
+      await page.locator(`[id="${table}_btnTabulatorPage-2"]`).click();
+      await expect.poll(drawnIds, { message: 'page 2 is the 11th to the 20th dearest', timeout: 30_000, intervals: [1_000] })
+        .toEqual(secondPage);
+      expect(await drawnIds(), 'and none of page 1').not.toContain(firstPage[0]);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
