@@ -459,6 +459,7 @@
       decorateTiles(dashboardContainer);
       wireDrillThrough(dashboardContainer);
       startAutoRefresh();
+      watchForNewTiles();
     }
 
     // Listen for parameter events from rb-parameters inside the dashboard.
@@ -630,6 +631,22 @@
    * replaces each tile with a copy of itself (`refreshDataWidgets`) and a copy carries no
    * listeners - the same reason the slicers are never replaced.
    */
+  /**
+   * The tiles are replaced by copies of themselves - by Apply in the filter bar, by a tile's Refresh,
+   * by a selection - and a copy carries no listeners, so a chart that filtered by its clicks stopped
+   * doing it after the first Apply. Each data widget is listened to as it arrives instead.
+   */
+  let tileObserver: MutationObserver | null = null;
+  function watchForNewTiles() {
+    if (tileObserver || !dashboardContainer || typeof MutationObserver === 'undefined') return;
+    tileObserver = new MutationObserver((changes) => {
+      const arrived = changes.some((change) => Array.from(change.addedNodes).some((node) =>
+        node instanceof Element && (node.matches(DATA_WIDGET_TAGS) || !!node.querySelector(DATA_WIDGET_TAGS))));
+      if (arrived) listenToCrossFilterTiles();
+    });
+    tileObserver.observe(dashboardContainer, { childList: true, subtree: true });
+  }
+
   function listenToCrossFilterTiles() {
     if (!dashboardContainer) return;
     dashboardContainer.querySelectorAll(DATA_WIDGET_TAGS).forEach((tile: Element) => {
@@ -759,6 +776,8 @@
     lazyObserver = null;
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     autoRefreshTimer = null;
+    tileObserver?.disconnect();
+    tileObserver = null;
   });
 
   // Helpers for aggregator reports — extract named component IDs from config
