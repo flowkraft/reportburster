@@ -282,6 +282,10 @@ public class CanvasExportService {
                 stateMap.getOrDefault("parametersConfig", Map.of("parameters", List.of()));
         List<Map<String, Object>> parametersList = (List<Map<String, Object>>)
                 parametersConfig.getOrDefault("parameters", List.of());
+        // What belongs to the whole dashboard rather than to one widget (the canvas's dashboard
+        // settings dialog). Absent on every canvas saved before it existed.
+        Map<String, Object> dashboardSettings = stateMap.get("dashboardSettings") instanceof Map<?, ?> settings
+                ? (Map<String, Object>) settings : Map.of();
 
         // dp_ belongs to the server's builtin variables, which are set on every request: a dashboard
         // parameter with such a name would be a control whose value is thrown away. Refused here as
@@ -331,7 +335,7 @@ public class CanvasExportService {
 
         // ── Step 6: Generate + write all sidecar files server-side ────────────
         DashboardFileGenerator.GeneratedFiles files = DashboardFileGenerator.generate(
-                widgets, parametersList, reportId, rbApiBaseUrl, connectionId);
+                widgets, parametersList, reportId, rbApiBaseUrl, connectionId, dashboardSettings);
 
         writeIfPresent(templateDir, reportId + "-template.html",                 files.templateHtml());
         writeIfPresent(configDir,   reportId + "-chart-config.groovy",           files.chartConfigGroovy());

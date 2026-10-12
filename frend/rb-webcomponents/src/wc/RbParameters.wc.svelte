@@ -1591,4 +1591,10 @@
   .rb-multi-pager button:not(:disabled):hover {
     background: color-mix(in srgb, currentColor 8%, transparent);
   }
+  /* On paper (#22) the filters say what the page shows; Apply and Reset have nothing to do there. */
+  @media print {
+    .rb-apply-row {
+      display: none !important;
+    }
+  }
 </style>

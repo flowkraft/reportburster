@@ -7,6 +7,8 @@
   import { decorateTiles } from '../shared/tile-menu';
   // A click on a bar or a table row opens the rows behind it (#21).
   import { wireDrillThrough } from '../shared/drill-through';
+  // How often the dashboard asks its data again by itself, as its author set it (#22).
+  import { autoRefreshMinutesOf } from '../shared/auto-refresh';
   import { fieldOf, SLICER_TAG, slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets,
            CROSS_FILTER_EVENT, DATA_WIDGET_TAGS,
            type SlicerSelection } from '../shared/slicer-selections';
@@ -456,6 +458,7 @@
       });
       decorateTiles(dashboardContainer);
       wireDrillThrough(dashboardContainer);
+      startAutoRefresh();
     }
 
     // Listen for parameter events from rb-parameters inside the dashboard.
@@ -702,6 +705,18 @@
     listenToCrossFilterTiles();
   }
 
+  /**
+   * A dashboard its author set to refresh asks all its data again every so many minutes (#22): the
+   * same refresh a filter change makes, with the filter values and selections it has now.
+   */
+  let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  function startAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+    const minutes = autoRefreshMinutesOf(dashboardContainer);
+    if (minutes > 0) autoRefreshTimer = setInterval(applySelections, minutes * 60_000);
+  }
+
   function handleDashboardParamChange(e: CustomEvent) {
     currentDashboardParams = e.detail || {};
 
@@ -742,6 +757,8 @@
     if (typeof window !== 'undefined') window.removeEventListener('hashchange', openHashTarget);
     lazyObserver?.disconnect();
     lazyObserver = null;
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
   });
 
   // Helpers for aggregator reports — extract named component IDs from config

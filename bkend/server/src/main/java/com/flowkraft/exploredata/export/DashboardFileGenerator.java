@@ -64,6 +64,20 @@ public class DashboardFileGenerator {
             String reportId,
             String apiBaseUrl,
             String connectionId) throws Exception {
+        return generate(widgets, parametersList, reportId, apiBaseUrl, connectionId, Map.of());
+    }
+
+    /**
+     * @param dashboardSettings what belongs to the whole dashboard rather than one widget, as the
+     *                          canvas's dashboard settings dialog stores it; empty means every default
+     */
+    public static GeneratedFiles generate(
+            List<Map<String, Object>> widgets,
+            List<Map<String, Object>> parametersList,
+            String reportId,
+            String apiBaseUrl,
+            String connectionId,
+            Map<String, Object> dashboardSettings) throws Exception {
 
         // Single source of truth (Principle 4): parametersConfig.parameters Map.
         // Serialize to canonical DSL text for the published spec file.
@@ -76,7 +90,8 @@ public class DashboardFileGenerator {
         }
 
         return new GeneratedFiles(
-            generateTemplate(widgets, !safeParams.isEmpty(), reportId, apiBaseUrl),
+            generateTemplate(widgets, !safeParams.isEmpty(), reportId, apiBaseUrl,
+                    autoRefreshMinutesOf(dashboardSettings)),
             generateChartConfig(byType(widgets, "chart")),
             generateTabulatorConfig(byType(widgets, "tabulator")),
             generatePivotConfig(byType(widgets, "pivot")),
@@ -97,8 +112,20 @@ public class DashboardFileGenerator {
 
     // ── HTML Template ─────────────────────────────────────────────────────────
 
+    /**
+     * Minutes between the published dashboard asking all its data again (#22): a whole number from 1
+     * up, or 0 for never - which is what anything else the settings hold means.
+     */
+    static int autoRefreshMinutesOf(Map<String, Object> dashboardSettings) {
+        Object minutes = dashboardSettings == null ? null : dashboardSettings.get("autoRefreshMinutes");
+        if (!(minutes instanceof Number number)) return 0;
+        double value = number.doubleValue();
+        return value >= 1 && value == Math.floor(value) && value <= 24 * 60 ? (int) value : 0;
+    }
+
     private static String generateTemplate(List<Map<String, Object>> widgets,
-                                           boolean hasParameters, String reportId, String apiBaseUrl) {
+                                           boolean hasParameters, String reportId, String apiBaseUrl,
+                                           int autoRefreshMinutes) {
         List<Map<String, Object>> sorted = widgets.stream()
             .sorted(Comparator.comparingInt((Map<String, Object> w) -> gridInt(w, "y"))
                               .thenComparingInt(w -> gridInt(w, "x")))
@@ -130,7 +157,11 @@ public class DashboardFileGenerator {
         // names a theme and the palette comes from it, and on somebody else's site or straight off
         // disk, where nothing names a theme and the page looks exactly as it did (D10).
         return "<meta charset=\"utf-8\">\n" +
-               "<div class=\"rb-dashboard-root\">\n" +
+               // A dashboard its author set to refresh says how often on its root, where rb-dashboard
+               // reads it (#22). Nothing at all on every other dashboard, which is written as it was.
+               (autoRefreshMinutes > 0
+                   ? "<div class=\"rb-dashboard-root\" data-auto-refresh=\"" + autoRefreshMinutes + "\">\n"
+                   : "<div class=\"rb-dashboard-root\">\n") +
                "  <style>\n" +
                "    .rb-dashboard-root {\n" +
                "      all: initial;\n" +
@@ -241,6 +272,14 @@ public class DashboardFileGenerator {
                "      display: flex;\n" +
                "      justify-content: flex-end;\n" +
                "      margin-bottom: 12px;\n" +
+               "    }\n" +
+               // On paper (#22): what the page shows, not how it is driven - the page is white, no tile
+               // is cut in two, and the page bar's controls stay off it. The filters keep their values
+               // and lose their buttons (rb-parameters' own print rule), and so do the tile menus.
+               "    @media print {\n" +
+               "      .rb-dashboard-root { background: #ffffff; color: #000000; padding: 0; }\n" +
+               "      .rb-dashboard-root .rb-page-bar { display: none !important; }\n" +
+               "      .rb-dashboard-root .grid-item { break-inside: avoid; box-shadow: none; }\n" +
                "    }\n" +
                // A phone: one column, every tile its full width, in the order the grid reads (the
                // tiles come sorted by row, then column). The tiles place themselves inline, hence !important.

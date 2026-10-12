@@ -254,6 +254,25 @@ export interface ParametersConfig {
   parameters: ParamMeta[];
 }
 
+/** The settings that are the whole dashboard's rather than one widget's, edited in the dashboard
+ *  settings dialog (`DashboardSettingsDialog`) and stored beside `parametersConfig` in the canvas
+ *  state. Absent on every canvas saved before it existed, which means every default. */
+export interface DashboardSettings {
+  /** Minutes between the published dashboard asking all its data again (#22). Absent: never. */
+  autoRefreshMinutes?: number;
+}
+
+/** What the canvas state JSON holds: `dashboardSettings` only when one is set, so a canvas with
+ *  none is stored exactly as it always was. */
+export function persistedStateOf(
+  widgets: unknown,
+  parametersConfig: ParametersConfig,
+  dashboardSettings: DashboardSettings | undefined,
+): string {
+  const settings = dashboardSettings && Object.keys(dashboardSettings).length > 0 ? { dashboardSettings } : {};
+  return JSON.stringify({ widgets, parametersConfig, ...settings });
+}
+
 export interface CanvasState {
   id: string;
   name: string;
@@ -271,6 +290,8 @@ export interface CanvasState {
    *  the canvas `<rb-parameters>` AND to the publisher (no drift possible).
    *  ============================================================================ */
   parametersConfig: ParametersConfig;
+  /** The whole dashboard's settings (`DashboardSettings`). */
+  dashboardSettings: DashboardSettings;
   filterValues: Record<string, string>;
   filterVersion: number;
   selectedWidgetId: string | null;
@@ -295,6 +316,7 @@ const DEFAULT_STATE: CanvasState = {
   widgets: [],
   queryResults: {},
   parametersConfig: { parameters: [] },
+  dashboardSettings: {},
   filterValues: {},
   filterVersion: 0,
   selectedWidgetId: null,
@@ -388,6 +410,7 @@ interface CanvasActions {
   setEditMode: (editMode: boolean) => void;
   updateLayout: (layouts: { i: string; x: number; y: number; w: number; h: number }[]) => void;
   setParametersConfig: (next: ParametersConfig) => void;
+  setDashboardSettings: (next: DashboardSettings) => void;
   setFilterValue: (paramName: string, value: string) => void;
   /** Update the exportedReportCode after a successful "Save to DataPallas". */
   setExportedReportCode: (code: string | null) => void;
@@ -782,6 +805,10 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     set({ parametersConfig: next });
   },
 
+  setDashboardSettings: (next) => {
+    set({ dashboardSettings: next });
+  },
+
   setExportedReportCode: (code) => set({ exportedReportCode: code }),
 
   setFilterValue: (paramName, value) => {
@@ -824,7 +851,7 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     // other non-serializable runtime fields.
     const { selectedWidgetId, editMode, filterValues, filterVersion, exploreSelections, exploreFieldStates, exploreVersion, exportedReportCode, queryResults, ...rest } = get();
     // Strip store actions — only keep data properties
-    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setParametersConfig, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
+    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setParametersConfig, setDashboardSettings, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
     return state;
   },
 }));

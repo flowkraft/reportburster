@@ -6090,4 +6090,84 @@ test('(canvas mechanics) M81 A click on a bar or a table row opens the rows behi
   }
 });
 
+test('(canvas mechanics) M82 Dashboard settings: refresh every N minutes; a page made for paper', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M82 Auto refresh and print', async (canvasId) => {
+      const channels = new Set(frozenRows('orders').map((o) => o.channel));
+
+      // A filter bar, and a table of orders per channel.
+      await addFilterBarParam(page, `reportParameters {
+  parameter(id: 'minTotal', type: 'Integer', label: 'Minimum total', defaultValue: 0) {
+    constraints(required: false)
+  }
+}
+`);
+      await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+
+      // + the settings dialog: minutes, a whole number from 1 up, or nothing for never.
+      await page.locator('#btnDashboardSettings').click();
+      await expect(page.locator('#dashboardSettings')).toBeVisible();
+      await page.locator('#inputAutoRefresh').fill('ten');
+      await expect(page.locator('#autoRefreshError')).toBeVisible();
+      await page.locator('#inputAutoRefresh').fill('1');
+      await expect(page.locator('#autoRefreshHint')).toContainText('every 1 minute');
+      await page.locator('#btnCloseDashboardSettings').click();
+      await expect(page.locator('#dashboardSettings')).toHaveCount(0);
+      await expect.poll(async () => {
+        const response = await page.request.get(`http://localhost:9090/api/explorations/${canvasId}`);
+        const state = JSON.parse(((await response.json()) as { state: string }).state);
+        return state.dashboardSettings?.autoRefreshMinutes;
+      }, { message: 'the canvas keeps the setting', timeout: 30_000, intervals: [1_000] }).toBe(1);
+
+      let tables: string[] = [];
+      await expect.poll(async () => (tables = (await getCanvasComponentIds(page, canvasId)).tabulator ?? []).length,
+        { message: 'the saved canvas names the table', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const table = tables[0];
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await pWaitCells(page, table, (cells) => cells.length === channels.size, 'the table has its rows');
+      await expect(page.locator('.rb-dashboard-root')).toHaveAttribute('data-auto-refresh', '1');
+
+      // + a minute later the tile asks again by itself: a new element in its place, the rows back.
+      await page.evaluate((cid) => {
+        const el = document.querySelector(`[component-id="${cid}"]`) as (HTMLElement & { __m82?: boolean }) | null;
+        if (el) el.__m82 = true;
+      }, table);
+      await expect.poll(async () => page.evaluate((cid) => {
+        const el = document.querySelector(`[component-id="${cid}"]`) as (HTMLElement & { __m82?: boolean }) | null;
+        return !!el && el.__m82 !== true;
+      }, table), { message: 'the dashboard refreshed itself', timeout: 100_000, intervals: [2_000] }).toBe(true);
+      await pWaitCells(page, table, (cells) => cells.length === channels.size, 'the refreshed table has its rows');
+
+      // + on paper: the filters keep their values and lose their buttons, the tile menu is gone, no
+      //   tile is cut in two, the page is white.
+      await page.emulateMedia({ media: 'print' });
+      try {
+        await expect(page.locator('#btnReloadDashboard')).toBeHidden();
+        await expect(page.locator('#minTotal')).toBeVisible();
+        await expect(page.locator(`[id="widgetMenu-${table}"]`)).toBeHidden();
+        const looks = await page.evaluate(() => {
+          const root = document.querySelector('.rb-dashboard-root') as HTMLElement;
+          const tile = document.querySelector('.rb-dashboard-root .grid-item') as HTMLElement;
+          return { background: getComputedStyle(root).backgroundColor, breakInside: getComputedStyle(tile).breakInside };
+        });
+        expect(looks.background, 'a white page').toBe('rgb(255, 255, 255)');
+        expect(looks.breakInside, 'no tile cut in two').toBe('avoid');
+      } finally {
+        await page.emulateMedia({ media: 'screen' });
+      }
+      await expect(page.locator('#btnReloadDashboard'), 'on screen the buttons are back').toBeVisible();
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
