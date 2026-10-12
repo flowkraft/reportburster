@@ -1,0 +1,8 @@
+{
+  "trend_openedat_csat" : {
+    "dateField" : "OpenedAt",
+    "valueField" : "AvgCsat",
+    "format" : "number",
+    "label" : "CSAT per month"
+  }
+}
