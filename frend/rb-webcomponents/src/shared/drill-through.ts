@@ -104,21 +104,36 @@ async function openRows(root: Element, widget: HTMLElement, type: string, detail
 }
 
 /**
- * Hear the clicks of every widget a dashboard holds. The widgets' own events do not bubble, so they
- * are heard on the way down, at the dashboard's root - which also hears the copies a filter change
- * puts in the widgets' places. Escape closes the panel, as it closes a cube's.
+ * Hear the clicks of every widget a dashboard holds that names its group columns. A widget's own
+ * events reach only listeners on the widget itself (a Svelte element calls them; no DOM event goes
+ * up the page), and a filter change, Apply or a tile's Refresh puts new copies in the widgets'
+ * places - so each widget is listened to as it arrives. Escape closes the panel, as it closes a
+ * cube's.
  */
 export function wireDrillThrough(root: Element | null | undefined): void {
   if (!root || (root as any).__rbDrillThrough) return;
   (root as any).__rbDrillThrough = true;
-  for (const type of ['chartClick', 'cellClick']) {
-    root.addEventListener(type, (event: Event) => {
-      const widget = event.target as HTMLElement | null;
-      if (!widget || typeof widget.getAttribute !== 'function') return;
-      openRows(root, widget, type, (event as CustomEvent).detail).catch((err) =>
-        console.warn('rb drill-through: the rows could not be opened', err));
-    }, true);
-  }
+  const heard = new WeakSet<Element>();
+  const listen = (widget: Element) => {
+    if (heard.has(widget)) return;
+    heard.add(widget);
+    for (const type of ['chartClick', 'cellClick']) {
+      widget.addEventListener(type, (event: Event) => {
+        openRows(root, widget as HTMLElement, type, (event as CustomEvent).detail).catch((err) =>
+          console.warn('rb drill-through: the rows could not be opened', err));
+      });
+    }
+  };
+  root.querySelectorAll('[drill-fields]').forEach(listen);
+  new MutationObserver((changes) => {
+    for (const change of changes) {
+      change.addedNodes.forEach((node) => {
+        if (!(node instanceof Element)) return;
+        if (node.hasAttribute('drill-fields')) listen(node);
+        node.querySelectorAll('[drill-fields]').forEach(listen);
+      });
+    }
+  }).observe(root, { childList: true, subtree: true });
   root.ownerDocument?.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key === 'Escape') closeAll(root);
   });
