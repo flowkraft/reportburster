@@ -637,13 +637,9 @@ test.describe('DataPallas - Dashboard Report E2E', async () => {
           // Select "Germany" in the country dropdown
           await page.selectOption('#country', 'Germany');
 
-          // Click Reload → cancel (click No) — dashboard should NOT refresh
-          await page.click('#btnReloadDashboard');
-          await expect(page.locator('#btnCancelReload')).toBeVisible({ timeout: 5000 });
-          await page.click('#btnCancelReload');
-
           // Click Apply — dashboard refreshes with Germany filter, no question asked (#18)
           await page.click('#btnReloadDashboard');
+          await expect(page.locator('#btnCancelReload'), 'Apply asks nothing').toHaveCount(0);
 
           // Wait for filtered data to load
           await page.waitForTimeout(5000);
