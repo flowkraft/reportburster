@@ -647,10 +647,19 @@
     tileObserver.observe(dashboardContainer, { childList: true, subtree: true });
   }
 
+  /**
+   * Each tile is listened to once. A remove-then-add does not make that safe: a widget not yet
+   * mounted keeps every listener it was given and hands each one to its component when it mounts,
+   * and a removal before that changes nothing - a copy wired by the selection that made it and
+   * again by `watchForNewTiles` heard a click twice, and a second click on a bar selected it again
+   * instead of taking it back.
+   */
+  const crossFilterTiles = new WeakSet<Element>();
   function listenToCrossFilterTiles() {
     if (!dashboardContainer) return;
     dashboardContainer.querySelectorAll(DATA_WIDGET_TAGS).forEach((tile: Element) => {
-      tile.removeEventListener(CROSS_FILTER_EVENT, handleCrossFilterSelect as EventListener);
+      if (crossFilterTiles.has(tile)) return;
+      crossFilterTiles.add(tile);
       tile.addEventListener(CROSS_FILTER_EVENT, handleCrossFilterSelect as EventListener);
     });
   }
