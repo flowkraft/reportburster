@@ -55,5 +55,6 @@ describe('number formats on a chart', () => {
     assert.notEqual(drawModeOf({}), drawModeOf({ rbNumberFormat: 'compact' }));
     assert.notEqual(drawModeOf({}), drawModeOf({ rbStack100: true }));
     assert.equal(drawModeOf({ responsive: true }), drawModeOf({}));
+    assert.notEqual(drawModeOf({}), drawModeOf({ rbTopN: 3 }));
   });
 });

@@ -6582,4 +6582,66 @@ test('(canvas mechanics) M88 Tables: a totals row, search, dragged columns, high
   }
 });
 
+/** A drawn chart's categories and its first series' values, as Chart.js holds them. */
+async function cBars(chart: Locator): Promise<{ labels: string[]; values: number[] } | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    if (!instance) return null;
+    return {
+      labels: (instance.data.labels ?? []).map(String),
+      values: (instance.data.datasets?.[0]?.data ?? []).map(Number),
+    };
+  });
+}
+
+test('(canvas mechanics) M89 The top N bars and one "Other", in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M89 Top N and Other', async (canvasId) => {
+      // The two biggest channels stay, in the order the query gives them; the rest are one "Other".
+      const counts = pChannels.map((c) => ({ c, n: pCount((r) => r.channel === c) }));
+      const top = new Set([...counts].sort((a, b) => b.n - a.n).slice(0, 2).map((x) => x.c));
+      const other = counts.filter((x) => !top.has(x.c)).reduce((sum, x) => sum + x.n, 0);
+      const folded = (s: { labels: string[]; values: number[] } | null) =>
+        !!s && s.labels.length === 3 && s.labels[2] === 'Other' && s.values[2] === other
+        && s.labels.slice(0, 2).every((l) => top.has(l));
+
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
+
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputChartTopN').fill('2');
+      await page.locator('#inputChartTopN').press('Enter');
+      await expect.poll(async () => folded(await cBars(cViz(page, chart))),
+        { message: 'two channels and Other', timeout: 30_000, intervals: [1_000] }).toBe(true);
+
+      // - "Other" is many channels at once: with clicks filtering the dashboard, a click on it selects nothing.
+      await setClicksFilter(page, 'chart', true);
+      await pClickBar(cViz(page, chart), 'Other');
+      await expect(page.locator('#selectionBar'), 'a click on Other selects nothing').toHaveCount(0);
+
+      // + published, the same three bars.
+      let charts: string[] = [];
+      await expect.poll(async () => (charts = (await getCanvasComponentIds(page, canvasId)).chart ?? []).length,
+        { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.rbTopN === 2);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect.poll(async () => folded(await cBars(page.locator(`[id="widgetChart-${charts[0]}"]`))),
+        { message: 'published: two channels and Other', timeout: 60_000, intervals: [1_000] }).toBe(true);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
