@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { PALETTES } from "./config-panels/ChartConfig";
 
@@ -48,7 +49,10 @@ export function DashboardSettingsDialog({ open, onClose }: { open: boolean; onCl
     setDashboardSettings(next === undefined ? others : { ...others, autoRefreshMinutes: next });
   };
 
-  return (
+  // On the body, as the Share dialog is: the toolbar it is opened from is a stacking context of its
+  // own, and the canvas widgets painted over a dialog rendered inside it - Close included, once the
+  // palette (#31) made the dialog tall enough to reach them.
+  return createPortal(
     <div
       id="overlayDashboardSettings"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -129,6 +133,7 @@ export function DashboardSettingsDialog({ open, onClose }: { open: boolean; onCl
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
