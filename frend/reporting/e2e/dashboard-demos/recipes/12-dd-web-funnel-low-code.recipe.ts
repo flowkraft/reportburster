@@ -326,9 +326,31 @@ ORDER BY ord`,
           },
         },
       },
+      dsl: `chart {
+  type 'line'
+  data {
+    labelField 'started_ts'
+    seriesField 'device'
+    datasets {
+      dataset {
+        field 'session_id_count'
+        label 'Sessions'
+      }
+    }
+  }
+  options {
+    plugins {
+      title {
+        display true
+        text 'Sessions per week by device (sampled 1 in 8)'
+      }
+    }
+  }
+}
+`,
       shot: {
         title: 'Set up sessions per week by device',
-        caption: 'On the **Display** tab, set the chart\'s type, axes, title and legend with the pickers.',
+        caption: 'On the **Display** tab, set the chart\'s type, axes, title and legend (the code view says it in one paste).',
       },
     },
     {
