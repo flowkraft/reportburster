@@ -12,8 +12,10 @@ import {
   createShareLink,
   describeAttributes,
   describeLocks,
+  embedSnippet,
   fetchReportParameters,
   listShareLinks,
+  mintEmbedToken,
   revokeShareLink,
 } from "@/lib/explore-data/share-api";
 import { useRbElementReady } from "@/components/explore-data/widgets/useRbElementReady";
@@ -149,6 +151,9 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [embedTtl, setEmbedTtl] = useState<"3600" | "86400">("3600");
+  const [embedCode, setEmbedCode] = useState("");
+  const [embedCopied, setEmbedCopied] = useState(false);
 
   const reload = useCallback(async () => {
     setError("");
@@ -163,6 +168,8 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
     if (!open || !reportId) return;
     setNewUrl("");
     setCopied(false);
+    setEmbedCode("");
+    setEmbedCopied(false);
     setLockedNames([]);
     setLockValues({});
     setAttributeRows([]);
@@ -218,15 +225,19 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
     return Object.keys(attributes).length === 0 ? undefined : attributes;
   };
 
-  const handleCreate = async () => {
+  /** Says which attribute names the server would refuse, and whether there were any. */
+  const refusedAttributeNames = (): boolean => {
     const refused = badAttributeNames();
-    if (refused.length > 0) {
-      setError(
-        `${refused.join(", ")} cannot be used as an attribute name. ` +
-          "Use lower-case letters, digits and _, starting with a letter.",
-      );
-      return;
-    }
+    if (refused.length === 0) return false;
+    setError(
+      `${refused.join(", ")} cannot be used as an attribute name. ` +
+        "Use lower-case letters, digits and _, starting with a letter.",
+    );
+    return true;
+  };
+
+  const handleCreate = async () => {
+    if (refusedAttributeNames()) return;
 
     setBusy(true);
     setError("");
@@ -263,6 +274,29 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(newUrl);
     setCopied(true);
+  };
+
+  // The embed code takes the same locks and attributes as a link: who a page shows the dashboard to
+  // is chosen once, above, whichever way it is shared.
+  const handleEmbedCode = async () => {
+    if (refusedAttributeNames()) return;
+
+    setBusy(true);
+    setError("");
+    try {
+      const { token } = await mintEmbedToken(reportId, Number(embedTtl), collectLocks(), collectAttributes());
+      setEmbedCode(embedSnippet(reportId, token));
+      setEmbedCopied(false);
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : "Could not create the embed code.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCopyEmbed = async () => {
+    await navigator.clipboard.writeText(embedCode);
+    setEmbedCopied(true);
   };
 
   // Through a portal, exactly like ExportDialog next door — and for a reason that is visible the
@@ -453,6 +487,44 @@ export function ShareDialog({ open, onClose, reportId }: ShareDialogProps) {
             )}
           </tbody>
         </table>
+
+        <div id="shareEmbed" className="mt-4 rounded-lg border border-base-300 p-3">
+          <p className="mb-1 text-sm font-medium">Embed in a web page</p>
+          <p className="mb-2 text-xs text-base-content/60">
+            Paste this where the dashboard should appear. It shows what a link with the locks and
+            attributes above would show, and its token expires. A portal mints a fresh token for each
+            page view with <code>POST /api/embed/token</code>.
+          </p>
+          <div className="flex items-end gap-2">
+            <select
+              id="shareEmbedTtl"
+              className="select select-bordered select-sm"
+              value={embedTtl}
+              onChange={(e) => setEmbedTtl(e.target.value as typeof embedTtl)}
+            >
+              <option value="3600">Token valid for 1 hour</option>
+              <option value="86400">Token valid for 24 hours</option>
+            </select>
+            <button id="btnCreateEmbedCode" className="btn btn-sm" disabled={busy} onClick={handleEmbedCode}>
+              Get embed code
+            </button>
+          </div>
+          {embedCode && (
+            <div className="mt-2 flex items-start gap-2">
+              <textarea
+                id="shareEmbedCode"
+                readOnly
+                rows={6}
+                value={embedCode}
+                className="textarea textarea-bordered w-full font-mono text-xs"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <button id="btnCopyEmbedCode" className="btn btn-sm btn-primary" onClick={handleCopyEmbed}>
+                {embedCopied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="mt-5 flex justify-end">
           <button id="btnShareClose" className="btn btn-sm" onClick={onClose}>

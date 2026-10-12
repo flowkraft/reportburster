@@ -7036,4 +7036,82 @@ test('(canvas mechanics) M96 A runaway widget says so instead of hanging', async
   });
 });
 
+// #39: the Share dialog hands out the code a web page pastes to show the dashboard - the components'
+// <script> and an <rb-dashboard> carrying an embed token minted with the dialog's own locks.
+test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embed token', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  let portalContext: BrowserContext | undefined;
+
+  try {
+    await withFreshCanvas(page, 'E2E mech M97 Embed code', async (canvasId) => {
+      // A dashboard with one select filter and one number that answers to it.
+      await addFilterBarParam(page, B_CHANNEL_FILTER_DSL);
+      await bAddSqlNumber(page, B_CHANNEL_COUNT_SQL, 'orders');
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      const numberIds = (await getCanvasComponentIds(page, canvasId)).number;
+      const truth = bOnlyNumber(await bData(page, reportId, numberIds[0], { channel: B_CHANNEL }));
+      expect(truth, 'the locked channel has orders').toBeGreaterThan(0);
+
+      // Share: lock the channel, then ask for the embed code.
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: AI_HUB_BASE_URL });
+      await page.locator('#btnShareDashboard').click();
+      await page.locator('#shareDialog').waitFor({ state: 'visible', timeout: 10_000 });
+      await page.locator('#shareLockParam-channel').check();
+      const lockValue = page.locator('#shareLockValue-channel');
+      await lockValue.waitFor({ state: 'visible', timeout: 10_000 });
+      await lockValue.locator('#channel').selectOption(B_CHANNEL);
+
+      // − nothing is minted until it is asked for.
+      await expect(page.locator('#shareEmbedCode'), 'no code before Get embed code').toHaveCount(0);
+      await page.locator('#shareEmbedTtl').selectOption('86400');
+      await page.locator('#btnCreateEmbedCode').click();
+      const codeBox = page.locator('#shareEmbedCode');
+      await codeBox.waitFor({ state: 'visible', timeout: 15_000 });
+      const code = await codeBox.inputValue();
+      expect(code, 'the code loads the components').toContain('/rb-webcomponents/rb-webcomponents.umd.js"></script>');
+      expect(code, 'the code is the dashboard tag').toContain(`<rb-dashboard\n  report-id="${reportId}"`);
+      const token = /embed-token="([^"]+)"/.exec(code)?.[1];
+      expect(token, 'the code carries an embed token').toBeTruthy();
+      await page.locator('#btnCopyEmbedCode').click();
+      expect(await page.evaluate(() => navigator.clipboard.readText()), 'the clipboard holds the code').toBe(code);
+
+      // − the embed code is no share link: none was created.
+      await expect(page.locator('#tableShareLinks [id^="shareLink-"]')).toHaveCount(0);
+      await page.locator('#btnShareClose').click();
+
+      // + pasted into a page of another site, opened by nobody signed in, it shows the dashboard: the
+      // locked channel fixed, and its number the truth.
+      portalContext = await page.context().browser()!.newContext();
+      const portal = await portalContext.newPage();
+      const portalUrl = 'http://localhost:8599/portal.html';
+      await portal.route(portalUrl, (route) =>
+        route.fulfill({
+          contentType: 'text/html',
+          body: `<!doctype html><html><head><meta charset="utf-8"><title>Portal</title></head><body>\n${code}\n</body></html>`,
+        }),
+      );
+      await portal.goto(portalUrl, { waitUntil: 'networkidle', timeout: 60_000 });
+      await expect
+        .poll(async () => bDigits(await portal.locator(`[id="widgetValue-${numberIds[0]}"]`).innerText().catch(() => '')), {
+          timeout: 60_000,
+          intervals: [500],
+        })
+        .toBe(String(truth));
+      await expect(portal.locator('#channel'), 'the locked control cannot be changed').toBeDisabled({ timeout: 30_000 });
+
+      // − the token answers this dashboard's data and nothing without it: the same call with no token is refused.
+      const dataUrl = `${SERVER_URL}/api/reports/${reportId}/data?componentId=${encodeURIComponent(numberIds[0])}`;
+      const withToken = await portalContext.request.get(dataUrl, { headers: { 'X-Embed-Token': token! } });
+      expect(withToken.status(), 'the embed token opens the data door').toBe(200);
+      const without = await portalContext.request.get(dataUrl, { maxRedirects: 0 });
+      expect(without.status(), `no token, no data (${without.status()})`).not.toBe(200);
+    });
+  } finally {
+    if (portalContext) await portalContext.close();
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
