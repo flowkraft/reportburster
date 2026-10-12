@@ -1,7 +1,8 @@
 // Dashboard Demo 07, Sales Pipeline (low-code): the same dashboard as 07-dd-sales-pipeline.recipe.ts,
 // built with less code (plan-dashboard-demos-low-code.md, TODO 7 and 8). Against the original: the
-// filters through the form; open pipeline, weighted pipeline (a formula) and deals by stage on the
-// Visual tab, not SQL; charts by the pickers.
+// filters through the form; open pipeline and weighted pipeline (a formula) on the Visual tab, not
+// SQL; charts by the pickers. Deals by stage stays SQL: two stages tie on deals for a rep, and the
+// order of a tie is no rule a twin can say.
 import type { Recipe } from '../../helpers/dashboard-demos/recipe';
 
 export const recipe: Recipe = {
@@ -273,27 +274,23 @@ Referral deals win about twice as often as paid-search deals (51% against 25%), 
       table: 'dash_demo.crm_opportunities',
       grid: { x: 0, y: 4, w: 6, h: 5 },
       shot: {
-        title: 'Pick the crm_opportunities table',
-        caption: 'In the schema browser, pick **crm_opportunities**.',
+        title: 'Start a widget on crm_opportunities',
+        caption: 'In the schema browser, pick **crm_opportunities**: any table will do, the query below replaces it.',
       },
     },
     {
-      kind: 'visualQuery',
-      query: {
-        filters: [
-          { column: 'stage', operator: 'not_in', value: 'won, lost' },
-          { column: 'owner_employee_id', operator: 'equals', value: '${repEmployeeId}' },
-        ],
-        summarize: [
-          { aggregation: 'COUNT', field: 'opportunity_id' },
-          { aggregation: 'SUM', field: 'amount' },
-        ],
-        groupBy: ['stage'],
-        sort: [{ column: 'opportunity_id_count', direction: 'DESC' }],
-      },
+      kind: 'sql',
+      sql: `SELECT c.stage AS stage,
+       count(*) AS deals,
+       round(sum(c.amount), 2) AS pipeline
+FROM dash_demo.crm_opportunities c
+WHERE c.stage NOT IN ('won', 'lost')
+  AND c.owner_employee_id = \${repEmployeeId}
+GROUP BY 1
+ORDER BY deals DESC`,
       shot: {
-        title: 'Build the query for deals by stage',
-        caption: 'Fill the Visual tab: open stages of the **Rep**; **Count of opportunity_id** and **Sum of amount** by stage, most deals first.',
+        title: 'The query for deals by stage',
+        caption: 'Open Finetune → SQL and paste the query. It needs more than the Visual tab offers, so this one is SQL: copy it.',
       },
     },
     {
@@ -310,16 +307,13 @@ Referral deals win about twice as often as paid-search deals (51% against 25%), 
       config: {
         dslConfig: {
           type: 'funnel',
-          data: {
-            labelField: 'stage',
-            datasets: [{ field: 'opportunity_id_count', label: 'Deals' }],
-          },
+          data: { labelField: 'stage', datasets: [{ field: 'deals', label: 'Deals' }] },
           options: { plugins: { title: { display: true, text: 'Open deals by stage' } } },
         },
       },
       shot: {
         title: 'Set up deals by stage',
-        caption: 'On the **Display** tab, set the chart\'s type, axes, title and legend (the code view says it in one paste).',
+        caption: 'On the **Display** tab, set the chart\'s type, axes, title and legend with the pickers.',
       },
     },
     {
