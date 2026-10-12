@@ -111,6 +111,11 @@
       justify-content: flex-end;
       margin-bottom: 12px;
     }
+    @media print {
+      .rb-dashboard-root { background: #ffffff; color: #000000; padding: 0; }
+      .rb-dashboard-root .rb-page-bar { display: none !important; }
+      .rb-dashboard-root .grid-item { break-inside: avoid; box-shadow: none; }
+    }
     @media (max-width: 640px) {
       .rb-dashboard-root { padding: 12px; }
       .rb-dashboard-root .dashboard-grid { grid-template-columns: 1fr; }

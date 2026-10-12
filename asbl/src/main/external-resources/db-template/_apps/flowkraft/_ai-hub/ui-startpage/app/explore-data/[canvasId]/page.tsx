@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 // heroicons replace lucide ChevronRight / ChevronLeft
-import { useCanvasStore, type ParametersConfig } from "@/lib/stores/canvas-store";
+import { useCanvasStore, type DashboardSettings, type ParametersConfig } from "@/lib/stores/canvas-store";
 import { useSaveStatusStore } from "@/lib/stores/save-status-store";
 import { usePublishStatusStore, publishSignature, editedSincePublish } from "@/lib/stores/publish-status-store";
 import { usePublishDirty } from "@/lib/stores/use-publish-dirty";
@@ -90,6 +90,7 @@ export default function CanvasEditorPage({ params }: PageProps) {
         connectionId: (canvas.connectionId as string) || null,
         widgets: state.widgets || [],
         parametersConfig,
+        dashboardSettings: (state.dashboardSettings as DashboardSettings | undefined) ?? {},
         filterValues: seededFilterValues,
         filterVersion: 0,
         selectedWidgetId: null,

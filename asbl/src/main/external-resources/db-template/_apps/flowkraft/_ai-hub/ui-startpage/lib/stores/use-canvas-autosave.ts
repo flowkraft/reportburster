@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { useCanvasStore, type ParametersConfig } from "./canvas-store";
+import { persistedStateOf, useCanvasStore, type DashboardSettings, type ParametersConfig } from "./canvas-store";
 import { useSaveStatusStore } from "./save-status-store";
 import { updateCanvas } from "@/lib/explore-data/rb-api";
 
@@ -12,20 +12,21 @@ type Persisted = {
   connectionId: string | null;
   widgets: unknown;
   parametersConfig: ParametersConfig;
+  dashboardSettings: DashboardSettings;
 };
 
 function snapshotPersisted(): Persisted {
-  const { name, description, connectionId, widgets, parametersConfig } = useCanvasStore.getState();
-  return { name, description, connectionId, widgets, parametersConfig };
+  const { name, description, connectionId, widgets, parametersConfig, dashboardSettings } = useCanvasStore.getState();
+  return { name, description, connectionId, widgets, parametersConfig, dashboardSettings };
 }
 
 async function pushToServer(canvasId: string): Promise<void> {
-  const { name, description, connectionId, widgets, parametersConfig } = useCanvasStore.getState();
+  const { name, description, connectionId, widgets, parametersConfig, dashboardSettings } = useCanvasStore.getState();
   await updateCanvas(canvasId, {
     name,
     description,
     connectionId,
-    state: JSON.stringify({ widgets, parametersConfig }),
+    state: persistedStateOf(widgets, parametersConfig, dashboardSettings),
   });
 }
 

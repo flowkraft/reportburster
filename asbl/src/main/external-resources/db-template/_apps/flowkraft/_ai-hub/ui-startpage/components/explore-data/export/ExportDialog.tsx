@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 // lucide-react removed
-import { useCanvasStore } from "@/lib/stores/canvas-store";
+import { persistedStateOf, useCanvasStore } from "@/lib/stores/canvas-store";
 import { usePublishStatusStore, publishSignature, rememberPublished } from "@/lib/stores/publish-status-store";
 import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
@@ -72,7 +72,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
       );
       return built ? { ...w, dataSource: { ...ds, generatedSql: built } } : w;
     });
-    const persistedState = JSON.stringify({ widgets: patchedWidgets, parametersConfig: state.parametersConfig });
+    const persistedState = persistedStateOf(patchedWidgets, state.parametersConfig, state.dashboardSettings);
     try {
       await updateCanvas(state.id, { state: persistedState });
     } catch (e) {
