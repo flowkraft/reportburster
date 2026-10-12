@@ -6346,4 +6346,68 @@ test('(canvas mechanics) M85 Data labels on the bars, in the Canvas and publishe
   }
 });
 
+/** How a drawn chart stacks (#25): its value axis's stacked and max, and each stack's total. */
+async function cStacks(chart: Locator): Promise<{ stacked: unknown; max: unknown; totals: number[] } | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    if (!instance) return null;
+    const y = instance.config.options?.scales?.y ?? {};
+    const datasets: { data: unknown[] }[] = instance.data.datasets ?? [];
+    const length = Math.max(0, ...datasets.map((ds) => ds.data.length));
+    const totals = Array.from({ length }, (_, j) =>
+      Math.round(datasets.reduce((sum, ds) => sum + (Number(ds.data[j]) || 0), 0) * 100) / 100);
+    return { stacked: y.stacked, max: y.max, totals };
+  });
+}
+
+test('(canvas mechanics) M86 Stacked areas, and bars stacked to 100%, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M86 Stacking', async (canvasId) => {
+      // The orders per channel, split by status.
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addGroupBy(page, 'channel');
+      await addGroupBy(page, 'status');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+
+      // + an area chart stacks, as it always did, and can now be told not to.
+      await setChartType(page, 'area');
+      await page.locator('#btnDisplayTab').click();
+      await expect.poll(async () => (await cStacks(cViz(page, chart)))?.stacked,
+        { message: 'an area chart stacks by itself', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await page.locator('#btnChartStacked-off').click();
+      await expect.poll(async () => (await cStacks(cViz(page, chart)))?.stacked,
+        { message: 'off: the areas overlap', timeout: 30_000, intervals: [1_000] }).toBe(false);
+      await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.scales?.y?.stacked === false);
+
+      // + the bars stacked to 100%: every channel's stack makes 100.
+      await setChartType(page, 'bar');
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#btnChartStacked-percent').click();
+      const every100 = (s: { stacked: unknown; max: unknown; totals: number[] } | null) =>
+        !!s && s.stacked === true && s.max === 100 && s.totals.length === pChannels.length && s.totals.every((t) => t === 100);
+      await expect.poll(async () => every100(await cStacks(cViz(page, chart))),
+        { message: 'each channel is 100%', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.rbStack100 === true);
+
+      // + the published chart draws the same shares.
+      let charts: string[] = [];
+      await expect.poll(async () => (charts = (await getCanvasComponentIds(page, canvasId)).chart ?? []).length,
+        { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect.poll(async () => every100(await cStacks(page.locator(`[id="widgetChart-${charts[0]}"]`))),
+        { message: 'published, each channel is 100% too', timeout: 60_000, intervals: [1_000] }).toBe(true);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });

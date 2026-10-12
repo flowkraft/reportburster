@@ -21,6 +21,7 @@
   import { reportQuery } from '../shared/report-query';
   import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
   import { VALUE_LABELS_PLUGIN_ID, valueLabelsPlugin } from '../shared/value-labels';
+  import { applyStackPercent } from '../shared/stack-percent';
 
   // DEBUG: counters for lifecycle events
   let _afterUpdateCount = 0;
@@ -361,12 +362,12 @@
     } as any;
   }
 
-  // Area — line with each dataset filled + Y-axis stacked.
+  // Area — line with each dataset filled + Y-axis stacked, unless its DSL says `stacked false` (#25).
   function buildAreaConfig(normalizedData: any, mergedOptions: any) {
     const datasets = (normalizedData?.datasets ?? []).map((ds: any) => Object.assign({}, ds, { fill: true }));
     const opts = Object.assign({}, mergedOptions, {
       scales: Object.assign({}, mergedOptions?.scales, {
-        y: Object.assign({}, mergedOptions?.scales?.y, { stacked: true }),
+        y: Object.assign({}, mergedOptions?.scales?.y, { stacked: mergedOptions?.scales?.y?.stacked !== false }),
       }),
     });
     return {
@@ -637,6 +638,8 @@
       if (!ChartCtor.registry?.plugins?.get?.(VALUE_LABELS_PLUGIN_ID)) ChartCtor.register(valueLabelsPlugin);
 
       const config = buildConfig();
+      // 100% stacked (#25): the shares replace the values once the config is built, for every type.
+      applyStackPercent(config);
       rbApplyThemeColors(config);
       const ctx2d = canvas?.getContext('2d');
       if (!ctx2d) return;

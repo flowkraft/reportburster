@@ -54,4 +54,18 @@ describe('data labels on a chart', () => {
     valueLabelsPlugin.afterDatasetsDraw(chart, {}, {});
     assert.deepEqual(chart.$rbValueLabels, []);
   });
+
+  test('on a 100% stacked chart a label is a share', () => {
+    const ctx = { save() {}, restore() {}, fillText() {} } as any;
+    const chart: any = {
+      ctx,
+      config: { options: { rbStack100: true } },
+      options: { scales: { y: { stacked: true } } },
+      data: { datasets: [{ data: [25] }] },
+      isDatasetVisible: () => true,
+      getDatasetMeta: () => ({ type: 'bar', data: [{ x: 1, y: 1, base: 2 }] }),
+    };
+    valueLabelsPlugin.afterDatasetsDraw(chart, {}, { display: true });
+    assert.deepEqual(chart.$rbValueLabels, ['25%']);
+  });
 });

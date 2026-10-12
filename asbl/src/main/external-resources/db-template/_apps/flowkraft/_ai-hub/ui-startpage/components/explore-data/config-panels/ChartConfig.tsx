@@ -162,6 +162,35 @@ export function readValueLabels(map: ChartDslOptions): boolean {
   return (plugins?.rbValueLabels as Record<string, unknown> | undefined)?.display === true;
 }
 
+/** How a chart stacks (#25): not at all, stacked, or each stack as 100%. An area chart stacks
+ *  unless it says `stacked false`; a bar chart only when it says `stacked true`. */
+export type StackMode = "off" | "on" | "percent";
+export function readStackMode(map: ChartDslOptions, chartType: string): StackMode {
+  const opts = map.options as Record<string, unknown> | undefined;
+  if (opts?.rbStack100 === true) return "percent";
+  const y = (opts?.scales as Record<string, unknown> | undefined)?.y as Record<string, unknown> | undefined;
+  if (chartType === "area") return y?.stacked === false ? "off" : "on";
+  return y?.stacked === true ? "on" : "off";
+}
+
+/** Write a stack mode into the Map, pruning what it empties, so "as it was" reads as it did. */
+export function setStackMode(map: ChartDslOptions, mode: StackMode, chartType: string): ChartDslOptions {
+  // An area stacks by itself: on is the keys gone, off is said out loud.
+  let next = setStackedOption(map, chartType === "area" ? false : mode !== "off");
+  const opts = { ...((next.options as Record<string, unknown> | undefined) ?? {}) };
+  if (mode === "percent") opts.rbStack100 = true;
+  else delete opts.rbStack100;
+  if (chartType === "area" && mode === "off") {
+    const scales = { ...((opts.scales as Record<string, unknown> | undefined) ?? {}) };
+    scales.y = { ...((scales.y as Record<string, unknown> | undefined) ?? {}), stacked: false };
+    opts.scales = scales;
+  }
+  next = { ...next };
+  if (Object.keys(opts).length > 0) next.options = opts;
+  else delete next.options;
+  return next;
+}
+
 /** Read whether the bars stack (`options.scales.y.stacked`; absent means they do not). */
 export function readStacked(map: ChartDslOptions): boolean {
   const opts = map.options as Record<string, unknown> | undefined;
@@ -354,7 +383,11 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
   const palette = (map.palette as string | undefined) ?? "default";
 
   const hasSeriesSplit = xFields.length >= 2;
-  const stacked = readStacked(map);
+  const stackMode = readStackMode(map, chartType);
+  // Stacking is offered where there is something to stack: an area chart, and bars or rows split by
+  // a second column or carrying several measures.
+  const canStack = chartType === "area"
+    || ((chartType === "bar" || chartType === "row") && (hasSeriesSplit || yFields.length >= 2));
   const valueLabels = readValueLabels(map);
   const valueAxis = valueAxisOf(chartType);
   const axisMin = valueAxis ? readAxisBound(map, valueAxis, "min") : undefined;
@@ -409,7 +442,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
     setDslMap(config, setPluginOption(map, "rbValueLabels", on ? { display: true } : undefined), onChange);
   // Stacking is two Chart.js keys, written into the same Map the published page
   // reads, so the bars stack in the Canvas and on the dashboard by one route.
-  const setStacked = (on: boolean) => setDslMap(config, setStackedOption(map, on), onChange);
+  const setStacked = (mode: StackMode) => setDslMap(config, setStackMode(map, mode, chartType), onChange);
   // The axis bounds are Chart.js's own `scales.<axis>.min|max`, in the same Map the published page reads.
   const setAxis = (bound: "min" | "max", value: number | undefined) => {
     if (valueAxis) setDslMap(config, setAxisBound(map, valueAxis, bound, value), onChange);
@@ -731,17 +764,17 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
         </div>
       </div>
 
-      {chartType === "bar" && hasSeriesSplit && (
+      {canStack && (
         <div>
-          <span className="text-xs text-base-content/60">Stacked bars</span>
+          <span className="text-xs text-base-content/60">Stacked</span>
           <div className="flex mt-1 rounded-md overflow-hidden border border-base-300 text-xs">
-            {([["on", true], ["off", false]] as const).map(([label, value]) => (
+            {([["off", "off", "off"], ["on", "on", "on"], ["percent", "percent", "100%"]] as const).map(([key, value, label]) => (
               <button
-                key={label}
-                id={`btnChartStacked-${label}`}
+                key={key}
+                id={`btnChartStacked-${key}`}
                 onClick={() => setStacked(value)}
                 className={`flex-1 py-1.5 capitalize transition-colors ${
-                  stacked === value
+                  stackMode === value
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-base-content/60 hover:bg-base-200"
                 }`}
