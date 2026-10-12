@@ -85,7 +85,9 @@
   // `geoJsonKey` isn't explicitly set we try these in order.
   const DEFAULT_KEY_CANDIDATES: Record<string, string[]> = {
     world_countries: ["ISO3166-1-Alpha-2", "ISO_A2", "iso_a2", "ISO2", "A2", "id"],
-    us_states:       ["STUSPS", "STATE", "id", "postal", "abbr"],
+    // The shipped us-states.geojson keys its features by FIPS number (`id` "41" is Oregon) and names
+    // them (`name` "Oregon"), so the name comes before the id; `featureKey` reads it as a USPS code.
+    us_states:       ["STUSPS", "STATE", "postal", "abbr", "name", "id"],
   };
 
   // ColorBrewer-style 5-bucket blue sequential palette. Meaningful without
@@ -320,9 +322,12 @@
     return (normalizeCountryToIso2(raw) ?? "").toUpperCase() || null;
   }
 
-  function featureKey(feature: any, keyProp: string): string {
+  function featureKey(feature: any, keyProp: string, region: "us_states" | "world_countries"): string {
     const rawKey = keyProp === "id" ? feature.id : feature.properties?.[keyProp];
-    return rawKey == null ? "" : String(rawKey).toUpperCase();
+    if (rawKey == null) return "";
+    // A state is matched as its data is (`canonicalKey`): a name or a code, read as the USPS code.
+    if (region === "us_states") return normalizeStateToUsps(rawKey) ?? String(rawKey).toUpperCase();
+    return String(rawKey).toUpperCase();
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -531,7 +536,7 @@
 
     const layer = L.geoJSON(geo, {
       style: (feature: any) => {
-        const fk = featureKey(feature, keyProp);
+        const fk = featureKey(feature, keyProp, r.region);
         const m = metricByKey.get(fk);
         return {
           fillColor: m == null ? MISSING_COLOR : colorFor(m),
@@ -541,7 +546,7 @@
         };
       },
       onEachFeature: (feature: any, fLayer: any) => {
-        const fk = featureKey(feature, keyProp);
+        const fk = featureKey(feature, keyProp, r.region);
         const row = rowByKey.get(fk);
         const regionName =
           feature.properties?.NAME ??
