@@ -5,6 +5,7 @@ import { useWidgetData } from "./useWidgetData";
 import { asDerivedWrite, useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
 import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
+import { DrillRowsPanel, useDrillRows } from "./useDrillRows";
 import { IconSparkles as Sparkles } from "@/components/shared/Icons";
 import { ensureDataTodayLoaded, fetchSchema, getConnectionType, getDataToday } from "@/lib/explore-data/rb-api";
 import { findTable, refForQuery } from "@/lib/explore-data/table-ref";
@@ -265,6 +266,8 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
   const ready = useRbElementReady("rb-chart");
   // This chart's own clicks, when its author ticked the box in the Display tab.
   useCrossFilterClicks(chartEl, widget);
+  // A click on a bar opens the rows behind it (#21), unless the chart's clicks filter the canvas.
+  const { drill, closeDrill } = useDrillRows(chartEl, widget);
   const [autoBusy, setAutoBusy] = useState(false);
   const [autoErr, setAutoErr] = useState<string | null>(null);
 
@@ -619,6 +622,7 @@ export function ChartWidget({ widgetId }: ChartWidgetProps) {
       <div className="flex-1 min-h-0 relative">
         {/* @ts-expect-error - Web component custom element */}
         <rb-chart ref={attachChart} id={`widgetViz-${widgetId}`} style={{ position: "absolute", inset: 0, display: "block" }} />
+        <DrillRowsPanel drill={drill} onClose={closeDrill} />
       </div>
       {hiddenCount > 0 && widget && (
         <div className="shrink-0 px-2 py-0.5 text-[10px] text-base-content/60 bg-base-200/40 border-t border-base-300/50 flex items-center justify-between gap-2">

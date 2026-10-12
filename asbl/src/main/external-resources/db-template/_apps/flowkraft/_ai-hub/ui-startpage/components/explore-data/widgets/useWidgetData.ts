@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo, TableSchema } from "@/lib/explore-data/types";
 import { executeQuery, executeScript, fetchSchema, getConnectionType, hasConnectionsCached, ensureConnectionsLoaded } from "@/lib/explore-data/rb-api";
-import { columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
+import { buildSql, columnKindsOf, extractParamTypes, sqlForDataSource } from "@/lib/explore-data/sql-builder";
+import { drillFieldsOf, drillFiltersOf, rowsQueryOf } from "@/lib/explore-data/drill-rows";
 import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { dialectFor } from "@/lib/explore-data/sql-dialects";
 import { slicerFilterPlanFor, slicerParamValues, wrapWithSlicerFilters } from "@/lib/explore-data/slicer-filters";
@@ -241,8 +242,30 @@ export function useWidgetData(widgetId: string) {
     // widget whose clicks filter - and taken away again when the last one goes, so a canvas with
     // neither keeps the data source it has always had.
     const slicerSql = slicerPlan.filters.length > 0 || slicerPlan.wrapFields.length > 0 ? asked : undefined;
-    if ((dataSource.slicerSql ?? undefined) !== slicerSql)
-      updateWidgetDataSource(widgetId, { ...dataSource, slicerSql });
+    // The rows behind one bar or one table row (#21): the same question without its aggregation,
+    // under the same filters and selections, plus the group values clicked (`drill-rows.ts`). Kept
+    // the same way, for the same reason: the published dashboard opens exactly these rows. Only a
+    // chart or a table offers the click, and only a query grouped by plain text columns has an
+    // answer to it; every other widget keeps the data source it has always had.
+    const columnKinds = columnKindsOf(tableSchema?.columns);
+    const drillFields = mode === "visual" && (widget?.type === "chart" || widget?.type === "tabulator")
+      ? drillFieldsOf(dataSource.visualQuery, columnKinds)
+      : [];
+    const rowsSql = drillFields.length > 0
+      ? buildSql(rowsQueryOf(dataSource.visualQuery!), {
+          connectionType: getConnectionType(connectionId),
+          temporalColumns: temporalColumnNamesOf(widget?.shape),
+          columnKinds,
+          paramTypes: extractParamTypes(parametersConfig?.parameters),
+          slicerFilters: [...slicerPlan.filters, ...drillFiltersOf(drillFields)],
+          today,
+        }) || undefined
+      : undefined;
+    const rowsFields = rowsSql ? drillFields : undefined;
+    if ((dataSource.slicerSql ?? undefined) !== slicerSql
+        || (dataSource.rowsSql ?? undefined) !== rowsSql
+        || (dataSource.rowsFields ?? []).join("\u0000") !== (rowsFields ?? []).join("\u0000"))
+      updateWidgetDataSource(widgetId, { ...dataSource, slicerSql, rowsSql, rowsFields });
 
     // SQL / AI-SQL — re-execute when Run is clicked OR when dashboard filter
     // values change AND the SQL contains a ${param} placeholder. Without the

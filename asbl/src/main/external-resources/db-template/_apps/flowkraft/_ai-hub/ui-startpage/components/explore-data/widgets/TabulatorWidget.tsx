@@ -5,6 +5,7 @@ import { useWidgetData } from "./useWidgetData";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "./useRbElementReady";
 import { useCrossFilterClicks, useRbElement } from "./useCrossFilter";
+import { DrillRowsPanel, useDrillRows } from "./useDrillRows";
 // lucide-react removed
 import { looksLikeBoolean, isTemporalExtraction } from "@/lib/explore-data/smart-defaults";
 import type { ColumnSchema } from "@/lib/explore-data/types";
@@ -74,6 +75,8 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const ready = useRbElementReady("rb-tabulator");
   // This table's own clicks, when its author ticked the box in the Display tab.
   useCrossFilterClicks(tableEl, widget);
+  // A click on a row opens the rows behind it (#21), unless the table's clicks filter the canvas.
+  const { drill, closeDrill } = useDrillRows(tableEl, widget);
   const [activeField, setActiveField] = useState<string | null>(null);
 
   // ── Single source of truth: the canonical DSL Map. If displayConfig has
@@ -193,7 +196,7 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
   const tabulatorPageSize = (dslMap.paginationSize as number | undefined) ?? 50;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       {/* @ts-expect-error - Web component custom element */}
       <rb-tabulator key={`${tabulatorTheme}|${tabulatorLayout}|${tabulatorPagination}|${tabulatorPageSize}`} ref={attachTable} id={`widgetViz-${widgetId}`} component-id={widgetId} theme={tabulatorTheme} style={{ display: "block", width: "100%", flex: 1 }} />
       {atLimit && (
@@ -201,6 +204,7 @@ export function TabulatorWidget({ widgetId }: TabulatorWidgetProps) {
           showing first {limit} rows — add a filter or raise the limit to see more
         </div>
       )}
+      <DrillRowsPanel drill={drill} onClose={closeDrill} />
       <ColumnSettingsDialog
         open={activeField !== null && activeMeta !== null}
         onClose={() => setActiveField(null)}

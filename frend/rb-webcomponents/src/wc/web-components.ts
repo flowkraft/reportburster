@@ -15,9 +15,11 @@ import RbProgress from "./RbProgress.wc.svelte";
 import RbDetail from "./RbDetail.wc.svelte";
 // One database picker for a whole page of cubes, in its header (D11).
 import RbSqlVendor from "./RbSqlVendor.wc.svelte";
+// The panel every drill opens its rows in: a cube's number, a Visual widget's bar or row (#21).
+import RbDrillRows from "./RbDrillRows.wc.svelte";
 
 // Export them so they can be imported elsewhere if desired
-export { RbTabulator, RbChart, RbPivotTable, RbParameters, RbReport, RbValue, RbSlicer, RbCubeRenderer, RbMap, RbSankey, RbGauge, RbTrend, RbProgress, RbDetail, RbSqlVendor };
+export { RbTabulator, RbChart, RbPivotTable, RbParameters, RbReport, RbValue, RbSlicer, RbCubeRenderer, RbMap, RbSankey, RbGauge, RbTrend, RbProgress, RbDetail, RbSqlVendor, RbDrillRows };
 
 // rb-dashboard is a semantic alias for rb-report
 const RbReportClass = customElements.get('rb-report');

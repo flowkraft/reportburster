@@ -69,6 +69,29 @@ public class ScriptAssembler {
     private static final Pattern SLICER_TOKEN = Pattern.compile(
             "\\$\\{(" + SLICER_PARAM_PREFIX + "[A-Za-z0-9_]+)\\}");
 
+    /**
+     * The prefix of a clicked group value's parameter, {@code __drill_<column>} (#21).
+     *
+     * <p>LOGIC-MIRROR of {@code DRILL_PARAM_PREFIX} in
+     * {@code ui-startpage/lib/explore-data/drill-rows.ts}, which writes {@code AND "channel" = ${__drill_channel}}
+     * into a widget's rows query, and in {@code rb-webcomponents/src/shared/drill-through.ts}, which
+     * sends the value clicked. Like a slicer's, no one declared it: the assembler finds it in the SQL.
+     */
+    private static final String DRILL_PARAM_PREFIX = "__drill_";
+
+    /** A clicked group value's parameter as it stands in a rows query. */
+    private static final Pattern DRILL_TOKEN = Pattern.compile(
+            "\\$\\{(" + DRILL_PARAM_PREFIX + "[A-Za-z0-9_]+)\\}");
+
+    /**
+     * The component a widget's rows behind a click are served as: {@code <component id>__rows}.
+     * LOGIC-MIRROR of {@code ROWS_COMPONENT_SUFFIX} in {@code drill-through.ts}.
+     */
+    static final String ROWS_COMPONENT_SUFFIX = "__rows";
+
+    /** On a widget's rows block: the component id of the widget whose rows it serves. */
+    private static final String ROWS_OF = "__rowsOf";
+
     /** Matches a full import statement on its own line. */
     private static final Pattern IMPORT_PATTERN = Pattern.compile(
             "^\\s*import\\s+[\\w.*]+(\\s+as\\s+\\w+)?\\s*(;\\s*)?$",
@@ -133,7 +156,7 @@ public class ScriptAssembler {
                                            List<Map<String, Object>> parametersList) throws CanvasExportException {
 
         // 1. Filter to data widgets and sort canonically: (y, x, id)
-        List<Map<String, Object>> widgets = allWidgets.stream()
+        List<Map<String, Object>> widgets = withRowsBlocks(allWidgets.stream()
                 .filter(w -> DATA_TYPES.contains(str(w, "type")))
                 // A widget published as the cube itself has no SQL in the dashboard at all: the
                 // viewer's questions are answered live, against the cube file, through the runtime
@@ -144,7 +167,7 @@ public class ScriptAssembler {
                 .sorted(Comparator.comparingInt((Map<String, Object> w) -> gridInt(w, "y"))
                         .thenComparingInt(w -> gridInt(w, "x"))
                         .thenComparing(w -> str(w, "id")))
-                .toList();
+                .toList());
 
         // 2. Hoist imports from script-mode widgets (dedup + sort via TreeSet)
         TreeSet<String> hoistedImports = new TreeSet<>();
@@ -258,6 +281,23 @@ public class ScriptAssembler {
                 if (!withSlicers.contains(slicerParam))
                     withSlicers.add(slicerParam);
             paramNames = withSlicers;
+        }
+
+        // ── The clicked group values' parameters (#21) ─────────────────────────
+        // The rows behind a click (`<component id>__rows`) are narrowed to the group clicked, each
+        // group column's value in a parameter of its own (`__drill_<column>`) that the page sends with
+        // the request. Declared the way a slicer's is, from the SQL itself. Sorted, so the same canvas
+        // assembles to the same bytes.
+        Set<String> drillParamsUsed = new TreeSet<>();
+        Matcher drillToken = DRILL_TOKEN.matcher(everyQuery.toString());
+        while (drillToken.find())
+            drillParamsUsed.add(drillToken.group(1));
+        if (!drillParamsUsed.isEmpty()) {
+            List<String> withDrills = new ArrayList<>(paramNames);
+            for (String drillParam : drillParamsUsed)
+                if (!withDrills.contains(drillParam))
+                    withDrills.add(drillParam);
+            paramNames = withDrills;
         }
 
         // 4. Build script text + line-to-widget blame map
@@ -566,7 +606,47 @@ public class ScriptAssembler {
      * the dashboard names it: the Dashboard Demos' claims are written against widget ids, and the
      * rows a published dashboard reports are keyed by this.
      */
+    /**
+     * The data widgets with, after each Visual-tab widget that keeps one, the block that serves the
+     * rows behind a click on it (#21): the query the canvas wrote without the aggregation
+     * ({@code dataSource.rowsSql}), as a component of its own. A canvas with no such widget - every
+     * canvas saved before this existed - assembles to exactly the script it always did.
+     */
+    private static List<Map<String, Object>> withRowsBlocks(List<Map<String, Object>> widgets) {
+        List<Map<String, Object>> withRows = new ArrayList<>();
+        for (Map<String, Object> widget : widgets) {
+            withRows.add(widget);
+            Map<String, Object> rows = rowsBlockOf(widget);
+            if (rows != null)
+                withRows.add(rows);
+        }
+        return withRows;
+    }
+
+    /** The rows block of one widget, or null when it keeps no rows query. */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> rowsBlockOf(Map<String, Object> widget) {
+        if (!"visual".equals(dsField(widget, "mode")))
+            return null;
+        String rowsSql = dsField(widget, "rowsSql");
+        if (rowsSql.isBlank() || !(widget.get("dataSource") instanceof Map<?, ?> source))
+            return null;
+        Map<String, Object> dataSource = new LinkedHashMap<>((Map<String, Object>) source);
+        dataSource.put("mode", "sql");
+        dataSource.put("sql", rowsSql);
+        dataSource.remove("slicerSql");
+        dataSource.remove("generatedSql");
+        dataSource.remove("rowsSql");
+        Map<String, Object> rows = new LinkedHashMap<>(widget);
+        rows.put("dataSource", dataSource);
+        rows.put(ROWS_OF, componentId(widget));
+        return rows;
+    }
+
     static String componentId(Map<String, Object> widget) {
+        // A widget's rows behind a click are served under the widget's own id, and a suffix (#21).
+        if (widget.get(ROWS_OF) instanceof String rowsOf && !rowsOf.isBlank())
+            return rowsOf + ROWS_COMPONENT_SUFFIX;
         String type    = str(widget, "type");
         String id      = str(widget, "id");
         String stripped = id.replaceFirst("^w-", "");
