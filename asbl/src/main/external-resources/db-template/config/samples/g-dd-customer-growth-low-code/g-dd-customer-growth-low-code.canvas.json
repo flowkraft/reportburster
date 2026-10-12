@@ -1,0 +1,844 @@
+{
+  "id": "g-dd-customer-growth-low-code",
+  "name": "Customer Base & Growth (low-code)",
+  "description": "The base and its intake: how many customers there are, how many arrived in the last 30 days and where the intake is heading, which channel brings them, who they are, where they are, how often they buy, and the newest of them as a list to act on.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-customer-growth-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd09-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Customer Base & Growth\n\nReferral signups more than doubled after the loyalty programme of March 2025, from about 13 a month to about 29."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd09-kpi-customers",
+        "type": "number",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "segment",
+                "operator": "equals",
+                "value": "${segment}"
+              },
+              {
+                "column": "acquisition_channel",
+                "operator": "in",
+                "value": "${acquisitionChannel}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "COUNT",
+                "field": "customer_id"
+              }
+            ],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nLIMIT 500",
+          "sql": "SELECT COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "customer_id_count",
+          "_auto_numberField": true,
+          "numberFormat": "number",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Customers"
+        },
+        "columns": [
+          {
+            "columnName": "customer_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "customer_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-kpi-new-in-30-days",
+        "type": "number",
+        "gridPosition": {
+          "x": 3,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT count(*) AS new_customers\nFROM dash_demo.customers c\nWHERE true\n  AND c.segment = ${segment}\n  AND c.acquisition_channel IN (${acquisitionChannel})\n  AND c.signup_date > (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 30 DAY\n  AND c.signup_date <= (SELECT a.as_of FROM dash_demo.as_of a)",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "new_customers",
+          "_auto_numberField": true,
+          "numberFormat": "number",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "New in the last 30 days"
+        },
+        "columns": [
+          {
+            "columnName": "new_customers",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "new_customers",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-trend-new-customers-per-month",
+        "type": "trend",
+        "gridPosition": {
+          "x": 6,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "segment",
+                "operator": "equals",
+                "value": "${segment}"
+              },
+              {
+                "column": "acquisition_channel",
+                "operator": "in",
+                "value": "${acquisitionChannel}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "COUNT",
+                "field": "customer_id"
+              }
+            ],
+            "groupBy": [
+              "signup_date"
+            ],
+            "sort": [
+              {
+                "column": "signup_date",
+                "direction": "ASC"
+              }
+            ],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {
+              "signup_date": "month"
+            }
+          },
+          "generatedSql": "SELECT *\nFROM (\n  SELECT strftime(\"signup_date\", '%Y-%m') AS \"signup_date\", COUNT(\"customer_id\") AS \"customer_id_count\"\n  FROM \"dash_demo\".\"customers\"\n  WHERE \"segment\" = ${segment}\n    AND \"acquisition_channel\" IN (${acquisitionChannel})\n  GROUP BY strftime(\"signup_date\", '%Y-%m')\n) grouped_rows\nORDER BY CASE WHEN \"signup_date\" IS NULL THEN 1 ELSE 0 END, \"signup_date\" ASC\nLIMIT 500",
+          "sql": "SELECT *\nFROM (\n  SELECT strftime(\"signup_date\", '%Y-%m') AS \"signup_date\", COUNT(\"customer_id\") AS \"customer_id_count\"\n  FROM \"dash_demo\".\"customers\"\n  WHERE \"segment\" = ${segment}\n    AND \"acquisition_channel\" IN (${acquisitionChannel})\n  GROUP BY strftime(\"signup_date\", '%Y-%m')\n) grouped_rows\nORDER BY CASE WHEN \"signup_date\" IS NULL THEN 1 ELSE 0 END, \"signup_date\" ASC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "line",
+            "data": {
+              "labelField": "signup_date",
+              "datasets": [
+                {
+                  "field": "customer_id_count",
+                  "label": "customer_id_count"
+                }
+              ]
+            }
+          },
+          "dateField": "signup_date",
+          "_auto_dateField": true,
+          "valueField": "customer_id_count",
+          "_auto_valueField": true,
+          "userPicked": true,
+          "format": "number",
+          "label": "New customers per month"
+        },
+        "columns": [
+          {
+            "columnName": "signup_date",
+            "dataType": 91,
+            "typeName": "DATE",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "customer_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "signup_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "customer_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-kpi-repeat-buyers",
+        "type": "number",
+        "gridPosition": {
+          "x": 9,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(1.0 * count(CASE WHEN b.orders > 1 THEN 1 END) / count(*), 4) AS repeat_buyer_pct\nFROM (SELECT (SELECT count(*) FROM dash_demo.orders o\n              WHERE o.customer_id = c.customer_id\n                AND o.status <> 'cancelled') AS orders\n      FROM dash_demo.customers c\n      WHERE true\n        AND c.segment = ${segment}\n        AND c.acquisition_channel IN (${acquisitionChannel})\n     ) b",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "repeat_buyer_pct",
+          "_auto_numberField": true,
+          "numberFormat": "percent",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Repeat buyers"
+        },
+        "columns": [
+          {
+            "columnName": "repeat_buyer_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "repeat_buyer_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-chart-new-customers-per-month-by-channel",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 4,
+          "w": 8,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "segment",
+                "operator": "equals",
+                "value": "${segment}"
+              },
+              {
+                "column": "acquisition_channel",
+                "operator": "in",
+                "value": "${acquisitionChannel}"
+              },
+              {
+                "column": "signup_date",
+                "operator": "greater_or_equal",
+                "value": "2024-01-01"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "COUNT",
+                "field": "customer_id"
+              }
+            ],
+            "groupBy": [
+              "signup_date",
+              "channel"
+            ],
+            "sort": [
+              {
+                "column": "signup_date",
+                "direction": "ASC"
+              },
+              {
+                "column": "channel",
+                "direction": "ASC"
+              }
+            ],
+            "limit": 500,
+            "computed": [
+              {
+                "name": "channel",
+                "left": "",
+                "operator": "",
+                "right": "",
+                "formula": "IF(acquisition_channel = 'partner' OR acquisition_channel = 'email', 'Other', acquisition_channel)"
+              }
+            ],
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {
+              "signup_date": "month"
+            }
+          },
+          "generatedSql": "SELECT *\nFROM (\n  SELECT strftime(\"signup_date\", '%Y-%m') AS \"signup_date\", (CASE WHEN ((\"acquisition_channel\" = 'partner') OR (\"acquisition_channel\" = 'email')) THEN 'Other' ELSE \"acquisition_channel\" END) AS \"channel\", COUNT(\"customer_id\") AS \"customer_id_count\"\n  FROM \"dash_demo\".\"customers\"\n  WHERE \"segment\" = ${segment}\n    AND \"acquisition_channel\" IN (${acquisitionChannel})\n    AND \"signup_date\" >= DATE '2024-01-01'\n  GROUP BY strftime(\"signup_date\", '%Y-%m'), (CASE WHEN ((\"acquisition_channel\" = 'partner') OR (\"acquisition_channel\" = 'email')) THEN 'Other' ELSE \"acquisition_channel\" END)\n) grouped_rows\nORDER BY CASE WHEN \"signup_date\" IS NULL THEN 1 ELSE 0 END, \"signup_date\" ASC, CASE WHEN \"channel\" IS NULL THEN 1 ELSE 0 END, \"channel\" ASC\nLIMIT 500",
+          "sql": "SELECT *\nFROM (\n  SELECT strftime(\"signup_date\", '%Y-%m') AS \"signup_date\", (CASE WHEN ((\"acquisition_channel\" = 'partner') OR (\"acquisition_channel\" = 'email')) THEN 'Other' ELSE \"acquisition_channel\" END) AS \"channel\", COUNT(\"customer_id\") AS \"customer_id_count\"\n  FROM \"dash_demo\".\"customers\"\n  WHERE \"segment\" = ${segment}\n    AND \"acquisition_channel\" IN (${acquisitionChannel})\n    AND \"signup_date\" >= DATE '2024-01-01'\n  GROUP BY strftime(\"signup_date\", '%Y-%m'), (CASE WHEN ((\"acquisition_channel\" = 'partner') OR (\"acquisition_channel\" = 'email')) THEN 'Other' ELSE \"acquisition_channel\" END)\n) grouped_rows\nORDER BY CASE WHEN \"signup_date\" IS NULL THEN 1 ELSE 0 END, \"signup_date\" ASC, CASE WHEN \"channel\" IS NULL THEN 1 ELSE 0 END, \"channel\" ASC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "line",
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "New customers per month by channel"
+                }
+              }
+            },
+            "data": {
+              "labelField": "signup_date",
+              "datasets": [
+                {
+                  "field": "customer_id_count",
+                  "label": "New customers"
+                }
+              ],
+              "seriesField": "channel"
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "signup_date",
+            "dataType": 91,
+            "typeName": "DATE",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "customer_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "signup_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "customer_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-chart-segment-mix",
+        "type": "chart",
+        "gridPosition": {
+          "x": 8,
+          "y": 4,
+          "w": 4,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "segment",
+                "operator": "equals",
+                "value": "${segment}"
+              },
+              {
+                "column": "acquisition_channel",
+                "operator": "in",
+                "value": "${acquisitionChannel}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "COUNT",
+                "field": "customer_id"
+              }
+            ],
+            "groupBy": [
+              "segment"
+            ],
+            "sort": [
+              {
+                "column": "customer_id_count",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT \"segment\", COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nGROUP BY \"segment\"\nORDER BY COUNT(\"customer_id\") DESC\nLIMIT 500",
+          "rowsSql": "SELECT *\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\n  AND \"segment\" = ${__drill_segment}\nLIMIT 500",
+          "rowsFields": [
+            "segment"
+          ],
+          "sql": "SELECT \"segment\", COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nGROUP BY \"segment\"\nORDER BY COUNT(\"customer_id\") DESC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "doughnut",
+            "data": {
+              "datasets": [
+                {
+                  "field": "customer_id_count",
+                  "label": "Customers"
+                }
+              ],
+              "labelField": "segment"
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Segment mix"
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "customer_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "customer_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-map-customers-by-country",
+        "type": "map",
+        "gridPosition": {
+          "x": 0,
+          "y": 8,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "customers",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "segment",
+                "operator": "equals",
+                "value": "${segment}"
+              },
+              {
+                "column": "acquisition_channel",
+                "operator": "in",
+                "value": "${acquisitionChannel}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "COUNT",
+                "field": "customer_id"
+              }
+            ],
+            "groupBy": [
+              "country_code"
+            ],
+            "sort": [
+              {
+                "column": "customer_id_count",
+                "direction": "DESC"
+              }
+            ],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT \"country_code\", COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nGROUP BY \"country_code\"\nORDER BY COUNT(\"customer_id\") DESC\nLIMIT 500",
+          "sql": "SELECT \"country_code\", COUNT(\"customer_id\") AS \"customer_id_count\"\nFROM \"dash_demo\".\"customers\"\nWHERE \"segment\" = ${segment}\n  AND \"acquisition_channel\" IN (${acquisitionChannel})\nGROUP BY \"country_code\"\nORDER BY COUNT(\"customer_id\") DESC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "mapType": "region",
+          "_auto_mapType": true,
+          "region": "world_countries",
+          "_auto_region": true,
+          "dimension": "country_code",
+          "_auto_dimension": true,
+          "metric": "customer_id_count",
+          "_auto_metric": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "customer_id_count",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "customer_id_count",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-chart-customers-by-lifetime-orders",
+        "type": "chart",
+        "gridPosition": {
+          "x": 6,
+          "y": 8,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT b.bucket AS lifetime_orders,\n       count(*) AS customers\nFROM (SELECT CASE WHEN n.orders = 0 THEN 'none'\n                  WHEN n.orders = 1 THEN '1'\n                  WHEN n.orders <= 3 THEN '2-3'\n                  WHEN n.orders <= 5 THEN '4-5'\n                  WHEN n.orders <= 9 THEN '6-9'\n                  ELSE '10 or more' END AS bucket,\n             CASE WHEN n.orders = 0 THEN 0\n                  WHEN n.orders = 1 THEN 1\n                  WHEN n.orders <= 3 THEN 2\n                  WHEN n.orders <= 5 THEN 3\n                  WHEN n.orders <= 9 THEN 4\n                  ELSE 5 END AS sort_key\n      FROM (SELECT (SELECT count(*) FROM dash_demo.orders o\n                    WHERE o.customer_id = c.customer_id\n                      AND o.status <> 'cancelled') AS orders\n            FROM dash_demo.customers c\n            WHERE true\n              AND c.segment = ${segment}\n              AND c.acquisition_channel IN (${acquisitionChannel})\n           ) n\n     ) b\nGROUP BY 1, b.sort_key\nORDER BY b.sort_key",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "lifetime_orders",
+              "datasets": [
+                {
+                  "field": "customers",
+                  "label": "Customers"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Customers by lifetime orders"
+                },
+                "legend": {
+                  "display": false
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "lifetime_orders",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "customers",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "lifetime_orders",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "customers",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd09-table-newest-customers",
+        "type": "tabulator",
+        "gridPosition": {
+          "x": 0,
+          "y": 13,
+          "w": 12,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "orders",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT c.name AS customer,\n       c.segment AS segment,\n       c.acquisition_channel AS acquisition_channel,\n       g.country AS country,\n       c.signup_date AS signup_date,\n       (SELECT round(o.total_amount, 2) FROM dash_demo.orders o\n        WHERE o.customer_id = c.customer_id\n          AND o.status <> 'cancelled'\n        ORDER BY o.order_ts\n        LIMIT 1) AS first_order_value\nFROM dash_demo.customers c\nJOIN dash_demo.geo_cities g ON g.city_id = c.city_id\nWHERE true\n  AND c.segment = ${segment}\n  AND c.acquisition_channel IN (${acquisitionChannel})\nORDER BY c.signup_date DESC\nLIMIT 200",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true,
+            "pagination": true,
+            "paginationSize": 10,
+            "theme": "modern"
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "customer",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "segment",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "acquisition_channel",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "country",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "signup_date",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "first_order_value",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "customer",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "segment",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "acquisition_channel",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "country",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": true,
+              "isCoordinate": false
+            },
+            {
+              "name": "signup_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "first_order_value",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": []
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "segment",
+          "type": "String",
+          "label": "Segment",
+          "description": "",
+          "constraints": {},
+          "uiHints": {
+            "control": "radio",
+            "options": "SELECT '' AS value, '-- All segments --' AS label UNION ALL SELECT DISTINCT segment AS value, segment AS label FROM dash_demo.customers ORDER BY label"
+          }
+        },
+        {
+          "id": "acquisitionChannel",
+          "type": "String",
+          "label": "Acquisition channel",
+          "description": "",
+          "defaultValue": [],
+          "constraints": {},
+          "uiHints": {
+            "control": "multiselect",
+            "options": "SELECT DISTINCT acquisition_channel AS value, acquisition_channel AS label FROM dash_demo.customers ORDER BY label"
+          }
+        }
+      ]
+    }
+  }
+}

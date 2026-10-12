@@ -13,6 +13,12 @@
       "title": "Sales Pipeline (low-code)"
     },
     {
+      "of": "dd-customer-growth",
+      "id": "dd-customer-growth-low-code",
+      "reportId": "g-dd-customer-growth-low-code",
+      "title": "Customer Base & Growth (low-code)"
+    },
+    {
       "of": "dd-invoices",
       "id": "dd-invoices-low-code",
       "reportId": "g-dd-invoices-low-code",
