@@ -155,6 +155,13 @@ function readLegend(map: ChartDslOptions): "auto" | "show" | "hide" {
   return "auto";
 }
 
+/** Read whether the chart writes its values on itself (`options.plugins.rbValueLabels.display`, #24). */
+export function readValueLabels(map: ChartDslOptions): boolean {
+  const opts = map.options as Record<string, unknown> | undefined;
+  const plugins = opts?.plugins as Record<string, unknown> | undefined;
+  return (plugins?.rbValueLabels as Record<string, unknown> | undefined)?.display === true;
+}
+
 /** Read whether the bars stack (`options.scales.y.stacked`; absent means they do not). */
 export function readStacked(map: ChartDslOptions): boolean {
   const opts = map.options as Record<string, unknown> | undefined;
@@ -271,7 +278,7 @@ function AxisBoundInput({ id, value, placeholder, onCommit }: {
 }
 
 /** Update options.plugins.* immutably. */
-function setPluginOption(map: ChartDslOptions, key: "title" | "legend", value: unknown): ChartDslOptions {
+function setPluginOption(map: ChartDslOptions, key: "title" | "legend" | "rbValueLabels", value: unknown): ChartDslOptions {
   const opts = { ...((map.options as Record<string, unknown> | undefined) ?? {}) };
   const plugins = { ...((opts.plugins as Record<string, unknown> | undefined) ?? {}) };
   if (value === undefined) delete plugins[key];
@@ -348,6 +355,7 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
 
   const hasSeriesSplit = xFields.length >= 2;
   const stacked = readStacked(map);
+  const valueLabels = readValueLabels(map);
   const valueAxis = valueAxisOf(chartType);
   const axisMin = valueAxis ? readAxisBound(map, valueAxis, "min") : undefined;
   const axisMax = valueAxis ? readAxisBound(map, valueAxis, "max") : undefined;
@@ -395,6 +403,10 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
     }
   };
 
+  // The data labels are the rb-chart plugin's own option, in the same Map the published page reads;
+  // off takes the key away, so a chart that never had them reads exactly as it did.
+  const setValueLabels = (on: boolean) =>
+    setDslMap(config, setPluginOption(map, "rbValueLabels", on ? { display: true } : undefined), onChange);
   // Stacking is two Chart.js keys, written into the same Map the published page
   // reads, so the bars stack in the Canvas and on the dashboard by one route.
   const setStacked = (on: boolean) => setDslMap(config, setStackedOption(map, on), onChange);
@@ -694,6 +706,26 @@ export function ChartConfig({ config, columns, onChange, rankingHints }: ChartCo
               }`}
             >
               {v}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <span className="text-xs text-base-content/60">Data labels</span>
+        <div className="flex mt-1 rounded-md overflow-hidden border border-base-300 text-xs">
+          {([["on", true], ["off", false]] as const).map(([label, value]) => (
+            <button
+              key={label}
+              id={`btnChartLabels-${label}`}
+              onClick={() => setValueLabels(value)}
+              className={`flex-1 py-1.5 capitalize transition-colors ${
+                valueLabels === value
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-base-content/60 hover:bg-base-200"
+              }`}
+            >
+              {label}
             </button>
           ))}
         </div>

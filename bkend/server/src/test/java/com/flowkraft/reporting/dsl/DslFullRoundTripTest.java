@@ -328,6 +328,27 @@ public class DslFullRoundTripTest {
             "and the chart the page is given carries it");
     }
 
+    /** #24: the data labels are the rb-chart plugin's own option, carried in `options` as written. */
+    @Test
+    public void roundTrip_chartValueLabels() throws Exception {
+        String dsl =
+            "chart('ordersByChannel') {\n" +
+            "  type 'bar'\n" +
+            "  data { labelField 'channel'; datasets { dataset { field 'orders' } } }\n" +
+            "  options { plugins { rbValueLabels { display true } } }\n" +
+            "}";
+        Map<String, Object> chart = parseChartRawNamed(dsl).get("ordersByChannel");
+        String emitted = BlockFormEmitter.emitNamed("chart", "ordersByChannel", chart, BlockFormRules.CHART);
+        assertEquals(chart, parseChartRawNamed(emitted).get("ordersByChannel"),
+            "the data labels survive the round trip");
+
+        ChartOptions read = ChartOptionsParser.parseGroovyChartDslCode(dsl);
+        Object options = read.getNamedOptions().get("ordersByChannel").getOptions();
+        assertEquals(Map.of("display", true),
+            ((Map<?, ?>) ((Map<?, ?>) ((Map<?, ?>) options).get("plugins")).get("rbValueLabels")),
+            "and the chart the page is given carries them");
+    }
+
     // ═════════════════════════════════════════════════════════════════════════════
     // PIVOT TABLE
     // ═════════════════════════════════════════════════════════════════════════════

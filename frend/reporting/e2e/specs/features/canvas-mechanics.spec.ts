@@ -6292,4 +6292,58 @@ test('(canvas mechanics) M84 A title and a subtitle over a widget, in the Canvas
   }
 });
 
+/** The data labels a chart wrote on itself last (#24), read off its Chart.js instance. */
+async function cValueLabels(chart: Locator): Promise<string[] | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    return instance ? ((instance.$rbValueLabels as string[] | undefined) ?? []) : null;
+  });
+}
+
+test('(canvas mechanics) M85 Data labels on the bars, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M85 Data labels', async (canvasId) => {
+      // Each channel's order count, as a label reads it.
+      const expected = pChannels.map((c) => pCount((r) => r.channel === c).toLocaleString('en-US')).sort();
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
+
+      // - as it was: no labels on the bars.
+      await expect.poll(async () => cValueLabels(cViz(page, chart)), { message: 'no labels yet', timeout: 30_000 })
+        .toEqual([]);
+
+      // + on: one label per bar, its count.
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#btnChartLabels-on').click();
+      await expect.poll(async () => (await cValueLabels(cViz(page, chart)))?.slice().sort(),
+        { message: 'the Canvas writes each count on its bar', timeout: 30_000, intervals: [1_000] }).toEqual(expected);
+
+      // + the published chart writes the same labels.
+      let charts: string[] = [];
+      await expect.poll(async () => (charts = (await getCanvasComponentIds(page, canvasId)).chart ?? []).length,
+        { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await expect.poll(async () => {
+        const response = await page.request.get(`http://localhost:9090/api/explorations/${canvasId}`);
+        return ((await response.json()) as { state: string }).state.includes('rbValueLabels');
+      }, { message: 'the canvas keeps the setting', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect.poll(async () => (await cValueLabels(page.locator(`[id="widgetChart-${charts[0]}"]`)))?.slice().sort(),
+        { message: 'the published chart writes the same counts', timeout: 60_000, intervals: [1_000] }).toEqual(expected);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
