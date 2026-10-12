@@ -11,7 +11,7 @@
  */
 
 /** What a measure's `format` may say. Anything else is shown as it came back. */
-export type CubeFormat = 'currency' | 'percent' | 'number' | '';
+export type CubeFormat = 'currency' | 'percent' | 'number' | 'compact' | '';
 
 /** The currency a cube uses when it names none. */
 export const DEFAULT_CURRENCY = 'USD';
@@ -63,6 +63,9 @@ export function formatMeasure(value: unknown, format: string,
       }) + '%';
     case 'number':
       return num.toLocaleString('en-US');
+    case 'compact':
+      // 1.2K, 3.5M: a big number read at a glance (#26, #27), one decimal at most.
+      return num.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 });
     default:
       return String(value);
   }

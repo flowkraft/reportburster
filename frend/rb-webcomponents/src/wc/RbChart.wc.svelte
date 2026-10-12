@@ -21,7 +21,8 @@
   import { reportQuery } from '../shared/report-query';
   import { CROSS_FILTER_EVENT } from '../shared/slicer-selections';
   import { VALUE_LABELS_PLUGIN_ID, valueLabelsPlugin } from '../shared/value-labels';
-  import { applyStackPercent, stackPercentOn } from '../shared/stack-percent';
+  import { applyStackPercent } from '../shared/stack-percent';
+  import { applyChartNumberFormat, drawModeOf } from '../shared/chart-number-format';
 
   // DEBUG: counters for lifecycle events
   let _afterUpdateCount = 0;
@@ -95,7 +96,7 @@
   let canvas: HTMLCanvasElement;
   let chart: any = null;
   let lastChartType: string | undefined = undefined;
-  let lastStackPercent = false;
+  let lastDrawMode = '';
   const dispatch = createEventDispatcher();
 
   // reuse ResizeObserver patch from RbTabulator
@@ -641,7 +642,9 @@
       const config = buildConfig();
       // 100% stacked (#25): the shares replace the values once the config is built, for every type.
       applyStackPercent(config);
-      lastStackPercent = stackPercentOn(config.options);
+      // Its numbers in the format its DSL names (#26): the value axis, the tooltips, the labels.
+      applyChartNumberFormat(config);
+      lastDrawMode = drawModeOf(config.options);
       rbApplyThemeColors(config);
       const ctx2d = canvas?.getContext('2d');
       if (!ctx2d) return;
@@ -848,10 +851,9 @@
     // naive update logic: if chart type changed, rebuild chart; otherwise update data/options
     try {
       const newType = type || chartConfig?.type || (data?.datasets?.[0]?.type);
-      // Shares or values (#25): the scales and the tooltip change with them, and an in-place merge
-      // would keep the old ones - a switch between them draws the chart anew.
-      const wantsStackPercent = stackPercentOn(chartConfig?.options ?? options);
-      if (chart && (lastChartType !== newType || lastStackPercent !== wantsStackPercent)) {
+      // Shares or values (#25), a number format (#26): the scales and the tooltip change with them,
+      // and an in-place merge would keep the old ones - a change of them draws the chart anew.
+      if (chart && (lastChartType !== newType || lastDrawMode !== drawModeOf(chartConfig?.options ?? options))) {
         // rebuild chart
         destroyChart();
         await createChart();
@@ -873,7 +875,8 @@
           mergedOptions = Object.assign({}, mergedOptions, options);
         }
         chart.config.options = mergedOptions;
-        if (wantsStackPercent) applyStackPercent(chart.config);
+        applyStackPercent(chart.config);
+        applyChartNumberFormat(chart.config);
         rbApplyThemeColors(chart.config);
 
         try { chart.update(); } catch (err) { dispatch('chartError', { message: String(err) }); }

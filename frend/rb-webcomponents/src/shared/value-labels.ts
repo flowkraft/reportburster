@@ -6,6 +6,8 @@
  */
 
 import { formatPercent, stackPercentOn } from './stack-percent.ts';
+import { chartNumberFormatOf } from './chart-number-format.ts';
+import { formatMeasure } from './cube-format.ts';
 
 export const VALUE_LABELS_PLUGIN_ID = 'rbValueLabels';
 
@@ -73,6 +75,8 @@ export const valueLabelsPlugin = {
     const stacked = !!(scales.x?.stacked || scales.y?.stacked);
     // A 100% stacked chart (#25) holds shares: its labels say so.
     const percent = stackPercentOn(chart.config?.options);
+    // A chart written in a number format (#26) writes its labels in it too.
+    const format = chartNumberFormatOf(chart.config?.options);
     const written: string[] = [];
     ctx.save();
     ctx.font = '11px system-ui, sans-serif';
@@ -87,7 +91,7 @@ export const valueLabelsPlugin = {
         const value = valueOf(dataset.data?.[j], horizontal);
         if (value === null || !el || el.skip) return;
         const at = labelPlacement(elementType, el, horizontal, stacked);
-        const text = percent ? formatPercent(value) : formatValueLabel(value);
+        const text = percent ? formatPercent(value) : format ? formatMeasure(value, format) : formatValueLabel(value);
         ctx.textAlign = at.align;
         ctx.textBaseline = at.baseline;
         ctx.fillText(text, at.x, at.y);

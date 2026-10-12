@@ -6410,4 +6410,66 @@ test('(canvas mechanics) M86 Stacked areas, and bars stacked to 100%, in the Can
   }
 });
 
+/** A drawn chart's value-axis tick labels, as Chart.js wrote them. */
+async function cValueTicks(chart: Locator): Promise<string[] | null> {
+  if ((await chart.count()) === 0) return null;
+  return chart.evaluate((el) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instance = (((el.getRootNode() as ShadowRoot).host ?? el) as any).getChartInstance?.();
+    if (!instance?.scales?.y) return null;
+    return (instance.scales.y.ticks as { label: unknown }[]).map((t) => String(t.label));
+  });
+}
+
+test('(canvas mechanics) M87 A chart written in a number format, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M87 Chart number format', async (canvasId) => {
+      const compact = (n: number) => n.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+      const expected = pChannels.map((c) => compact(pCount((r) => r.channel === c))).sort();
+      // Every tick but zero is written short: 4K, 8K, 12K.
+      const shortTicks = (ticks: string[] | null) =>
+        !!ticks && ticks.length > 1 && ticks.every((t) => t === '0' || /^\d+(\.\d)?K$/.test(t));
+
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+      await cWaitChart(page, chart, (s) => cSame([...new Set(s.labels)], pChannels), 'a bar per channel');
+
+      // - as it was: Chart.js writes the ticks in full (12,000).
+      await expect.poll(async () => shortTicks(await cValueTicks(cViz(page, chart))),
+        { message: 'full numbers on the axis', timeout: 30_000 }).toBe(false);
+
+      // + Compact: the axis and the labels read 13.2K, the way a table column and a KPI write it.
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#btnChartLabels-on').click();
+      await page.locator('#selectChartNumberFormat').selectOption('compact');
+      await expect.poll(async () => shortTicks(await cValueTicks(cViz(page, chart))),
+        { message: 'the axis is written short', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await expect.poll(async () => (await cValueLabels(cViz(page, chart)))?.slice().sort(),
+        { message: 'and so are the labels', timeout: 30_000, intervals: [1_000] }).toEqual(expected);
+
+      // + published, the same.
+      let charts: string[] = [];
+      await expect.poll(async () => (charts = (await getCanvasComponentIds(page, canvasId)).chart ?? []).length,
+        { message: 'the saved canvas names the chart', timeout: 30_000, intervals: [1_000] }).toBe(1);
+      await eStoredWidgets(page, canvasId, (w) => w[0]?.displayConfig?.dslConfig?.options?.rbNumberFormat === 'compact');
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      const pub = () => page.locator(`[id="widgetChart-${charts[0]}"]`);
+      await expect.poll(async () => shortTicks(await cValueTicks(pub())),
+        { message: 'the published axis is written short', timeout: 60_000, intervals: [1_000] }).toBe(true);
+      await expect.poll(async () => (await cValueLabels(pub()))?.slice().sort(),
+        { message: 'and its labels', timeout: 30_000, intervals: [1_000] }).toEqual(expected);
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });
