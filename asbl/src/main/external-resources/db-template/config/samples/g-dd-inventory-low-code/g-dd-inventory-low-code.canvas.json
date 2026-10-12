@@ -1,0 +1,555 @@
+{
+  "id": "g-dd-inventory-low-code",
+  "name": "Inventory & Stock Health (low-code)",
+  "description": "The money in stock, the SKUs below their reorder level and the value stuck in stock that has not sold in 90 days; how full each warehouse is; the slow movers worth most; and the reorder list itself, with a suggested order quantity per SKU.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-inventory-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd19-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Inventory & Stock Health\n\n14 SKUs are below their reorder level, 4 of them in Rotterdam, and Rotterdam is the warehouse with no room left: 94% of capacity against 71% in Frankfurt and 52% in Sao Paulo. 62,110.83 sits in 9 slow movers that have not sold in 90 days, none of them worth more than 6,979.31 on its own, and every one of them is in a different building - so the money to free is spread thin while the space problem is in one place.\n\nThe money in stock, the size of today's ordering job and the money stuck, then where there is room and what to clear, then the list to act on. **Below reorder level only** is ticked, so the table is today's reorder list; untick it to see all 1,000 stock rows. It moves the table alone - the three numbers keep their own meaning. Space used counts everything in a building, so it does not narrow with **Category**."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd19-kpi-stock-value",
+        "type": "number",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 4,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-inventory",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "StockValue"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {},
+              "order": [],
+              "limit": null,
+              "paramBindings": [
+                {
+                  "param": "warehouse",
+                  "member": "Warehouse",
+                  "operator": "equals"
+                },
+                {
+                  "param": "category",
+                  "member": "Category",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  CAST(SUM(stock.qty_on_hand * stock.unit_cost) AS DECIMAL(31,4)) AS \"StockValue\"\nFROM (SELECT l.*, p.unit_cost\n  FROM dash_demo.stock_levels l\n  LEFT JOIN dash_demo.products p ON p.product_id = l.product_id) stock\nLEFT JOIN dash_demo.products ON stock.product_id = dash_demo.products.product_id\nLEFT JOIN dash_demo.warehouses ON stock.warehouse_id = dash_demo.warehouses.warehouse_id\nWHERE dash_demo.warehouses.name = ${warehouse}\n  AND dash_demo.products.category IN (${category})"
+        },
+        "displayConfig": {
+          "columnSettings": {
+            "StockValue": {
+              "numberStyle": "currency",
+              "currency": "EUR"
+            }
+          },
+          "numberField": "StockValue",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Stock value"
+        },
+        "columns": [
+          {
+            "columnName": "StockValue",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "StockValue",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd19-kpi-skus-below-reorder",
+        "type": "number",
+        "gridPosition": {
+          "x": 4,
+          "y": 1,
+          "w": 4,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "cube",
+            "cubeId": "dd-inventory",
+            "table": "",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "cubeSelection": {
+              "dimensions": [],
+              "measures": [
+                "BelowReorder"
+              ],
+              "segments": [],
+              "filters": [],
+              "granularities": {},
+              "order": [],
+              "limit": null,
+              "paramBindings": [
+                {
+                  "param": "warehouse",
+                  "member": "Warehouse",
+                  "operator": "equals"
+                },
+                {
+                  "param": "category",
+                  "member": "Category",
+                  "operator": "in"
+                }
+              ]
+            }
+          },
+          "generatedSql": "SELECT\n  COUNT(CASE WHEN (stock.qty_on_hand < stock.reorder_level) THEN 1 END) AS \"BelowReorder\"\nFROM (SELECT l.*, p.unit_cost\n  FROM dash_demo.stock_levels l\n  LEFT JOIN dash_demo.products p ON p.product_id = l.product_id) stock\nLEFT JOIN dash_demo.products ON stock.product_id = dash_demo.products.product_id\nLEFT JOIN dash_demo.warehouses ON stock.warehouse_id = dash_demo.warehouses.warehouse_id\nWHERE dash_demo.warehouses.name = ${warehouse}\n  AND dash_demo.products.category IN (${category})"
+        },
+        "displayConfig": {
+          "numberField": "BelowReorder",
+          "_auto_numberField": true,
+          "numberFormat": "number",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "SKUs below reorder level"
+        },
+        "columns": [],
+        "shape": {
+          "dims": [],
+          "measures": []
+        }
+      },
+      {
+        "id": "w-dd19-kpi-slow-mover-value",
+        "type": "number",
+        "gridPosition": {
+          "x": 8,
+          "y": 1,
+          "w": 4,
+          "h": 2
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "stock_levels",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(sum(sl.qty_on_hand * pr.unit_cost), 2) AS slow_mover_value\nFROM dash_demo.stock_levels sl\nJOIN dash_demo.products pr ON pr.product_id = sl.product_id\nJOIN dash_demo.warehouses w ON w.warehouse_id = sl.warehouse_id\nWHERE true\n  AND w.name = ${warehouse}\n  AND pr.category IN (${category})\n  AND (sl.last_sold_date IS NULL OR sl.last_sold_date < (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 90 DAY)",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "slow_mover_value",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Slow-mover value, no sale in 90 days"
+        },
+        "columns": [
+          {
+            "columnName": "slow_mover_value",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "slow_mover_value",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd19-chart-space-used-by-warehouse",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 3,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "stock_levels",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT w.name AS warehouse,\n       round(100.0 * sum(sl.qty_on_hand) / max(w.capacity_units), 2) AS capacity_pct\nFROM dash_demo.stock_levels sl\nJOIN dash_demo.warehouses w ON w.warehouse_id = sl.warehouse_id\nWHERE true\n  AND w.name = ${warehouse}\nGROUP BY w.name\nORDER BY capacity_pct DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Space used by warehouse, % of capacity"
+                },
+                "legend": {
+                  "display": false
+                }
+              },
+              "scales": {
+                "y": {
+                  "suggestedMax": 100
+                }
+              }
+            },
+            "data": {
+              "labelField": "warehouse",
+              "datasets": [
+                {
+                  "field": "capacity_pct",
+                  "label": "% of capacity"
+                }
+              ]
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "warehouse",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "capacity_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "warehouse",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "capacity_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd19-chart-slow-movers-by-value",
+        "type": "chart",
+        "gridPosition": {
+          "x": 6,
+          "y": 3,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "stock_levels",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT pr.sku || ' ' || pr.name AS product,\n       round(sum(sl.qty_on_hand * pr.unit_cost), 2) AS stuck_value\nFROM dash_demo.stock_levels sl\nJOIN dash_demo.products pr ON pr.product_id = sl.product_id\nJOIN dash_demo.warehouses w ON w.warehouse_id = sl.warehouse_id\nWHERE true\n  AND w.name = ${warehouse}\n  AND pr.category IN (${category})\n  AND (sl.last_sold_date IS NULL OR sl.last_sold_date < (SELECT a.as_of FROM dash_demo.as_of a) - INTERVAL 90 DAY)\nGROUP BY pr.sku, pr.name\nORDER BY stuck_value DESC\nLIMIT 10",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "row",
+            "data": {
+              "labelField": "product",
+              "datasets": [
+                {
+                  "field": "stuck_value",
+                  "label": "Value stuck"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Slow movers by value, no sale in 90 days"
+                },
+                "legend": {
+                  "display": false
+                }
+              }
+            }
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "product",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "stuck_value",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "product",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "stuck_value",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd19-table-stock-by-sku",
+        "type": "tabulator",
+        "gridPosition": {
+          "x": 0,
+          "y": 8,
+          "w": 12,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "stock_levels",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT pr.sku AS sku,\n       pr.name AS product,\n       pr.category AS category,\n       w.name AS warehouse,\n       sl.qty_on_hand AS qty_on_hand,\n       sl.reorder_level AS reorder_level,\n       greatest(sl.reorder_level - sl.qty_on_hand, sl.reorder_qty) AS suggested_order\nFROM dash_demo.stock_levels sl\nJOIN dash_demo.products pr ON pr.product_id = sl.product_id\nJOIN dash_demo.warehouses w ON w.warehouse_id = sl.warehouse_id\nWHERE true\n  AND w.name = ${warehouse}\n  AND pr.category IN (${category})\n  AND (sl.qty_on_hand < sl.reorder_level OR NOT ${belowReorderOnly})\nORDER BY suggested_order DESC, pr.sku",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true,
+            "pagination": true,
+            "paginationSize": 10,
+            "theme": "bootstrap5"
+          },
+          "userPicked": true,
+          "columnSettings": {
+            "sku": {
+              "columnTitle": "SKU"
+            },
+            "product": {
+              "columnTitle": "Product"
+            },
+            "qty_on_hand": {
+              "columnTitle": "On hand"
+            },
+            "reorder_level": {
+              "columnTitle": "Reorder level"
+            },
+            "suggested_order": {
+              "columnTitle": "Suggested order"
+            }
+          }
+        },
+        "columns": [
+          {
+            "columnName": "sku",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "product",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "category",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "warehouse",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "qty_on_hand",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "reorder_level",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "suggested_order",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "sku",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "product",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "category",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "warehouse",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "qty_on_hand",
+              "kind": "measure"
+            },
+            {
+              "name": "reorder_level",
+              "kind": "measure"
+            },
+            {
+              "name": "suggested_order",
+              "kind": "measure"
+            }
+          ]
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "warehouse",
+          "type": "String",
+          "label": "Warehouse",
+          "description": "",
+          "constraints": {},
+          "uiHints": {
+            "control": "select",
+            "options": "SELECT '' AS value, '-- All warehouses --' AS label UNION ALL SELECT w.name AS value, w.name AS label FROM dash_demo.warehouses w ORDER BY label"
+          }
+        },
+        {
+          "id": "belowReorderOnly",
+          "type": "Boolean",
+          "label": "Below reorder level only",
+          "description": "",
+          "defaultValue": true,
+          "constraints": {},
+          "uiHints": {
+            "control": "checkbox"
+          }
+        },
+        {
+          "id": "category",
+          "type": "String",
+          "label": "Category",
+          "description": "",
+          "defaultValue": [],
+          "constraints": {},
+          "uiHints": {
+            "control": "multiselect",
+            "options": "SELECT DISTINCT pr.category AS value, pr.category AS label FROM dash_demo.products pr ORDER BY label"
+          }
+        }
+      ]
+    }
+  }
+}
