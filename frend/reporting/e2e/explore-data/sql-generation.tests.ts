@@ -72,6 +72,7 @@ import {
   isCompleteComputedColumn,
   isNumberOperand,
 } from "@/lib/explore-data/computed-columns";
+import { FORMULA_FUNCTIONS, parseFormula } from "@/lib/explore-data/formula";
 import {
   isDayParam,
   nextDayRef,
@@ -88,7 +89,9 @@ import {
 import {
   aliasSafeColumnRef,
   bucketExpr,
+  concatExpr,
   containsFilter,
+  daysBetweenExpr,
   likeFilter,
   dateExpr,
   decimalDivision,
@@ -96,6 +99,7 @@ import {
   quoteIdent,
   quoteTableRef,
   sqlLiteral,
+  textExpr,
   type SqlDialect,
   type SqlLiteralKind,
 } from "@/lib/explore-data/sql-dialects";
@@ -3495,5 +3499,227 @@ describe("ANSI — an aggregate of its own rows (Count where / Sum where, #9)", 
       summarize: [{ aggregation: "SUM", field: "amount", where: undefined }], groupBy: ["title"],
     } as Partial<VisualQuery>))).toBe(before);
     expect(before).not.toContain("CASE WHEN");
+  });
+});
+
+// ── 32 ───────────────────────────────────────────────────────────────────────
+
+/** A formula row of the Compute step (#8): a name and one line of formula. */
+function formulaColumn(name: string, formula: string) {
+  return { name, left: "", operator: "", right: "", formula };
+}
+
+/** Why a formula did not read, or "" when it did. */
+function formulaError(formula: string): string {
+  return (parseFormula(formula, COLUMN_KINDS) as { error?: string }).error ?? "";
+}
+
+describe("ANSI — a formula column (#8)", () => {
+
+  /** "The amount of the Pro deals, 0 for the others": what one step cannot say. */
+  const proAmount = formulaColumn("pro_amount", "IF(title = 'Pro', amount, 0)");
+  const withFormula = (...computed: ReturnType<typeof formulaColumn>[]) =>
+    query({ computed } as Partial<VisualQuery>);
+
+  it("writes one text on every vendor", () => {
+    expect(oneAnsiTextFor(withFormula(proAmount)).length).toBeGreaterThan(0);
+  });
+
+  it("selects the formula beside the table's own columns, under its name", () => {
+    expect(oneAnsiTextFor(withFormula(proAmount)))
+      .toContain("(CASE WHEN (title = 'Pro') THEN amount ELSE 0 END) AS pro_amount");
+  });
+
+  it("reads * and / before + and -, and brackets first", () => {
+    const ansi = oneAnsiTextFor(withFormula(
+      formulaColumn("a", "amount + qty * 2 - 1"),
+      formulaColumn("b", "(amount + qty) * 2"),
+      formulaColumn("c", "-amount + 3"),
+    ));
+    expect(ansi).toContain("((amount + (qty * 2)) - 1) AS a");
+    expect(ansi).toContain("((amount + qty) * 2) AS b");
+    expect(ansi).toContain("((-amount) + 3) AS c");
+  });
+
+  it("reads NOT before AND before OR", () => {
+    expect(oneAnsiTextFor(withFormula(formulaColumn("x", "IF(NOT (amount > 5 AND qty < 3) OR title <> 'x', 1, 0)"))))
+      .toContain("(CASE WHEN ((NOT ((amount > 5) AND (qty < 3))) OR (title <> 'x')) THEN 1 ELSE 0 END) AS x");
+  });
+
+  it("writes CASE, ROUND, BIN, ABS and COALESCE", () => {
+    const ansi = oneAnsiTextFor(withFormula(
+      formulaColumn("size", "CASE(amount > 1000, 'big', amount > 100, 'mid', 'small')"),
+      formulaColumn("r", "ROUND(amount, 2)"),
+      formulaColumn("r0", "ROUND(amount)"),
+      formulaColumn("band", "BIN(amount, 100)"),
+      formulaColumn("gap", "ABS(amount - qty)"),
+      formulaColumn("q", "COALESCE(qty, 0)"),
+    ));
+    expect(ansi).toContain("(CASE WHEN (amount > 1000) THEN 'big' WHEN (amount > 100) THEN 'mid' ELSE 'small' END) AS size");
+    expect(ansi).toContain("ROUND(CAST(amount AS DECIMAL(31,4)), 2) AS r");
+    expect(ansi).toContain("ROUND(CAST(amount AS DECIMAL(31,4)), 0) AS r0");
+    expect(ansi).toContain("(FLOOR(CAST(amount AS DECIMAL(31,4)) / 100) * 100) AS band");
+    expect(ansi).toContain("ABS((amount - qty)) AS gap");
+    expect(ansi).toContain("COALESCE(qty, 0) AS q");
+  });
+
+  it("reads function names in any case, and a column name regardless of case", () => {
+    expect(oneAnsiTextFor(withFormula(formulaColumn("pro_amount", "if(TITLE = 'Pro', Amount, 0)"))))
+      .toBe(oneAnsiTextFor(withFormula(proAmount)));
+  });
+
+  it("is summed and grouped by like any column", () => {
+    const ansi = oneAnsiTextFor(query({
+      computed: [proAmount],
+      groupBy: ["title"],
+      summarize: [{ aggregation: "SUM", field: "pro_amount" }],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("SUM((CASE WHEN (title = 'Pro') THEN amount ELSE 0 END))");
+    expect(ansi).toContain("AS pro_amount_sum");
+  });
+
+  it("is a column to group by (#35): the band in SELECT under its name, the expression in GROUP BY", () => {
+    const ansi = oneAnsiTextFor(query({
+      computed: [formulaColumn("size", "CASE(amount > 1000, 'big', 'small')")],
+      groupBy: ["size"],
+      summarize: [{ aggregation: "COUNT", field: "*" }],
+    } as Partial<VisualQuery>));
+    expect(ansi).toContain("SELECT (CASE WHEN (amount > 1000) THEN 'big' ELSE 'small' END) AS size, COUNT(*) AS count");
+    expect(ansi).toContain("GROUP BY (CASE WHEN (amount > 1000) THEN 'big' ELSE 'small' END)");
+  });
+
+  it("refuses, in words, what it cannot read - and the query leaves the column out", () => {
+    const refused: [string, string][] = [
+      ["IF(price > 1, 1, 0)", 'there is no column "price"'],
+      ["MEDIAN(amount)", "there is no function MEDIAN()"],
+      ["IF(title = 'Pro, 1, 0)", "is not closed with '"],
+      ["amount > 5", "a condition alone is true or false"],
+      ["closed_on", "a formula gives a number or a text"],
+      ["title + 1", "+ adds numbers; CONCAT(a, b) joins texts"],
+      ["IF(amount > 5, 1)", "IF takes 3 values"],
+      ["IF(amount = 'x', 1, 0)", "a number cannot be compared with a text"],
+      ["IF(amount > 5, 1, 'no')", "the two values of IF must all be numbers, or all texts"],
+      ["ROUND(amount, qty)", "the decimals of ROUND are a whole number"],
+      ["BIN(amount, 0)", "the width of BIN is a number above 0"],
+      ["amount +", "the formula ends too soon"],
+      ["amount qty", "is left over"],
+      ["amount; DROP TABLE crm_deals", '";" at 7 is not part of a formula'],
+      ["", "the formula is empty"],
+    ];
+    const plain = oneAnsiTextFor(query({}));
+    for (const [formula, error] of refused) {
+      expect(parseFormula(formula, COLUMN_KINDS).ok).withContext(formula).toBeFalse();
+      expect(formulaError(formula)).withContext(formula).toContain(error);
+      expect(oneAnsiTextFor(withFormula(formulaColumn("bad", formula)))).withContext(formula).toBe(plain);
+    }
+  });
+
+  it("puts nothing typed into the SQL but a column it knows, a number or a quoted text", () => {
+    // A text is the vendor layer's literal, its quote doubled: it can never close the literal.
+    expect(oneAnsiTextFor(withFormula(formulaColumn("x", "IF(title = 'a'' OR 1=1 --', 1, 0)"))))
+      .toContain("(CASE WHEN (title = 'a'' OR 1=1 --') THEN 1 ELSE 0 END) AS x");
+    // A bracketed name is a column name only when the table has it.
+    expect(parseFormula("[amount) OR 1=1 --]", COLUMN_KINDS))
+      .toEqual({ ok: false, error: 'there is no column "amount) OR 1=1 --"' });
+  });
+
+  it("is typed as text when it gives text, so the next steps offer text operators", () => {
+    const schemas = computedColumnSchemas([
+      formulaColumn("label", "CONCAT(title, ' x')"),
+      formulaColumn("size", "IF(amount > 100, 'big', 'small')"),
+      proAmount,
+    ], COLUMN_KINDS);
+    expect(schemas.map((c) => [c.columnName, c.typeName])).toEqual([
+      ["label", "VARCHAR"], ["size", "VARCHAR"], ["pro_amount", "DECIMAL"],
+    ]);
+  });
+
+  it("is not a column while its name is empty or its formula does not read", () => {
+    expect(isCompleteComputedColumn(formulaColumn("", "amount * 2"), COLUMN_KINDS)).toBeFalse();
+    expect(isCompleteComputedColumn(formulaColumn("x", "amount *"), COLUMN_KINDS)).toBeFalse();
+    expect(isCompleteComputedColumn(formulaColumn("x", "amount * 2"), COLUMN_KINDS)).toBeTrue();
+  });
+
+  it("offers every function it reads in the help, and reads every one it offers", () => {
+    expect(FORMULA_FUNCTIONS.map((f) => f.name).sort())
+      .toEqual(["ABS", "BIN", "CASE", "COALESCE", "CONCAT", "DAYS", "IF", "ROUND", "TODAY"]);
+    for (const f of FORMULA_FUNCTIONS) {
+      expect(formulaError(`${f.name}(`)).withContext(f.name).not.toContain("there is no function");
+    }
+  });
+});
+
+// ── 33 ───────────────────────────────────────────────────────────────────────
+
+describe("VENDOR LAYER — what a formula writes per vendor (#8)", () => {
+
+  const TODAY = "2026-09-30";
+  const formulaOn = (formula: string, vendor: SqlDialect): string =>
+    unquoted(buildSql(query({ computed: [formulaColumn("x", formula)] } as Partial<VisualQuery>),
+      { connectionType: vendor, columnKinds: COLUMN_KINDS, today: TODAY }));
+
+  it("counts the whole days from one date to the other: DAYS(start, end)", () => {
+    for (const [vendor, expected] of eachVendor({
+      sqlite:     "CAST(julianday(e) - julianday(s) AS INTEGER)",
+      duckdb:     "date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",
+      postgres:   "(CAST(e AS DATE) - CAST(s AS DATE))",
+      mysql:      "DATEDIFF(e, s)",
+      mariadb:    "DATEDIFF(e, s)",
+      clickhouse: "dateDiff('day', toDate(s), toDate(e))",
+      sqlserver:  "DATEDIFF(day, s, e)",
+      oracle:     "(TRUNC(e) - TRUNC(s))",
+      db2:        "(DAYS(e) - DAYS(s))",
+    })) {
+      expect(daysBetweenExpr("s", "e", vendor)).withContext(vendor).toBe(expected);
+      expect(formulaOn("DAYS(closed_on, created_at)", vendor)).withContext(vendor)
+        .toContain(`${unquoted(daysBetweenExpr(dateExpr("closed_on", vendor), dateExpr("created_at", vendor), vendor))} AS x`);
+    }
+  });
+
+  it("reads a number as text: CONCAT of a number", () => {
+    for (const [vendor, expected] of eachVendor({
+      sqlite:     "CAST(v AS VARCHAR(255))",
+      duckdb:     "CAST(v AS VARCHAR(255))",
+      postgres:   "CAST(v AS VARCHAR(255))",
+      mysql:      "CAST(v AS CHAR)",
+      mariadb:    "CAST(v AS CHAR)",
+      clickhouse: "toString(v)",
+      sqlserver:  "CAST(v AS NVARCHAR(4000))",
+      oracle:     "TO_CHAR(v)",
+      db2:        "CAST(v AS VARCHAR(255))",
+    })) {
+      expect(textExpr("v", vendor)).withContext(vendor).toBe(expected);
+    }
+  });
+
+  it("joins texts, an empty one as nothing: CONCAT(a, b)", () => {
+    const pipes = "(COALESCE(a, '') || COALESCE(b, ''))";
+    const fn = "CONCAT(COALESCE(a, ''), COALESCE(b, ''))";
+    for (const [vendor, expected] of eachVendor({
+      sqlite: pipes, duckdb: pipes, postgres: pipes, clickhouse: pipes, oracle: pipes, db2: pipes,
+      mysql: fn, mariadb: fn, sqlserver: fn,
+    })) {
+      expect(concatExpr(["a", "b"], vendor)).withContext(vendor).toBe(expected);
+      expect(formulaOn("CONCAT(title, ' / ', qty)", vendor)).withContext(vendor)
+        .toContain(`${concatExpr(["title", "' / '", textExpr("qty", vendor)], vendor)} AS x`);
+    }
+  });
+
+  it("divides as the Compute step divides: a decimal left side, no division by zero", () => {
+    for (const vendor of EVERY_VENDOR) {
+      expect(formulaOn("amount / qty", vendor)).withContext(vendor)
+        .toContain(`${unquoted(decimalDivision("amount", "qty", vendor))} AS x`);
+    }
+  });
+
+  it("writes a Boolean column as a condition, TODAY() and a date text as the vendor's date literal", () => {
+    for (const vendor of EVERY_VENDOR) {
+      expect(formulaOn("IF(is_won, amount, 0)", vendor)).withContext(vendor)
+        .toContain(`(CASE WHEN (is_won = ${sqlLiteral(true, "boolean", vendor)}) THEN amount ELSE 0 END) AS x`);
+      expect(formulaOn("DAYS(closed_on, TODAY())", vendor)).withContext(vendor)
+        .toContain(sqlLiteral(TODAY, "date", vendor));
+      expect(formulaOn("IF(closed_on >= '2026-01-01', 1, 0)", vendor)).withContext(vendor)
+        .toContain(`>= ${sqlLiteral("2026-01-01", "date", vendor)})`);
+    }
   });
 });

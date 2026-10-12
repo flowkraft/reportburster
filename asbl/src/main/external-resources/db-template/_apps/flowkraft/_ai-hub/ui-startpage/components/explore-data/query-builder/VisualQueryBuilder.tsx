@@ -110,7 +110,7 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
   // the columns that hold a number - arithmetic on a date or a name is not what
   // this step is for.
   const numericColumns = columns.filter((c) => columnClassOf(c) === "number");
-  const columnsWithComputed = [...columns, ...computedColumnSchemas(query.computed)];
+  const columnsWithComputed = [...columns, ...computedColumnSchemas(query.computed, columnKindsOf(columns))];
   // The column types decide what a filter literal looks like: a number goes in
   // bare, a date as the vendor's date literal. Without them every value was a
   // string, which a numeric or date column rejects on the strict vendors.
@@ -458,14 +458,13 @@ export function VisualQueryBuilder({ widgetId, schema, dataSource, onChange, onR
       {!isCube && query.table && columns.length > 0 && (
         <>
           {/* Compute comes first: the columns it names are then pickable in every
-              step below it. Nothing to compute without a numeric column. */}
-          {numericColumns.length > 0 && (
-            <ComputeStep
-              columns={numericColumns}
-              computed={query.computed ?? []}
-              onChange={(computed) => updateQuery({ computed })}
-            />
-          )}
+              step below it. One step needs a numeric column; a formula (#8) reads any. */}
+          <ComputeStep
+            columns={numericColumns}
+            allColumns={columns}
+            computed={query.computed ?? []}
+            onChange={(computed) => updateQuery({ computed })}
+          />
           <FilterStep columns={columnsWithComputed} filters={query.filters} match={query.filterMatch ?? "all"} onMatchChange={(filterMatch) => updateQuery({ filterMatch })} availableParams={availableParams} builtinParams={builtinParams} onChange={(filters) => updateQuery({ filters })} />
           <SummarizeStep
             columns={columns}

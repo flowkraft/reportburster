@@ -62,9 +62,10 @@ const TEMPORAL_BUCKET_OPTIONS: { label: string; value: TemporalBucketChoice; gro
 interface SummarizeStepProps {
   columns: ColumnSchema[];
   /** What an aggregate may be taken over: the table's columns plus the query's
-   *  computed ones (F6). Only the aggregate's field list uses it - Group by stays
-   *  on the table's own columns, whose ranges the bucket pickers probe. Absent
-   *  means the columns themselves, which is what every caller had. */
+   *  computed ones (F6). Group by offers them too (#35): a formula such as
+   *  CASE(...) or BIN(...) is a band to group by. The bucket pickers stay on the
+   *  table's own columns, whose ranges they probe. Absent means the columns
+   *  themselves, which is what every caller had. */
   aggregateColumns?: ColumnSchema[];
   summarize: AggItem[];
   groupBy: string[];
@@ -269,7 +270,7 @@ export function SummarizeStep({
   }, [connectionId, tableName, tableSchema, groupBy.join("\u0000")]);
 
   const selectedGroupBy = groupBy.map((col) => ({ col, schema: colByName[col] }));
-  const unselectedColumns = columns.filter((c) => !groupBy.includes(c.columnName));
+  const unselectedColumns = aggFields.filter((c) => !groupBy.includes(c.columnName));
 
   return (
     <div className="space-y-1.5">
