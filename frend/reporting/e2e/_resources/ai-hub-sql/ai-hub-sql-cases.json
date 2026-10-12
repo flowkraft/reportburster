@@ -209,10 +209,10 @@
     {
       "id": "a8-slicer-stage",
       "group": "A",
-      "proves": "the slicer's value list, capped: DISTINCT, ORDER BY and the vendor's row cap (TOP after DISTINCT on SQL Server)",
+      "proves": "the slicer's value list, capped: each value once with its number of rows (GROUP BY, COUNT), ORDER BY and the vendor's row cap (TOP after SELECT on SQL Server); Closed Lost 244 and Closed Won 402 are a3's counts",
       "slicer": { "table": { "schema": "cube_demo", "name": "crm_deals" }, "field": "stage", "rowLimit": 2 },
       "ordered": true,
-      "rows": [["Closed Lost"], ["Closed Won"]]
+      "rows": [["Closed Lost", 244], ["Closed Won", 402]]
     },
     {
       "id": "a9-tickets-sla-breached",
@@ -1739,10 +1739,10 @@
     {
       "id": "b7-slicer-shipcountry",
       "group": "B",
-      "proves": "the slicer on a mixed-case column of a bare table",
+      "proves": "the slicer on a mixed-case column of a bare table, each country with its orders in both shipped Northwind samples",
       "slicer": { "table": "Orders", "field": "ShipCountry", "rowLimit": 5 },
       "ordered": true,
-      "rows": [["Argentina"], ["Austria"], ["France"], ["Germany"], ["Italy"]]
+      "rows": [["Argentina", 3], ["Austria", 3], ["France", 6], ["Germany", 32], ["Italy", 3]]
     },
     {
       "id": "b8-customers-contains",

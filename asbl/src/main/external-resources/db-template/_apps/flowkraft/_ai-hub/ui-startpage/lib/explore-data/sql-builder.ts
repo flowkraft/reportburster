@@ -1349,8 +1349,12 @@ function dayParamCondition(
   }
 }
 
+/** The column a slicer's value query counts each value's rows in, beside the value. */
+export const SLICER_COUNT_COLUMN = "slicer_count";
+
 /**
- * The distinct values of one column, for the slicer's value list.
+ * The distinct values of one column, for the slicer's value list, each with its number of rows
+ * (`SLICER_COUNT_COLUMN`), which the slicer shows and sorts by when the author asks for counts.
  *
  * A pure function of the table, the field, the row cap and the vendor, so the
  * slicer runs exactly the SQL the tests read: ANSI everywhere, with the row cap
@@ -1371,8 +1375,9 @@ export function buildDistinctValuesSql(
 ): string {
   const col = quoteIdent(field, dialect);
   const where = [`WHERE ${col} IS NOT NULL`, ...narrowingLines].join("\n");
-  const sql = `SELECT DISTINCT ${col} FROM ${quoteTableRef(asTableRef(table), dialect)}`
-    + `\n${where}\nORDER BY ${col}`;
+  const count = quoteIdent(SLICER_COUNT_COLUMN, dialect);
+  const sql = `SELECT ${col}, COUNT(*) AS ${count} FROM ${quoteTableRef(asTableRef(table), dialect)}`
+    + `\n${where}\nGROUP BY ${col}\nORDER BY ${col}`;
   return limitClause(sql, rowLimit, dialect);
 }
 

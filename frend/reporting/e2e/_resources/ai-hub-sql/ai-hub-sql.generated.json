@@ -110,15 +110,15 @@
     "db2": "SELECT \"deal_id\", MAX(\"amount\") AS \"amount_max\"\nFROM \"cube_demo\".\"crm_deals\"\nGROUP BY \"deal_id\"\nORDER BY CASE WHEN MAX(\"amount\") IS NULL THEN 1 ELSE 0 END, MAX(\"amount\") DESC\nFETCH FIRST 2 ROWS ONLY"
   },
   "a8-slicer-stage": {
-    "sqlite": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nLIMIT 2",
-    "duckdb": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nLIMIT 2",
-    "postgres": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY",
-    "mysql": "SELECT DISTINCT `stage` FROM `cube_demo`.`crm_deals`\nWHERE `stage` IS NOT NULL\nORDER BY `stage`\nLIMIT 2",
-    "mariadb": "SELECT DISTINCT `stage` FROM `cube_demo`.`crm_deals`\nWHERE `stage` IS NOT NULL\nORDER BY `stage`\nLIMIT 2",
-    "clickhouse": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nLIMIT 2",
-    "sqlserver": "SELECT DISTINCT TOP 2 [stage] FROM [cube_demo].[crm_deals]\nWHERE [stage] IS NOT NULL\nORDER BY [stage]",
-    "oracle": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY",
-    "db2": "SELECT DISTINCT \"stage\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY"
+    "sqlite": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nLIMIT 2",
+    "duckdb": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nLIMIT 2",
+    "postgres": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY",
+    "mysql": "SELECT `stage`, COUNT(*) AS `slicer_count` FROM `cube_demo`.`crm_deals`\nWHERE `stage` IS NOT NULL\nGROUP BY `stage`\nORDER BY `stage`\nLIMIT 2",
+    "mariadb": "SELECT `stage`, COUNT(*) AS `slicer_count` FROM `cube_demo`.`crm_deals`\nWHERE `stage` IS NOT NULL\nGROUP BY `stage`\nORDER BY `stage`\nLIMIT 2",
+    "clickhouse": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nLIMIT 2",
+    "sqlserver": "SELECT TOP 2 [stage], COUNT(*) AS [slicer_count] FROM [cube_demo].[crm_deals]\nWHERE [stage] IS NOT NULL\nGROUP BY [stage]\nORDER BY [stage]",
+    "oracle": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY",
+    "db2": "SELECT \"stage\", COUNT(*) AS \"slicer_count\" FROM \"cube_demo\".\"crm_deals\"\nWHERE \"stage\" IS NOT NULL\nGROUP BY \"stage\"\nORDER BY \"stage\"\nFETCH FIRST 2 ROWS ONLY"
   },
   "a9-tickets-sla-breached": {
     "sqlite": "SELECT COUNT(*) AS \"count\"\nFROM \"cube_demo\".\"support_tickets\"\nWHERE \"sla_breached\" = 1",
@@ -957,15 +957,15 @@
     "db2": "SELECT \"OrderID\", MAX(\"Freight\") AS \"Freight_max\"\nFROM \"Orders\"\nGROUP BY \"OrderID\"\nORDER BY CASE WHEN MAX(\"Freight\") IS NULL THEN 1 ELSE 0 END, MAX(\"Freight\") DESC\nFETCH FIRST 3 ROWS ONLY"
   },
   "b7-slicer-shipcountry": {
-    "sqlite": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nLIMIT 5",
-    "duckdb": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nLIMIT 5",
-    "postgres": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY",
-    "mysql": "SELECT DISTINCT `ShipCountry` FROM `Orders`\nWHERE `ShipCountry` IS NOT NULL\nORDER BY `ShipCountry`\nLIMIT 5",
-    "mariadb": "SELECT DISTINCT `ShipCountry` FROM `Orders`\nWHERE `ShipCountry` IS NOT NULL\nORDER BY `ShipCountry`\nLIMIT 5",
-    "clickhouse": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nLIMIT 5",
-    "sqlserver": "SELECT DISTINCT TOP 5 [ShipCountry] FROM [Orders]\nWHERE [ShipCountry] IS NOT NULL\nORDER BY [ShipCountry]",
-    "oracle": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY",
-    "db2": "SELECT DISTINCT \"ShipCountry\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY"
+    "sqlite": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nLIMIT 5",
+    "duckdb": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nLIMIT 5",
+    "postgres": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY",
+    "mysql": "SELECT `ShipCountry`, COUNT(*) AS `slicer_count` FROM `Orders`\nWHERE `ShipCountry` IS NOT NULL\nGROUP BY `ShipCountry`\nORDER BY `ShipCountry`\nLIMIT 5",
+    "mariadb": "SELECT `ShipCountry`, COUNT(*) AS `slicer_count` FROM `Orders`\nWHERE `ShipCountry` IS NOT NULL\nGROUP BY `ShipCountry`\nORDER BY `ShipCountry`\nLIMIT 5",
+    "clickhouse": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nLIMIT 5",
+    "sqlserver": "SELECT TOP 5 [ShipCountry], COUNT(*) AS [slicer_count] FROM [Orders]\nWHERE [ShipCountry] IS NOT NULL\nGROUP BY [ShipCountry]\nORDER BY [ShipCountry]",
+    "oracle": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY",
+    "db2": "SELECT \"ShipCountry\", COUNT(*) AS \"slicer_count\" FROM \"Orders\"\nWHERE \"ShipCountry\" IS NOT NULL\nGROUP BY \"ShipCountry\"\nORDER BY \"ShipCountry\"\nFETCH FIRST 5 ROWS ONLY"
   },
   "b8-customers-contains": {
     "sqlite": "SELECT COUNT(*) AS \"count\"\nFROM \"Customers\"\nWHERE LOWER(\"CompanyName\") LIKE LOWER('%app''%') ESCAPE '!'",

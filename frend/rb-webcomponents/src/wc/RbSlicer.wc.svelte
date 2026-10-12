@@ -244,13 +244,19 @@
     return document.querySelector(`rb-slicer[field="${field}"]`);
   }
 
-  /** Extract distinct values from a data array (Mode 1 or Mode 2 report-mode) */
+  /**
+   * Extract distinct values from a data array (Mode 1 or Mode 2 report-mode). A row of the slicer's
+   * own value query (`buildDistinctValuesSql`) carries its value's number of rows in `slicer_count`;
+   * any other row counts once.
+   */
   function extractDistinctValuesFromData(rows: Record<string, any>[]) {
     const counts = new Map<string, number>();
     for (const row of rows) {
       if (row[field] != null) {
         const val = String(row[field]);
-        counts.set(val, (counts.get(val) || 0) + 1);
+        const counted = Number(row.slicer_count);
+        const n = row.slicer_count != null && Number.isFinite(counted) ? counted : 1;
+        counts.set(val, (counts.get(val) || 0) + n);
       }
     }
     allValues = [...counts.entries()].map(([value, count]) => ({ value, count }));
