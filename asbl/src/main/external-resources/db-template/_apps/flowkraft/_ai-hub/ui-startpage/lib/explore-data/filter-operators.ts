@@ -25,6 +25,7 @@ export const STRING_OPS: OperatorDef[] = [
   { value: "equals", label: "=" },
   { value: "not_equals", label: "!=" },
   { value: "contains", label: "contains" },
+  { value: "not_contains", label: "does not contain" },
   { value: "starts_with", label: "starts with" },
   { value: "ends_with", label: "ends with" },
   { value: "in", label: "in" },
@@ -59,14 +60,18 @@ export const DATE_OPS: OperatorDef[] = [
   // (`relative-dates.ts`) and written as the same half-open range `between`
   // writes, so a KPI that reads "this month" keeps meaning this month without
   // anyone editing the canvas. The three "last N" operators take the N in the
-  // value box; the five periods take no value at all.
+  // value box; the periods take no value at all.
+  { value: "today", label: "today" },
+  { value: "yesterday", label: "yesterday" },
   { value: "last_n_days", label: "in the last N days" },
   { value: "last_n_weeks", label: "in the last N weeks" },
   { value: "last_n_months", label: "in the last N months" },
   { value: "this_month", label: "this month" },
   { value: "previous_month", label: "previous month" },
   { value: "this_quarter", label: "this quarter" },
+  { value: "previous_quarter", label: "previous quarter" },
   { value: "this_year", label: "this year" },
+  { value: "previous_year", label: "previous year" },
   { value: "year_to_date", label: "year to date" },
   { value: "is_null", label: "is null" },
   { value: "is_not_null", label: "is not null" },

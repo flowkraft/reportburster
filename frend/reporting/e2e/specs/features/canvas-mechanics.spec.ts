@@ -6869,4 +6869,36 @@ test('(canvas mechanics) M93 The median, and a moving average next to the runnin
   }, 'rbt-sample-northwind-sqlite-4f2');
 });
 
+test('(canvas mechanics) M94 More filter operators: does not contain, today, yesterday, the quarter and the year before', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M94 More operators', async () => {
+    // A text column: the rows whose channel does not hold the letters, whatever their case.
+    const kpi = await eNewVisualWidget(page, 'orders');
+    await addVisualFilter(page, 0, 'channel', 'not_contains', 'WEB');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await runVisualQuery(page);
+    const withoutWeb = pCount((r) => !r.channel.toLowerCase().includes('web'));
+    expect(withoutWeb, 'some orders are not web ones').toBeGreaterThan(0);
+    await g4ScalarIs(page, kpi, withoutWeb, 'does not contain, whatever the case');
+
+    // A date column: the periods count from the data's today, 2026-09-30 here (M66), and take no value.
+    await page.locator('#btnRemoveFilter-0').click();
+    await addVisualFilter(page, 0, 'order_ts', 'today');
+    await expect(page.locator('#inputFilterValue-0'), 'a period takes no value').toHaveCount(0);
+    const day = (r: Record<string, string>): string => r.order_ts.slice(0, 10);
+    const periods: Array<[string, (d: string) => boolean]> = [
+      ['today', (d) => d === '2026-09-30'],
+      ['yesterday', (d) => d === '2026-09-29'],
+      ['previous_quarter', (d) => d >= '2026-04-01' && d < '2026-07-01'],
+      ['previous_year', (d) => d >= '2025-01-01' && d < '2026-01-01'],
+    ];
+    for (const [operator, inPeriod] of periods) {
+      await page.locator('#selectFilterOp-0').selectOption(operator);
+      await runVisualQuery(page);
+      await g4ScalarIs(page, kpi, pCount((r) => inPeriod(day(r))), `${operator} counts from the data's today`);
+    }
+    expect(pCount((r) => day(r) >= '2026-04-01' && day(r) < '2026-07-01'), 'the previous quarter has orders').toBeGreaterThan(0);
+  });
+});
+
 });

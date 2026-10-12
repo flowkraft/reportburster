@@ -599,6 +599,9 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
       // LIKE patterns are always string comparisons: the pattern is text
       // even when the column is not, so the value goes in as a string.
       case "contains":        return likeFilter(cmp, f.value ?? "", "contains", dialect);
+      // The same predicate turned round (#34). A NULL contains nothing and is not kept either,
+      // as `!=` does not keep one: NOT of an unknown is unknown.
+      case "not_contains":    return `NOT (${likeFilter(cmp, f.value ?? "", "contains", dialect)})`;
       // All three go through the same vendor-layer predicate: the wildcards in
       // the value are escaped and both sides are folded to lower case, so the
       // three filters differ only in where the `%` sits.
