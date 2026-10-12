@@ -6240,4 +6240,56 @@ test('(canvas mechanics) M83 A click still filters after Apply and after a tile\
   }
 });
 
+test('(canvas mechanics) M84 A title and a subtitle over a widget, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M84 Widget titles', async (canvasId) => {
+      // A KPI left as it is, and a bar chart of the orders per channel that gets a title.
+      const kpi = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'number');
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      await setChartType(page, 'bar');
+
+      // + the two boxes at the top of the Display tab; what is typed is over the widget at once.
+      await page.locator('#btnDisplayTab').click();
+      await page.locator('#inputWidgetTitle').fill('Orders by channel');
+      await page.locator('#inputWidgetSubtitle').fill('Every order, <b>as placed</b>');
+      await expect(page.locator(`[id="widgetTitle-${chart}"]`)).toHaveText('Orders by channel');
+      await expect(page.locator(`[id="widgetSubtitle-${chart}"]`), 'shown as typed, never as markup')
+        .toHaveText('Every order, <b>as placed</b>');
+      await expect(page.locator(`[id="widgetTitle-${kpi}"]`), 'a widget with no title shows none').toHaveCount(0);
+
+      // + the published tiles say the same, the KPI's none.
+      let ids: Record<string, string[]> = {};
+      await expect.poll(async () => {
+        ids = await getCanvasComponentIds(page, canvasId);
+        return (ids.number ?? []).length === 1 && (ids.chart ?? []).length === 1;
+      }, { message: 'the saved canvas names the KPI and the chart', timeout: 30_000, intervals: [1_000] }).toBe(true);
+      await expect.poll(async () => {
+        const response = await page.request.get(`http://localhost:9090/api/explorations/${canvasId}`);
+        const state = JSON.parse(((await response.json()) as { state: string }).state);
+        return (state.widgets as { type: string; displayConfig?: { widgetSubtitle?: string } }[])
+          .find((w) => w.type === 'chart')?.displayConfig?.widgetSubtitle;
+      }, { message: 'the canvas keeps the subtitle', timeout: 30_000, intervals: [1_000] })
+        .toBe('Every order, <b>as placed</b>');
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+      await expect(page.locator(`[id="tileTitle-${ids.chart[0]}"]`)).toHaveText('Orders by channel');
+      await expect(page.locator(`[id="tileSubtitle-${ids.chart[0]}"]`)).toHaveText('Every order, <b>as placed</b>');
+      await expect(page.locator(`[id="tileTitle-${ids.number[0]}"]`)).toHaveCount(0);
+      await expect(page.locator(`[id="widgetChart-${ids.chart[0]}"]`), 'and the chart under them').toBeVisible();
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
 });

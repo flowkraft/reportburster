@@ -41,6 +41,7 @@ import { ProgressConfig } from "./config-panels/ProgressConfig";
 import { DetailConfig } from "./config-panels/DetailConfig";
 import { SlicerConfig } from "./config-panels/SlicerConfig";
 import { BidirectionalDslCustomizer } from "./config-panels/BidirectionalDslCustomizer";
+import { WidgetHeadingConfig } from "./config-panels/WidgetHeadingConfig";
 
 // Auto-switch helpers (`seedDisplayConfigForType`, `inferColumnsFromRow`)
 // moved to `lib/explore-data/widget-defaults.ts` so the canvas-store's
@@ -724,6 +725,8 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
                 )}
               </div>
             )}
+
+            <WidgetHeadingConfig config={selectedWidget.displayConfig} onChange={handleDisplayChange} />
 
             {/* Component-specific config */}
             {selectedWidget.type === "chart" && (
