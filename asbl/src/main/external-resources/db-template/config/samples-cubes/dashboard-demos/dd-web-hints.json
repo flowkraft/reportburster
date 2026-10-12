@@ -1,0 +1,51 @@
+[
+  {
+    "id": "conversion-by-source",
+    "fromStory": null,
+    "question": "Which traffic source converts best?",
+    "text": "Tick **Sessions**, **Purchases** and **Conversion**, then add **Traffic Source**.",
+    "query": {
+      "dimensions": [
+        "TrafficSource"
+      ],
+      "measures": [
+        "Sessions",
+        "Purchases",
+        "ConversionPct"
+      ]
+    }
+  },
+  {
+    "id": "checkout-by-device",
+    "fromStory": null,
+    "question": "Which device loses people at the checkout?",
+    "text": "Tick **Reached Checkout**, **Purchases** and **Checkout Conversion**, then add **Device**.",
+    "query": {
+      "dimensions": [
+        "Device"
+      ],
+      "measures": [
+        "ReachedCheckout",
+        "Purchases",
+        "CheckoutConversionPct"
+      ]
+    },
+    "variants": [
+      {
+        "id": "by-year",
+        "question": "Has the checkout got better over the years?",
+        "text": "The same by **Started**, grouped by year.",
+        "query": {
+          "dimensions": [
+            "StartedAt.year"
+          ],
+          "measures": [
+            "ReachedCheckout",
+            "Purchases",
+            "CheckoutConversionPct"
+          ]
+        }
+      }
+    ]
+  }
+]

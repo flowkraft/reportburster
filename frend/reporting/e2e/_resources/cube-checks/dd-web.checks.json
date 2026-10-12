@@ -1,0 +1,92 @@
+[
+  {
+    "hint": "conversion-by-source",
+    "source": "select traffic_source,count(*),count(case when purchased then 1 end),1.0*count(case when purchased then 1 end)/nullif(count(*),0) from dash_demo.web_sessions group by 1",
+    "rows": [
+      [
+        "direct",
+        7856,
+        365,
+        0.0465
+      ],
+      [
+        "email",
+        4969,
+        298,
+        0.06
+      ],
+      [
+        "organic",
+        16647,
+        559,
+        0.0336
+      ],
+      [
+        "paid_search",
+        13060,
+        387,
+        0.0296
+      ],
+      [
+        "paid_social",
+        11910,
+        325,
+        0.0273
+      ],
+      [
+        "referral",
+        5558,
+        329,
+        0.0592
+      ]
+    ]
+  },
+  {
+    "hint": "checkout-by-device",
+    "source": "select device,count(case when reached_checkout then 1 end),count(case when purchased then 1 end),1.0*count(case when purchased then 1 end)/nullif(count(case when reached_checkout then 1 end),0) from dash_demo.web_sessions group by 1",
+    "rows": [
+      [
+        "desktop",
+        1648,
+        908,
+        0.551
+      ],
+      [
+        "mobile",
+        1844,
+        1096,
+        0.5944
+      ],
+      [
+        "tablet",
+        472,
+        259,
+        0.5487
+      ]
+    ]
+  },
+  {
+    "hint": "checkout-by-device/by-year",
+    "source": "select date_trunc('year',started_ts),count(case when reached_checkout then 1 end),count(case when purchased then 1 end),1.0*count(case when purchased then 1 end)/nullif(count(case when reached_checkout then 1 end),0) from dash_demo.web_sessions group by 1",
+    "rows": [
+      [
+        "2024-01-01",
+        1121,
+        648,
+        0.5781
+      ],
+      [
+        "2025-01-01",
+        1554,
+        906,
+        0.583
+      ],
+      [
+        "2026-01-01",
+        1289,
+        709,
+        0.55
+      ]
+    ]
+  }
+]

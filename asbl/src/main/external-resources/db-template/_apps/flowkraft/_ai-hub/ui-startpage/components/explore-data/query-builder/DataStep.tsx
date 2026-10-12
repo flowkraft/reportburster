@@ -179,6 +179,27 @@ export function DataStep({ tables, cubes = [], value, valueKind, defaultSchema, 
           })}
         </div>
       )}
+
+      {/* The Visual tab reads one table and does no joins: the join layer is the cube, which
+          carries the joins and the business measures (on-time %, win rate, margin...). */}
+      {selectedTable && (
+        <p id="hintUseCube" className="ml-6 text-[11px] text-base-content/60">
+          Need another table?{" "}
+          {cubes.length > 0 ? (
+            <button
+              id="btnHintUseCube"
+              type="button"
+              className="underline text-amber-600 hover:text-amber-700"
+              onClick={() => setOpen(true)}
+            >
+              Use a cube
+            </button>
+          ) : (
+            "Use a cube"
+          )}
+          : it carries the joins and the business measures.
+        </p>
+      )}
     </div>
   );
 }

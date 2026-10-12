@@ -24,7 +24,7 @@ import com.flowkraft.reporting.dsl.cube.CubeOptionsParser;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindFixture;
 
 /**
- * Every measure of the three dashboards cubes answers the number the demo data's truths hold.
+ * Every measure of the dashboards cubes answers the number the demo data's truths hold.
  *
  * <p>CubeSampleSqlExecutesTest sweeps these cubes too, but it only asks whether the generated SQL
  * runs: a measure that sums the wrong column, or one whose filter says {@code = 'overdue'} where
@@ -63,6 +63,10 @@ class DashboardsDemoCubeMeasuresTest {
 	private static final double RATIO = 0.000001;
 	private static final double FOUR_DECIMALS = 0.00011;
 
+	/** The dashboards cubes, every one of them: a cube left out here would ship unchecked. */
+	private static final List<String> CUBES = List.of("dd-sales", "dd-finance", "dd-support", "dd-delivery",
+			"dd-crm", "dd-people", "dd-inventory", "dd-web");
+
 	/**
 	 * Every measure of every cube, alone, with the number the frozen rows hold. The map is also the
 	 * list: a measure added to a cube with no truth written here fails
@@ -85,9 +89,43 @@ class DashboardsDemoCubeMeasuresTest {
 					"Tickets", 14000.0,
 					"OpenTickets", 127.0,
 					"AvgFirstResponseMinutes", 836.5481,
-					"AvgCsat", 4.0089)));
+					"AvgCsat", 4.0089)),
+			"dd-delivery", new LinkedHashMap<>(Map.of(
+					"Orders", 24000.0,
+					"Delivered", 23355.0,
+					"Late", 1557.0,
+					"OnTimePct", 0.933333,
+					"Returned", 1432.0,
+					"ReturnRatePct", 0.059667)),
+			"dd-crm", new LinkedHashMap<>(Map.of(
+					"Opportunities", 2400.0,
+					"Won", 718.0,
+					"Lost", 1397.0,
+					"WinRatePct", 0.339480,
+					"WonAmount", 14579254.00,
+					"Pipeline", 5255334.00)),
+			"dd-people", new LinkedHashMap<>(Map.of(
+					"Employees", 260.0,
+					"Headcount", 209.0,
+					"Leavers", 51.0,
+					"LeaverRatePct", 0.196154,
+					"AvgSalary", 45873.2057)),
+			"dd-inventory", new LinkedHashMap<>(Map.of(
+					"StockLines", 1000.0,
+					"OnHand", 279650.0,
+					"StockValue", 77966532.24,
+					"BelowReorder", 14.0,
+					"BelowReorderPct", 0.014)),
+			"dd-web", new LinkedHashMap<>(Map.of(
+					"Sessions", 60000.0,
+					"ReachedCheckout", 3964.0,
+					"Purchases", 2263.0,
+					"ConversionPct", 0.037717,
+					"CheckoutConversionPct", 0.570888,
+					"AvgPages", 3.3456,
+					"AvgDurationSec", 148.6642)));
 
-	/** One split per cube, by a field that only a join can reach. */
+	/** One split per cube that has joins (dd-web has none), by a field that only a join can reach. */
 	private static final List<Split> SPLITS = List.of(
 			new Split("dd-sales", "Segment", List.of("Revenue", "Orders"), Map.of(
 					"Consumer", List.of(30116133.44, 18317.0),
@@ -102,7 +140,31 @@ class DashboardsDemoCubeMeasuresTest {
 					"Billing", List.of(3531.0, 26.0),
 					"Returns", List.of(3547.0, 28.0),
 					"Technical", List.of(3426.0, 37.0),
-					"Tier 1", List.of(3496.0, 36.0))));
+					"Tier 1", List.of(3496.0, 36.0))),
+			new Split("dd-delivery", "Warehouse", List.of("Delivered", "Late"), Map.of(
+					"Chicago DC", List.of(3960.0, 255.0),
+					"Frankfurt DC", List.of(7561.0, 516.0),
+					"Rotterdam DC", List.of(7376.0, 481.0),
+					"Sao Paulo DC", List.of(1574.0, 109.0),
+					"Tokyo DC", List.of(2884.0, 196.0))),
+			new Split("dd-crm", "Segment", List.of("Won", "Lost"), Map.of(
+					"Enterprise", List.of(189.0, 349.0),
+					"SMB", List.of(529.0, 1048.0))),
+			new Split("dd-people", "Department", List.of("Headcount", "Leavers"), Map.of(
+					"Customer Support", List.of(26.0, 12.0),
+					"Engineering", List.of(56.0, 6.0),
+					"Finance", List.of(10.0, 2.0),
+					"HR", List.of(6.0, 1.0),
+					"Management", List.of(12.0, 2.0),
+					"Marketing", List.of(14.0, 3.0),
+					"Sales", List.of(39.0, 7.0),
+					"Warehouse", List.of(46.0, 18.0))),
+			new Split("dd-inventory", "Warehouse", List.of("OnHand", "StockValue"), Map.of(
+					"Chicago DC", List.of(56320.0, 15816973.90),
+					"Frankfurt DC", List.of(67450.0, 18242919.55),
+					"Rotterdam DC", List.of(112800.0, 31969768.60),
+					"Sao Paulo DC", List.of(18720.0, 5354447.86),
+					"Tokyo DC", List.of(24360.0, 6582422.33))));
 
 	/** A cube, the field it is split by, the measures read, and the row each value holds. */
 	private static final class Split {
@@ -123,7 +185,7 @@ class DashboardsDemoCubeMeasuresTest {
 	void everyMeasureAnswersItsTruth() throws Exception {
 		List<String> wrong = new ArrayList<>();
 		try (Connection connection = NorthwindFixture.readOnly()) {
-			for (String cubeId : List.of("dd-sales", "dd-finance", "dd-support")) {
+			for (String cubeId : CUBES) {
 				CubeOptions cube = parse(cubeId);
 				for (Map.Entry<String, Double> truth : TRUTHS.get(cubeId).entrySet()) {
 					String measure = truth.getKey();
@@ -145,7 +207,7 @@ class DashboardsDemoCubeMeasuresTest {
 	@Test
 	void everyMeasureIsAccountedFor() throws Exception {
 		Map<String, List<String>> missing = new LinkedHashMap<>();
-		for (String cubeId : List.of("dd-sales", "dd-finance", "dd-support")) {
+		for (String cubeId : CUBES) {
 			List<String> declared = new ArrayList<>();
 			for (Map<String, Object> measure : parse(cubeId).getMeasures()) {
 				declared.add(String.valueOf(measure.get("name")));
@@ -219,8 +281,8 @@ class DashboardsDemoCubeMeasuresTest {
 	}
 
 	private static double tolerance(String measure) {
-		if ("MarginPct".equals(measure)) return RATIO;
-		if ("AvgCsat".equals(measure) || "AvgFirstResponseMinutes".equals(measure)) return FOUR_DECIMALS;
+		if (measure.endsWith("Pct")) return RATIO;
+		if (measure.startsWith("Avg")) return FOUR_DECIMALS;
 		return CENT;
 	}
 

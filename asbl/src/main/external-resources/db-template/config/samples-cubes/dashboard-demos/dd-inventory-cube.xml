@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Demo Inventory</name>
+    <description>The stock as it stands: units on hand, what they are worth and what needs reordering, by warehouse, category, brand and product. Runs on the dash_demo dashboards demo data.</description>
+    <connectionId>rbt-sample-northwind-duckdb-4f2</connectionId>
+</cube>

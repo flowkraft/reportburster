@@ -1,0 +1,137 @@
+[
+  {
+    "hint": "on-time-by-carrier",
+    "source": "select o.carrier,count(o.delivered_ts), count(case when CAST(o.delivered_ts AS DATE) > o.promised_date then 1 end), 1.0*(count(o.delivered_ts)-count(case when CAST(o.delivered_ts AS DATE) > o.promised_date then 1 end))/nullif(count(o.delivered_ts),0) from dash_demo.orders o group by 1",
+    "rows": [
+      [
+        "EuroParcel",
+        8124,
+        338,
+        0.9584
+      ],
+      [
+        "NordFreight",
+        8290,
+        365,
+        0.956
+      ],
+      [
+        "SwiftPost",
+        6941,
+        854,
+        0.877
+      ]
+    ]
+  },
+  {
+    "hint": "on-time-by-carrier/by-warehouse",
+    "source": "select w.name,count(o.delivered_ts), count(case when CAST(o.delivered_ts AS DATE) > o.promised_date then 1 end), 1.0*(count(o.delivered_ts)-count(case when CAST(o.delivered_ts AS DATE) > o.promised_date then 1 end))/nullif(count(o.delivered_ts),0) from dash_demo.orders o left join dash_demo.warehouses w on o.warehouse_id=w.warehouse_id group by 1",
+    "rows": [
+      [
+        "Chicago DC",
+        3960,
+        255,
+        0.9356
+      ],
+      [
+        "Frankfurt DC",
+        7561,
+        516,
+        0.9318
+      ],
+      [
+        "Rotterdam DC",
+        7376,
+        481,
+        0.9348
+      ],
+      [
+        "Sao Paulo DC",
+        1574,
+        109,
+        0.9307
+      ],
+      [
+        "Tokyo DC",
+        2884,
+        196,
+        0.932
+      ]
+    ]
+  },
+  {
+    "hint": "returns-by-channel",
+    "source": "select o.channel,count(*), count(case when o.status='returned' then 1 end), 1.0*count(case when o.status='returned' then 1 end)/nullif(count(*),0) from dash_demo.orders o group by 1",
+    "rows": [
+      [
+        "marketplace",
+        3723,
+        389,
+        0.1045
+      ],
+      [
+        "mobile_app",
+        4932,
+        265,
+        0.0537
+      ],
+      [
+        "sales_rep",
+        2176,
+        61,
+        0.028
+      ],
+      [
+        "web",
+        13169,
+        717,
+        0.0544
+      ]
+    ]
+  },
+  {
+    "hint": "returns-by-channel/by-segment",
+    "source": "select c.segment,count(*), count(case when o.status='returned' then 1 end), 1.0*count(case when o.status='returned' then 1 end)/nullif(count(*),0) from dash_demo.orders o left join dash_demo.customers c on o.customer_id=c.customer_id group by 1",
+    "rows": [
+      [
+        "Consumer",
+        18726,
+        1157,
+        0.0618
+      ],
+      [
+        "Enterprise",
+        1439,
+        71,
+        0.0493
+      ],
+      [
+        "SMB",
+        3835,
+        204,
+        0.0532
+      ]
+    ]
+  },
+  {
+    "hint": "orders-by-year",
+    "source": "select date_trunc('year',o.order_ts),count(*),1.0*(count(o.delivered_ts)-count(case when CAST(o.delivered_ts AS DATE) > o.promised_date then 1 end))/nullif(count(o.delivered_ts),0) from dash_demo.orders o group by 1",
+    "rows": [
+      [
+        "2024-01-01",
+        7146,
+        0.9324
+      ],
+      [
+        "2025-01-01",
+        9601,
+        0.9328
+      ],
+      [
+        "2026-01-01",
+        7253,
+        0.935
+      ]
+    ]
+  }
+]
