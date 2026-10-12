@@ -1,0 +1,760 @@
+{
+  "id": "g-dd-sales-pipeline-low-code",
+  "name": "Sales Pipeline (low-code)",
+  "description": "The weekly forecast: the open and the weighted pipeline for the close window, this quarter against quota and next quarter's cover, then where deals stall, which lead sources are worth feeding, and the deals to chase this week.",
+  "connection_id": "rbt-sample-northwind-duckdb-4f2",
+  "exported_report_code": "g-dd-sales-pipeline-low-code",
+  "state": {
+    "widgets": [
+      {
+        "id": "w-dd07-text-title",
+        "type": "text",
+        "gridPosition": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 1
+        },
+        "dataSource": null,
+        "displayConfig": {
+          "textContent": "## Sales Pipeline\n\nReferral deals win about twice as often as paid-search deals (51% against 25%), and next quarter's pipeline covers 2.1 times its quota."
+        },
+        "columns": null,
+        "shape": null
+      },
+      {
+        "id": "w-dd07-kpi-open-pipeline",
+        "type": "number",
+        "gridPosition": {
+          "x": 0,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "stage",
+                "operator": "not_in",
+                "value": "won, lost"
+              },
+              {
+                "column": "expected_close_date",
+                "operator": "greater_or_equal",
+                "value": "${closeFrom}"
+              },
+              {
+                "column": "expected_close_date",
+                "operator": "less_or_equal",
+                "value": "${closeTo}"
+              },
+              {
+                "column": "owner_employee_id",
+                "operator": "equals",
+                "value": "${repEmployeeId}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "SUM",
+                "field": "amount"
+              }
+            ],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT CAST(SUM(\"amount\") AS DECIMAL(31,4)) AS \"amount_sum\"\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom}\n  AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nLIMIT 500",
+          "sql": "SELECT CAST(SUM(\"amount\") AS DECIMAL(31,4)) AS \"amount_sum\"\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom}\n  AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "amount_sum",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Open pipeline"
+        },
+        "columns": [
+          {
+            "columnName": "amount_sum",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "amount_sum",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-kpi-weighted-pipeline",
+        "type": "number",
+        "gridPosition": {
+          "x": 3,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "stage",
+                "operator": "not_in",
+                "value": "won, lost"
+              },
+              {
+                "column": "expected_close_date",
+                "operator": "greater_or_equal",
+                "value": "${closeFrom}"
+              },
+              {
+                "column": "expected_close_date",
+                "operator": "less_or_equal",
+                "value": "${closeTo}"
+              },
+              {
+                "column": "owner_employee_id",
+                "operator": "equals",
+                "value": "${repEmployeeId}"
+              }
+            ],
+            "summarize": [
+              {
+                "aggregation": "SUM",
+                "field": "weighted"
+              }
+            ],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500,
+            "computed": [
+              {
+                "name": "weighted",
+                "left": "",
+                "operator": "",
+                "right": "",
+                "formula": "amount * probability_pct / 100"
+              }
+            ],
+            "groupByNumericBuckets": {},
+            "groupByBuckets": {}
+          },
+          "generatedSql": "SELECT CAST(SUM((CAST((\"amount\" * \"probability_pct\") AS DECIMAL(31,4)) / NULLIF(100, 0))) AS DECIMAL(31,4)) AS \"weighted_sum\"\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom}\n  AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nLIMIT 500",
+          "sql": "SELECT CAST(SUM((CAST((\"amount\" * \"probability_pct\") AS DECIMAL(31,4)) / NULLIF(100, 0))) AS DECIMAL(31,4)) AS \"weighted_sum\"\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom}\n  AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "numberField": "weighted_sum",
+          "_auto_numberField": true,
+          "numberFormat": "currency",
+          "_auto_numberFormat": true,
+          "userPicked": true,
+          "numberLabel": "Weighted pipeline"
+        },
+        "columns": [
+          {
+            "columnName": "weighted_sum",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "weighted_sum",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-gauge-quota-attainment",
+        "type": "gauge",
+        "gridPosition": {
+          "x": 6,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(\n         (SELECT sum(c.amount) FROM dash_demo.crm_opportunities c\n          WHERE c.stage = 'won'\n            AND c.closed_date >= date_trunc('quarter', (SELECT a.as_of FROM dash_demo.as_of a))\n            AND c.closed_date <= (SELECT a.as_of FROM dash_demo.as_of a)\n            AND c.owner_employee_id = ${repEmployeeId}\n         )\n       / (SELECT sum(q.quota) FROM dash_demo.rep_quotas q\n          WHERE q.quarter_start = date_trunc('quarter', (SELECT a.as_of FROM dash_demo.as_of a))\n            AND q.employee_id = ${repEmployeeId}\n         ), 4) AS quota_attainment",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "field": "quota_attainment",
+          "_auto_field": true,
+          "userPicked": true,
+          "label": "Quota attainment this quarter",
+          "max": 1.5,
+          "gaugeFormat": "percent",
+          "gaugeBands": [
+            {
+              "to": 1,
+              "color": "#ef8c8c"
+            },
+            {
+              "to": 1.5,
+              "color": "#f9d45c"
+            },
+            {
+              "to": 1.5,
+              "color": "#88bf4d"
+            }
+          ]
+        },
+        "columns": [
+          {
+            "columnName": "quota_attainment",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "quota_attainment",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-kpi-next-quarter-cover",
+        "type": "number",
+        "gridPosition": {
+          "x": 9,
+          "y": 1,
+          "w": 3,
+          "h": 3
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT round(\n         (SELECT sum(c.amount) FROM dash_demo.crm_opportunities c\n          WHERE c.stage NOT IN ('won', 'lost')\n            AND c.expected_close_date >= date_trunc('quarter', (SELECT a.as_of FROM dash_demo.as_of a)) + INTERVAL 3 MONTH\n            AND c.expected_close_date < date_trunc('quarter', (SELECT a.as_of FROM dash_demo.as_of a)) + INTERVAL 6 MONTH\n            AND c.owner_employee_id = ${repEmployeeId}\n         )\n       / (SELECT sum(q.quota) FROM dash_demo.rep_quotas q\n          WHERE q.quarter_start = date_trunc('quarter', (SELECT a.as_of FROM dash_demo.as_of a)) + INTERVAL 3 MONTH\n            AND q.employee_id = ${repEmployeeId}\n         ), 2) AS next_quarter_cover",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true
+          },
+          "userPicked": true,
+          "numberField": "next_quarter_cover",
+          "numberFormat": "number",
+          "numberLabel": "Next quarter's pipeline / its quota"
+        },
+        "columns": [
+          {
+            "columnName": "next_quarter_cover",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [],
+          "measures": [
+            {
+              "name": "next_quarter_cover",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-chart-deals-by-stage",
+        "type": "chart",
+        "gridPosition": {
+          "x": 0,
+          "y": 4,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT c.stage AS stage,\n       count(*) AS deals,\n       round(sum(c.amount), 2) AS pipeline\nFROM dash_demo.crm_opportunities c\nWHERE c.stage NOT IN ('won', 'lost')\n  AND c.owner_employee_id = ${repEmployeeId}\nGROUP BY 1\nORDER BY deals DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "funnel",
+            "data": {
+              "labelField": "stage",
+              "datasets": [
+                {
+                  "field": "deals",
+                  "label": "Deals"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Open deals by stage"
+                }
+              }
+            }
+          },
+          "grouped": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "stage",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "deals",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "pipeline",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "stage",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "deals",
+              "kind": "measure"
+            },
+            {
+              "name": "pipeline",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-chart-win-rate-by-lead-source",
+        "type": "chart",
+        "gridPosition": {
+          "x": 6,
+          "y": 4,
+          "w": 6,
+          "h": 5
+        },
+        "dataSource": {
+          "mode": "sql",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [],
+            "limit": 500
+          },
+          "sql": "SELECT c.lead_source AS lead_source,\n       round(100.0 * count(CASE WHEN c.stage = 'won' THEN 1 END) / count(*), 2) AS win_rate_pct,\n       count(*) AS closed_deals\nFROM dash_demo.crm_opportunities c\nWHERE c.stage IN ('won', 'lost')\n  AND c.owner_employee_id = ${repEmployeeId}\nGROUP BY 1\nORDER BY win_rate_pct DESC",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "type": "bar",
+            "data": {
+              "labelField": "lead_source",
+              "datasets": [
+                {
+                  "field": "win_rate_pct",
+                  "label": "Win rate %"
+                }
+              ]
+            },
+            "options": {
+              "plugins": {
+                "title": {
+                  "display": true,
+                  "text": "Win rate by lead source"
+                },
+                "legend": {
+                  "display": false
+                }
+              }
+            }
+          },
+          "grouped": true,
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "lead_source",
+            "typeName": "VARCHAR",
+            "isNullable": true
+          },
+          {
+            "columnName": "win_rate_pct",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          },
+          {
+            "columnName": "closed_deals",
+            "typeName": "DOUBLE",
+            "isNullable": true
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "lead_source",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "win_rate_pct",
+              "kind": "measure"
+            },
+            {
+              "name": "closed_deals",
+              "kind": "measure"
+            }
+          ]
+        }
+      },
+      {
+        "id": "w-dd07-table-open-deals",
+        "type": "tabulator",
+        "gridPosition": {
+          "x": 0,
+          "y": 9,
+          "w": 12,
+          "h": 4
+        },
+        "dataSource": {
+          "mode": "visual",
+          "visualQuery": {
+            "kind": "table",
+            "table": "crm_opportunities",
+            "tableSchema": "dash_demo",
+            "filters": [
+              {
+                "column": "stage",
+                "operator": "not_in",
+                "value": "won, lost"
+              },
+              {
+                "column": "expected_close_date",
+                "operator": "between",
+                "value": "${closeFrom}",
+                "valueTo": "${closeTo}"
+              },
+              {
+                "column": "owner_employee_id",
+                "operator": "equals",
+                "value": "${repEmployeeId}"
+              }
+            ],
+            "summarize": [],
+            "groupBy": [],
+            "sort": [
+              {
+                "column": "expected_close_date",
+                "direction": "ASC"
+              }
+            ],
+            "limit": 500
+          },
+          "generatedSql": "SELECT *\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom} AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nORDER BY CASE WHEN \"expected_close_date\" IS NULL THEN 1 ELSE 0 END, \"expected_close_date\" ASC\nLIMIT 500",
+          "sql": "SELECT *\nFROM \"dash_demo\".\"crm_opportunities\"\nWHERE \"stage\" NOT IN ('won', 'lost')\n  AND \"expected_close_date\" >= ${closeFrom} AND \"expected_close_date\" < ${closeTo__next_day}\n  AND \"owner_employee_id\" = ${repEmployeeId}\nORDER BY CASE WHEN \"expected_close_date\" IS NULL THEN 1 ELSE 0 END, \"expected_close_date\" ASC\nLIMIT 500",
+          "executeVersion": 1
+        },
+        "displayConfig": {
+          "dslConfig": {
+            "layout": "fitColumns",
+            "autoColumns": true,
+            "theme": "modern"
+          },
+          "userPicked": true
+        },
+        "columns": [
+          {
+            "columnName": "opportunity_id",
+            "dataType": 4,
+            "typeName": "INTEGER",
+            "columnSize": 32,
+            "decimalDigits": 0,
+            "numPrecRadix": 10,
+            "isNullable": false,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "customer_id",
+            "dataType": 4,
+            "typeName": "INTEGER",
+            "columnSize": 32,
+            "decimalDigits": 0,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "owner_employee_id",
+            "dataType": 4,
+            "typeName": "INTEGER",
+            "columnSize": 32,
+            "decimalDigits": 0,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "stage",
+            "dataType": 12,
+            "typeName": "VARCHAR",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null,
+            "semanticHint": "zip_code"
+          },
+          {
+            "columnName": "lead_source",
+            "dataType": 12,
+            "typeName": "VARCHAR",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "amount",
+            "dataType": 3,
+            "typeName": "DECIMAL(12,2)",
+            "columnSize": 12,
+            "decimalDigits": 2,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "probability_pct",
+            "dataType": 4,
+            "typeName": "INTEGER",
+            "columnSize": 32,
+            "decimalDigits": 0,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "created_date",
+            "dataType": 91,
+            "typeName": "DATE",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "expected_close_date",
+            "dataType": 91,
+            "typeName": "DATE",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          },
+          {
+            "columnName": "closed_date",
+            "dataType": 91,
+            "typeName": "DATE",
+            "columnSize": 0,
+            "decimalDigits": null,
+            "numPrecRadix": 10,
+            "isNullable": true,
+            "remarks": null,
+            "notes": null,
+            "defaultValue": null
+          }
+        ],
+        "shape": {
+          "dims": [
+            {
+              "name": "stage",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "lead_source",
+              "kind": "category-low",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "created_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "expected_close_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            },
+            {
+              "name": "closed_date",
+              "kind": "temporal",
+              "isState": false,
+              "isCountry": false,
+              "isCoordinate": false
+            }
+          ],
+          "measures": [
+            {
+              "name": "amount",
+              "kind": "measure"
+            },
+            {
+              "name": "probability_pct",
+              "kind": "measure"
+            }
+          ]
+        }
+      }
+    ],
+    "parametersConfig": {
+      "parameters": [
+        {
+          "id": "repEmployeeId",
+          "type": "String",
+          "label": "Rep",
+          "description": "",
+          "constraints": {},
+          "uiHints": {
+            "control": "select",
+            "options": "SELECT '' AS value, '-- All reps --' AS label UNION ALL SELECT DISTINCT e.employee_id::VARCHAR AS value, e.name AS label FROM dash_demo.rep_quotas q JOIN dash_demo.employees e ON e.employee_id = q.employee_id ORDER BY label"
+          }
+        },
+        {
+          "id": "closeFrom",
+          "type": "Date",
+          "label": "Closing from",
+          "description": "",
+          "defaultValue": "{dataToday:startOf quarter}",
+          "constraints": {},
+          "uiHints": {
+            "control": "datepicker"
+          }
+        },
+        {
+          "id": "closeTo",
+          "type": "Date",
+          "label": "Closing to",
+          "description": "",
+          "defaultValue": "{dataToday:endOf quarter}",
+          "constraints": {},
+          "uiHints": {
+            "control": "datepicker"
+          }
+        }
+      ]
+    }
+  }
+}
