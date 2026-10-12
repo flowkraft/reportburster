@@ -559,6 +559,12 @@ final class DashboardDemos {
 				"today", DASH_DEMO_TODAY,
 				"wipe", "true",
 				"dataDir", script.getParent().resolve("dashboards-demo-data").toAbsolutePath().toString()));
+		// Rows that tie on a query's ORDER BY come back in whatever order the threads finish; on one
+		// thread the same query hands the same rows in the same order every time it runs, so a twin
+		// running its original's own query is handed exactly its original's rows.
+		try (java.sql.Statement statement = connection.createStatement()) {
+			statement.execute("SET threads TO 1");
+		}
 		dashDemo = connection;
 		return dashDemo;
 	}
