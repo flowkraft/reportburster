@@ -1,0 +1,126 @@
+[
+  {
+    "hint": "win-rate-by-source",
+    "source": "select lead_source,count(case when stage='won' then 1 end), count(case when stage='lost' then 1 end), 1.0*count(case when stage='won' then 1 end)/nullif(count(case when stage in ('won','lost') then 1 end),0) from dash_demo.crm_opportunities group by 1",
+    "rows": [
+      [
+        "event",
+        91,
+        164,
+        0.3569
+      ],
+      [
+        "inbound",
+        108,
+        183,
+        0.3711
+      ],
+      [
+        "outbound",
+        128,
+        367,
+        0.2586
+      ],
+      [
+        "paid_search",
+        124,
+        363,
+        0.2546
+      ],
+      [
+        "partner",
+        74,
+        136,
+        0.3524
+      ],
+      [
+        "referral",
+        193,
+        184,
+        0.5119
+      ]
+    ]
+  },
+  {
+    "hint": "pipeline-by-stage",
+    "source": "select stage,count(*),sum(amount) from dash_demo.crm_opportunities where stage not in ('won','lost') group by 1",
+    "rows": [
+      [
+        "negotiation",
+        56,
+        1186959.0
+      ],
+      [
+        "proposal",
+        71,
+        1182805.0
+      ],
+      [
+        "prospecting",
+        80,
+        1601701.0
+      ],
+      [
+        "qualified",
+        78,
+        1283869.0
+      ]
+    ]
+  },
+  {
+    "hint": "won-by-year",
+    "source": "select date_trunc('year',closed_date),count(case when stage='won' then 1 end),sum(case when stage='won' then amount end) from dash_demo.crm_opportunities group by 1",
+    "rows": [
+      [
+        "2024-01-01",
+        160,
+        3404789.0
+      ],
+      [
+        "2025-01-01",
+        310,
+        6312408.0
+      ],
+      [
+        "2026-01-01",
+        248,
+        4862057.0
+      ],
+      [
+        null,
+        0,
+        null
+      ]
+    ]
+  },
+  {
+    "hint": "won-by-year/win-rate",
+    "source": "select date_trunc('year',closed_date),count(case when stage='won' then 1 end),sum(case when stage='won' then amount end),1.0*count(case when stage='won' then 1 end)/nullif(count(case when stage in ('won','lost') then 1 end),0) from dash_demo.crm_opportunities group by 1",
+    "rows": [
+      [
+        "2024-01-01",
+        160,
+        3404789.0,
+        0.3292
+      ],
+      [
+        "2025-01-01",
+        310,
+        6312408.0,
+        0.3422
+      ],
+      [
+        "2026-01-01",
+        248,
+        4862057.0,
+        0.343
+      ],
+      [
+        null,
+        0,
+        null,
+        null
+      ]
+    ]
+  }
+]

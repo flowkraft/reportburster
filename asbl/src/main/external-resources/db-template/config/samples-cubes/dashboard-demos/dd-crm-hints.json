@@ -1,0 +1,68 @@
+[
+  {
+    "id": "win-rate-by-source",
+    "fromStory": null,
+    "question": "Which lead source wins most often?",
+    "text": "Tick **Won**, **Lost** and **Win Rate**, then add **Lead Source**.",
+    "query": {
+      "dimensions": [
+        "LeadSource"
+      ],
+      "measures": [
+        "Won",
+        "Lost",
+        "WinRatePct"
+      ]
+    }
+  },
+  {
+    "id": "pipeline-by-stage",
+    "fromStory": null,
+    "question": "What is still in the pipeline, and how far along is it?",
+    "text": "Tick **Opportunities** and **Pipeline**, add **Stage**, and keep only the **Still open** ones.",
+    "query": {
+      "dimensions": [
+        "Stage"
+      ],
+      "measures": [
+        "Opportunities",
+        "Pipeline"
+      ],
+      "segments": [
+        "open"
+      ]
+    }
+  },
+  {
+    "id": "won-by-year",
+    "fromStory": null,
+    "question": "How much did we win each year?",
+    "text": "Tick **Won** and **Won Amount** and add **Closed**, grouped by year.",
+    "query": {
+      "dimensions": [
+        "ClosedAt.year"
+      ],
+      "measures": [
+        "Won",
+        "WonAmount"
+      ]
+    },
+    "variants": [
+      {
+        "id": "win-rate",
+        "question": "And did we win more often?",
+        "text": "Add **Win Rate**.",
+        "query": {
+          "dimensions": [
+            "ClosedAt.year"
+          ],
+          "measures": [
+            "Won",
+            "WonAmount",
+            "WinRatePct"
+          ]
+        }
+      }
+    ]
+  }
+]

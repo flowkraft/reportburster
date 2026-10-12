@@ -1,0 +1,33 @@
+[
+  {
+    "id": "stock-by-warehouse",
+    "fromStory": null,
+    "question": "What does each warehouse hold, and what is it worth?",
+    "text": "Tick **On Hand** and **Stock Value**, then add **Warehouse**.",
+    "query": {
+      "dimensions": [
+        "Warehouse"
+      ],
+      "measures": [
+        "OnHand",
+        "StockValue"
+      ]
+    }
+  },
+  {
+    "id": "reorder-by-category",
+    "fromStory": null,
+    "question": "Which category needs reordering?",
+    "text": "Tick **Stock Lines**, **Below Reorder** and **Below Reorder %**, then add **Category**.",
+    "query": {
+      "dimensions": [
+        "Category"
+      ],
+      "measures": [
+        "StockLines",
+        "BelowReorder",
+        "BelowReorderPct"
+      ]
+    }
+  }
+]

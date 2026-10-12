@@ -1,0 +1,47 @@
+[
+  {
+    "id": "headcount-by-department",
+    "fromStory": null,
+    "question": "How many people does each department have, and who loses the most?",
+    "text": "Tick **Headcount**, **Leavers** and **Leaver Rate**, then add **Department**.",
+    "query": {
+      "dimensions": [
+        "Department"
+      ],
+      "measures": [
+        "Headcount",
+        "Leavers",
+        "LeaverRatePct"
+      ]
+    }
+  },
+  {
+    "id": "salary-by-level",
+    "fromStory": null,
+    "question": "What is each level paid?",
+    "text": "Tick **Headcount** and **Average Salary**, then add **Level**.",
+    "query": {
+      "dimensions": [
+        "Level"
+      ],
+      "measures": [
+        "Headcount",
+        "AvgSalary"
+      ]
+    }
+  },
+  {
+    "id": "hires-by-year",
+    "fromStory": null,
+    "question": "How many people joined each year?",
+    "text": "Tick **Employees** and add **Hired**, grouped by year.",
+    "query": {
+      "dimensions": [
+        "HiredAt.year"
+      ],
+      "measures": [
+        "Employees"
+      ]
+    }
+  }
+]

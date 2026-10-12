@@ -46,7 +46,7 @@ class CubeSampleDesignTest {
 			"northwind-hr", "northwind-inventory", "northwind-warehouse", "online-sales",
 			"sales-pipeline", "support-desk", "freight-shipments", "student-enrollments", "customer-invoices",
 			"customer-payments", "invoice-balances", "customer-statement", "depot-network",
-			"student-progress", "dd-sales", "dd-finance", "dd-support");
+			"student-progress", "dd-sales", "dd-finance", "dd-support", "dd-delivery", "dd-crm", "dd-people", "dd-inventory", "dd-web");
 
 	private static final Pattern XML_NAME = Pattern.compile("<name>\\s*(.*?)\\s*</name>", Pattern.DOTALL);
 

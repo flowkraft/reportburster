@@ -1,0 +1,87 @@
+[
+  {
+    "hint": "stock-by-warehouse",
+    "source": "select w.name,sum(l.qty_on_hand),sum(l.qty_on_hand*p.unit_cost) from dash_demo.stock_levels l left join dash_demo.warehouses w on l.warehouse_id=w.warehouse_id left join dash_demo.products p on l.product_id=p.product_id group by 1",
+    "rows": [
+      [
+        "Chicago DC",
+        56320,
+        15816973.9
+      ],
+      [
+        "Frankfurt DC",
+        67450,
+        18242919.55
+      ],
+      [
+        "Rotterdam DC",
+        112800,
+        31969768.6
+      ],
+      [
+        "Sao Paulo DC",
+        18720,
+        5354447.86
+      ],
+      [
+        "Tokyo DC",
+        24360,
+        6582422.33
+      ]
+    ]
+  },
+  {
+    "hint": "reorder-by-category",
+    "source": "select p.category,count(*),count(case when l.qty_on_hand<l.reorder_level then 1 end),1.0*count(case when l.qty_on_hand<l.reorder_level then 1 end)/nullif(count(*),0) from dash_demo.stock_levels l left join dash_demo.products p on l.product_id=p.product_id group by 1",
+    "rows": [
+      [
+        "Accessories",
+        150,
+        2,
+        0.0133
+      ],
+      [
+        "Audio",
+        130,
+        3,
+        0.0231
+      ],
+      [
+        "Laptops",
+        120,
+        2,
+        0.0167
+      ],
+      [
+        "Monitors",
+        110,
+        1,
+        0.0091
+      ],
+      [
+        "Networking",
+        120,
+        1,
+        0.0083
+      ],
+      [
+        "Office Furniture",
+        150,
+        1,
+        0.0067
+      ],
+      [
+        "Printers",
+        90,
+        1,
+        0.0111
+      ],
+      [
+        "Smart Home",
+        130,
+        3,
+        0.0231
+      ]
+    ]
+  }
+]

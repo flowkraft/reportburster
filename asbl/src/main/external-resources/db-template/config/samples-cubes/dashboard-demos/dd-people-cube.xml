@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Demo People</name>
+    <description>The employees: headcount, leavers, the leaver rate and salaries, by department, level, job title, country and hire or leave month. Runs on the dash_demo dashboards demo data.</description>
+    <connectionId>rbt-sample-northwind-duckdb-4f2</connectionId>
+</cube>

@@ -5103,4 +5103,51 @@ test('(canvas mechanics) M66 A relative date filter counts from the data\'s toda
   });
 });
 
+test('(canvas mechanics) M67 Need another table? A cube carries the joins and the business measures', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M67 Cube as the join layer', async () => {
+    // The truths, from the frozen rows: a delivered order is late when it arrived after its promised
+    // day, and a return rate is the returned orders over every order placed (the cube's own words).
+    const orders = frozenRows('orders');
+    const segmentOf = new Map(frozenRows('customers').map((c) => [c.customer_id, c.segment]));
+    const carriers = [...new Set(orders.map((o) => o.carrier))];
+    const segments = [...new Set(orders.map((o) => segmentOf.get(o.customer_id) ?? ''))];
+
+    // + a widget on one table says where another table comes from, and the line opens the picker.
+    const id = await eNewVisualWidget(page, 'orders');
+    await expect(page.locator('#hintUseCube'), 'the Visual tab names the cube as the join layer').toContainText('Need another table?');
+    await page.locator('#btnHintUseCube').click();
+    await page.locator('[id="itemPickCube-dd-delivery"]').click();
+    await expect(page.locator('#btnPickTableOrCube'), 'the widget now reads the cube').toContainText('(cube)');
+    // − on a cube the line is gone: the cube is already the answer.
+    await expect(page.locator('#hintUseCube')).toHaveCount(0);
+
+    // + On-Time % per carrier: a measure made of two others, answered as the frozen rows answer it.
+    await applyCubeSelection(page, { dimensions: ['Carrier'], measures: ['Delivered', 'Late', 'OnTimePct'] });
+    const byCarrier = await g4RowsWhere(page, id,
+      (rows) => rows.length === carriers.length && rows.every((r) => 'OnTimePct' in r), 'one row per carrier');
+    for (const carrier of carriers) {
+      const mine = orders.filter((o) => o.carrier === carrier && o.delivered_ts !== '');
+      const late = mine.filter((o) => o.delivered_ts.slice(0, 10) > o.promised_date).length;
+      const row = byCarrier.find((r) => Object.values(r).includes(carrier));
+      expect(row, `a row for ${carrier}`).toBeTruthy();
+      expect(Number(row!.Delivered), `${carrier} delivered`).toBe(mine.length);
+      expect(Number(row!.Late), `${carrier} late`).toBe(late);
+      expect(Math.abs(Number(row!.OnTimePct) - (mine.length - late) / mine.length), `${carrier} on time`).toBeLessThan(1e-6);
+    }
+
+    // + Return Rate by the customer's segment: the cube joins the customers, the Visual tab never does.
+    await applyCubeSelection(page, { dimensions: ['Segment'], measures: ['ReturnRatePct'] });
+    const bySegment = await g4RowsWhere(page, id,
+      (rows) => rows.length === segments.length && rows.every((r) => 'ReturnRatePct' in r), 'one row per segment');
+    for (const segment of segments) {
+      const mine = orders.filter((o) => segmentOf.get(o.customer_id) === segment);
+      const returned = mine.filter((o) => o.status === 'returned').length;
+      const row = bySegment.find((r) => Object.values(r).includes(segment));
+      expect(row, `a row for ${segment}`).toBeTruthy();
+      expect(Math.abs(Number(row!.ReturnRatePct) - returned / mine.length), `${segment} return rate`).toBeLessThan(1e-6);
+    }
+  });
+});
+
 });

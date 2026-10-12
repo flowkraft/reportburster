@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Demo CRM</name>
+    <description>The sales opportunities: how many were won and lost, the win rate, the won amount and the open pipeline, by lead source, stage, salesperson and month. Runs on the dash_demo dashboards demo data.</description>
+    <connectionId>rbt-sample-northwind-duckdb-4f2</connectionId>
+</cube>

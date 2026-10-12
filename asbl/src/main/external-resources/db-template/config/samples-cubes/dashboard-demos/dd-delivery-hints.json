@@ -1,0 +1,83 @@
+[
+  {
+    "id": "on-time-by-carrier",
+    "fromStory": null,
+    "question": "Which carrier keeps its delivery promise?",
+    "text": "Tick **Delivered**, **Late** and **On-Time %**, then add **Carrier**.",
+    "query": {
+      "dimensions": [
+        "Carrier"
+      ],
+      "measures": [
+        "Delivered",
+        "Late",
+        "OnTimePct"
+      ]
+    },
+    "variants": [
+      {
+        "id": "by-warehouse",
+        "question": "Which warehouse ships on time?",
+        "text": "The same by **Warehouse**.",
+        "query": {
+          "dimensions": [
+            "Warehouse"
+          ],
+          "measures": [
+            "Delivered",
+            "Late",
+            "OnTimePct"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "returns-by-channel",
+    "fromStory": null,
+    "question": "Which channel sends the most back?",
+    "text": "Tick **Orders**, **Returned** and **Return Rate**, then add **Channel**.",
+    "query": {
+      "dimensions": [
+        "Channel"
+      ],
+      "measures": [
+        "Orders",
+        "Returned",
+        "ReturnRatePct"
+      ]
+    },
+    "variants": [
+      {
+        "id": "by-segment",
+        "question": "Do business customers send back less?",
+        "text": "The same by customer **Segment**.",
+        "query": {
+          "dimensions": [
+            "Segment"
+          ],
+          "measures": [
+            "Orders",
+            "Returned",
+            "ReturnRatePct"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "orders-by-year",
+    "fromStory": null,
+    "question": "Are we shipping more orders, and still on time?",
+    "text": "Tick **Orders** and **On-Time %** and add **Ordered**, grouped by year.",
+    "query": {
+      "dimensions": [
+        "OrderedAt.year"
+      ],
+      "measures": [
+        "Orders",
+        "OnTimePct"
+      ]
+    }
+  }
+]

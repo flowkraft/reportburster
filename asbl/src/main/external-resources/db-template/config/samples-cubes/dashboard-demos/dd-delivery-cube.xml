@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Demo Delivery</name>
+    <description>The orders from placed to delivered: how many, how many arrived late, the on-time rate and the return rate, by carrier, channel, warehouse, customer segment and month. Runs on the dash_demo dashboards demo data.</description>
+    <connectionId>rbt-sample-northwind-duckdb-4f2</connectionId>
+</cube>
