@@ -223,7 +223,14 @@ async function doVisualQuery(page: Page, query: import('./recipe').VisualQuerySp
 
   // Computed columns first: Filter, Summarize and Sort offer them by name.
   for (const [i, c] of (query.computed ?? []).entries()) {
-    await addComputedColumn(page, i, c.name, c.left, c.operator, c.right);
+    if ('left' in c) {
+      await addComputedColumn(page, i, c.name, c.left, c.operator, c.right);
+    } else {
+      await page.locator('#btnAddFormula').click();
+      await page.locator(`#inputComputedName-${i}`).fill(c.name);
+      await page.locator(`#inputComputedFormula-${i}`).fill(c.formula);
+      await page.waitForTimeout(300);
+    }
   }
 
   for (const [i, f] of (query.filters ?? []).entries()) await doFilterRow(page, i, f);
@@ -244,8 +251,16 @@ async function doVisualQuery(page: Page, query: import('./recipe').VisualQuerySp
   await runVisualQuery(page);
 }
 
-/** One filter row: a typed value, or the `${}` chip bound to a dashboard filter. */
+/** One filter row: a typed value, or the `${}` chip bound to a dashboard filter; then its switch. */
 async function doFilterRow(page: Page, index: number, f: VisualFilter): Promise<void> {
+  await doFilterValue(page, index, f);
+  if (f.switchParam) {
+    await page.locator(`#selectFilterSwitch-${index}`).selectOption(`${f.switchParam}:${f.switchOn ?? 'on'}`);
+    await page.waitForTimeout(300);
+  }
+}
+
+async function doFilterValue(page: Page, index: number, f: VisualFilter): Promise<void> {
   const bound = (v: string | undefined) => (v === undefined ? undefined : PARAM_REF.exec(v)?.[1]);
   const lower = bound(f.value);
   const upper = bound(f.valueTo);
@@ -366,10 +381,10 @@ async function doDisplayConfig(
       return;
 
     case 'pivot':
-      // The pivot's fields are dragged between zones that carry no ids of their own; the Display
-      // tab's DSL pane says the same thing in words, so that is the path (recipe-runner's one DSL-only widget).
-      if (!dsl) throw new Error('a pivot step carries its DSL');
-      await setWidgetDsl(page, dsl);
+      // A pivot's fields are dragged into its zones (`btnDragPivotSource-<field>` into `pivotZone-<zone>`),
+      // or the shipped DSL is pasted where a recipe carries one.
+      if (dsl) await setWidgetDsl(page, dsl);
+      else await doPivotByPickers(page, config);
       return;
 
     case 'detail':
@@ -434,20 +449,23 @@ async function doChartByPickers(page: Page, config: DisplayConfig): Promise<void
   await doChart(page, config);
   await page.locator('#btnDisplayTab').click();
 
-  const series = dsl.data?.seriesField;
-  if (series) {
-    await page.locator('#btnAddChartXAxis').click();
-    await page.locator('#selectChartXAxis-1').selectOption(series);
-  }
+  // The measures and their names first: a series breakout hides the name boxes (its series are
+  // named by its values), and a name typed before it stays in the chart.
   const datasets = dsl.data?.datasets ?? [];
   for (const [i, d] of datasets.entries()) {
     if (i > 0) {
       await page.locator('#btnAddChartYAxis').click();
       await page.locator(`#selectChartYAxis-${i}`).selectOption(d.field);
     }
-    if (!series && d.label !== undefined) await page.locator(`#inputChartSeriesLabel-${i}`).fill(d.label);
-    if (d.type !== undefined) await page.locator(`#selectChartSeriesType-${i}`).selectOption(d.type);
+    // A measure is named after its column until a name is typed; an empty box takes the name away.
+    await page.locator(`#inputChartSeriesLabel-${i}`).fill(d.label ?? '');
+    if (d.type !== undefined) await chooseWritten(page, `#selectChartSeriesType-${i}`, d.type);
     if (d.yAxisID === 'y1') await page.locator(`#chkChartSeriesRightAxis-${i}`).check();
+  }
+  const series = dsl.data?.seriesField;
+  if (series) {
+    await page.locator('#btnAddChartXAxis').click();
+    await page.locator('#selectChartXAxis-1').selectOption(series);
   }
   if (dsl.options?.plugins?.legend?.display === true) await page.locator('#btnChartLegend-show').click();
   if (dsl.options?.plugins?.rbValueLabels?.display === true) await page.locator('#btnChartLabels-on').click();
@@ -466,6 +484,80 @@ async function doChartByPickers(page: Page, config: DisplayConfig): Promise<void
   if (dsl.options?.rbNumberFormat) await page.locator('#selectChartNumberFormat').selectOption(dsl.options.rbNumberFormat);
   if (dsl.palette) await page.locator(`#btnChartPalette-${dsl.palette}`).click();
   if (dsl.clicksFilter === true) await page.locator('#chkChartClicksFilter').check();
+  await page.waitForTimeout(500);
+  await page.locator('#btnDataTab').click();
+  await page.waitForTimeout(500);
+}
+
+/**
+ * A choice made so the widget writes it down: a select already showing the wanted value writes
+ * nothing when it is picked again, so another value is picked first.
+ */
+async function chooseWritten(page: Page, selector: string, value: string): Promise<void> {
+  const select = page.locator(selector);
+  if ((await select.inputValue()) === value) {
+    const other = await select.locator('option').evaluateAll(
+      (options, wanted) => options.map((o) => (o as HTMLOptionElement).value).find((v) => v !== wanted),
+      value,
+    );
+    if (other !== undefined) await select.selectOption(other);
+  }
+  await select.selectOption(value);
+}
+
+/** Drag a field chip into a pivot zone (`rows`, `cols`, `vals`) with the mouse, as a person does. */
+async function dragPivotField(page: Page, field: string, zone: 'rows' | 'cols' | 'vals'): Promise<void> {
+  const chip = page.locator(`[id="btnDragPivotSource-${field}"], [id="btnDragPivotField-${field}"]`).first();
+  const target = page.locator(`[id="pivotZone-${zone}"]`);
+  await chip.waitFor({ state: 'visible', timeout: 10_000 });
+  await target.waitFor({ state: 'visible', timeout: 10_000 });
+  const from = await chip.boundingBox();
+  const to = await target.boundingBox();
+  if (!from || !to) throw new Error(`cannot drag ${field} to ${zone}: a box is missing`);
+  // dnd-kit's pointer sensor needs a real press, a few moves and a release.
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + from.width / 2 + 8, from.y + from.height / 2 + 8, { steps: 4 });
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
+  await page.mouse.up();
+  await page.locator(`[id="btnDragPivotField-${field}"]`).waitFor({ state: 'visible', timeout: 10_000 });
+}
+
+/**
+ * A pivot said by its panel, with no DSL pasted: every field back to the available list, then
+ * dragged into its zone in order, then the aggregation, the renderer, both totals and both axis
+ * orders, each written down as the shipped one says it.
+ */
+async function doPivotByPickers(page: Page, config: DisplayConfig): Promise<void> {
+  const dsl = (config.dslConfig ?? {}) as {
+    rows?: string[]; cols?: string[]; vals?: string[]; aggregatorName?: string; rendererName?: string;
+    rowOrder?: string; colOrder?: string; rowTotals?: boolean; colTotals?: boolean;
+  };
+  await page.locator('#btnDisplayTab').click();
+  await page.locator('#configPanel-pivot').waitFor({ state: 'visible', timeout: 10_000 });
+  // Switching to a pivot lays the fields out by itself.
+  const assigned = page.locator('[id^="btnRemovePivotField-"]');
+  for (let left = await assigned.count(); left > 0; left = await assigned.count()) {
+    await assigned.first().click();
+    await page.waitForTimeout(300);
+  }
+  for (const zone of ['rows', 'cols', 'vals'] as const) {
+    for (const field of dsl[zone] ?? []) await dragPivotField(page, field, zone);
+  }
+  if (dsl.aggregatorName) await chooseWritten(page, '#selectPivotAggregation', dsl.aggregatorName);
+  if (dsl.rendererName) await chooseWritten(page, '#selectPivotRenderer', dsl.rendererName);
+  for (const [key, id] of [['rowTotals', '#chkPivotRowTotals'], ['colTotals', '#chkPivotColTotals']] as const) {
+    const want = dsl[key];
+    if (want === undefined) continue;
+    // Unticked and ticked again, so the panel writes the setting even where it is the default.
+    await page.locator(id).setChecked(!want);
+    await page.locator(id).setChecked(want);
+  }
+  // The axis order cycles: none, A to Z, Z to A.
+  for (const [key, zone] of [['rowOrder', 'rows'], ['colOrder', 'cols']] as const) {
+    const clicks = dsl[key] === 'key_a_to_z' ? 1 : dsl[key] === 'key_z_to_a' ? 2 : 0;
+    for (let i = 0; i < clicks; i++) await page.locator(`#btnPivotSortAxis-${zone}`).click();
+  }
   await page.waitForTimeout(500);
   await page.locator('#btnDataTab').click();
   await page.waitForTimeout(500);

@@ -43,6 +43,9 @@ export interface VisualFilter {
   value?: string;
   /** The upper box of a `between`. */
   valueTo?: string;
+  /** The row applies only while this Boolean dashboard filter is on (or off, `switchOn: 'off'`). */
+  switchParam?: string;
+  switchOn?: 'on' | 'off';
 }
 
 /** One Summarize row. */
@@ -57,8 +60,13 @@ export interface VisualAggregate {
 /** `asc` / `desc` are how two shipped canvases write it; the Sort step stores upper case. */
 export interface VisualSort { column: string; direction: 'ASC' | 'DESC' | 'asc' | 'desc' }
 
-/** One computed column of the Visual query: one arithmetic step over two operands. */
-export interface VisualComputed { name: string; left: string; operator: '+' | '-' | '*' | '/'; right: string }
+/**
+ * One computed column of the Visual query: one arithmetic step over two operands, or a one-line
+ * formula (`IF(purchased, 1, 0)`) typed in the formula box.
+ */
+export type VisualComputed =
+  | { name: string; left: string; operator: '+' | '-' | '*' | '/'; right: string }
+  | { name: string; formula: string };
 
 /** What the Visual query builder is told. */
 export interface VisualQuerySpec {

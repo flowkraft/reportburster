@@ -28,7 +28,18 @@ import { recipe as r22 } from './22-dd-support-quality.recipe';
 import { recipe as r23 } from './23-dd-table-profile.recipe';
 import { recipe as r24 } from './24-dd-metric-deep-dive.recipe';
 import { recipe as r25 } from './25-dd-segment-vs-all.recipe';
+import { recipe as l04 } from './04-dd-sales-channels-low-code.recipe';
+import { recipe as l07 } from './07-dd-sales-pipeline-low-code.recipe';
+import { recipe as l09 } from './09-dd-customer-growth-low-code.recipe';
+import { recipe as l11 } from './11-dd-customer-360-low-code.recipe';
+import { recipe as l12 } from './12-dd-web-funnel-low-code.recipe';
 import { recipe as l13 } from './13-dd-invoices-low-code.recipe';
+import { recipe as l15 } from './15-dd-subscriptions-mrr-low-code.recipe';
+import { recipe as l18 } from './18-dd-headcount-low-code.recipe';
+import { recipe as l19 } from './19-dd-inventory-low-code.recipe';
+import { recipe as l20 } from './20-dd-fulfillment-low-code.recipe';
+import { recipe as l22 } from './22-dd-support-quality-low-code.recipe';
+import { recipe as l25 } from './25-dd-segment-vs-all-low-code.recipe';
 
 /** Recipe by `<nn>-<id>`, e.g. `01-dd-executive-overview`. */
 export const RECIPES: Record<string, Recipe> = {
@@ -62,5 +73,5 @@ export const RECIPES: Record<string, Recipe> = {
 // The "(low-code)" twins (plan-dashboard-demos-low-code.md, TODO 8): the same dashboards built with
 // less code, walked by canvas-dashboard-demos-low-code.spec.ts in this order.
 export const LOW_CODE_RECIPES: Recipe[] = [
-  l13,
+  l04, l07, l09, l11, l12, l13, l15, l18, l19, l20, l22, l25,
 ];
