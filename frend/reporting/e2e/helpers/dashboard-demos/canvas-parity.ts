@@ -256,8 +256,38 @@ function diffs(a: any, b: any, at: string, out: string[]): void {
   out.push(`${at}: shipped ${JSON.stringify(a)} ≠ rebuilt ${JSON.stringify(b)}`);
 }
 
+/**
+ * How a comparison reads a canvas built another way: a "(low-code)" twin against its original
+ * (TODO 9 of the low-code plan, check 2). Without options the comparison is the whole canvas.
+ */
+export interface ParityOptions {
+  /** Leave every widget's data source out: the twin builds it on the Visual tab or a cube. */
+  withoutDataSource?: boolean;
+  /**
+   * Per widget, by its place: the rebuilt widget's column names under the shipped one's. A display
+   * names its widget's columns (`numberField`, a chart's fields), and a twin's widget answers with
+   * its own names at the same places.
+   */
+  columnNames?: Array<Record<string, string> | undefined>;
+}
+
+/** A display with its column names put under other ones: every value and key that is one of them. */
+function renamedDisplay(display: Json, names: Record<string, string>): Json {
+  const walk = (v: any): any => {
+    if (typeof v === 'string') return Object.prototype.hasOwnProperty.call(names, v) ? names[v] : v;
+    if (Array.isArray(v)) return v.map(walk);
+    if (v && typeof v === 'object') {
+      const out: Json = {};
+      for (const [k, x] of Object.entries(v)) out[Object.prototype.hasOwnProperty.call(names, k) ? names[k] : k] = walk(x);
+      return out;
+    }
+    return v;
+  };
+  return walk(display);
+}
+
 /** The differences between the shipped canvas and the rebuilt one, in the order the Canvas shows them. */
-export function canvasDifferences(rebuilt: Json, shipped: Json): string[] {
+export function canvasDifferences(rebuilt: Json, shipped: Json, options: ParityOptions = {}): string[] {
   const r = normalizeCanvas(rebuilt);
   const s = normalizeCanvas(shipped);
   const out: string[] = [];
@@ -277,14 +307,15 @@ export function canvasDifferences(rebuilt: Json, shipped: Json): string[] {
       continue;
     }
     diffs(s.widgets[i].grid, r.widgets[i].grid, `${at}.grid`, out);
-    diffs(s.widgets[i].dataSource, r.widgets[i].dataSource, `${at}.dataSource`, out);
-    diffs(s.widgets[i].display, r.widgets[i].display, `${at}.display`, out);
+    if (!options.withoutDataSource) diffs(s.widgets[i].dataSource, r.widgets[i].dataSource, `${at}.dataSource`, out);
+    const names = options.columnNames?.[i];
+    diffs(s.widgets[i].display, names ? renamedDisplay(r.widgets[i].display, names) : r.widgets[i].display, `${at}.display`, out);
   }
   return out;
 }
 
 /** Fail with the list of differences, or pass when the rebuilt canvas is the shipped one. */
-export function assertSameCanvas(rebuilt: Json, shipped: Json): void {
-  const found = canvasDifferences(rebuilt, shipped);
+export function assertSameCanvas(rebuilt: Json, shipped: Json, options: ParityOptions = {}): void {
+  const found = canvasDifferences(rebuilt, shipped, options);
   expect(found, `the rebuilt canvas differs from the shipped one:\n  ${found.join('\n  ')}\n`).toEqual([]);
 }

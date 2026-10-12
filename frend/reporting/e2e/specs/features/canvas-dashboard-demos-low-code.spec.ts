@@ -11,6 +11,12 @@
 // otherwise names its own columns, so its claims read it by position under the original's names
 // (`DemoWidget.columns`, asked of the original's own published dashboard).
 //
+// Sameness (TODO 9 of the low-code plan), in its order: 1. the original's checks; 2. the original's
+// structure (`canvasDifferences` with the data source left out and a widget built otherwise read
+// under the original's column names); 3. the original's rows in every tile the twin builds
+// otherwise, at the defaults and under every interaction (the Java `DashboardDemosTwinsTest` holds
+// every tile to them on the frozen rows); 4. the twin's own shipped canvas.
+//
 // A twin whose canvas is not shipped yet is being built: its test prints the canvas it saved
 // (`TWIN_CANVAS <report id> <base64 JSON>`), skips the comparison and still runs every check.
 //
@@ -39,9 +45,11 @@ import {
   type Demo,
 } from '../../helpers/dashboard-demos/demo-catalog';
 import {
+  askData,
   assertDemoDashboard,
   columnsOf,
   openPublished,
+  rowsDifference,
   runInteractions,
   watchForErrors,
 } from '../../helpers/dashboard-demos/published-dashboard-checks';
@@ -140,15 +148,37 @@ test.describe('Dashboard Demos (low-code) twins rebuilt in the Canvas', () => {
           const shippedWidgets = widgetsOf(original.id);
           const theirs = normalizeCanvas(loadCanvas(original.id)).widgets;
           const ours = normalizeCanvas(rebuilt).widgets;
+          const asBuilt: Demo = { ...original, reportId: published.reportId, rebuilt: widgets };
+          const builtOtherwise: number[] = [];
+          const columnNames: Array<Record<string, string> | undefined> = [];
           for (const [i, widget] of widgets.entries()) {
             if (JSON.stringify(theirs[i]?.dataSource) === JSON.stringify(ours[i]?.dataSource)) continue;
             if (!theirs[i]?.dataSource) continue;
+            builtOtherwise.push(i);
             widget.columns = await columnsOf(body, original, shippedWidgets[i], checks.defaults);
+            const own = await columnsOf(body, asBuilt, widget, checks.defaults);
+            columnNames[i] = Object.fromEntries(own.map((name, k) => [name, widget.columns![k]]).filter(([a, b]) => a !== b));
           }
-          const asBuilt: Demo = { ...original, reportId: published.reportId, rebuilt: widgets };
           await assertDemoDashboard(body, asBuilt, checks);
           await runInteractions(body, asBuilt, checks);
           watch.assertNone(`${recipe.id} rebuilt, on its own page`);
+
+          // Its original's structure: the same filters, widgets, grid and display; only where the
+          // data comes from may differ, and a display names the twin's columns at the same places.
+          assertSameCanvas(rebuilt, loadCanvas(original.id), { withoutDataSource: true, columnNames });
+
+          // Its original's rows in every tile built otherwise, at the defaults and under every
+          // interaction. A tile that runs its original's own query answers its rows by itself.
+          const unlike: string[] = [];
+          for (const moment of [{ id: 'defaults', params: checks.defaults }, ...checks.interactions]) {
+            for (const i of builtOtherwise) {
+              const want = await askData(body, original, shippedWidgets[i], moment.params);
+              const got = await askData(body, asBuilt, widgets[i], moment.params);
+              const difference = rowsDifference(want, got);
+              if (difference) unlike.push(`${moment.id} / ${shippedWidgets[i].key}: ${difference}`);
+            }
+          }
+          expect(unlike, `${recipe.id} answers other rows than its original:\n  ${unlike.join('\n  ')}\n`).toEqual([]);
 
           // 4. The last pictures: the published dashboard, and a story answered on it.
           await shots.finish(published);
