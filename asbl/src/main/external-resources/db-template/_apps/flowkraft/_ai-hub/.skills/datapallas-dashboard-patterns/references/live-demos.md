@@ -50,7 +50,7 @@ do not edit by hand.
 - **Filters:** Include returns (`includeReturns`)
 - **Stories:** "How does the mix look before returns?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-sales-channels` · **on its own:** `/dashboard/g-dd-sales-channels`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-sales-channels
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-sales-channels-low-code
 
 ### DD05 Product Performance (`g-dd-product-performance`)
 - **Question:** Which products should we push, fix or delist?
@@ -80,7 +80,7 @@ do not edit by hand.
 - **Filters:** Rep (`repEmployeeId`), Closing from (`closeFrom`), Closing to (`closeTo`)
 - **Stories:** "How is one rep doing?" "What still has to close this week?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-sales-pipeline` · **on its own:** `/dashboard/g-dd-sales-pipeline`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-sales-pipeline
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-sales-pipeline-low-code
 
 ### DD08 Targets vs Actual (`g-dd-targets-vs-actual`)
 - **Question:** Which region is behind plan, and since when?
@@ -102,7 +102,7 @@ do not edit by hand.
 - **Filters:** Segment (`segment`), Acquisition channel (`acquisitionChannel`)
 - **Stories:** "Do the big accounts behave differently?" "What did the loyalty programme bring?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-customer-growth` · **on its own:** `/dashboard/g-dd-customer-growth`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-customer-growth
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-customer-growth-low-code
 
 ### DD10 Cohort Retention (`g-dd-cohort-retention`)
 - **Question:** Did what we changed make customers stay longer?
@@ -122,7 +122,7 @@ do not edit by hand.
 - **Filters:** Customer (`customerId`)
 - **Stories:** "And a small consumer account?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-customer-360` · **on its own:** `/dashboard/g-dd-customer-360`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-customer-360
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-customer-360-low-code
 
 ## D · Digital
 
@@ -134,7 +134,7 @@ do not edit by hand.
 - **Filters:** From (`dateFrom`), To (`dateTo`), Device (`device`)
 - **Stories:** "What happened on mobile in June?" "Was desktop hit too?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-web-funnel` · **on its own:** `/dashboard/g-dd-web-funnel`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-web-funnel
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-web-funnel-low-code
 
 ## E · Finance
 
@@ -146,7 +146,7 @@ do not edit by hand.
 - **Filters:** Status (`status`), Customer (`customerId`), Issued from (`issuedFrom`), Issued to (`issuedTo`)
 - **Stories:** "What is overdue?" "And the largest account?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-invoices` · **on its own:** `/dashboard/g-dd-invoices`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-invoices
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-invoices-low-code
 
 ### DD14 Receivables Aging & Collections (`g-dd-receivables-aging`)
 - **Question:** Whom do I call today, and is collection getting worse?
@@ -166,7 +166,7 @@ do not edit by hand.
 - **Filters:** Plan (`plan`)
 - **Stories:** "And the plan the price change hit hardest?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-subscriptions-mrr` · **on its own:** `/dashboard/g-dd-subscriptions-mrr`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-subscriptions-mrr
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-subscriptions-mrr-low-code
 
 ### DD16 Profit & Margin (`g-dd-profit-margin`)
 - **Question:** Is discounting worth what it costs in margin?
@@ -198,7 +198,7 @@ do not edit by hand.
 - **Filters:** Department (`department`), Country (`country`)
 - **Stories:** "Which team is losing people?" "And the largest country?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-headcount` · **on its own:** `/dashboard/g-dd-headcount`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-headcount
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-headcount-low-code
 
 ## G · Operations
 
@@ -210,7 +210,7 @@ do not edit by hand.
 - **Filters:** Warehouse (`warehouse`), Below reorder level only (`belowReorderOnly`), Category (`category`)
 - **Stories:** "Rotterdam has no room - what is in it?" "And everything we hold, not just what is short?" "Just the buying area I look after?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-inventory` · **on its own:** `/dashboard/g-dd-inventory`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-inventory
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-inventory-low-code
 
 ### DD20 Fulfillment & Delivery (`g-dd-fulfillment`)
 - **Question:** Is lateness a carrier problem or a country problem, and which orders do we chase?
@@ -220,7 +220,7 @@ do not edit by hand.
 - **Filters:** From (`dateFrom`), To (`dateTo`), Carrier (`carrier`)
 - **Stories:** "Is it one carrier?" "And over the year, not the quarter?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-fulfillment` · **on its own:** `/dashboard/g-dd-fulfillment`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-fulfillment
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-fulfillment-low-code
 
 ### DD21 Support Operations (`g-dd-support-operations`)
 - **Question:** Who works when, and which tickets do we pick up today?
@@ -240,7 +240,7 @@ do not edit by hand.
 - **Filters:** Team (`team`), From (`dateFrom`), To (`dateTo`)
 - **Stories:** "And my technical team?" "Who needs coaching?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-support-quality` · **on its own:** `/dashboard/g-dd-support-quality`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-support-quality
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-support-quality-low-code
 
 ## H · The analyst's toolkit
 
@@ -272,4 +272,4 @@ do not edit by hand.
 - **Filters:** Country (`country`)
 - **Stories:** "And the biggest market - is it the average?" "And a market on the other side of the world?"
 - **In the gallery:** `/dashboard/g-dashboard-demos#dd-segment-vs-all` · **on its own:** `/dashboard/g-dd-segment-vs-all`
-- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-segment-vs-all
+- **How it was built:** https://datapallas.com/docs/dashboard-demos/dd-segment-vs-all-low-code
