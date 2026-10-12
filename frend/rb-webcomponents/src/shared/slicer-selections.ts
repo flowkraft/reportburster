@@ -198,16 +198,25 @@ export function refreshDataWidgets(host: Element | null | undefined,
   const paramsJson = JSON.stringify(values);
   const widgets = (root as Element | Document).querySelectorAll(DATA_WIDGET_TAGS);
   widgets.forEach((el: Element) => {
-    const fresh = document.createElement(el.tagName.toLowerCase());
-    for (const attr of Array.from(el.attributes)) fresh.setAttribute(attr.name, attr.value);
-    fresh.setAttribute('report-params', paramsJson);
-    // A widget a person can tick things on is showing something it was not published showing, and
-    // that is not ours to throw away: it says what it is showing, and the element that takes its
-    // place opens there.
-    const localState = localStateOf(el);
-    if (localState) fresh.setAttribute('local-state', localState);
-    el.parentNode?.replaceChild(fresh, el);
+    el.parentNode?.replaceChild(freshCopy(el, paramsJson), el);
   });
+}
+
+/**
+ * A new element for a widget, to put in its place so it fetches its rows again: the same attributes,
+ * the new `report-params` when given, and what it is showing now. A tile's Refresh (#19) asks for one
+ * with the values it already has.
+ */
+export function freshCopy(el: Element, paramsJson?: string): Element {
+  const fresh = document.createElement(el.tagName.toLowerCase());
+  for (const attr of Array.from(el.attributes)) fresh.setAttribute(attr.name, attr.value);
+  if (paramsJson !== undefined) fresh.setAttribute('report-params', paramsJson);
+  // A widget a person can tick things on is showing something it was not published showing, and
+  // that is not ours to throw away: it says what it is showing, and the element that takes its
+  // place opens there.
+  const localState = localStateOf(el);
+  if (localState) fresh.setAttribute('local-state', localState);
+  return fresh;
 }
 
 /**

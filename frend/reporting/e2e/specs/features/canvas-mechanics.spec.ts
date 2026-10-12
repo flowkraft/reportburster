@@ -25,6 +25,7 @@
 import {
   type Browser,
   type BrowserContext,
+  type Download,
   expect,
   type Locator,
   type Page,
@@ -5847,6 +5848,86 @@ test('(canvas mechanics) M78 A long select can be searched; Apply and Reset on t
       await pubBar.locator('#btnResetDashboard').click();
       await pPublishedNumberIs(page, ids.number[0], cities.length, 'Reset: the default, every city');
       await expect(pubBar.locator('#city_search'), 'and the search is cleared').toHaveValue('');
+    });
+  } finally {
+    if (reportId) await deleteReportAsAdmin(reportId);
+  }
+});
+
+/** What a download holds, as text. */
+async function m79Text(download: Download): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+test('(canvas mechanics) M79 The menu on a published tile: CSV, PNG, maximise, refresh', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  let reportId: string | undefined;
+  try {
+    await withFreshCanvas(page, 'E2E mech M79 Tile menu', async (canvasId) => {
+      const orders = frozenRows('orders');
+      const channels = [...new Set(orders.map((o) => o.channel))];
+
+      // A chart and a table of orders per channel.
+      const chart = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'chart');
+      const table = await eNewVisualWidget(page, 'orders');
+      await addAggregation(page, 0, 'COUNT', 'order_id');
+      await addGroupBy(page, 'channel');
+      await runVisualQuery(page);
+      await switchToWidget(page, 'tabulator');
+      await eStoredWidgets(page, canvasId, (w) => w.length === 2);
+      const published = await publishDashboard(page);
+      reportId = published.reportId;
+      await openPublished(page, reportId);
+
+      // + the table's CSV: a header and a line per channel, its numbers the frozen rows'.
+      await page.locator(`[id="widgetMenu-${table}"]`).click();
+      await expect(page.locator(`[id="widgetMenuPng-${table}"]`), 'a table is not a picture').toHaveCount(0);
+      const [csv] = await Promise.all([
+        page.waitForEvent('download'),
+        page.locator(`[id="widgetMenuCsv-${table}"]`).click(),
+      ]);
+      expect(csv.suggestedFilename()).toMatch(/\.csv$/);
+      const lines = (await m79Text(csv)).trim().split(/\r?\n/);
+      expect(lines.length, 'a header and one line per channel').toBe(channels.length + 1);
+      const total = lines.slice(1).reduce((sum, line) => sum + Number(line.split(',').pop()), 0);
+      expect(total, 'the counts add up to every order').toBe(orders.length);
+
+      // + the chart as a PNG.
+      await page.locator(`[id="widgetMenu-${chart}"]`).click();
+      const [png] = await Promise.all([
+        page.waitForEvent('download'),
+        page.locator(`[id="widgetMenuPng-${chart}"]`).click(),
+      ]);
+      expect(png.suggestedFilename()).toMatch(/\.png$/);
+      const head = await m79Text(png);
+      expect(head.length, 'an image was saved').toBeGreaterThan(100);
+
+      // + maximise fills the page with the tile; Escape gives it its place back.
+      const chartTile = page.locator('.grid-item', { has: page.locator(`[id="widgetMenu-${chart}"]`) });
+      await page.locator(`[id="widgetMenu-${chart}"]`).click();
+      await page.locator(`[id="widgetMenuMaximise-${chart}"]`).click();
+      await expect(chartTile).toHaveClass(/rb-tile-maximised/);
+      await page.keyboard.press('Escape');
+      await expect(chartTile).not.toHaveClass(/rb-tile-maximised/);
+
+      // + refresh draws the tile again from a new element: the old one is gone, the rows are back.
+      await page.evaluate((cid) => {
+        const el = document.querySelector(`[component-id="${cid}"]`) as (HTMLElement & { __m79?: boolean }) | null;
+        if (el) el.__m79 = true;
+      }, table);
+      await page.locator(`[id="widgetMenu-${table}"]`).click();
+      await page.locator(`[id="widgetMenuRefresh-${table}"]`).click();
+      await expect.poll(async () => page.evaluate((cid) => {
+        const el = document.querySelector(`[component-id="${cid}"]`) as (HTMLElement & { __m79?: boolean }) | null;
+        return !!el && el.__m79 !== true;
+      }, table), { message: 'a new element took the tile', timeout: 15_000 }).toBe(true);
+      await pWaitCells(page, table, (cells) => cells.length === channels.length, 'the refreshed table has its rows');
     });
   } finally {
     if (reportId) await deleteReportAsAdmin(reportId);
