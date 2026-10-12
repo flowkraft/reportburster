@@ -20,6 +20,7 @@ DELETE /api/connections/{connectionId} -> ADMIN
 DELETE /api/cubes/{cubeId} -> REPORT_AUTHOR
 DELETE /api/embed/share-link/{id} -> REPORT_AUTHOR
 DELETE /api/explorations/{id} -> REPORT_AUTHOR
+DELETE /api/explorations/{id}/export -> REPORT_AUTHOR
 DELETE /api/iam/groups/{groupId} -> ADMIN
 DELETE /api/iam/users/{username} -> ADMIN
 DELETE /api/jobs/logs/{logFileName} -> JOB_OPERATOR
@@ -74,6 +75,7 @@ GET /api/jobs/{id} -> JOB_OPERATOR
 GET /api/jobs/{id}/logs -> JOB_OPERATOR
 # Signed in is the whole requirement, deliberately: a dashboard viewer is answered with their own groups' grants and nothing else, every other role with the published catalog. The filtering is the authorization, and it lives in the handler because it depends on who is asking.
 GET /api/me/dashboards -> (none)
+GET /api/queries/data-today/{connectionId} -> REPORT_AUTHOR
 GET /api/queries/schema/{connectionId} -> REPORT_AUTHOR
 # and then by data: visibleToCaller filters the list to the reports this caller could actually
 # run - the same question dispatch asks, so nothing is offered that would be refused on submit.
@@ -225,6 +227,11 @@ POST /api/reports/{reportId}/cube/{componentId}/query -> (none)
 # showSql, which a dashboard's author turns on per widget: where it is off the answer is 403.
 POST /api/reports/{reportId}/cube/{componentId}/sql -> (none)
 POST /api/reports/{reportId}/duplicate -> REPORT_AUTHOR
+# One filter's options asked again for the values the viewer picked (#17, cascading filters): the
+# options SELECT /config already runs for the defaults, read from the report's own folder and bound to
+# other values, never SQL from the request. Open exactly as far as /config is: dashboardAccess.check plus
+# reportAccess.assertReportReadable, a share link's locks over the values and the dp_ values the server's.
+POST /api/reports/{reportId}/parameter-options -> (none)
 POST /api/reports/{reportId}/restore-defaults -> REPORT_AUTHOR
 POST /api/system/feedback/feature-request -> JOB_OPERATOR
 POST /api/system/fs/copy -> REPORT_AUTHOR

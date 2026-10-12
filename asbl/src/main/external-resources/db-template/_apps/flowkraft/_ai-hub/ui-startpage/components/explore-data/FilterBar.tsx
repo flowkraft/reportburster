@@ -5,7 +5,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useCanvasStore, type ParamMeta } from "@/lib/stores/canvas-store";
 import { useRbElementReady } from "@/components/explore-data/widgets/useRbElementReady";
 import { executeQuery } from "@/lib/explore-data/rb-api";
-import { filterValueApplies } from "@/lib/explore-data/filter-values";
+import { extractParamTypes } from "@/lib/explore-data/sql-builder";
+import { filterValueApplies, optionsUses } from "@/lib/explore-data/filter-values";
 import { useDataToday } from "@/lib/explore-data/use-data-today";
 import { FilterBarConfigPanel } from "@/components/explore-data/config-panels/FilterBarConfigPanel";
 
@@ -36,6 +37,27 @@ export type { ParamMeta };
  * SQL string is executed against the canvas connection and replaced with the
  * resolved array before the `<rb-parameters>` component receives it.
  */
+/** The options a SELECT's rows give: one column, its values; two or more, `[value, label]` pairs. */
+function optionsOfRows(rows: Record<string, unknown>[]): unknown[] {
+  if (!rows.length) return [];
+  const keys = Object.keys(rows[0]);
+  return keys.length >= 2
+    ? rows.map((r) => [String(r[keys[0]]), String(r[keys[1]])])
+    : rows.map((r) => String(r[keys[0]]));
+}
+
+/** The SELECT a filter takes its options from, or null when its options are a list of its own. */
+function optionsSqlOf(p: ParamMeta | undefined): string | null {
+  const options = (p?.uiHints as Record<string, unknown> | undefined)?.options;
+  return typeof options === "string" && options.trimStart().toUpperCase().startsWith("SELECT") ? options : null;
+}
+
+/** A filter's value as the text a query is sent: a list as its comma-separated values. */
+function valueText(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(",");
+  return value == null ? "" : String(value);
+}
+
 export function FilterBar() {
   const parametersConfig = useCanvasStore((s) => s.parametersConfig);
   const editMode         = useCanvasStore((s) => s.editMode);
@@ -70,17 +92,23 @@ export function FilterBar() {
     (async () => {
       const resolved = await Promise.all(
         baseParameters.map(async (p) => {
-          const optionsSql = (p.uiHints as Record<string, unknown> | undefined)?.options;
-          if (
-            typeof optionsSql !== "string" ||
-            !optionsSql.trimStart().toUpperCase().startsWith("SELECT") ||
-            !connectionId
-          ) {
+          const optionsSql = optionsSqlOf(p);
+          if (optionsSql === null || !connectionId) {
             return p;
           }
+          // A SELECT that names other filters is answered for their defaults here, and asked again
+          // by <rb-parameters> (an `optionsChange` event, below) each time one of them changes.
+          const uses = optionsUses(optionsSql, baseParameters, p.id);
           try {
-            const qr   = await executeQuery(connectionId, optionsSql);
+            const qr   = uses.length === 0
+              ? await executeQuery(connectionId, optionsSql)
+              : await executeQuery(connectionId, optionsSql,
+                  Object.fromEntries(baseParameters.map((q) => [q.id, valueText(q.defaultValue)])),
+                  extractParamTypes(baseParameters));
             const rows = qr.data ?? [];
+            if (uses.length > 0) {
+              return { ...p, uiHints: { ...(p.uiHints ?? {}), options: optionsOfRows(rows), optionsDependOn: uses } };
+            }
             if (!rows.length) return p;
             const keys = Object.keys(rows[0]);
             const arr  = keys.length >= 2
@@ -131,12 +159,32 @@ export function FilterBar() {
       }
     };
     el.addEventListener("valueChange", handler);
+    // A filter whose options SELECT names another asks for its options again when that one changes:
+    // run here, against the canvas connection with the values the bar holds, as a widget's query is.
+    const onOptionsChange = async (e: Event) => {
+      const asked = (e as CustomEvent<{ id: string; values: Record<string, unknown> }>).detail;
+      const declared = useCanvasStore.getState().parametersConfig?.parameters ?? [];
+      const sql = optionsSqlOf(declared.find((q) => q.id === asked?.id));
+      if (!asked || sql === null || !connectionId) return;
+      try {
+        const values = Object.fromEntries(Object.entries(asked.values ?? {}).map(([k, v]) => [k, valueText(v)]));
+        const qr = await executeQuery(connectionId, sql, values, extractParamTypes(declared));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el as any).setDependentOptions?.(asked.id, optionsOfRows(qr.data ?? []));
+      } catch {
+        // The list stays as it was; the widgets' own queries say what is wrong with the connection.
+      }
+    };
+    el.addEventListener("optionsChange", onOptionsChange);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (el as any).parameters = parameters;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (el as any).dataToday = dataToday ?? "";
-    return () => el.removeEventListener("valueChange", handler);
-  }, [parameters, ready, setFilterValue, dataToday]);
+    return () => {
+      el.removeEventListener("valueChange", handler);
+      el.removeEventListener("optionsChange", onOptionsChange);
+    };
+  }, [parameters, ready, setFilterValue, dataToday, connectionId]);
 
   const hasFilters = parameters.length > 0;
   if (!hasFilters && !editMode) return null;
