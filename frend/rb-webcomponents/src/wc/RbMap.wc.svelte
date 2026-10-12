@@ -357,13 +357,19 @@
   // Render paths
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Renders overlap (the first one on mount, the next when the data lands) and a region map waits
+  // for its GeoJSON: only the newest render may draw, or both add their shapes to the map.
+  let renderGeneration = 0;
+
   async function renderMap() {
     if (!container) return;
+    const generation = ++renderGeneration;
     try {
       showRuntimeError(null);   // imperative — does NOT trigger $invalidate
       injectLeafletCss();
 
       const L = (await import("leaflet")).default as any;
+      if (generation !== renderGeneration) return;
 
       // Resolve options first — they drive tile URL, mode selection, etc.
       resolved = resolveOptions(data ?? [], options);
@@ -402,7 +408,8 @@
       } else if (resolved.mapType === "grid") {
         renderGrid(L, resolved);
       } else {
-        await renderRegion(L, resolved);
+        await renderRegion(L, resolved, generation);
+        if (generation !== renderGeneration) return;
       }
       publishShapeCount();
 
@@ -513,12 +520,13 @@
     dispatch(CROSS_FILTER_EVENT, { field: dimension, value });
   }
 
-  async function renderRegion(L: any, r: ResolvedOptions) {
+  async function renderRegion(L: any, r: ResolvedOptions, generation: number) {
     if (!r.dimension || !r.metric) {
       showRuntimeError("Region map needs dimension + metric columns.");
       return;
     }
     const geo = await fetchGeoJsonCached(r.geoJsonUrl);
+    if (generation !== renderGeneration) return;
     const keyProp = pickGeoJsonKey(geo, r.region, r.geoJsonKey);
 
     // Build row lookup keyed by canonical code.
