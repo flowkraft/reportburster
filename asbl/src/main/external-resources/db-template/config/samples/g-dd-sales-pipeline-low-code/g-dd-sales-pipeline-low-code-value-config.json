@@ -1,0 +1,16 @@
+{
+  "number_amount_sum_pipeline" : {
+    "field" : "amount_sum",
+    "format" : "currency",
+    "label" : "Open pipeline"
+  },
+  "number_weighted_sum_pipeline" : {
+    "field" : "weighted_sum",
+    "format" : "currency",
+    "label" : "Weighted pipeline"
+  },
+  "number_next_quarter_cover_cover" : {
+    "format" : "number",
+    "label" : "Next quarter's pipeline / its quota"
+  }
+}
