@@ -1,0 +1,7 @@
+{
+  "number_count_subscribers" : {
+    "field" : "count",
+    "format" : "number",
+    "label" : "Active subscribers"
+  }
+}
