@@ -6689,4 +6689,65 @@ test('(canvas mechanics) M90 The words a widget says when its query answers no r
   }
 });
 
+test('(canvas mechanics) M91 One colour set for every chart of a dashboard, in the Canvas and published', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M91 Dashboard palette', async (canvasId) => {
+    const warm = '#d62728';
+    const pastel = '#a8dadc';
+
+    // Orders per channel twice, as bars: one chart names no colours, the other picks its own.
+    const plain = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'bar');
+    const houseColour = (await pChartColors(page, plain))[0];
+    expect(houseColour, 'the plain chart starts in the house colours').not.toBe(warm);
+
+    const own = await eNewVisualWidget(page, 'orders');
+    await addAggregation(page, 0, 'COUNT', 'order_id');
+    await addGroupBy(page, 'channel');
+    await runVisualQuery(page);
+    await switchToWidget(page, 'chart');
+    await setChartType(page, 'bar');
+    await clickDisplayTab(page);
+    await page.locator('#btnChartPalette-pastel').click();
+    await expect.poll(async () => (await pChartColors(page, own))[0],
+      { message: 'the other chart takes its own colours', timeout: 20_000, intervals: [500] }).toBe(pastel);
+
+    // + the settings dialog: warm for every chart. The plain chart turns warm, the other keeps its own.
+    await page.locator('#btnDashboardSettings').click();
+    await expect(page.locator('#dashboardSettings')).toBeVisible();
+    await page.locator('#btnDashboardPalette-warm').click();
+    await page.locator('#btnCloseDashboardSettings').click();
+    await expect(page.locator('#dashboardSettings')).toHaveCount(0);
+    await expect.poll(async () => [(await pChartColors(page, plain))[0], (await pChartColors(page, own))[0]],
+      { message: 'the plain chart turns warm, the other keeps pastel', timeout: 20_000, intervals: [500] })
+      .toEqual([warm, pastel]);
+    await expect.poll(async () => {
+      const response = await page.request.get(`http://localhost:9090/api/explorations/${canvasId}`);
+      const state = JSON.parse(((await response.json()) as { state: string }).state);
+      return state.dashboardSettings?.palette;
+    }, { message: 'the canvas keeps the setting', timeout: 30_000, intervals: [1_000] }).toBe('warm');
+
+    // + Published: the page names the set, and the two charts are drawn as in the Canvas.
+    const published = await publishDashboard(page);
+    await openPublished(page, published.reportId);
+    await expect(page.locator('.rb-dashboard-root')).toHaveAttribute('data-palette', 'warm');
+    await expect.poll(async () => (await pPublishedChartColors(page)).map((c) => c.colors[0]).sort(),
+      { message: 'published, the plain chart is warm and the other pastel', timeout: 60_000, intervals: [1_000] })
+      .toEqual([warm, pastel].sort());
+    await page.goBack();
+    await page.locator('#btnCanvasName').waitFor({ state: 'visible', timeout: 30_000 });
+
+    // + back to Default: the plain chart is in the house colours again.
+    await page.locator('#btnDashboardSettings').click();
+    await page.locator('#btnDashboardPalette-default').click();
+    await page.locator('#btnCloseDashboardSettings').click();
+    await expect.poll(async () => (await pChartColors(page, plain))[0],
+      { message: 'Default gives the house colours back', timeout: 20_000, intervals: [500] }).toBe(houseColour);
+  });
+});
+
 });

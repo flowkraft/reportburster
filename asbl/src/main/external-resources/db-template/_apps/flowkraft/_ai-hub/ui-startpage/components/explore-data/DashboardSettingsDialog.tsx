@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
+import { PALETTES } from "./config-panels/ChartConfig";
 
 /** Minutes typed into the box: a whole number from 1 up, or nothing (never). */
 export function autoRefreshMinutesOf(text: string): number | undefined | null {
@@ -86,6 +87,36 @@ export function DashboardSettingsDialog({ open, onClose }: { open: boolean; onCl
               : `The published dashboard asks for its data again every ${parsed} minute${parsed === 1 ? "" : "s"}.`}
           </p>
         )}
+
+        {/* #31: the colour set of every chart that does not name its own. */}
+        <span className="block text-xs font-medium text-base-content mt-4">Chart colours</span>
+        <div className="grid grid-cols-5 gap-1 mt-1">
+          {PALETTES.map(({ id, label, colors }) => {
+            const selected = (dashboardSettings.palette ?? "default") === id;
+            return (
+              <button
+                id={`btnDashboardPalette-${id}`}
+                key={id}
+                type="button"
+                onClick={() => {
+                  const others = { ...dashboardSettings };
+                  delete others.palette;
+                  setDashboardSettings(id === "default" ? others : { ...others, palette: id });
+                }}
+                title={label}
+                className={`flex flex-col items-center gap-0.5 p-1 rounded border transition-colors ${
+                  selected ? "border-primary bg-primary/5" : "border-base-300 hover:border-base-content/40"
+                }`}
+              >
+                <div className="flex gap-0.5">
+                  {colors.map((c) => <div key={c} style={{ backgroundColor: c }} className="w-2 h-2 rounded-sm" />)}
+                </div>
+                <span className="text-[9px] text-base-content/60">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-base-content/60 mt-1">A chart that picks its own colours keeps them.</p>
 
         <div className="flex items-center justify-end mt-4">
           <button

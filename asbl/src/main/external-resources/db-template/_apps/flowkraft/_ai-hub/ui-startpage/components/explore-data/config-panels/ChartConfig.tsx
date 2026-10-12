@@ -56,7 +56,7 @@ import type { ChartDslOptions, ChartDataBlock } from "@/lib/explore-data/dsl-syn
  * ============================================================================
  */
 
-const PALETTES = [
+export const PALETTES = [
   { id: "default", label: "Default", colors: ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f"] },
   { id: "warm",    label: "Warm",    colors: ["#d62728","#ff7f0e","#ffbb78","#8c564b","#e377c2"] },
   { id: "cool",    label: "Cool",    colors: ["#1f77b4","#aec7e8","#2ca02c","#9467bd","#17becf"] },

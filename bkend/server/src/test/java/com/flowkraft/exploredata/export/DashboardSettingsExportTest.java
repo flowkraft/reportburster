@@ -47,6 +47,16 @@ class DashboardSettingsExportTest {
 	}
 
 	@Test
+	void a_dashboard_palette_is_named_on_its_root_and_only_a_known_one() throws Exception {
+		assertTrue(templateWith(Map.of("palette", "warm")).contains("<div class=\"rb-dashboard-root\" data-palette=\"warm\">"));
+		assertTrue(templateWith(Map.of("autoRefreshMinutes", 5, "palette", "cool"))
+				.contains("<div class=\"rb-dashboard-root\" data-auto-refresh=\"5\" data-palette=\"cool\">"));
+		for (Object palette : List.of("default", "neon", "\"><script>", 3)) {
+			assertFalse(templateWith(Map.of("palette", palette)).contains("data-palette"), String.valueOf(palette));
+		}
+	}
+
+	@Test
 	void on_paper_the_page_is_white_and_no_tile_is_cut_in_two() throws Exception {
 		String template = templateWith(Map.of());
 		assertTrue(template.contains("@media print {"));

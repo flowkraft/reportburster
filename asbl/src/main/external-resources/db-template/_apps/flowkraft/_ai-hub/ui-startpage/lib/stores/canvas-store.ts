@@ -260,6 +260,8 @@ export interface ParametersConfig {
 export interface DashboardSettings {
   /** Minutes between the published dashboard asking all its data again (#22). Absent: never. */
   autoRefreshMinutes?: number;
+  /** The colour set every chart is drawn in unless it names its own (#31); absent: the house colours. */
+  palette?: string;
 }
 
 /** What the canvas state JSON holds: `dashboardSettings` only when one is set, so a canvas with
