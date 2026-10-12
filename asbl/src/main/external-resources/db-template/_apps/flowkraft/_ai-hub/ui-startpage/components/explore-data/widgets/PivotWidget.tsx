@@ -139,20 +139,9 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
       }
     }
 
-    // Auto-pick Heatmap renderer for small 2-dim + 1-measure grids unless user
-    // wrote rendererName explicitly in the DSL.
-    const autoHeatmap =
-      pivotRows.length === 1 &&
-      pivotCols.length === 1 &&
-      pivotVals.length === 1 &&
-      (() => {
-        const distinct = (col: string) => new Set(filteredData.map((r) => r[col])).size;
-        const rowCard = distinct(pivotRows[0]);
-        const colCard = distinct(pivotCols[0]);
-        return rowCard > 0 && colCard > 0 && rowCard * colCard <= 225;
-      })();
-    const configRenderer = dslMap.rendererName as string | undefined;
-    const rendererName = configRenderer ?? (autoHeatmap ? "Heatmap" : "Table");
+    // The renderer the author picked (#5, "Show as"), else a plain table, as published. An
+    // automatic "Heatmap" stood here, but no renderer has that name, so it always drew a table.
+    const rendererName = (dslMap.rendererName as string | undefined) ?? "Table";
 
     const rowOrder = (dslMap.rowOrder as string | undefined) ?? "value_z_to_a";
     const colOrder = dslMap.colOrder as string | undefined;
@@ -178,8 +167,10 @@ export function PivotWidget({ widgetId }: PivotWidgetProps) {
     el.rendererName = rendererName;
     el.rowOrder = rowOrder;
     if (colOrder) el.colOrder = colOrder;
-    el.rowTotals = (dslMap.rowTotals as boolean | undefined) ?? false;
-    el.colTotals = (dslMap.colTotals as boolean | undefined) ?? false;
+    // Unset, both totals show, as `<rb-pivot-table>` and so the published dashboard draw them
+    // (#5): the Canvas hid them, and published they appeared.
+    el.rowTotals = (dslMap.rowTotals as boolean | undefined) ?? true;
+    el.colTotals = (dslMap.colTotals as boolean | undefined) ?? true;
   }, [ready, result, dslMap, configRows, configCols, configVals, showAutoLayoutPrompt]);
 
   if (showAutoLayoutPrompt) {

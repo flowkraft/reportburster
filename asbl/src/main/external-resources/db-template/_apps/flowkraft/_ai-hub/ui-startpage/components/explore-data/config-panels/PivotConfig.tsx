@@ -34,6 +34,15 @@ import type { PivotDslOptions } from "@/lib/explore-data/dsl-sync/pivot-mapping"
 
 const AGGREGATORS = ["Sum", "Count", "Average", "Min", "Max"];
 
+/** How a pivot is drawn (#5): the table renderers of `<rb-pivot-table>`. Its chart renderers
+ *  stay the Chart widget's job. */
+const PIVOT_TABLE_RENDERERS = [
+  { value: "Table", label: "Table" },
+  { value: "Table Heatmap", label: "Heatmap" },
+  { value: "Table Row Heatmap", label: "Heatmap per row" },
+  { value: "Table Col Heatmap", label: "Heatmap per column" },
+];
+
 type ZoneId = "rows" | "cols" | "vals" | "available";
 const DIM_ZONES: ZoneId[] = ["rows", "cols", "available"];
 const MEASURE_ZONES: ZoneId[] = ["vals", "available"];
@@ -75,6 +84,11 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
   const aggregator = (map.aggregatorName as string | undefined) ?? "Sum";
   const rowOrderDir = axisDir(map.rowOrder);
   const colOrderDir = axisDir(map.colOrder);
+  // Unset, a pivot is a plain table with both totals: what `<rb-pivot-table>` draws, and so what
+  // the published dashboard shows. `PivotWidget` reads the same defaults.
+  const renderer = (map.rendererName as string | undefined) ?? "Table";
+  const rowTotals = (map.rowTotals as boolean | undefined) ?? true;
+  const colTotals = (map.colTotals as boolean | undefined) ?? true;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -139,6 +153,14 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
     setDslMap(config, { ...map, aggregatorName: agg }, onChange);
   };
 
+  const setRenderer = (name: string) => {
+    setDslMap(config, { ...map, rendererName: name }, onChange);
+  };
+
+  const setTotals = (key: "rowTotals" | "colTotals", on: boolean) => {
+    setDslMap(config, { ...map, [key]: on }, onChange);
+  };
+
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
     const field = String(e.active.id);
@@ -201,6 +223,47 @@ export function PivotConfig({ config, columns, onChange }: PivotConfigProps) {
               <option key={a} value={a}>{a}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <span className="text-xs text-base-content/60">Show as</span>
+          <select
+            id="selectPivotRenderer"
+            value={renderer}
+            onChange={(e) => setRenderer(e.target.value)}
+            className="w-full mt-1 text-sm bg-base-100 border border-base-300 rounded-md px-2 py-1.5 text-base-content"
+          >
+            {PIVOT_TABLE_RENDERERS.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+            {/* A renderer written in the DSL (a chart) is shown as it is, not lost. */}
+            {!PIVOT_TABLE_RENDERERS.some((r) => r.value === renderer) && (
+              <option value={renderer}>{renderer}</option>
+            )}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
+            <input
+              id="chkPivotRowTotals"
+              type="checkbox"
+              checked={rowTotals}
+              onChange={(e) => setTotals("rowTotals", e.target.checked)}
+              className="rounded border-base-300"
+            />
+            <span>Row totals</span>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-base-content cursor-pointer">
+            <input
+              id="chkPivotColTotals"
+              type="checkbox"
+              checked={colTotals}
+              onChange={(e) => setTotals("colTotals", e.target.checked)}
+              className="rounded border-base-300"
+            />
+            <span>Column totals</span>
+          </label>
         </div>
 
         <AvailableZone fields={available} />
