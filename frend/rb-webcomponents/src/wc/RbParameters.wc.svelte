@@ -8,6 +8,11 @@
   // can ask it directly - see src/shared/parameter-controls.test.ts.
   import { controlTypeOf, defaultForType, isTicked } from '../shared/parameter-controls';
   import { slicerFieldsOnPage, slicerSelectionsFor, refreshDataWidgets } from '../shared/slicer-selections';
+  // A `date-range` control draws `<id>From` and `<id>To` as one range with presets - see
+  // src/shared/date-range.ts.
+  import {
+    DATE_RANGE_PRESETS, presetOf, presetRange, rangePartnerIds, rangePartnerOf, rangeToday,
+  } from '../shared/date-range';
   // Starting values a link carries, and the address bar kept on the view that is on screen. This
   // component is the only one that reads or writes the URL for parameters - see
   // src/shared/url-start-values.ts for the rules.
@@ -66,6 +71,12 @@
   
   // Raw DSL source code (exposed for Configuration tab)
   export let configDsl: string = '';
+
+  /**
+   * The day a date range's presets count from: the data's today on the dashboard's connection, as the
+   * server's config hands it (`dataToday`) or the Canvas sets it. Empty = the browser's own date.
+   */
+  export let dataToday: string = '';
 
   // Show/hide the Reload button (hidden by default, shown via attribute show-reload="true")
   export let showReload: boolean = false;
@@ -186,6 +197,8 @@
         if (config.lockedParameters && typeof config.lockedParameters === 'object') {
           lockedParameters = config.lockedParameters;
         }
+
+        if (typeof config.dataToday === 'string') dataToday = config.dataToday;
 
         // Apply parameters from config
         if (config.parameters && Array.isArray(config.parameters)) {
@@ -674,6 +687,22 @@
     syncUrl();
   }
 
+  // The `<id>To` of every range is drawn inside its range, not again on its own.
+  $: rangeToIds = rangePartnerIds(parameters);
+
+  /** A preset fills both days of a range at once, counted from the data's today (`date-range.ts`). */
+  function pickPreset(from: ParamMeta, to: ParamMeta, event: Event) {
+    const range = presetRange((event.target as HTMLSelectElement).value, rangeToday(dataToday));
+    if (!range) return;
+    formValues[from.id] = range.from;
+    formValues[to.id] = range.to;
+    touched[from.id] = true;
+    touched[to.id] = true;
+    validateAll();
+    emitValues();
+    syncUrl();
+  }
+
   // Handle blur for touched state
   function handleBlur(p: ParamMeta) {
     touched[p.id] = true;
@@ -842,6 +871,8 @@
       if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
       const config = await configRes.json();
       
+      if (typeof config.dataToday === 'string') dataToday = config.dataToday;
+
       // Apply parameters from config
       if (config.parameters && Array.isArray(config.parameters)) {
         parameters = config.parameters;
@@ -871,7 +902,8 @@
     {#if parameters && parameters.length}
       <!-- Debug: rendering {parameters.length} parameters -->
       <form class="report-parameters-form" style="display: flex; flex-direction: column; gap: 1rem;">
-        {#each parameters as p (p.id)}
+        {#each parameters.filter((q) => !rangeToIds.has(q.id)) as p (p.id)}
+          {@const partner = rangePartnerOf(p, parameters)}
           <div class="form-group">
             <!-- Multi-select renders its own "Choose <label>" inside the trigger button,
                  so the form-group <label> above would be a redundant repetition. Hide it
@@ -880,7 +912,60 @@
               <label for={p.id}>{paramLabel(p)}</label>
             {/if}
 
-            {#if getControlType(p) === 'date'}
+            {#if partner}
+              <!-- One range, two declared parameters: the preset fills both, each box is its own
+                   parameter as before (`#<id>From`, `#<id>To`). -->
+              <div class="rb-date-range" id={p.id + '_range'} style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                <select
+                  id={p.id + '_preset'}
+                  class="form-control"
+                  style="flex:1 1 9rem;"
+                  title="Pick a period, or type the days"
+                  disabled={isLocked(p) || isLocked(partner)}
+                  value={presetOf(formValues[p.id], formValues[partner.id], rangeToday(dataToday))}
+                  on:change={(e) => pickPreset(p, partner, e)}
+                >
+                  <option value="">Custom</option>
+                  {#each DATE_RANGE_PRESETS as preset}
+                    <option value={preset.id}>{preset.label}</option>
+                  {/each}
+                </select>
+                <input
+                  type="date"
+                  id={p.id}
+                  value={formValues[p.id] || ''}
+                  min={resolveMin(p)}
+                  max={resolveMax(p)}
+                  title={p.description || paramLabel(p)}
+                  disabled={isLocked(p)}
+                  class="form-control"
+                  style="flex:1 1 8rem;"
+                  on:input={(e) => handleChange(p, e)}
+                  on:blur={() => handleBlur(p)}
+                />
+                <span class="rb-date-range-to">to</span>
+                <input
+                  type="date"
+                  id={partner.id}
+                  value={formValues[partner.id] || ''}
+                  min={resolveMin(partner)}
+                  max={resolveMax(partner)}
+                  title={partner.description || paramLabel(partner)}
+                  disabled={isLocked(partner)}
+                  class="form-control"
+                  style="flex:1 1 8rem;"
+                  on:input={(e) => handleChange(partner, e)}
+                  on:blur={() => handleBlur(partner)}
+                />
+              </div>
+              {#if touched[partner.id] && errors[partner.id]?.length > 0}
+                <div class="text-danger validation-errors" id={partner.id + '_errors'}>
+                  {#each errors[partner.id] as err}
+                    <div>{err}</div>
+                  {/each}
+                </div>
+              {/if}
+            {:else if getControlType(p) === 'date' || getControlType(p) === 'date-range'}
               <input
                 type="date"
                 id={p.id}

@@ -35,9 +35,25 @@ const CodeMirror = dynamic(
 const RB_BASE = "/api/dp";
 
 const PARAM_TYPES = ["String", "Integer", "Double", "Boolean", "Date"];
-const UI_WIDGETS  = ["text", "select", "multiselect", "datepicker", "checkbox", "radio"];
+const UI_WIDGETS  = ["text", "select", "multiselect", "datepicker", "daterange", "checkbox", "radio"];
 /** The shipped files' names for the dropdown's controls (the filter bar draws both the same). */
-const SHIPPED_CONTROL_NAMES: Record<string, string> = { "multi-select": "multiselect", date: "datepicker", boolean: "checkbox" };
+const SHIPPED_CONTROL_NAMES: Record<string, string> = {
+  "multi-select": "multiselect", date: "datepicker", "date-range": "daterange", boolean: "checkbox",
+};
+
+/** The id a date range's last day has: `dateFrom` → `dateTo`, `order_date_from` → `order_date_to`.
+ *  The same rule as `rangeToIdOf` in rb-webcomponents' `date-range.ts`, which draws the range. */
+export function rangeToIdOf(fromId: string): string | null {
+  const m = /^(.+?)(From|_from)$/.exec(fromId ?? "");
+  return m ? m[1] + (m[2] === "From" ? "To" : "_to") : null;
+}
+
+/** Whether a filter asks to be drawn as a date range, in either word. */
+function isDateRange(p: ParamMeta | undefined): boolean {
+  const hints = (p?.uiHints ?? {}) as Record<string, unknown>;
+  const written = (hints.control ?? hints.widget) as string | undefined;
+  return written === "daterange" || written === "date-range";
+}
 
 /** Slugify a label into a valid parameter ID: "Start Date" → "start_date".
  *  Uses underscores (not hyphens) because the param ID flows through:
@@ -179,7 +195,17 @@ export function FilterBarConfigPanel({ open, onClose }: FilterBarConfigPanelProp
   };
 
   const updateParam = (idx: number, updated: ParamMeta) => {
-    const next = params.map((p, i) => i === idx ? updated : p);
+    let next = params.map((p, i) => i === idx ? updated : p);
+    // A filter turned into a date range gets its last day as a filter of its own, right after it, when
+    // the dashboard has none yet: the range fills two parameters, so each `${}` keeps its own name.
+    const toId = isDateRange(updated) && !isDateRange(params[idx]) ? rangeToIdOf(updated.id) : null;
+    if (toId && !next.some((p) => p.id === toId)) {
+      const partner: ParamMeta = {
+        id: toId, type: updated.type || "Date", label: "To", description: "",
+        defaultValue: undefined, constraints: { required: false }, uiHints: {},
+      };
+      next = [...next.slice(0, idx + 1), partner, ...next.slice(idx + 1)];
+    }
     setParametersConfig({ parameters: next });
   };
 
@@ -369,6 +395,8 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
   const options  = uiHints.options;
 
   const showOptions = control === "select" || control === "multiselect" || control === "radio";
+  // A range is drawn from a filter whose id names its first day (`...From`); any other id is a plain date.
+  const rangeWithoutFrom = control === "daterange" && rangeToIdOf(param.id ?? "") === null;
   const isList      = control === "multiselect";
 
   // What a list field shows while it is being typed: the stored value is parsed on every key, and
@@ -524,6 +552,12 @@ function ParameterRow({ param, onChange, onRemove }: ParameterRowProps) {
           Required
         </label>
       </div>
+
+      {rangeWithoutFrom && (
+        <p id={`paramRangeHint-${key}`} className="text-[10px] text-amber-600">
+          A date range is drawn from a filter whose id ends in From (or _from), with its To partner.
+        </p>
+      )}
 
       {/* Row 4: options source — only for select-like controls */}
       {showOptions && (

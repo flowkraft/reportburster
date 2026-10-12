@@ -140,4 +140,13 @@ public class ReportFullConfigDto {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public JsonNode stories;
+
+    /**
+     * The day a date range's presets count from ("last 30 days", "year to date"): the data's today on
+     * the report's connection, the day a {@code {dataToday}} default is read against. Absent unless a
+     * parameter is drawn as a {@code date-range}, and when the connection has no such day - the
+     * filter bar then counts from the browser's own date.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String dataToday;
 }
