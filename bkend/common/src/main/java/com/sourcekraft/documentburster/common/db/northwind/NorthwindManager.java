@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -530,11 +531,26 @@ public class NorthwindManager implements AutoCloseable {
 	}
 
 	/**
+	 * The database the academy datasets live in, next to Northwind and never inside it: on DuckDB
+	 * the file {@code northwind_co.duckdb} beside {@code northwind.duckdb}, on PostgreSQL the
+	 * database {@code northwind_co} in the same server. Northwind's own catalog then lists only
+	 * Northwind, which the lessons that query the catalog rely on.
+	 */
+	private static final String ACADEMY_DATABASE = "northwind_co";
+
+	/**
+	 * The schema the lessons' bare table names resolve to on PostgreSQL: Northwind Company at scale S.
+	 * It is set as the academy database's default search_path, so a query like {@code SELECT * FROM
+	 * "Products"} works without a {@code SET search_path} first.
+	 */
+	private static final String ACADEMY_DEFAULT_SCHEMA = "northwind_co_s";
+
+	/**
 	 * Loads the DataZeus academy datasets at scale S (Northwind Company, its warehouse and its
-	 * change log) into the DuckDB or PostgreSQL sample, with the install scripts that ship with
-	 * the DataZeus content in db/datazeus. A data folder with no db/datazeus sibling is not an
-	 * error: Northwind is there as before, without the academy schemas. A load that fails is
-	 * thrown, like the cube_demo seed.
+	 * change log) into the academy database beside the DuckDB or PostgreSQL sample, with the
+	 * install scripts that ship with the DataZeus content in db/datazeus. A data folder with no
+	 * db/datazeus sibling is not an error: Northwind is there as before, without the academy
+	 * datasets. A load that fails is thrown, like the cube_demo seed.
 	 */
 	private void seedAcademyDatasets(DatabaseVendor vendor, Path hostDataPath) throws Exception {
 
@@ -547,10 +563,51 @@ public class NorthwindManager implements AutoCloseable {
 
 		try (Connection connection = (vendor == DatabaseVendor.DUCKDB)
 				? DriverManager.getConnection(
-						"jdbc:duckdb:" + hostDataPath.resolve("northwind.duckdb").toAbsolutePath())
-				: DriverManager.getConnection(getJdbcUrl(vendor), getUsername(vendor), getPassword(vendor))) {
+						"jdbc:duckdb:" + hostDataPath.resolve(ACADEMY_DATABASE + ".duckdb").toAbsolutePath())
+				: openAcademyPostgresDatabase(vendor)) {
 			AcademyDatasetsSeeder.seed(connection, vendor.name(), scripts);
 		}
+	}
+
+	/**
+	 * Connects to the academy database on the PostgreSQL server, creating it first when it is not
+	 * there. Two starts at once may both try to create it; the one that loses finds it created.
+	 */
+	private Connection openAcademyPostgresDatabase(DatabaseVendor vendor) throws SQLException {
+
+		String northwindUrl = getJdbcUrl(vendor);
+		try (Connection northwind = DriverManager.getConnection(northwindUrl, getUsername(vendor),
+				getPassword(vendor)); Statement st = northwind.createStatement()) {
+			boolean exists;
+			try (ResultSet rs = st.executeQuery(
+					"SELECT 1 FROM pg_database WHERE datname = '" + ACADEMY_DATABASE + "'")) {
+				exists = rs.next();
+			}
+			if (!exists) {
+				try {
+					st.execute("CREATE DATABASE " + ACADEMY_DATABASE);
+					log.info("Created the PostgreSQL database {} for the academy datasets", ACADEMY_DATABASE);
+				} catch (SQLException e) {
+					if (!"42P04".equals(e.getSQLState())) { // 42P04: duplicate_database
+						throw e;
+					}
+				}
+			}
+
+			// Stored on the database, so every new session starts with it; an open session keeps
+			// its old path until it reconnects. The schema need not exist yet: the install script
+			// creates it, and a path that names a missing schema is skipped. Run on every start, so
+			// a database created before this setting existed gets it too.
+			st.execute("ALTER DATABASE " + ACADEMY_DATABASE + " SET search_path = " + ACADEMY_DEFAULT_SCHEMA
+					+ ", public");
+		}
+
+		// Same server and options as Northwind's URL, another database: .../Northwind?x -> .../northwind_co?x
+		int query = northwindUrl.indexOf('?');
+		String path = (query < 0) ? northwindUrl : northwindUrl.substring(0, query);
+		String academyUrl = path.substring(0, path.lastIndexOf('/') + 1) + ACADEMY_DATABASE
+				+ ((query < 0) ? "" : northwindUrl.substring(query));
+		return DriverManager.getConnection(academyUrl, getUsername(vendor), getPassword(vendor));
 	}
 
 	public void initializeDatabaseWithGenerator(DatabaseVendor vendor, Path hostDataPath) throws Exception {
@@ -588,7 +645,8 @@ public class NorthwindManager implements AutoCloseable {
             // parent this branch already uses to find the SQLite sample.
             seedDemoData(hostDataPath, duckdbPath);
 
-            // The DataZeus academy datasets at scale S, so the lessons' data ships in the sample.
+            // The DataZeus academy datasets at scale S, in northwind_co.duckdb beside this file, so the
+            // lessons' data ships with the sample.
             seedAcademyDatasets(vendor, hostDataPath);
 
             return; // Skip JPA initialization below - already created via SQL

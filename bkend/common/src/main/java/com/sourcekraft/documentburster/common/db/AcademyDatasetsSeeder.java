@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Loads the DataZeus academy datasets at scale S into a Northwind sample database: Northwind
- * Company, its warehouse and its change log, each from the install script that ships with the
- * DataZeus content in {@code db/datazeus/datasets/scripts}.
+ * Loads the DataZeus academy datasets at scale S into the academy database beside a Northwind
+ * sample (see NorthwindManager): Northwind Company, its warehouse and its change log, each from
+ * the install script that ships with the DataZeus content in {@code db/datazeus/datasets/scripts}.
  *
  * <p>
  * Each dataset is loaded once and then left alone. A script writes its schema's
