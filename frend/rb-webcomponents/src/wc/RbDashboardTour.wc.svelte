@@ -1,7 +1,7 @@
 <svelte:options customElement={{ tag: "rb-dashboard-tour", shadow: "none" }} />
 
 <!--
-  rb-dashboard-tour — the "Show Tour" button of a dashboard: one button above the whole page that
+  rb-dashboard-tour — the "Take the Tour" button of a dashboard: one button above the whole page that
   starts a guided walk through what the dashboard can do (see shared/dashboard-tour.ts).
 
   Use, anywhere inside the dashboard (the page's bar is the place):
@@ -16,7 +16,7 @@
   import { dashboardTourSteps } from '../shared/dashboard-tour';
   import type { TourStep } from '../shared/tour';
 
-  export let label: string = 'Show Tour';
+  export let label: string = 'Take the Tour';
 
   let button: HTMLButtonElement;
   let open = false;

@@ -3,7 +3,7 @@
 // The Gallery on the real site (Phase D, TODO 14a).
 //
 // `dashboard-demos.spec.ts` opens the Gallery straight on a local server. This one opens it the way a
-// reader of datapallas.com does: the docs page at /docs/dashboard-demos, with the Gallery inside its
+// reader of datapallas.com does: the docs page at /docs/bi-analytics/dashboard-examples, with the Gallery inside its
 // iframe, served by demo.datapallas.com. That is the one thing the local spec cannot prove - that a browser
 // really lets the site frame the page (the deployed `frame-ancestors`, no `X-Frame-Options` on the
 // Gallery) through the share link the docs page holds, and that the 25 "How was this dashboard built?"
@@ -38,7 +38,7 @@ import {
 } from '../../helpers/dashboard-demos-test-helper';
 
 /** Fixed in the file, as every other address in this spec is: there is one public site. */
-const DOCS_PAGE = 'https://datapallas.com/docs/dashboard-demos';
+const DOCS_PAGE = 'https://datapallas.com/docs/bi-analytics/dashboard-examples';
 const DEMO_ORIGIN = 'https://demo.datapallas.com';
 const GALLERY_PATH = '/dashboard/g-dashboard-demos';
 const IFRAME = 'iframe[title="Dashboard Demos"]';

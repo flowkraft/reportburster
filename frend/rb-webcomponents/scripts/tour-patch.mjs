@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Turns a dashboard's HTML into a tour-enabled one: puts the "Show Tour" button (<rb-dashboard-tour>)
+ * Turns a dashboard's HTML into a tour-enabled one: puts the "Take the Tour" button (<rb-dashboard-tour>)
  * on top of the page. The dashboard is left exactly as it was otherwise - nothing in the product's
  * own files changes, so a dashboard published from its canvas keeps its tests, and any copy of it
  * (a demo, a website) can be given a tour.
@@ -12,7 +12,7 @@
  *   --out-dir <dir>   write each patched page here under its own name
  *   --in-place        overwrite the input
  *   (none of these)   print the patched page on stdout
- *   --label <text>    the button's words (default "Show Tour")
+ *   --label <text>    the button's words (default "Take the Tour")
  *   --into <id>       the element to put the button in (default pageBar, the page's top bar)
  *   --check           change nothing; exit 1 if a page could not be patched
  *
@@ -43,11 +43,11 @@ function attr(text) {
  * @throws when the page has no place for the button
  */
 export function patchTour(html, options = {}) {
-  const label = options.label ?? 'Show Tour';
+  const label = options.label ?? 'Take the Tour';
   const into = options.into ?? 'pageBar';
   if (html.includes('<' + TAG)) return { html, changed: false, where: 'already' };
 
-  const labelAttr = label === 'Show Tour' ? '' : ` label="${attr(label)}"`;
+  const labelAttr = label === 'Take the Tour' ? '' : ` label="${attr(label)}"`;
 
   // 1. The page's own bar: the button goes first, on the left; the bar's other items stay on the right.
   const idEsc = into.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

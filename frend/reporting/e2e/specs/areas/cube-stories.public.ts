@@ -4,7 +4,7 @@
 //
 // `cube-stories.spec.ts` opens the Cube Stories dashboard straight on a local
 // server. This one opens it the way a reader of datapallas.com does: the docs
-// page at /docs/semantic-layer/cube-stories, with the dashboard inside its
+// page at /docs/semantic-layer/cube-examples, with the dashboard inside its
 // iframe, served by demo.datapallas.com. That is the one thing the local spec
 // cannot prove — that a browser really lets the site frame the page, which
 // takes the deployed `Content-Security-Policy: frame-ancestors`, the missing
@@ -45,7 +45,7 @@ import {
 } from '../../helpers/cube-stories-test-helper';
 
 /** Fixed in the file, as every other address in this spec is: there is one public site. */
-const DOCS_PAGE = 'https://datapallas.com/docs/semantic-layer/cube-stories';
+const DOCS_PAGE = 'https://datapallas.com/docs/semantic-layer/cube-examples';
 const DEMO_ORIGIN = 'https://demo.datapallas.com';
 
 test.describe('Cube Stories on datapallas.com', () => {

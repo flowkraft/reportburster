@@ -23,6 +23,9 @@
   import { formatCell, formatMeasure, measureFormatOf, dimensionText, totalColumnWidth, DEFAULT_CURRENCY } from '../shared/cube-format';
   import { COLUMN_FLOOR_PX } from '../shared/table-extras';
   import { cubeShowMeSteps, fieldOf } from '../shared/cube-tour';
+  import { showMeWindowTop, panelScroll } from '../shared/show-me-view';
+  import type { Span } from '../shared/show-me-view';
+  import { announceTourView, getVisibleWindow } from '../shared/demo-ready';
   import { folderTip } from '../shared/folder-tips';
   import type { TourStep } from '../shared/tour';
   import { refusalMessage, withCsrfHeader } from '../shared/session-request';
@@ -1605,6 +1608,7 @@
   async function askToApply(ask: any) {
     confirmId = String(ask?.id ?? '');
     await tick();
+    showCardView(ask);
     document.getElementById('btnShowMeYes-' + confirmId)?.focus({ preventScroll: true });
   }
 
@@ -1623,7 +1627,8 @@
     say('Story applied: \u201c' + String(ask?.question ?? '').trim() + '\u201d. Notice how the data below was refreshed to match the ticked fields.');
     // The reader pressed Yes to see the answer, so the whole cube comes into view: at once, and again when
     // the answer has been drawn, because it changes the cube's height.
-    bringCubeIntoView();
+    await tick();
+    if (!showStoryView(ask)) bringCubeIntoView();
     await tick();
     const started = Date.now();
     // The question is sent a moment after the ticks (a tick waits briefly for the next one): wait for it
@@ -1631,7 +1636,7 @@
     while (Date.now() - started < 600 && !(runtimeLoading || queryRunning)) await pause(50);
     while (Date.now() - started < 8000 && (runtimeLoading || queryRunning)) await pause(100);
     await tick();
-    bringCubeIntoView();
+    if (!showStoryView(ask)) bringCubeIntoView();
     // The toast says to look at the answer: the reader gets time to read it before the answer lights up.
     if (Date.now() - started < READ_TOAST_MS) await pause(READ_TOAST_MS - (Date.now() - started));
     await flash();
@@ -1648,6 +1653,118 @@
 
   function pause(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // ── Show Me in a frame as tall as its page ─────────────────────────────────
+  // The page around the frame is what scrolls, so it is told which part of the frame to show (the same word a
+  // tour uses). The panels inside - the field list, the stories - are scrolled here, so that what Show Me is about
+  // is whole and clear of their edges: the fields it ticked, and the card it was pressed on.
+
+  const VIEW_AIR = 24;
+
+  /** The nearest panel around `el` that scrolls on its own, if any. */
+  function panelOf(el: Element | null): HTMLElement | null {
+    for (let p = el?.parentElement ?? null; p && p !== container; p = p.parentElement) {
+      const overflowY = getComputedStyle(p).overflowY;
+      if ((overflowY === 'auto' || overflowY === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p;
+    }
+    return null;
+  }
+
+  /** Scroll the panel around these elements so they are whole and clear of its edges, as far as they fit. */
+  function showInPanel(els: Element[]) {
+    const panel = panelOf(els[0] ?? null);
+    if (!panel) return;
+    const rects = els.map((e) => e.getBoundingClientRect());
+    const p = panel.getBoundingClientRect();
+    const by = panelScroll({ top: Math.min(...rects.map((r) => r.top)), bottom: Math.max(...rects.map((r) => r.bottom)) }, { top: p.top, bottom: p.bottom }, VIEW_AIR);
+    if (by) panel.scrollTop += by;
+  }
+
+  /** The two side-by-side panels, the field list and the stories. */
+  function halves(): HTMLElement[] {
+    return ['cubeFieldsHalf', 'cubeStoriesHalf']
+      .map((id) => container?.querySelector('[id="' + id + '"]') as HTMLElement | null)
+      .filter((h): h is HTMLElement => !!h);
+  }
+
+  /** Back to the height the stylesheet gives the panels. */
+  function releasePanels() {
+    for (const h of halves()) h.style.maxHeight = '';
+  }
+
+  /**
+   * The fields a story ticked can lie further apart than the panel is tall (a measure at the top, a dimension
+   * far below). In a frame the page has the room, so both panels grow by just what it takes to hold them with air,
+   * never beyond what the reader can see at once. Panels that do not scroll (a narrow screen) are left alone.
+   */
+  function fitPanelsTo(ticked: Element[], room: number) {
+    const [fields] = halves();
+    releasePanels();
+    if (!fields || ticked.length === 0) return;
+    const overflowY = getComputedStyle(fields).overflowY;
+    if (overflowY !== 'auto' && overflowY !== 'scroll') return;
+    const rects = ticked.map((e) => e.getBoundingClientRect());
+    const span = Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top));
+    const want = Math.min(span + 2 * VIEW_AIR, room - 2 * VIEW_AIR, fields.scrollHeight);
+    if (want <= fields.clientHeight) return;
+    for (const h of halves()) h.style.maxHeight = Math.ceil(want) + 'px';
+  }
+
+  /** What of these elements is to be seen: cut by the panel each sits in, as a span of this page. */
+  function seenSpan(els: Element[]): Span | null {
+    const spans: Span[] = [];
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      const panel = panelOf(el)?.getBoundingClientRect();
+      const top = Math.max(r.top, panel ? panel.top : r.top);
+      const bottom = Math.min(r.bottom, panel ? panel.bottom : r.bottom);
+      if (bottom > top) spans.push({ top: top + window.scrollY, bottom: bottom + window.scrollY });
+    }
+    if (spans.length === 0) return null;
+    return { top: Math.min(...spans.map((s) => s.top)), bottom: Math.max(...spans.map((s) => s.bottom)) };
+  }
+
+  function pageHeight(): number {
+    return Math.max(document.documentElement.scrollHeight, window.innerHeight);
+  }
+
+  /** The card of a story, found by the id its Show Me button carries. */
+  function cardOf(ask: any): HTMLElement | null {
+    return document.getElementById('hint-' + String(ask?.id ?? ''));
+  }
+
+  /** Pressing Show Me: the card it is on is brought whole into view - only moved when it is not already. */
+  function showCardView(ask: any): boolean {
+    const room = getVisibleWindow()?.room;
+    const card = cardOf(ask);
+    if (!room || !card) return false;
+    showInPanel([card]);
+    const span = seenSpan([card]);
+    if (!span) return false;
+    const seen = getVisibleWindow()!;
+    if (span.top >= seen.top + VIEW_AIR && span.bottom <= seen.top + seen.height - VIEW_AIR) return true;
+    const top = Math.max(0, Math.min((span.top + span.bottom) / 2 - room / 2, Math.max(0, pageHeight() - room)));
+    announceTourView(window, { top, height: room - 1 }, null);
+    return true;
+  }
+
+  /**
+   * After Yes: the fields the story ticked and the card it came from, whole and clear of the edges, and
+   * under them as much of the answer as there is room for. False when this is not a frame that scrolls.
+   */
+  function showStoryView(ask: any): boolean {
+    const room = getVisibleWindow()?.room;
+    if (!room || !container) return false;
+    const card = cardOf(ask);
+    const ticked = Array.from(container.querySelectorAll('input[id^="chk-meas-"]:checked, input[id^="chk-dim-"]:checked, input[id^="chk-seg-"]:checked')).map((i) => i.closest('label') ?? i);
+    fitPanelsTo(ticked, room);
+    if (ticked.length > 0) showInPanel(ticked);
+    if (card) showInPanel([card]);
+    const answer = document.getElementById('cubeRuntimeResult');
+    const top = showMeWindowTop(seenSpan(ticked), seenSpan(card ? [card] : []), seenSpan(answer ? [answer] : []), room, pageHeight(), VIEW_AIR);
+    announceTourView(window, { top, height: room - 1 }, null);
+    return true;
   }
 
   /** The whole cube in the middle of the screen; one taller than the screen is lined up by its top, which is where it starts. */
@@ -1731,6 +1848,7 @@
       applySelection(authorDefault);
     }
     await tick();
+    releasePanels();
     for (const id of ['cubeFieldsHalf', 'cubeStoriesHalf']) {
       const half = container?.querySelector('[id="' + id + '"]');
       if (half) half.scrollTop = 0;

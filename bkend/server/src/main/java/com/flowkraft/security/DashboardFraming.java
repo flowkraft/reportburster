@@ -30,16 +30,19 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class DashboardFraming implements HeaderWriter {
 
 	/**
-	 * The pages that may be framed: the Cube Stories sample dashboard, and the Dashboard Demos
-	 * gallery. Exact paths, and a closed list: a page is framed because it was put on the site on
+	 * The pages that may be framed: the Cube Stories sample dashboard, the Dashboard Demos
+	 * gallery, and the Country Sales cube dashboard. Exact paths, and a closed list: a page is framed because it was put on the site on
 	 * purpose, never because of what it is named or where it lives.
 	 */
 	static final Set<String> FRAMED_PATHS = Set.of("/dashboard/g-cube-stories",
-			"/dashboard/g-dashboard-demos");
+			"/dashboard/g-dashboard-demos", "/dashboard/g-cube-country-sales");
 
-	/** Who may frame it: DataPallas itself, and the two spellings of the site. */
+	/**
+	 * Who may frame it: DataPallas itself, the two spellings of the site, and the development
+	 * copy of the site.
+	 */
 	static final String FRAME_ANCESTORS = "frame-ancestors 'self' https://datapallas.com "
-			+ "https://www.datapallas.com";
+			+ "https://www.datapallas.com https://dp-www-dev.bkstg.flowkraft.com";
 
 	static final String CONTENT_SECURITY_POLICY = "Content-Security-Policy";
 

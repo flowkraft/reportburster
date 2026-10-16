@@ -4,7 +4,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { unionBox, clampBox, spotlightBox, placeDialog, richText, intersectBox, dimPath, mergeNear } from './tour.ts';
+import { unionBox, clampBox, spotlightBox, placeDialog, placeInWindow, placeInEmptySpace, richText, intersectBox, dimPath, mergeNear } from './tour.ts';
 
 const VIEW = { width: 1000, height: 700 };
 const CARD = { width: 300, height: 160 };
@@ -112,5 +112,99 @@ describe('boxes that touch are lit as one', () => {
     assert.deepEqual(mergeNear(rows, 4), [{ left: 10, top: 10, width: 100, height: 42 }, rows[2]]);
     assert.deepEqual(mergeNear(rows, 0).length, 3, 'a gap bigger than the allowance keeps them apart');
     assert.deepEqual(mergeNear([], 4), []);
+  });
+});
+
+describe('the card of a tour in a frame as tall as its page', () => {
+  const FRAME = { width: 1000, height: 2400 };
+  const ROOM = 800;
+  const inWindow = (r: { windowTop: number; place: { top: number } }, card: { height: number }) =>
+    r.place.top >= r.windowTop && r.place.top + card.height <= r.windowTop + ROOM;
+
+  test('a target and its card that fit are centred in the window, the card below', () => {
+    const target = { left: 100, top: 1000, width: 600, height: 400 };
+    const r = placeInWindow(target, CARD, FRAME, ROOM);
+    assert.equal(r.place.side, 'bottom');
+    assert.ok(inWindow(r, CARD));
+    assert.ok(r.windowTop <= target.top && target.top + target.height <= r.windowTop + ROOM, 'the target is in the window too');
+    const above = target.top - r.windowTop;
+    const below = r.windowTop + ROOM - (target.top + target.height + CARD.height);
+    assert.ok(Math.abs(above - below) < 30, 'about the same air above the target and below its card');
+  });
+
+  test('a target that fits but leaves no room above or below for the card is centred, the card beside it', () => {
+    const tall = { width: 300, height: 420 };
+    const target = { left: 600, top: 1000, width: 380, height: 600 };
+    const r = placeInWindow(target, tall, FRAME, ROOM);
+    assert.equal(r.place.side, 'left');
+    assert.ok(inWindow(r, tall));
+    assert.ok(r.windowTop <= target.top && target.top + target.height <= r.windowTop + ROOM, 'all of the target is in the window');
+    assert.ok(r.place.left + tall.width < target.left, 'the card is left of the target, not on it');
+  });
+
+  test('with no side to go to, the card takes the empty right of a table that fills only its left', () => {
+    const card = { width: 300, height: 300 };
+    const target = { left: 0, top: 1000, width: 1000, height: 540 };
+    const table = [{ left: 0, top: 1000, width: 400, height: 40 }, { left: 0, top: 1040, width: 400, height: 400 }];
+    const r = placeInWindow(target, card, FRAME, ROOM, 14, 12, () => table);
+    assert.equal(r.place.side, 'center');
+    assert.ok(r.place.left >= 400 + 8, 'right of the data, not on it');
+    assert.ok(r.place.left + card.width <= target.left + target.width);
+    assert.ok(inWindow(r, card));
+  });
+
+  test('an empty part is preferred to a side, and the target is centred alone', () => {
+    const card = { width: 300, height: 200 };
+    const target = { left: 0, top: 1000, width: 1000, height: 400 };
+    const r = placeInWindow(target, card, FRAME, ROOM, 14, 12, () => [{ left: 0, top: 1000, width: 400, height: 400 }]);
+    assert.equal(r.place.side, 'center');
+    assert.equal(r.windowTop, target.top + target.height / 2 - ROOM / 2);
+    assert.ok(r.place.left >= 408);
+  });
+
+  test('a target full of content leaves the card on the bottom of the window, as before', () => {
+    const card = { width: 300, height: 300 };
+    const target = { left: 0, top: 1000, width: 1000, height: 540 };
+    const r = placeInWindow(target, card, FRAME, ROOM, 14, 12, () => [target]);
+    assert.equal(r.place.side, 'center');
+    assert.equal(r.place.top, r.windowTop + ROOM - card.height - 12);
+  });
+
+  test('the empty space is looked for only inside what the reader sees, and left when the right is taken', () => {
+    const card = { width: 300, height: 200 };
+    const target = { left: 0, top: 0, width: 1000, height: 2000 };
+    const right = [{ left: 650, top: 0, width: 350, height: 2000 }];
+    const r = placeInEmptySpace(target, right, card, 500, 800);
+    assert.ok(r && r.left === 12 && r.top >= 512 && r.top + card.height <= 1288);
+    assert.equal(placeInEmptySpace(target, [{ left: 0, top: 0, width: 1000, height: 2000 }], card, 500, 800), null);
+  });
+
+  test('a target that nearly fills the window is shown whole, not lined up by its top', () => {
+    const target = { left: 0, top: 1000, width: 700, height: ROOM - 10 };
+    const r = placeInWindow(target, CARD, FRAME, ROOM);
+    assert.ok(r.windowTop <= target.top && target.top + target.height <= r.windowTop + ROOM, 'all of it, down to its last row, is in the window');
+    assert.ok(inWindow(r, CARD));
+  });
+
+  test('a target taller than the window is lined up by its top and the card sits on it, inside the window', () => {
+    const target = { left: 50, top: 1200, width: 900, height: 1100 };
+    const r = placeInWindow(target, CARD, FRAME, ROOM);
+    assert.equal(r.windowTop, target.top - 24);
+    assert.equal(r.place.side, 'center');
+    assert.ok(inWindow(r, CARD));
+  });
+
+  test('near the top or the bottom of the frame the window stays on the frame, the card in it', () => {
+    const high = placeInWindow({ left: 100, top: 40, width: 600, height: 120 }, CARD, FRAME, ROOM);
+    assert.equal(high.windowTop, 0);
+    assert.ok(inWindow(high, CARD));
+    const low = placeInWindow({ left: 100, top: 2250, width: 600, height: 100 }, CARD, FRAME, ROOM);
+    assert.equal(low.windowTop, FRAME.height - ROOM);
+    assert.ok(inWindow(low, CARD));
+  });
+
+  test('a frame shorter than the window is not scrolled', () => {
+    const r = placeInWindow({ left: 100, top: 300, width: 600, height: 100 }, CARD, { width: 1000, height: 500 }, ROOM);
+    assert.equal(r.windowTop, 0);
   });
 });

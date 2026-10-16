@@ -30,8 +30,15 @@ function widgets(root: ParentNode, tag: string): Element[] {
 
 /** What the filter is called on the page ("Country"): the first label inside it. */
 function filterLabel(root: ParentNode): string {
-  const label = root.querySelector('rb-parameters label')?.textContent ?? '';
+  // The filter keeps its labels in a shadow tree of its own, which a plain selector does not enter.
+  const host = root.querySelector('rb-parameters');
+  const label = root.querySelector('rb-parameters label')?.textContent ?? host?.shadowRoot?.querySelector('label')?.textContent ?? '';
   return label.replace(/[*\s]+/g, ' ').trim();
+}
+
+/** "a, b and c" */
+function sentenceList(items: string[]): string {
+  return items.length > 1 ? items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1] : items.join('');
 }
 
 export function dashboardTourSteps(o: DashboardTourOptions): TourStep[] {
@@ -40,26 +47,40 @@ export function dashboardTourSteps(o: DashboardTourOptions): TourStep[] {
   const hasCube = !!root.querySelector('rb-cube-renderer');
   const steps: TourStep[] = [];
 
+  // What the opening says is what the page has: a dashboard without a chart does not promise one.
+  const shown = [
+    has('rb-value') ? 'headline **numbers**' : '',
+    has('rb-chart') ? 'a **chart**' : '',
+    has('rb-tabulator') ? 'a **table**' : '',
+  ].filter(Boolean);
+  const list = sentenceList(shown);
+  const filtered = root.querySelector('rb-parameters') ? ', all moved by one **filter**' : '';
   steps.push({
     title: 'A short tour of this page',
     content:
-      'This page already holds the answers to a few questions: headline **numbers**, a **chart** and a **table**, all moved by one **filter**. The tour goes through them, then ends where you take over and ask a question of **your own**.',
+      'The dashboard holds good answers to a few data questions' + (list ? ': ' + list + filtered : '') + '.\n\n' +
+      (hasCube
+        ? 'The tour goes through them, then ends where you take over and ask **ad hoc** data questions of **your own**.'
+        : 'The tour goes through them one by one.'),
   });
 
   if (root.querySelector('rb-parameters')) {
     const label = filterLabel(root);
     const name = label.replace(/\*/g, '').trim();
     const aOrAn = (word: string) => (/^[aeiou]/i.test(word) ? 'an' : 'a');
+    const recalculated = sentenceList(
+      [has('rb-value') ? 'the numbers' : '', has('rb-chart') ? 'the chart' : '', has('rb-tabulator') ? 'the table' : '', hasCube ? 'the interactive data explorer at the bottom' : ''].filter(Boolean),
+    );
     steps.push({
       target: () => {
         const el = root.querySelector('rb-parameters');
         return el ? tileOf(el) : null;
       },
-      title: 'One filter moves the whole page',
+      title: 'One filter moves the whole dashboard',
       content:
-        (label ? 'The **' + label.replace(/\*/g, '') + '** filter decides what everything below is about. ' : 'The filter decides what everything below is about. ') +
-        'Here you could choose ' + (name ? aOrAn(name) + ' ' + name.toLowerCase() : 'a value') + ' and press **Apply**: everything would be calculated again for it - the numbers, the chart, the table' +
-        (hasCube ? ' and the explorer at the bottom' : '') +
+        'The filter decides what data the dashboard is showing. ' +
+        'Here you could choose ' + (name ? aOrAn(name) + ' ' + name.toLowerCase() : 'a value') + ' and press **Apply**: everything would be calculated again for it' +
+        (recalculated ? ' - ' + recalculated : '') +
         '.',
     });
   }
@@ -106,7 +127,7 @@ export function dashboardTourSteps(o: DashboardTourOptions): TourStep[] {
       title: 'Your own questions',
       content:
         'Dashboards are great: each one is a **prebuilt recipe**, a data question prepared in advance and answered at a glance. When it is your question, nothing is faster.\n\n' +
-        'Here is something even better. Sooner or later you want another angle, another comparison, a hunch - the ad-hoc questions an SQL ninja would type straight into the database. You do not have to be one: this **explorer** lets you ask your business data whatever comes to mind, day or night, just by ticking boxes.' +
+        'Here is something even better. Sooner or later you want another angle, another comparison, a hunch - the ad-hoc questions an SQL ninja would type straight into the database. You do not have to be one: this **interactive data explorer** lets you ask your business data whatever comes to mind, day or night, just by ticking boxes.' +
         (cubeSteps.length > 0
           ? '\n\nIt comes with **Data Stories** to get you started; the tour follows the first one.'
           : '\n\nTick the numbers you want, and what to group them by.'),

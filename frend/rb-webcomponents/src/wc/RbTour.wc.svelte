@@ -18,8 +18,9 @@
 
 <script lang="ts">
   import { onMount, onDestroy, tick, createEventDispatcher } from 'svelte';
-  import { toBox, unionBox, clampBox, spotlightBox, placeDialog, richText, intersectBox, dimPath, mergeNear } from '../shared/tour';
+  import { toBox, unionBox, clampBox, spotlightBox, placeDialog, placeInWindow, richText, intersectBox, dimPath, mergeNear } from '../shared/tour';
   import { celebrateSvg } from '../shared/tour-art';
+  import { announceTourView, getVisibleWindow } from '../shared/demo-ready';
   import type { Box, Placement, TourStep, TourTarget } from '../shared/tour';
 
   export let steps: TourStep[] = [];
@@ -53,11 +54,15 @@
   let place: Placement = { side: 'center', left: 0, top: 0, arrow: -1 };
   let dialogEl: HTMLDivElement;
   let nextEl: HTMLButtonElement;
+  /** In a frame: where the reader's window sits on this page for the shown step, and what the page around was last told. */
+  let windowTop: number | null = null;
+  let toldTop = Number.NaN;
   /** Bumped by every move of the tour, so a step that was waiting when the reader moved on stops. */
   let run = 0;
   let resizeObserver: ResizeObserver | undefined;
   let frame = 0;
   let settleTimer: ReturnType<typeof setTimeout> | undefined;
+  let settleAgainTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Whether Next is Finish: nothing is left after this step that could still be shown. */
   let isLast = false;
@@ -103,6 +108,12 @@
    * reader needs (centred, its top and bottom would both be cut off).
    */
   function bringIntoView(targets: Element[], anchor?: Element | null) {
+    // In a frame the page around it is what scrolls, and it is told where (see tellFramingPage); scrolling an
+    // element into view from in here would move that page too, wherever it happens to go. Only panels are scrolled.
+    if (framedRoom() !== null) {
+      revealInPanels(anchor ?? targets[0]);
+      return;
+    }
     if (anchor) {
       const taller = anchor.getBoundingClientRect().height > view().height * 0.92;
       anchor.scrollIntoView({ block: taller ? 'start' : 'center', inline: 'nearest' });
@@ -113,6 +124,44 @@
     const box = unionBox(targets.map((el) => toBox(el.getBoundingClientRect())));
     const tall = !!box && box.height > view().height * 0.85;
     targets[0].scrollIntoView({ block: tall ? 'start' : 'center', inline: 'nearest' });
+  }
+
+  /** How much of this page the page around the frame can show at once; null when this page is not in such a frame. */
+  function framedRoom(): number | null {
+    return getVisibleWindow()?.room ?? null;
+  }
+
+  /** What the elements really show - text, pictures, controls - as boxes, so the card can go where nothing is. */
+  function contentBoxes(els: Element[]): Box[] {
+    const out: Box[] = [];
+    // Shadow trees are entered too: a chart or a table of its own is drawn inside one.
+    const todo: Array<Element | ShadowRoot> = [...els];
+    for (let seen = 0; todo.length > 0 && seen < 6000; seen++) {
+      const node = todo.pop()!;
+      if (node instanceof Element) {
+        const shown = /^(canvas|svg|img|input|select|textarea|button)$/i.test(node.tagName) || (node.children.length === 0 && (node.textContent ?? '').trim() !== '');
+        if (shown) {
+          const r = node.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) out.push(toBox(r));
+        }
+        if (node.shadowRoot) todo.push(node.shadowRoot);
+      }
+      todo.push(...Array.from(node.children));
+    }
+    return out;
+  }
+
+  /** Scroll `el` into view inside the panels that scroll on their own, and nothing above them. */
+  function revealInPanels(el: Element | undefined) {
+    if (!el) return;
+    for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      const overflowY = getComputedStyle(p).overflowY;
+      if ((overflowY !== 'auto' && overflowY !== 'scroll') || p.scrollHeight <= p.clientHeight + 1) continue;
+      const r = el.getBoundingClientRect();
+      const box = p.getBoundingClientRect();
+      if (r.top >= box.top && r.bottom <= box.bottom) continue;
+      p.scrollTop += r.height > box.height ? r.top - box.top : r.top + r.height / 2 - (box.top + box.height / 2);
+    }
   }
 
   function view() {
@@ -154,12 +203,42 @@
     await tick();
     if (!dialogEl) return;
     place = placeDialog(hasTarget ? visible : null, { width: dialogEl.offsetWidth, height: dialogEl.offsetHeight }, size);
+    // In a frame as tall as its page, the card goes where the reader will be looking, not where the whole page's middle is.
+    const room = framedRoom();
+    windowTop = null;
+    if (room !== null && hasTarget && visible) {
+      const framed = placeInWindow(visible, { width: dialogEl.offsetWidth, height: dialogEl.offsetHeight }, size, room, 14, 12, step.each || targetsOf(step).length !== 1 ? undefined : () => contentBoxes(targetsOf(step)));
+      place = framed.place;
+      windowTop = framed.windowTop;
+    }
+    // A card with no target is centred in the screen, and in a frame as tall as its page that is the middle of
+    // the page: when the page around the frame has said what of it is seen, the card is centred in that.
+    const seen = hasTarget ? null : getVisibleWindow();
+    if (seen) place = { ...place, top: Math.max(12, seen.top + (seen.height - dialogEl.offsetHeight) / 2.2) };
+  }
+
+  /**
+   * Inside a frame, the page around it is told where this step is, so it can scroll the frame to the middle of
+   * its own screen: the frame may be taller than what is seen of it, and a card below that fold is not shown.
+   */
+  function tellFramingPage(onlyIfMoved = false) {
+    if (!open || !dialogEl) return;
+    if (onlyIfMoved && windowTop === null) return;
+    const room = framedRoom();
+    if (windowTop !== null && room !== null) {
+      if (onlyIfMoved && Math.abs(windowTop - toldTop) < 2) return;
+      toldTop = windowTop;
+      announceTourView(window, { top: windowTop, height: room - 1 }, null);
+      return;
+    }
+    const card = dialogEl.getBoundingClientRect();
+    announceTourView(window, hasTarget ? { top: spot.top, height: spot.height } : null, { top: card.top, height: card.height });
   }
 
   /** The page moved (a scroll, in the window or inside a panel; a resize; a target that changed size). */
   function relayout() {
     if (frame) return;
-    frame = requestAnimationFrame(() => { frame = 0; layout(); });
+    frame = requestAnimationFrame(() => { frame = 0; layout().then(() => tellFramingPage(true)); });
   }
 
   /**
@@ -202,10 +281,14 @@
       await frames();
       if (mine !== run) return;
       await layout();
+      tellFramingPage();
       nextEl?.focus({ preventScroll: true });
       // What arrives a moment later (a table, a chart) moves the target: look once more.
+      // Twice, the second for a page around that was still scrolling: it measures where it is each time it is told.
       clearTimeout(settleTimer);
-      settleTimer = setTimeout(relayout, 450);
+      clearTimeout(settleAgainTimer);
+      settleTimer = setTimeout(async () => { await layout(); tellFramingPage(); }, 450);
+      settleAgainTimer = setTimeout(() => tellFramingPage(), 1300);
       return;
     }
     if (i >= steps.length) finish(true);

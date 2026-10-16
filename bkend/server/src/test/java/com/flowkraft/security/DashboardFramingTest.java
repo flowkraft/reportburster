@@ -32,7 +32,8 @@ class DashboardFramingTest {
 
 		MockHttpServletResponse response = headersFor("/dashboard/g-cube-stories");
 
-		assertEquals("frame-ancestors 'self' https://datapallas.com https://www.datapallas.com",
+		assertEquals("frame-ancestors 'self' https://datapallas.com https://www.datapallas.com "
+						+ "https://dp-www-dev.bkstg.flowkraft.com",
 				response.getHeader("Content-Security-Policy"));
 		// The negative half: X-Frame-Options has no origin list, so if it were sent at all the site
 		// could not frame the page, whatever the policy above says.
@@ -45,8 +46,20 @@ class DashboardFramingTest {
 
 		MockHttpServletResponse response = headersFor("/dashboard/g-dashboard-demos");
 
-		assertEquals("frame-ancestors 'self' https://datapallas.com https://www.datapallas.com",
+		assertEquals("frame-ancestors 'self' https://datapallas.com https://www.datapallas.com "
+						+ "https://dp-www-dev.bkstg.flowkraft.com",
 				response.getHeader("Content-Security-Policy"));
+		assertNull(response.getHeader("X-Frame-Options"));
+	}
+
+	@Test
+	@DisplayName("The Country Sales page names the same origins, and sends no X-Frame-Options")
+	void countrySalesIsFramable() {
+
+		MockHttpServletResponse response = headersFor("/dashboard/g-cube-country-sales");
+
+		assertEquals("frame-ancestors 'self' https://datapallas.com https://www.datapallas.com "
+				+ "https://dp-www-dev.bkstg.flowkraft.com", response.getHeader("Content-Security-Policy"));
 		assertNull(response.getHeader("X-Frame-Options"));
 	}
 

@@ -10,6 +10,7 @@
   // A click on a bar or a table row opens the rows behind it (#21).
   import { wireDrillThrough } from '../shared/drill-through';
   import { wireNoData } from '../shared/no-data';
+  import { announceDemoReady, watchFramedPage } from '../shared/demo-ready';
   // How often the dashboard asks its data again by itself, as its author set it (#22).
   import { autoRefreshMinutesOf } from '../shared/auto-refresh';
   import { storyToastLines } from '../shared/story-summary';
@@ -464,6 +465,17 @@
     }
   }
   
+  // A framed dashboard page tells the page around it that it drew, once (see ../shared/demo-ready).
+  let readySaid = false;
+  let stopFramedTalk: (() => void) | null = null;
+  function sayReadyOnce() {
+    if (readySaid || typeof window === 'undefined') return;
+    const host = dashboardContainer.closest('rb-dashboard, rb-report');
+    readySaid = announceDemoReady(window, host?.id, reportId);
+    // Framed, it also says how tall it is and hears what of it is seen (../shared/demo-ready).
+    if (readySaid) stopFramedTalk = watchFramedPage(window as any, host as any, host?.id);
+  }
+
   // Dashboard mode: inject HTML into DOM when container is ready
   function injectDashboard(fullInject: boolean = true) {
     if (!dashboardContainer || !dashboardTemplate) return;
@@ -484,6 +496,7 @@
       wireNoData(dashboardContainer);
       startAutoRefresh();
       watchForNewTiles();
+      sayReadyOnce();
     }
 
     // Listen for parameter events from rb-parameters inside the dashboard.
@@ -905,6 +918,8 @@
     autoRefreshTimer = null;
     tileObserver?.disconnect();
     tileObserver = null;
+    stopFramedTalk?.();
+    stopFramedTalk = null;
   });
 
   // Helpers for aggregator reports — extract named component IDs from config

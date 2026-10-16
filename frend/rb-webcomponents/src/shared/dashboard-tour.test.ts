@@ -55,13 +55,24 @@ const full = () =>
   );
 
 describe('the tour of a dashboard', () => {
+  test('the opening says what this page has, and only that', () => {
+    const complete = dashboardTourSteps({ root: full(), cubeSteps: CUBE_STEPS })[0].content;
+    assert.match(complete, /^The dashboard holds good answers to a few data questions: headline \*\*numbers\*\*, a \*\*chart\*\* and a \*\*table\*\*, all moved by one \*\*filter\*\*\./);
+    assert.match(complete, /ask \*\*ad hoc\*\* data questions of \*\*your own\*\*\.$/);
+
+    const plain = dashboardTourSteps({ root: dashboard([el('rb-value'), el('rb-chart')]), cubeSteps: [] })[0].content;
+    assert.match(plain, /: headline \*\*numbers\*\* and a \*\*chart\*\*\./);
+    assert.doesNotMatch(plain, /table|filter|your own/);
+    assert.match(plain, /The tour goes through them one by one\.$/);
+  });
+
   test('it goes from the filter through the numbers, the chart and the table to the explorer, and ends on the picture', () => {
     const steps = dashboardTourSteps({ root: full(), cubeSteps: CUBE_STEPS });
     assert.deepEqual(
       steps.map((s) => s.title),
       [
         'A short tour of this page',
-        'One filter moves the whole page',
+        'One filter moves the whole dashboard',
         'The headline numbers',
         'The shape of it',
         'The exact figures',
@@ -77,8 +88,20 @@ describe('the tour of a dashboard', () => {
 
   test('the filter is explained by its own name', () => {
     const steps = dashboardTourSteps({ root: full(), cubeSteps: CUBE_STEPS });
-    assert.match(steps[1].content, /^The \*\*Country\*\* filter decides what everything below is about\. Here you could choose a country and press \*\*Apply\*\*: everything would be calculated again for it/);
-    assert.match(steps[1].content, /and the explorer at the bottom\./);
+    assert.equal(
+      steps[1].content,
+      'The filter decides what data the dashboard is showing. Here you could choose a country and press **Apply**: everything would be calculated again for it - the numbers, the chart, the table and the interactive data explorer at the bottom.',
+    );
+  });
+
+  test('the filter keeps its label in a shadow tree, and the tour still finds it', () => {
+    const filter = el('rb-parameters') as Fake & { shadowRoot?: unknown };
+    filter.shadowRoot = { querySelector: (s: string) => (s === 'label' ? { textContent: 'Country *' } : null) };
+    const steps = dashboardTourSteps({ root: dashboard([filter, el('rb-value')]), cubeSteps: [] });
+    assert.equal(
+      steps[1].content,
+      'The filter decides what data the dashboard is showing. Here you could choose a country and press **Apply**: everything would be calculated again for it - the numbers.',
+    );
   });
 
   test('each step lights the tile of its widget, the numbers together, and never a table of the explorer', () => {
@@ -107,6 +130,6 @@ describe('the tour of a dashboard', () => {
 
   test('a filter without a readable label is still a filter', () => {
     const steps = dashboardTourSteps({ root: dashboard([el('rb-parameters')]), cubeSteps: [] });
-    assert.match(steps[1].content, /^The filter decides what everything below is about\. Here you could choose a value and press/);
+    assert.match(steps[1].content, /^The filter decides what data the dashboard is showing\. Here you could choose a value and press \*\*Apply\*\*: everything would be calculated again for it\.$/);
   });
 });

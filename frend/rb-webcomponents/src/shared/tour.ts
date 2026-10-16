@@ -159,6 +159,80 @@ export function placeDialog(target: Box | null, dialog: Size, view: Size, gap = 
 }
 
 /**
+ * Where the card goes, and which part of the frame the reader should be looking at, for a tour in a frame
+ * that is as tall as the page inside it: the page around the frame is what scrolls, and what it can show at
+ * once is `room` px of the frame, from `windowTop`.
+ *
+ * A target with an empty part, as wide as the card and as tall as it, gets the card there (`contents` says what is
+ * not empty), centred in the window: nothing is covered. Otherwise: a target and its card that fit in the room one
+ * above the other are centred in it, the card below the target.
+ * A target that fits but leaves no room for the card above or below it is centred in the room and the card goes
+ * beside it. A target taller than the room is lined up by its top, with the card on top of it at the bottom of
+ * the room: its start is the part a reader needs. The card is always inside the window, so it is always seen.
+ */
+export function placeInWindow(
+  target: Box,
+  dialog: Size,
+  frame: Size,
+  room: number,
+  gap = 14,
+  margin = 12,
+  contents?: () => Box[],
+): { windowTop: number; place: Placement } {
+  const onFrame = (top: number) => Math.max(0, Math.min(top, Math.max(0, frame.height - room)));
+  // The room already keeps air from the page's header and from the screen's edge: a target that fills it is still whole.
+  const fits = target.height <= room;
+  if (contents && target.height >= dialog.height + 2 * margin) {
+    // Where the target has an empty part the card can lie on, nothing is covered and nothing needs room around it.
+    const top = onFrame(fits ? target.top + target.height / 2 - room / 2 : target.top - 2 * margin);
+    const empty = placeInEmptySpace(target, contents(), dialog, top, room, margin);
+    if (empty) return { windowTop: top, place: empty };
+  }
+  const free = room - (target.height + dialog.height + gap + margin);
+  const windowTop = onFrame(free >= 0 ? target.top - free / 2 : fits ? target.top + target.height / 2 - room / 2 : target.top - 2 * margin);
+  const inside = placeDialog({ ...target, top: target.top - windowTop }, dialog, { width: frame.width, height: room }, gap, margin);
+  return { windowTop, place: { ...inside, top: inside.top + windowTop } };
+}
+
+/**
+ * The card inside the target, where it covers nothing: a table that fills a third of its box leaves the rest
+ * empty. `contents` are the boxes of what the target really shows (text, pictures, controls). The card keeps to
+ * the part of the target the reader sees (`windowTop`..`windowTop + room`), goes to the right first and to the
+ * left second, and as near the middle as it can. No pointer: it is on the target. Null when there is no such place.
+ */
+export function placeInEmptySpace(
+  target: Box,
+  contents: Box[],
+  dialog: Size,
+  windowTop: number,
+  room: number,
+  margin = 12,
+): Placement | null {
+  const lowest = Math.max(target.top, windowTop) + margin;
+  const highest = Math.min(target.top + target.height, windowTop + room) - margin - dialog.height;
+  if (highest < lowest) return null;
+  const air = 8;
+  const free = (left: number, top: number) =>
+    !contents.some(
+      (c) =>
+        c.width > 0 && c.height > 0 &&
+        c.left < left + dialog.width + air && c.left + c.width > left - air &&
+        c.top < top + dialog.height + air && c.top + c.height > top - air,
+    );
+  const middle = (lowest + highest) / 2;
+  const lefts = [target.left + target.width - margin - dialog.width, target.left + margin];
+  for (const left of lefts) {
+    if (left < target.left) continue;
+    for (let d = 0; d <= highest - lowest; d += 8) {
+      for (const top of d === 0 ? [middle] : [middle - d, middle + d]) {
+        if (top >= lowest && top <= highest && free(left, top)) return { side: 'center', left, top, arrow: -1 };
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * A step's sentence as HTML, with `**word**` bold. The text is escaped first and only `**…**`
  * becomes a `<strong>`, so what a story's author wrote can put no markup on the page.
  */
