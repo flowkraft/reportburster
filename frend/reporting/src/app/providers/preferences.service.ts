@@ -45,8 +45,9 @@ export class PreferencesService {
       loaded.settings.showsamples = false;
     }
     // Sync the BehaviorSubject with the loaded value (robust to bool/string)
-    const v = loaded?.settings?.showsamples;
-    this.showSamples$.next(v === true || v === 'true');
+    // Only when it changed: the list views reload on every emission.
+    const v = loaded?.settings?.showsamples === true || loaded?.settings?.showsamples === 'true';
+    if (v !== this.showSamples$.value) this.showSamples$.next(v);
     return loaded;
   }
 

@@ -33,7 +33,16 @@ export class MoreSettingsComponent {
     });
   }
 
-  show() {
+  async show() {
+    // The dialog shows what the server holds, not what this page started with. The browser build
+    // never loads the preferences at startup (they need a signed-in user), so without this the
+    // Samples box opens unticked while the lists are already showing the samples.
+    try {
+      this.settingsService.xmlInternalSettings.documentburster =
+        await this.settingsService.loadPreferences();
+    } catch (e) {
+      console.warn('[MoreSettings] Failed to load preferences:', e);
+    }
     (document.getElementById('moreSettingsModal') as HTMLDialogElement)?.showModal();
   }
 
