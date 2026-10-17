@@ -323,15 +323,33 @@ public class SystemService {
 
 
 
+	/** The blog feed the What's New panel lists. */
+	private static final String BLOG_FEED_URL = "https://www.pdfburst.com/blog/feed/";
+
+	/** What the panel gets when the feed cannot be read: a feed with no posts. */
+	static final String EMPTY_BLOG_FEED = "{\"channel\":{\"item\":[]}}";
+
 	public Mono<String> getBlogPosts() {
-		String url = "https://www.pdfburst.com/blog/feed/";
+		return getBlogPosts(BLOG_FEED_URL);
+	}
+
+	/**
+	 * The blog feed at {@code url}, as JSON. The feed is a nice-to-have: any failure (TLS, DNS, no
+	 * connection, a server that does not answer within 5 s, an HTTP error, a body that is not XML)
+	 * gives an empty feed, logged at DEBUG. Logged as an ERROR it would land in errors.log, and a
+	 * non-empty errors.log blocks the next job. No cache: every call reads the feed.
+	 */
+	Mono<String> getBlogPosts(String url) {
 		WebClient webClient = WebClient.create();
 		return webClient.get().uri(url).retrieve().bodyToMono(String.class).flatMap(body -> {
 			XmlMapper xmlMapper = new XmlMapper();
 			ObjectMapper jsonMapper = new ObjectMapper();
 			return Mono.fromCallable(() -> xmlMapper.readTree(body))
 					.flatMap(xmlNode -> Mono.fromCallable(() -> jsonMapper.writeValueAsString(xmlNode)));
-		}).onErrorMap(e -> new RuntimeException("Error converting XML to JSON", e));
+		}).timeout(Duration.ofSeconds(5)).onErrorResume(e -> {
+			log.debug("Could not read the blog feed {}: {}", url, e.getMessage());
+			return Mono.just(EMPTY_BLOG_FEED);
+		});
 	}
 
 	public Mono<String> getCopilotUrl() {

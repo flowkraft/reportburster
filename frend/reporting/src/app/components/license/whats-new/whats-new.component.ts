@@ -108,7 +108,8 @@ export class WhatsNewComponent {
     else if (action == 'next') this.visibleBlogPostIndex++;
     else this.visibleBlogPostIndex--;
 
-    if (this.blogPosts) {
+    // An unreadable feed comes back empty: nothing to show.
+    if (this.blogPosts?.length) {
       this.visibleBlogPost = this.blogPosts[this.visibleBlogPostIndex];
 
       this.visibleBlogPost.summary = Utilities.getExcerpt(
