@@ -40,7 +40,7 @@ class DashboardsDemoRunOnceTest {
 	private static final String ANOTHER_TODAY = "2027-10-05";
 
 	/** The version of the rows, and of the tables they go into, that the script ships with. */
-	private static final int DATA_VERSION = 1;
+	private static final int DATA_VERSION = 2;
 
 	/** The row every test changes to see whether a run reloaded or left the data alone. */
 	private static final String SHIPPED_NAME = "AeroDesk Pro";

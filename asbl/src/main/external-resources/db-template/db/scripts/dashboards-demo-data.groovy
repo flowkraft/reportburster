@@ -36,7 +36,7 @@ final boolean WIPE_ALL_DATA = false
 // The version of the rows this script ships with, bumped whenever the .psv files change, or the
 // tables they are loaded into do. A database holding an older version is NOT reloaded on its own -
 // that would break the promise above - the script only says a newer one exists.
-final int DATA_VERSION = 1
+final int DATA_VERSION = 2
 
 // ── the vendor ─────────────────────────────────────────────────────────────
 
@@ -118,7 +118,7 @@ log.info("=== dash_demo demo data: today is {}, the rows were made for {}, so ev
 // script computed and what the product queries are the same rows in the same columns.
 
 def TABLES = [
-    geo_cities          : 'city_id:INTEGER;city:VARCHAR(60);country_code:VARCHAR(2);country:VARCHAR(60);region:VARCHAR(10);latitude:DECIMAL(9,4);longitude:DECIMAL(9,4)',
+    geo_cities          : 'city_id:INTEGER;city:VARCHAR(60);country_code:VARCHAR(2);country:VARCHAR(60);region:VARCHAR(10);latitude:DECIMAL(9,4);longitude:DECIMAL(9,4);state_code:VARCHAR(2)',
     customers           : 'customer_id:INTEGER;customer_type:VARCHAR(10);name:VARCHAR(120);company_name:VARCHAR(120);segment:VARCHAR(20);country_code:VARCHAR(2);city_id:INTEGER;signup_date:DATE;acquisition_channel:VARCHAR(20);payment_terms_days:INTEGER;credit_limit:DECIMAL(12,2);account_manager_id:INTEGER',
     products            : 'product_id:INTEGER;sku:VARCHAR(20);name:VARCHAR(120);category:VARCHAR(40);subcategory:VARCHAR(40);brand:VARCHAR(40);unit_cost:DECIMAL(12,2);list_price:DECIMAL(12,2);launch_date:DATE;discontinued:BOOLEAN;rating:DECIMAL(3,1)',
     orders              : 'order_id:INTEGER;customer_id:INTEGER;order_ts:TIMESTAMP;channel:VARCHAR(20);device:VARCHAR(10);status:VARCHAR(10);country_code:VARCHAR(2);city_id:INTEGER;subtotal:DECIMAL(12,2);discount_amount:DECIMAL(12,2);shipping_fee:DECIMAL(12,2);tax_amount:DECIMAL(12,2);total_amount:DECIMAL(12,2);warehouse_id:INTEGER;carrier:VARCHAR(20);shipped_ts:TIMESTAMP;promised_date:DATE;delivered_ts:TIMESTAMP',

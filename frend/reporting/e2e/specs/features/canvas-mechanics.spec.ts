@@ -7825,17 +7825,25 @@ test('(canvas mechanics) M105 A map of US states', async () => {
   let reportId: string | undefined;
   try {
     await withFreshCanvas(page, 'E2E mech M105 US states map', async (canvasId) => {
-      // dash_demo has no US state column (its places are country codes, and geo_cities.region is
-      // APAC / EMEA / LATAM / NA). The same shipped DuckDB connection carries Northwind Company at scale S
-      // (schema northwind_co_s, loaded by AcademyDatasetsSeeder and checked against its checksums), whose
-      // orders to the USA name their state in two letters, and to Canada their province:
-      //   SELECT ShipRegion, COUNT(*) FROM northwind_co_s.Orders
-      //   WHERE ShipCountry IN ('USA', 'Canada') GROUP BY ShipRegion ORDER BY ShipRegion;
-      //   -> BC 117 | MA 62 | OR 904 | QC 302 | WA 236
-      const STATES: Record<string, number> = { Massachusetts: 62, Oregon: 904, Washington: 236 };
+      // The states come from geo_cities.state_code: the two-letter state of dash_demo's 5 US cities (empty
+      // for the others), where all its US orders are. The truths are counted in the frozen rows the seed
+      // loads (`frozenRows`), never typed in. With the data seeded for 2026-09-30 they are:
+      //   SELECT g.state_code, COUNT(*) FROM dash_demo.orders o JOIN dash_demo.geo_cities g ON g.city_id = o.city_id
+      //   WHERE g.country_code = 'US' GROUP BY g.state_code ORDER BY g.state_code;
+      //   -> CA 776 | GA 588 | IL 601 | NY 605 | TX 546
+      const STATE_NAMES: Record<string, string> = { CA: 'California', GA: 'Georgia', IL: 'Illinois', NY: 'New York', TX: 'Texas' };
+      const stateOfCity = new Map(frozenRows('geo_cities').filter((c) => c.state_code).map((c) => [c.city_id, c.state_code]));
+      const STATES: Record<string, number> = {};
+      for (const o of cOrders) {
+        const code = stateOfCity.get(o.city_id);
+        if (!code) continue;
+        const name = STATE_NAMES[code] ?? `no name for state ${code}`;
+        STATES[name] = (STATES[name] ?? 0) + 1;
+      }
       const US_SHAPES = 52; // public/geojson/us-states.geojson: the 50 states, DC and Puerto Rico
-      const SQL = 'SELECT ShipRegion AS state, COUNT(*) AS orders FROM northwind_co_s.Orders\n'
-        + "WHERE ShipCountry IN ('USA', 'Canada') GROUP BY ShipRegion ORDER BY ShipRegion";
+      const SQL = 'SELECT g.state_code AS state, COUNT(*) AS orders\nFROM dash_demo.orders o\n'
+        + 'JOIN dash_demo.geo_cities g ON g.city_id = o.city_id\n'
+        + "WHERE g.country_code = 'US'\nGROUP BY g.state_code\nORDER BY g.state_code";
       // Compared as sorted [name, number] pairs, whatever order the GeoJSON lists its regions in.
       const canonical = (o: Record<string, number> | null) =>
         (o ? JSON.stringify(Object.keys(o).sort().map((name) => [name, o[name]])) : 'no map yet');
@@ -7844,19 +7852,20 @@ test('(canvas mechanics) M105 A map of US states', async () => {
       await addTableToCanvas(page, 'dash_demo.orders');
       const mapId = await getLastWidgetId(page);
       await runSqlQuery(page, SQL);
-      await expect(dRowCount(page), 'two provinces and three states').toContainText('5 rows returned', { timeout: 30_000 });
+      await expect(dRowCount(page), 'one row per state').toContainText(`${Object.keys(STATES).length} rows returned`, { timeout: 30_000 });
       await switchToWidget(page, 'map');
 
-      // + Region "US states": the map is the 52 US shapes, and the three states the orders went to are
-      //   coloured, each with its count; the two Canadian provinces colour nothing.
+      // + Region "US states": the map is the 52 US shapes, and the states the orders went to are
+      //   coloured, each with its count.
       await setMapConfig(page, { type: 'region', region: 'us_states', dimension: 'state', metric: 'orders' });
       await expect.poll(() => eMapShapes(page, mapId), { message: 'the US map, state by state', timeout: 60_000, intervals: [1_000] })
         .toBe(US_SHAPES);
       await expect.poll(() => coloured(page.locator(`[id="widgetViz-${mapId}"]`)),
-        { message: 'MA, OR and WA coloured with their orders', timeout: 60_000, intervals: [1_000] })
+        { message: 'the states coloured with their orders', timeout: 60_000, intervals: [1_000] })
         .toBe(canonical(STATES));
 
-      // - Region "World countries": the same answer draws the world, and no US state is among what it colours.
+      // - Region "World countries": the same answer draws the world, and no US state is among what it colours
+      //   (CA, GA and IL read there as Canada, Gabon and Israel: what the wrong region gives, so not asserted).
       await page.locator('#btnDisplayTab').click();
       await page.locator('#selectMapRegion').selectOption('world_countries');
       await expect.poll(() => eMapShapes(page, mapId), { message: 'the world map', timeout: 60_000, intervals: [1_000] })
@@ -7871,7 +7880,7 @@ test('(canvas mechanics) M105 A map of US states', async () => {
         (w) => w[0]?.type === 'map' && w[0]?.displayConfig?.region === 'us_states' && w[0]?.displayConfig?.metric === 'orders');
       expect(stored[0].displayConfig).toMatchObject({ mapType: 'region', region: 'us_states', dimension: 'state', metric: 'orders' });
 
-      // + Published: the same US map, the same three states with the same numbers.
+      // + Published: the same US map, the same states with the same numbers.
       let maps: string[] = [];
       await expect.poll(async () => (maps = (await getCanvasComponentIds(page, canvasId)).map ?? []).length,
         { message: 'the saved canvas names the map', timeout: 30_000, intervals: [1_000] }).toBe(1);
@@ -7882,7 +7891,7 @@ test('(canvas mechanics) M105 A map of US states', async () => {
       await expect.poll(() => eMapShapes(page, maps[0]), { message: 'published, the US map', timeout: 60_000, intervals: [1_000] })
         .toBe(US_SHAPES);
       await expect.poll(() => coloured(pubMap),
-        { message: 'published, MA, OR and WA coloured with their orders', timeout: 60_000, intervals: [1_000] })
+        { message: 'published, the states coloured with their orders', timeout: 60_000, intervals: [1_000] })
         .toBe(canonical(STATES));
     });
   } finally {
