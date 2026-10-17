@@ -234,6 +234,7 @@ export async function setParam(root: Locator, param: ParamMeta, value: unknown):
       await control.click();
       const modal = root.locator(`#${param.id}_modal`);
       await expect(modal, `${param.id} opens its list`).toBeVisible({ timeout: 30_000 });
+      await expectListOnTop(modal, param.id);
       await root.locator(`#${param.id}_btnNone`).click();
       for (const one of wanted.filter((v) => v !== ''))
         await root.locator(`#${param.id}_cb_${safeId(one)}`).check();
@@ -313,6 +314,7 @@ async function tickedIn(root: Locator, id: string): Promise<string> {
   await root.locator(`#${id}`).click();
   const modal = root.locator(`#${id}_modal`);
   await expect(modal, `${id} opens its list`).toBeVisible({ timeout: 30_000 });
+  await expectListOnTop(modal, id);
   try {
     if ((await root.locator(`#${id}_lblCount`).innerText()).trim() === 'All') return '*';
     const ticked: string[] = [];
@@ -329,6 +331,21 @@ async function tickedIn(root: Locator, id: string): Promise<string> {
     await root.locator(`#${id}_btnCancel`).click();
     await expect(modal, `${id} closes on Cancel`).toBeHidden({ timeout: 30_000 });
   }
+}
+
+/**
+ * An opened multiselect list is what the reader sees: the element on top at the list's centre is the
+ * list itself, not a tile drawn over it. A list can be visible to Playwright and still sit under the
+ * tiles (run-all A, RC-A), and then a click on its buttons only works where they happen to fall into a
+ * gap between tiles. The list lives in the component's own tree, so that tree is asked.
+ */
+async function expectListOnTop(modal: Locator, id: string): Promise<void> {
+  await expect.poll(() => modal.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const top = (el.getRootNode() as Document | ShadowRoot)
+      .elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return top !== null && el.contains(top);
+  }), { timeout: 10_000, message: `${id}'s list is drawn on top of the dashboard` }).toBe(true);
 }
 
 /**
