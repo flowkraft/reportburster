@@ -14,7 +14,7 @@ reportParameters {
         defaultValue: LocalDate.of(2024, 1, 1)
     ) {
         constraints(
-            required: true,
+            required: false,
             min:      LocalDate.of(2020, 1, 1),
             max:      endDate
         )
@@ -32,7 +32,7 @@ reportParameters {
         defaultValue: LocalDate.now()
     ) {
         constraints(
-            required: true,
+            required: false,
             min:      startDate,
             max:      LocalDate.now().plusYears(1)
         )
