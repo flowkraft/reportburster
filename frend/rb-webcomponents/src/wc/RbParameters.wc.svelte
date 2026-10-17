@@ -1424,27 +1424,20 @@
   /*
    * The filters a story is about, in the page's accent mixed into whatever the page already is, so
    * it follows any theme. While the story's Yes / No is open they breathe; once it is applied they
-   * keep a tint and a bar on the left. The mark is a layer behind the filter, not padding on it, so
-   * marking one moves nothing.
+   * keep a tint and a bar on the left. The mark is a background and a shadow on the filter, not
+   * padding on it, so marking one moves nothing. It must not make the filter a stacking context
+   * (no isolation, no z-index): a multiselect's list is drawn inside the filter, and would then be
+   * trapped under the dashboard's tiles. position: relative only anchors the "was -> now" tag.
    */
   .rb-involved,
   .rb-story-field {
     position: relative;
-    isolation: isolate;
-  }
-  .rb-involved::before,
-  .rb-story-field::before {
-    content: '';
-    position: absolute;
-    inset: -6px -10px;
-    z-index: -1;
     border-radius: 6px;
-    pointer-events: none;
   }
-  .rb-involved::before {
+  .rb-involved {
     animation: rb-param-glow 1.8s ease-in-out infinite;
   }
-  .rb-story-field::before {
+  .rb-story-field {
     background: color-mix(in oklab, var(--rb-accent, var(--color-primary, #2171b5)) 14%, transparent);
     box-shadow: inset 3px 0 0 color-mix(in oklab, var(--rb-accent, var(--color-primary, #2171b5)) 75%, transparent);
   }
@@ -1453,7 +1446,7 @@
     50% { background: color-mix(in oklab, var(--rb-accent, var(--color-primary, #2171b5)) 28%, transparent); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .rb-involved::before {
+    .rb-involved {
       animation: none;
       background: color-mix(in oklab, var(--rb-accent, var(--color-primary, #2171b5)) 20%, transparent);
     }
