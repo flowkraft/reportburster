@@ -1,4 +1,4 @@
-import { Browser, BrowserContext, Page } from '@playwright/test';
+import { Browser, BrowserContext, Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { FluentTester } from '../fluent-tester';
 import { AppsTestHelper } from '../apps-test-helper';
@@ -778,6 +778,27 @@ export class SelfServicePortalsTestHelper {
     expect(usageText).toContain('rb-chart');
     expect(usageText).toContain(reportCode);
     console.log('Grails Charts: Usage - HTML snippet valid ✓');
+  }
+
+  /**
+   * Assert that an rb-chart holds values to draw, and return what it holds.
+   * The drawn data is the Chart.js instance's (`getChartInstance().data`), which is where the product's
+   * drill-through and tile menu read it too. The element's `data` property is the fetched input, not
+   * Chart.js data. The instance exists only once Chart.js has loaded, so it is polled.
+   */
+  static async chartHasDrawnData(chart: Locator): Promise<{ labels: number; datasets: number; points: number }> {
+    let drawn = { labels: 0, datasets: 0, points: 0 };
+    await expect.poll(async () => {
+      drawn = await chart.evaluate((el: any) => {
+        const d = el.getChartInstance?.()?.data;
+        const points = (d?.datasets || []).reduce(
+          (sum: number, ds: any) => sum + (ds.data || []).filter((v: unknown) => v !== null && v !== undefined).length, 0,
+        );
+        return { labels: d?.labels?.length || 0, datasets: d?.datasets?.length || 0, points };
+      });
+      return drawn.labels > 0 && drawn.points > 0;
+    }, { timeout: 20_000, message: 'the chart holds values to draw' }).toBe(true);
+    return drawn;
   }
 
   // ----------------------------------------------------------
