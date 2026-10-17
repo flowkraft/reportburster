@@ -792,12 +792,12 @@ test.describe('Data Canvas Use Cases', () => {
 
       // KPI 1 — total freight billed by the selected carrier (what we pay them).
       await addWidget(page, 'Orders',
-        `SELECT SUM(o.Freight) AS total_freight FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE s.CompanyName = \${shipper}`,
+        `SELECT SUM(o.Freight) AS total_freight FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE s.CompanyName = \${shipper}`,
         'number');
       // KPI 2 — on-time delivery rate (quality): ShippedDate <= RequiredDate,
       // excluding still-unshipped orders so the denominator is fair.
       await addWidget(page, 'Orders',
-        `SELECT ROUND(100.0 * SUM(CASE WHEN o.ShippedDate <= o.RequiredDate THEN 1 ELSE 0 END) / COUNT(*), 1) AS on_time_pct FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE s.CompanyName = \${shipper} AND o.ShippedDate IS NOT NULL`,
+        `SELECT ROUND(100.0 * SUM(CASE WHEN o.ShippedDate <= o.RequiredDate THEN 1 ELSE 0 END) / COUNT(*), 1) AS on_time_pct FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE o.ShippedDate IS NOT NULL\nAND s.CompanyName = \${shipper}`,
         'number');
 
       // Visual break between the KPI row and the detail row.
@@ -806,11 +806,11 @@ test.describe('Data Canvas Use Cases', () => {
       // Chart — monthly shipment volume for the selected carrier.
       // OrderDate is stored as epoch-ms by Hibernate → divide by 1000 + unixepoch modifier.
       await addWidget(page, 'Orders',
-        `SELECT STRFTIME('%Y-%m', o.OrderDate / 1000, 'unixepoch') AS month, COUNT(*) AS shipments FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE s.CompanyName = \${shipper} GROUP BY month ORDER BY month`,
+        `SELECT STRFTIME('%Y-%m', o.OrderDate / 1000, 'unixepoch') AS month, COUNT(*) AS shipments FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE s.CompanyName = \${shipper}\nGROUP BY month ORDER BY month`,
         'chart');
       // Trend — avg freight per order month-by-month (efficiency proxy).
       await addWidget(page, 'Orders',
-        `SELECT STRFTIME('%Y-%m', o.OrderDate / 1000, 'unixepoch') AS order_month, AVG(o.Freight) AS avg_freight FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE s.CompanyName = \${shipper} GROUP BY order_month ORDER BY order_month`,
+        `SELECT STRFTIME('%Y-%m', o.OrderDate / 1000, 'unixepoch') AS order_month, AVG(o.Freight) AS avg_freight FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE s.CompanyName = \${shipper}\nGROUP BY order_month ORDER BY order_month`,
         'trend');
 
       // Section label for the geographic reach view.
@@ -821,7 +821,7 @@ test.describe('Data Canvas Use Cases', () => {
       // Map — carrier's shipment count per country (geographic reach).
       // Normalize legacy short codes to GeoJSON names so countries highlight on the map.
       await addWidget(page, 'Orders',
-        `SELECT CASE o.ShipCountry WHEN 'UK' THEN 'United Kingdom' WHEN 'USA' THEN 'United States of America' ELSE o.ShipCountry END AS ShipCountry, COUNT(*) AS shipments FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE s.CompanyName = \${shipper} GROUP BY o.ShipCountry ORDER BY shipments DESC`,
+        `SELECT CASE o.ShipCountry WHEN 'UK' THEN 'United Kingdom' WHEN 'USA' THEN 'United States of America' ELSE o.ShipCountry END AS ShipCountry, COUNT(*) AS shipments FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE s.CompanyName = \${shipper}\nGROUP BY o.ShipCountry ORDER BY shipments DESC`,
         'map');
 
       // Arrange on the 12-col grid: header full-width → 2 KPIs side-by-side →
@@ -1178,21 +1178,21 @@ test.describe('Data Canvas Use Cases', () => {
       });
 
       await addWidget(page, 'Orders',
-        `SELECT COUNT(*) AS total_orders FROM Orders WHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}`,
+        `SELECT COUNT(*) AS total_orders FROM Orders\nWHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}`,
         'number');
       await addWidget(page, 'Orders',
-        `SELECT AVG(Freight) AS avg_freight FROM Orders WHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}`,
+        `SELECT AVG(Freight) AS avg_freight FROM Orders\nWHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}`,
         'number');
       await addWidget(page, 'Orders',
-        `SELECT STRFTIME('%Y-%m', OrderDate/1000, 'unixepoch') AS order_month, COUNT(*) AS order_count FROM Orders WHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate} GROUP BY order_month ORDER BY order_month`,
+        `SELECT STRFTIME('%Y-%m', OrderDate/1000, 'unixepoch') AS order_month, COUNT(*) AS order_count FROM Orders\nWHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}\nGROUP BY order_month ORDER BY order_month`,
         'trend');
       await addWidget(page, 'Orders',
-        `SELECT s.CompanyName, COUNT(o.OrderID) AS order_count FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia WHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${startDate} GROUP BY s.CompanyName ORDER BY order_count DESC`,
+        `SELECT s.CompanyName, COUNT(o.OrderID) AS order_count FROM Orders o JOIN Shippers s ON s.ShipperID=o.ShipVia\nWHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${startDate}\nGROUP BY s.CompanyName ORDER BY order_count DESC`,
         'chart');
       await addUIElement(page, 'divider');
 
       await addWidget(page, 'Orders',
-        `SELECT OrderID, CustomerID, OrderDate, ShipCountry, Freight FROM Orders WHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate} ORDER BY OrderDate DESC LIMIT 20`,
+        `SELECT OrderID, CustomerID, OrderDate, ShipCountry, Freight FROM Orders\nWHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${startDate}\nORDER BY OrderDate DESC LIMIT 20`,
         'tabulator');
 
       // Layout: text → 2 KPIs → trend + shipper chart → divider → recent orders.
@@ -1271,25 +1271,25 @@ test.describe('Data Canvas Use Cases', () => {
 
       // Product count in the selected category
       await addWidget(page, 'Products',
-        `SELECT COUNT(*) AS product_count FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID WHERE c.CategoryName = \${category}`,
+        `SELECT COUNT(*) AS product_count FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID\nWHERE c.CategoryName = \${category}`,
         'number');
       // Products in the selected category — stock levels
       await addWidget(page, 'Products',
-        `SELECT p.ProductName, p.UnitsInStock AS stock FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID WHERE c.CategoryName = \${category} ORDER BY stock DESC`,
+        `SELECT p.ProductName, p.UnitsInStock AS stock FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID\nWHERE c.CategoryName = \${category}\nORDER BY stock DESC`,
         'chart');
       // Revenue per product in the selected category
       await addWidget(page, 'Order Details',
-        `SELECT p.ProductName, ROUND(SUM(od.UnitPrice*od.Quantity), 2) AS revenue FROM "Order Details" od JOIN Products p ON p.ProductID=od.ProductID JOIN Categories c ON c.CategoryID=p.CategoryID WHERE c.CategoryName = \${category} GROUP BY p.ProductName ORDER BY revenue DESC`,
+        `SELECT p.ProductName, ROUND(SUM(od.UnitPrice*od.Quantity), 2) AS revenue FROM "Order Details" od JOIN Products p ON p.ProductID=od.ProductID JOIN Categories c ON c.CategoryID=p.CategoryID\nWHERE c.CategoryName = \${category}\nGROUP BY p.ProductName ORDER BY revenue DESC`,
         'chart');
       // Unit prices for products in the selected category
       await addWidget(page, 'Products',
-        `SELECT p.ProductName, p.UnitPrice FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID WHERE c.CategoryName = \${category} ORDER BY p.UnitPrice DESC`,
+        `SELECT p.ProductName, p.UnitPrice FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID\nWHERE c.CategoryName = \${category}\nORDER BY p.UnitPrice DESC`,
         'chart');
       await addUIElement(page, 'divider');
 
       // Full product detail table for the selected category
       await addWidget(page, 'Products',
-        `SELECT p.ProductName, c.CategoryName, p.UnitPrice, p.UnitsInStock, p.ReorderLevel FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID WHERE c.CategoryName = \${category} ORDER BY p.ProductName`,
+        `SELECT p.ProductName, c.CategoryName, p.UnitPrice, p.UnitsInStock, p.ReorderLevel FROM Products p JOIN Categories c ON c.CategoryID=p.CategoryID\nWHERE c.CategoryName = \${category}\nORDER BY p.ProductName`,
         'tabulator');
 
       // Layout: text → category count → 3 charts side-by-side → divider → detail.
@@ -1374,10 +1374,10 @@ test.describe('Data Canvas Use Cases', () => {
         `SELECT AVG(total) AS avg_customer_value FROM (SELECT SUM(od.UnitPrice*od.Quantity) AS total FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID GROUP BY o.CustomerID)`,
         'number');
       await addWidget(page, 'Order Details',
-        `SELECT c.CompanyName, SUM(od.UnitPrice*od.Quantity) AS revenue FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID JOIN Customers c ON c.CustomerID=o.CustomerID GROUP BY c.CompanyName ORDER BY revenue DESC LIMIT \${topN}`,
+        `SELECT c.CompanyName, SUM(od.UnitPrice*od.Quantity) AS revenue FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID JOIN Customers c ON c.CustomerID=o.CustomerID GROUP BY c.CompanyName ORDER BY revenue DESC\nLIMIT \${topN}`,
         'chart');
       await addWidget(page, 'Orders',
-        `SELECT CustomerID, COUNT(*) AS order_count FROM Orders GROUP BY CustomerID ORDER BY order_count DESC LIMIT \${topN}`,
+        `SELECT CustomerID, COUNT(*) AS order_count FROM Orders GROUP BY CustomerID ORDER BY order_count DESC\nLIMIT \${topN}`,
         'chart');
       // Top-N countries by revenue
       await addWidget(page, 'Order Details',
@@ -1386,7 +1386,7 @@ test.describe('Data Canvas Use Cases', () => {
       await addUIElement(page, 'divider');
 
       await addWidget(page, 'Orders',
-        `SELECT o.CustomerID, c.CompanyName, COUNT(*) AS orders, SUM(o.Freight) AS total_freight, MAX(o.OrderDate) AS last_order FROM Orders o JOIN Customers c ON c.CustomerID=o.CustomerID GROUP BY o.CustomerID, c.CompanyName ORDER BY orders DESC LIMIT \${topN}`,
+        `SELECT o.CustomerID, c.CompanyName, COUNT(*) AS orders, SUM(o.Freight) AS total_freight, MAX(o.OrderDate) AS last_order FROM Orders o JOIN Customers c ON c.CustomerID=o.CustomerID GROUP BY o.CustomerID, c.CompanyName ORDER BY orders DESC\nLIMIT \${topN}`,
         'tabulator');
 
       // Layout: text → avg KPI → 3 charts side-by-side → divider → ranked detail.
@@ -1589,19 +1589,19 @@ return data`,
       });
 
       await addWidget(page, 'Order Details',
-        `SELECT SUM(od.UnitPrice*od.Quantity) AS total_revenue FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID WHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom} AND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo}`,
+        `SELECT SUM(od.UnitPrice*od.Quantity) AS total_revenue FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID\nWHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom}\nAND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo}`,
         'number');
       await addWidget(page, 'Orders',
-        `SELECT SUM(Freight) AS total_freight FROM Orders WHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${dateFrom} AND STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') <= \${dateTo}`,
+        `SELECT SUM(Freight) AS total_freight FROM Orders\nWHERE STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') >= \${dateFrom}\nAND STRFTIME('%Y-%m-%d', OrderDate/1000, 'unixepoch') <= \${dateTo}`,
         'number');
       await addWidget(page, 'Order Details',
-        `SELECT AVG(order_total) AS avg_order_value FROM (SELECT SUM(od.UnitPrice*od.Quantity) AS order_total FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID WHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom} AND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo} GROUP BY od.OrderID)`,
+        `SELECT AVG(order_total) AS avg_order_value FROM (SELECT SUM(od.UnitPrice*od.Quantity) AS order_total FROM "Order Details" od JOIN Orders o ON o.OrderID=od.OrderID\nWHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom}\nAND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo}\nGROUP BY od.OrderID)`,
         'number');
       await addWidget(page, 'Orders',
-        `SELECT STRFTIME('%Y-%m', o.OrderDate/1000, 'unixepoch') AS order_month, SUM(od.UnitPrice*od.Quantity) AS revenue, SUM(o.Freight) AS freight FROM Orders o JOIN "Order Details" od ON od.OrderID=o.OrderID WHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom} AND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo} GROUP BY order_month ORDER BY order_month`,
+        `SELECT STRFTIME('%Y-%m', o.OrderDate/1000, 'unixepoch') AS order_month, SUM(od.UnitPrice*od.Quantity) AS revenue, SUM(o.Freight) AS freight FROM Orders o JOIN "Order Details" od ON od.OrderID=o.OrderID\nWHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom}\nAND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo}\nGROUP BY order_month ORDER BY order_month`,
         'chart');
       await addWidget(page, 'Orders',
-        `SELECT STRFTIME('%Y', o.OrderDate/1000, 'unixepoch') AS yr, CAST((STRFTIME('%m', o.OrderDate/1000, 'unixepoch') + 2) / 3 AS INTEGER) AS quarter, SUM(od.UnitPrice*od.Quantity) AS revenue FROM Orders o JOIN "Order Details" od ON od.OrderID=o.OrderID WHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom} AND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo} GROUP BY yr, quarter ORDER BY yr, quarter`,
+        `SELECT STRFTIME('%Y', o.OrderDate/1000, 'unixepoch') AS yr, CAST((STRFTIME('%m', o.OrderDate/1000, 'unixepoch') + 2) / 3 AS INTEGER) AS quarter, SUM(od.UnitPrice*od.Quantity) AS revenue FROM Orders o JOIN "Order Details" od ON od.OrderID=o.OrderID\nWHERE STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') >= \${dateFrom}\nAND STRFTIME('%Y-%m-%d', o.OrderDate/1000, 'unixepoch') <= \${dateTo}\nGROUP BY yr, quarter ORDER BY yr, quarter`,
         'chart');
 
       // Layout: text → 3 KPIs → monthly chart + quarterly chart.
@@ -2078,15 +2078,15 @@ return data`,
         `SELECT ShipCountry, SUM(Freight) AS total_freight FROM Orders GROUP BY ShipCountry ORDER BY total_freight DESC`,
         'map');
       await addWidget(page, 'Orders',
-        `SELECT ShipCountry, COUNT(*) AS order_count FROM Orders WHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%') GROUP BY ShipCountry ORDER BY order_count DESC`,
+        `SELECT ShipCountry, COUNT(*) AS order_count FROM Orders\nWHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%')\nGROUP BY ShipCountry ORDER BY order_count DESC`,
         'chart');
       await addWidget(page, 'Orders',
-        `SELECT ShipCountry, ROUND(AVG(Freight), 2) AS avg_freight FROM Orders WHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%') GROUP BY ShipCountry ORDER BY avg_freight DESC`,
+        `SELECT ShipCountry, ROUND(AVG(Freight), 2) AS avg_freight FROM Orders\nWHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%')\nGROUP BY ShipCountry ORDER BY avg_freight DESC`,
         'chart');
       await addUIElement(page, 'divider');
 
       await addWidget(page, 'Orders',
-        `SELECT ShipCountry, COUNT(*) AS orders, ROUND(SUM(Freight), 2) AS total_freight, ROUND(AVG(Freight), 2) AS avg_freight FROM Orders WHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%') GROUP BY ShipCountry ORDER BY orders DESC`,
+        `SELECT ShipCountry, COUNT(*) AS orders, ROUND(SUM(Freight), 2) AS total_freight, ROUND(AVG(Freight), 2) AS avg_freight FROM Orders\nWHERE (',' || \${countries} || ',') LIKE ('%,' || ShipCountry || ',%')\nGROUP BY ShipCountry ORDER BY orders DESC`,
         'tabulator');
 
       // Layout: text → countries KPI → global map (full-width) → 2 filtered charts → divider → filtered detail.
@@ -3839,11 +3839,11 @@ return ctx.dbSql.rows(sql)`,
 
       // ── the deals closing on or before the date the picker holds ──
       await addWidget(page, 'cube_demo.crm_deals',
-        `SELECT COUNT(*) AS deal_count FROM cube_demo.crm_deals WHERE close_date <= \${to}`,
+        `SELECT COUNT(*) AS deal_count FROM cube_demo.crm_deals\nWHERE close_date <= \${to}`,
         'number');
       // ── and, of those, the ones over an amount with a fraction ──
       await addWidget(page, 'cube_demo.crm_deals',
-        `SELECT COUNT(*) AS big_deal_count FROM cube_demo.crm_deals WHERE amount > \${min}`,
+        `SELECT COUNT(*) AS big_deal_count FROM cube_demo.crm_deals\nWHERE amount > \${min}`,
         'number');
 
       await layoutWidgetsByDrag(page, [
