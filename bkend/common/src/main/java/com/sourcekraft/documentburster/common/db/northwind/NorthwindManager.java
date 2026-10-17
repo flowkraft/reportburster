@@ -531,10 +531,11 @@ public class NorthwindManager implements AutoCloseable {
 	}
 
 	/**
-	 * The database the academy datasets live in, next to Northwind and never inside it: on DuckDB
-	 * the file {@code northwind_co.duckdb} beside {@code northwind.duckdb}, on PostgreSQL the
-	 * database {@code northwind_co} in the same server. Northwind's own catalog then lists only
-	 * Northwind, which the lessons that query the catalog rely on.
+	 * The database the academy datasets live in, next to Northwind and never inside it: the
+	 * database {@code northwind_co} in the same PostgreSQL server. Northwind's own catalog then lists
+	 * only Northwind, which the lessons that query the catalog rely on. It is built on PostgreSQL
+	 * only: for DuckDB the package already carries DataZeus's own
+	 * {@code db/datazeus/datasets/northwind-co/northwind_co.duckdb}.
 	 */
 	private static final String ACADEMY_DATABASE = "northwind_co";
 
@@ -547,8 +548,10 @@ public class NorthwindManager implements AutoCloseable {
 
 	/**
 	 * Loads the DataZeus academy datasets at scale S (Northwind Company, its warehouse and its
-	 * change log) into the academy database beside the DuckDB or PostgreSQL sample, with the
-	 * install scripts that ship with the DataZeus content in db/datazeus. A data folder with no
+	 * change log) into the academy database beside the PostgreSQL sample, with the install scripts
+	 * that ship with the DataZeus content in db/datazeus. PostgreSQL only: DataZeus commits no
+	 * PostgreSQL data, while on DuckDB the package already carries its
+	 * {@code db/datazeus/datasets/northwind-co/northwind_co.duckdb}. A data folder with no
 	 * db/datazeus sibling is not an error: Northwind is there as before, without the academy
 	 * datasets. A load that fails is thrown, like the cube_demo seed.
 	 */
@@ -561,10 +564,7 @@ public class NorthwindManager implements AutoCloseable {
 			return;
 		}
 
-		try (Connection connection = (vendor == DatabaseVendor.DUCKDB)
-				? DriverManager.getConnection(
-						"jdbc:duckdb:" + hostDataPath.resolve(ACADEMY_DATABASE + ".duckdb").toAbsolutePath())
-				: openAcademyPostgresDatabase(vendor)) {
+		try (Connection connection = openAcademyPostgresDatabase(vendor)) {
 			AcademyDatasetsSeeder.seed(connection, vendor.name(), scripts);
 		}
 	}
@@ -640,14 +640,10 @@ public class NorthwindManager implements AutoCloseable {
 
             // The demo data (schemas cube_demo and dash_demo) is loaded by the shipped seed
             // scripts from the shipped rows, so the sample database a user gets is built the same
-            // way wherever it is built: by the packager, by 'system service database start', or by
-            // the tests' fixture. The scripts sit in the db/ folder's scripts/ sibling, the same
-            // parent this branch already uses to find the SQLite sample.
+            // way wherever it is built: by the packager or by the tests' fixture. The scripts sit in
+            // the db/ folder's scripts/ sibling, the same parent this branch already uses to find
+            // the SQLite sample.
             seedDemoData(hostDataPath, duckdbPath);
-
-            // The DataZeus academy datasets at scale S, in northwind_co.duckdb beside this file, so the
-            // lessons' data ships with the sample.
-            seedAcademyDatasets(vendor, hostDataPath);
 
             return; // Skip JPA initialization below - already created via SQL
         }

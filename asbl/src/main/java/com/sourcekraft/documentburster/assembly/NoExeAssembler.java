@@ -1642,10 +1642,10 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_10:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
 
-		_generateSampleNorthwindDatabase();
+		_generateSampleDatabasesWithDemoData();
 
 		System.out.println(
-				"------------------------------------- DONE_11:NoExeAssembler _generateSampleNorthwindDatabase() ... -------------------------------------");
+				"------------------------------------- DONE_11:NoExeAssembler _generateSampleDatabasesWithDemoData() ... -------------------------------------");
 
 	}
 
@@ -1777,7 +1777,28 @@ public class NoExeAssembler extends AbstractAssembler {
 		return title.replaceAll("[^A-Za-z0-9]", "");
 	}
 
-	private void _generateSampleNorthwindDatabase() throws Exception {
+	/**
+	 * The one place where the shipped sample databases and their demo data are made, once per
+	 * package:
+	 * <ol>
+	 * <li>{@code startDatabase(SQLITE)}: Northwind classic, via JPA ({@code NorthwindDataGenerator}),
+	 * in {@code db/sample-northwind-sqlite/northwind.db}.</li>
+	 * <li>{@code startDatabase(DUCKDB)}, in {@code db/sample-northwind-duckdb/northwind.duckdb}:
+	 * Northwind classic, copied from that SQLite file, plus the star schema
+	 * ({@code DuckDBDataWarehouseCreator}); {@code cube_demo}, from
+	 * {@code db/scripts/cube-demo-data.groovy} and its rows in {@code db/scripts/cube-demo-data/};
+	 * and {@code dash_demo}, from {@code db/scripts/dashboards-demo-data.groovy} and its rows in
+	 * {@code db/scripts/dashboards-demo-data/}. Both seeds run in
+	 * {@code NorthwindManager.seedDemoData}.</li>
+	 * </ol>
+	 *
+	 * <p>Not made here: the server databases (PostgreSQL, MySQL and the others) get Northwind via JPA
+	 * at their first start ({@code ServicesManager} → {@code NorthwindManager.startDatabase}), since
+	 * they do not exist at packaging; the academy data ({@code northwind_co.duckdb}) comes with the
+	 * DataZeus download (step 02b). The tests' {@code NorthwindFixture} makes the same two calls in a
+	 * temp folder, so JUnit tests what ships.
+	 */
+	private void _generateSampleDatabasesWithDemoData() throws Exception {
 
 		try (NorthwindManager northwindManager = new NorthwindManager()) {
 			System.out.println("Generating sample Northwind database for SQLite...");

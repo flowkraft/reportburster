@@ -53,7 +53,8 @@ public class AcademyDatasetsSeeder {
 	 * Loads every dataset that is not complete yet. A scripts folder that is not there, or that
 	 * lacks one of the scripts, is not an error: the database is left as it is.
 	 *
-	 * @param vendor {@code DUCKDB} or {@code POSTGRES}, the two the academy datasets ship on
+	 * @param vendor {@code POSTGRES}, the one vendor the academy datasets are built on (DuckDB's ship
+	 *               ready-made with the DataZeus content); the name goes to the install scripts
 	 */
 	public static void seed(Connection connection, String vendor, Path scriptsDir) throws Exception {
 
