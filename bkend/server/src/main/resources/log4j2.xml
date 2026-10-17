@@ -73,6 +73,20 @@
 
 		</RollingFile>
 
+		<!-- Starting and stopping services and apps (ServicesManager), every level. Kept out of
+		     info.log, whose "Log files are not empty" check would otherwise block the next job. -->
+		<RollingFile name="services-out"
+			fileName="${LOG_DIR}/services.log"
+			filePattern="${LOG_DIR}/services-%d{MM-dd-yyyy}.log.zip">
+
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+
+		</RollingFile>
+
 		<!-- Send all DocumentBurster problems by email -->
 		<!-- Correct email account details should be provided -->
 		<SMTP name="mailAppender" subject="DocumentBurster Error Log"
@@ -97,6 +111,13 @@
 			<AppenderRef ref="error-out" />
 			<AppenderRef ref="debug-out" />
 
+		</Logger>
+
+		<!-- Services and apps to services.log + console; their failures still reach errors.log -->
+		<Logger name="com.sourcekraft.documentburster.common.ServicesManager" level="info" additivity="false">
+			<AppenderRef ref="services-out"/>
+			<AppenderRef ref="Console"/>
+			<AppenderRef ref="error-out"/>
 		</Logger>
 
 		<!-- Log com.flowkraft to console + errors only (not info.log to avoid polluting dirty-logs checks) -->

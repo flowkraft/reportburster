@@ -1,7 +1,12 @@
 import { Page } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 import { FluentTester } from './fluent-tester';
 import { Constants } from '../utils/constants';
 import { Helpers } from '../utils/helpers';
+import * as PATHS from '../utils/paths';
+
+const slash = require('slash');
 
 // List of visible apps in TOP-TO-BOTTOM UI order (must match apps-manager.service.ts)
 // Apps with launch: false have no Launch button (headless/API-only apps)
@@ -44,10 +49,16 @@ export class AppsTestHelper {
     const sanitizedId = sanitizeAppId(appId);
     const btnSel = `#btnStartStop_${sanitizedId}`;
     const stateSel = `#appState_${sanitizedId}`;
+    let servicesLogOffset = 0;
 
     ft = ft
       .scrollIntoViewIfNeeded(btnSel)
-      .consoleLog(`Stopping app '${appId}'...`)
+      .consoleLog(`Stopping app '${appId}'...`);
+    // The stop's own lines in services.log are the ones written past this point.
+    ft.actions.push(async () => {
+      servicesLogOffset = AppsTestHelper.servicesLogSize();
+    });
+    ft = ft
       .click(btnSel)
       .confirmDialogShouldBeVisible()
       .clickYesDoThis();
@@ -61,8 +72,62 @@ export class AppsTestHelper {
     ft.actions.push(() =>
       AppsTestHelper.waitUntilStopped(ft.window, appId, btnSel, stateSel, timeout),
     );
+    ft.actions.push(() => AppsTestHelper.waitUntilComposeDown(appId, servicesLogOffset));
 
     return ft.consoleLog(`App '${appId}' is stopped.`);
+  }
+
+  /** The one file ServicesManager logs to (log4j2.xml's services-out). */
+  private static servicesLogPath(): string {
+    return path.resolve(slash(`${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/services.log`));
+  }
+
+  /** services.log's size in bytes, 0 while it does not exist yet. */
+  private static servicesLogSize(): number {
+    const file = AppsTestHelper.servicesLogPath();
+    return fs.existsSync(file) ? fs.statSync(file).size : 0;
+  }
+
+  /** The lines services.log holds past `offset`; from its start when it is shorter (it rolled over). */
+  private static servicesLogLinesFrom(offset: number): string[] {
+    const file = AppsTestHelper.servicesLogPath();
+    if (!fs.existsSync(file)) return [];
+    const content = fs.readFileSync(file);
+    return content.subarray(content.length < offset ? 0 : offset).toString('utf8').split(/\r?\n/);
+  }
+
+  /**
+   * Wait until the stop has really finished: 'stopped' on the screen can come before `docker compose
+   * down` has returned, and the next test would then start on a half-stopped stack. ServicesManager's
+   * doAppStop logs `handleAppStop: composePath=…` first and, once `docker compose down` has returned,
+   * `Command exit code: N` as its last line. The anchor matters: another command logs the same
+   * exit-code line. A non-zero N fails with that line and the "Failed to stop app …" after it. The
+   * bound is that command's own timeout (ProcessExecutor, 300 s).
+   */
+  private static async waitUntilComposeDown(appId: string, offset: number): Promise<void> {
+    const exitCode = /Command exit code: (-?\d+)/;
+    const deadline = Date.now() + 300_000;
+    let lines: string[] = [];
+
+    while (Date.now() < deadline) {
+      lines = AppsTestHelper.servicesLogLinesFrom(offset);
+      const start = lines.findIndex((line) => line.includes('handleAppStop: composePath='));
+      const exit = start < 0 ? -1 : lines.findIndex((line, i) => i > start && exitCode.test(line));
+      if (exit >= 0) {
+        if (lines[exit].match(exitCode)![1] === '0') return;
+        // The ERROR follows the exit code; give it a moment to be written.
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        lines = AppsTestHelper.servicesLogLinesFrom(offset);
+        const failed = lines.slice(exit + 1).find((line) => line.includes('Failed to stop app'));
+        throw new Error(`stopApp: app '${appId}' did not stop: ${lines[exit]}${failed ? ` | ${failed}` : ''}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+
+    const lastLine = lines.filter((line) => line.length > 0).pop() ?? '(nothing written)';
+    throw new Error(
+      `stopApp: app '${appId}': no 'Command exit code' after 'handleAppStop' in ${AppsTestHelper.servicesLogPath()} within 300 s; last line read: ${lastLine}`,
+    );
   }
 
   /**
@@ -89,8 +154,9 @@ export class AppsTestHelper {
   ): Promise<void> {
     // One apps manager shows an app at a time (each area mounts its own, for its own apps), so
     // the state id names one element.
+    // A short timeout: with none, one read blocked for 300 s (M105's teardown, run A).
     const isStopped = async (): Promise<boolean> =>
-      ((await page.locator(stateSel).textContent().catch(() => '')) || '')
+      ((await page.locator(stateSel).textContent({ timeout: 5_000 }).catch(() => '')) || '')
         .toLowerCase()
         .includes('stopped');
 
