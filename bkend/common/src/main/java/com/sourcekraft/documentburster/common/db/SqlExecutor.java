@@ -179,8 +179,14 @@ public class SqlExecutor {
 	 * report's own SQL is. The rows are read fully before the rollback, so the caller gets its
 	 * result either way, and anything the statement managed to change is undone.
 	 *
-	 * <p>A driver that refuses transactions or the read-only flag (SQLite once open, ClickHouse)
-	 * is logged at DEBUG and the query runs anyway: the guard in front of this path is what
+	 * <p>The transaction is only opened where the driver has transactions
+	 * ({@code supportsTransactions()}). ClickHouse has none: it answers {@code setAutoCommit(false)}
+	 * with SQLSTATE 0A000, which the connection pool counts as fatal, so the pool would evict the
+	 * connection and the query would then run on a closed one. Skipping the transaction there loses
+	 * nothing, since a rollback never undid anything on ClickHouse.
+	 *
+	 * <p>A driver that refuses the read-only flag (SQLite once open), or a transaction it says it
+	 * has, is logged at DEBUG and the query runs anyway: the guard in front of this path is what
 	 * refuses writes, and the transaction is the second line of defence, not the only one.
 	 *
 	 * @param connectionCode The code identifying the target database connection.
@@ -223,11 +229,15 @@ public class SqlExecutor {
 					log.debug("Connection '{}' would not go read-only: {}", connectionCode, e.getMessage());
 				}
 
-				try {
-					handle.begin();
-					inTransaction = true;
-				} catch (Exception e) {
-					log.debug("Connection '{}' would not open a transaction: {}", connectionCode, e.getMessage());
+				if (supportsTransactions(handle)) {
+					try {
+						handle.begin();
+						inTransaction = true;
+					} catch (Exception e) {
+						log.debug("Connection '{}' would not open a transaction: {}", connectionCode, e.getMessage());
+					}
+				} else {
+					log.debug("Connection '{}' has no transactions; the query runs without one.", connectionCode);
 				}
 
 				return executeQuery(handle, sql, params, maxRows, timeoutSeconds);
@@ -249,6 +259,15 @@ public class SqlExecutor {
 				}
 			}
 		});
+	}
+
+	/** Whether the connection's driver has transactions; false when its metadata cannot be read. */
+	private static boolean supportsTransactions(Handle handle) {
+		try {
+			return handle.getConnection().getMetaData().supportsTransactions();
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
