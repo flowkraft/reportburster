@@ -349,7 +349,9 @@ export function isFK(col: ColumnSchema, table?: TableSchema): boolean {
 // or LAST token is a geo keyword — catches prefix AND suffix forms without
 // the over-matching of "any token" (which would e.g. flag
 // `contact_country_name` as a country column).
-const STATE_KEYWORDS     = ["state", "province", "region", "us_state"];
+// Not "region": a region column is a sales or world region far more often than a US state
+// (EMEA / NA / APAC, Nordics / DACH), and read as a state it drew an empty US map (D11, 2026-10-17).
+const STATE_KEYWORDS     = ["state", "province", "us_state"];
 const COUNTRY_KEYWORDS   = ["country", "nation", "iso_country", "iso2", "iso3"];
 const LATITUDE_KEYWORDS  = ["lat", "latitude"];
 const LONGITUDE_KEYWORDS = ["lon", "lng", "long", "longitude"];

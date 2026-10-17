@@ -8415,4 +8415,27 @@ test('(canvas mechanics) M109 A viewer sorts and pages a published table; Unpubl
   }
 });
 
+test('(canvas mechanics) M110 A sales region draws a bar chart, not a US map', async () => {
+  test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+  await withFreshCanvas(page, 'E2E mech M110 Region is a category', async (canvasId) => {
+    // The sales regions, from the frozen rows the seed loads: APAC, EMEA, LATAM and NA. None is a US
+    // state, so a US map would colour nothing; a region column is a category and gets a bar chart (D11).
+    const regions = [...new Set(frozenRows('sales_targets').map((r) => r.region))];
+
+    await addTableToCanvas(page, 'dash_demo.sales_targets');
+    const id = await getLastWidgetId(page);
+    await addGroupBy(page, 'region');
+    await addAggregation(page, 0, 'SUM', 'revenue_target');
+    await runVisualQuery(page);
+
+    // + the widget the canvas picks on its own is a bar chart, one bar per region.
+    const chart = await cWaitChart(page, id, (s) => cSame(s.labels, regions), 'a bar per sales region');
+    expect(chart.type).toBe('bar');
+    // - and no map.
+    expect(await eMapShapes(page, id), 'no US map').toBe(0);
+    const stored = await eStoredWidgets(page, canvasId, (w) => w[0]?.type === 'chart');
+    expect(stored[0].type, 'saved as a chart').toBe('chart');
+  });
+});
+
 });

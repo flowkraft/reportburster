@@ -17,7 +17,9 @@
 // without the over-matching of "any token" (which would e.g. flag
 // `contact_country_name` as a country column).
 
-const STATE_KEYWORDS     = ["state", "province", "region", "us_state"];
+// Not "region": a region column is a sales or world region far more often than a US state
+// (EMEA / NA / APAC, Nordics / DACH), and read as a state it drew an empty US map (D11, 2026-10-17).
+const STATE_KEYWORDS     = ["state", "province", "us_state"];
 const COUNTRY_KEYWORDS   = ["country", "nation", "iso_country", "iso2", "iso3"];
 const LATITUDE_KEYWORDS  = ["lat", "latitude"];
 const LONGITUDE_KEYWORDS = ["lon", "lng", "long", "longitude"];
@@ -25,7 +27,7 @@ const LONGITUDE_KEYWORDS = ["lon", "lng", "long", "longitude"];
 /** Tokenize camelCase + snake_case → lowercase tokens.
  *    "ShipCountry"   → ["ship", "country"]
  *    "country_code"  → ["country", "code"]
- *    "Region"        → ["region"]
+ *    "BillingState"  → ["billing", "state"]
  */
 function nameTokens(name: string): string[] {
   return name
