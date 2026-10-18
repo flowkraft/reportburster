@@ -39,24 +39,23 @@ function minifyEs() {
  * source and none of them is ever copied by hand. It holds nothing but the `[data-theme=...]`
  * blocks, so a page that links it looks exactly as it did until something names a theme.
  *
- * daisyUI is the application's dependency, not this bundle's - the components themselves draw with
- * `currentColor` and variables and need no framework. A build that cannot find it would ship a
- * dashboard that is light whatever the application is set to, silently, so it fails instead.
+ * The components themselves draw with `currentColor` and variables and need no framework: daisyUI is
+ * here only for this file, as a devDependency pinned to the exact version frend/reporting compiles
+ * its themes with. It is read from this package's own node_modules, so the build works wherever this
+ * package is installed - the repo, the Docker image's build stage, Windows - without assuming where
+ * the application's folder is. A build that cannot find it would ship a dashboard that is light
+ * whatever the application is set to, silently, so it fails instead.
  */
 function daisyUiThemes() {
-  const candidates = [
-    resolve(__dirname, "node_modules/daisyui/themes.css"),
-    resolve(__dirname, "../reporting/node_modules/daisyui/themes.css"),
-  ];
+  const from = resolve(__dirname, "node_modules/daisyui/themes.css");
   return {
     name: "daisyUiThemes",
     generateBundle() {
-      const from = candidates.find((candidate) => existsSync(candidate));
-      if (!from) {
+      if (!existsSync(from)) {
         throw new Error(
-          "daisyUI's themes.css was not found - looked in " +
-            candidates.join(" and ") +
-            ". Run npm install in frend/reporting first: a dashboard needs those palettes to " +
+          "daisyUI's themes.css was not found at " +
+            from +
+            ". Run npm install in frend/rb-webcomponents first: a dashboard needs those palettes to " +
             "follow the theme the application is on."
         );
       }
