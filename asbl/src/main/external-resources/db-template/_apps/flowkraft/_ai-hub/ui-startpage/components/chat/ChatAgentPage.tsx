@@ -51,6 +51,7 @@ import { friendlyError, isNoAgentsError } from "@/lib/chat/errors";
 import { useChatQueue } from "@/lib/chat/useChatQueue";
 import { chat2dbStreamOne, openaiStreamOne, type StreamOne } from "@/lib/chat/transports";
 import type { ChatAgentConfig } from "@/lib/chat/agents";
+import { appUrl } from "@/lib/app-url";
 import type { DbConnection } from "@/lib/chat/types";
 
 /** Highlight SQL with inline styles — no CSS dependency. Used for Athena's executed-SQL
@@ -249,6 +250,10 @@ export function ChatAgentPage({ config: cfg }: { config: ChatAgentConfig }) {
               <a
                 id="btn-chat-element"
                 href={cfg.elementRoomUrl}
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open(appUrl(cfg.elementRoomUrl!), "_blank", "noopener,noreferrer");
+                }}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-base-content/60 underline hover:text-base-content"

@@ -263,6 +263,8 @@ export class ConfigurationRepository {
   loadPreferences() { return this.preferencesService.loadPreferences(); }
   savePreferences(s: any) { return this.preferencesService.savePreferences(s); }
   getCopilotUrl() { return this.preferencesService.getCopilotUrl(); }
+  appUrl(url: string) { return this.preferencesService.appUrl(url); }
+  ensurePreferencesLoaded() { return this.preferencesService.ensurePreferencesLoaded(); }
 
   get LOGS_FOLDER_PATH() { return this.appPathsService.LOGS_FOLDER_PATH; }
   get QUARANTINE_FOLDER_PATH() { return this.appPathsService.QUARANTINE_FOLDER_PATH; }

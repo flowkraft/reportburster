@@ -50,9 +50,14 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 const DP_TARGET = process.env.DP_API_URL || 'http://localhost:9090/api';
 
-/** Hop-by-hop and host-specific headers must not be forwarded verbatim. */
+/**
+ * Hop-by-hop and host-specific headers must not be forwarded verbatim. `origin` is checked in proxy()
+ * and then dropped: the backend sees a server-side call, not a browser on whatever address this app
+ * was opened at (only localhost is on its CORS list).
+ */
 const STRIPPED_REQUEST_HEADERS = new Set([
   'host',
+  'origin',
   'connection',
   'keep-alive',
   'transfer-encoding',
@@ -82,7 +87,23 @@ function readCookie(cookieHeader: string | null, name: string): string | null {
   return null;
 }
 
+/** True when the browser says the call comes from another site than the address this app was opened at. */
+function isForeignOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+  try {
+    return new URL(origin).host !== request.headers.get('host');
+  } catch {
+    return true;
+  }
+}
+
 async function proxy(request: NextRequest, path: string[]): Promise<Response> {
+  // The CSRF token is echoed below, so a request another site makes the browser send must stop here.
+  if (isForeignOrigin(request)) {
+    return NextResponse.json({ error: 'Cross-site request refused' }, { status: 403 });
+  }
+
   const search = request.nextUrl.search;
   const target = `${DP_TARGET}/${path.join('/')}${search}`;
 

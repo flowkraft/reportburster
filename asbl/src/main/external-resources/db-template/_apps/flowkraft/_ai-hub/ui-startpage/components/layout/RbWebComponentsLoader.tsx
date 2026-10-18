@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Script from "next/script"
+import { appUrl } from "@/lib/app-url"
 
 // URL for the DataPallas web components script
 const RB_WEBCOMPONENTS_URL = process.env.NEXT_PUBLIC_RB_API_BASE_URL
@@ -19,6 +20,8 @@ const RB_WEBCOMPONENTS_URL = process.env.NEXT_PUBLIC_RB_API_BASE_URL
  */
 export function RbWebComponentsLoader() {
   const [isLoaded, setIsLoaded] = useState(false)
+  // Set in the browser only: where DataPallas is depends on where this page was opened from
+  const [src, setSrc] = useState<string | null>(null)
 
   useEffect(() => {
     // Data fetched BY the web components goes through this app's server-side proxy, like every
@@ -35,11 +38,14 @@ export function RbWebComponentsLoader() {
       apiBaseUrl: "/api/dp",
       apiKey: "",
     }
+    setSrc(appUrl(RB_WEBCOMPONENTS_URL))
   }, [])
+
+  if (!src) return null
 
   return (
     <Script
-      src={RB_WEBCOMPONENTS_URL}
+      src={src}
       strategy="afterInteractive"
       onLoad={() => {
         console.log("DataPallas web components loaded successfully")

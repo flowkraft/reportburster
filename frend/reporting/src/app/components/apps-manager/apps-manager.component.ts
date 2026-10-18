@@ -14,6 +14,7 @@ import { AiManagerComponent, AiManagerLaunchConfig } from '../ai-manager/ai-mana
 import { PollingHelper } from '../../providers/polling.helper';
 import { iconSvg } from '../../shared/icon-svgs';
 import { AuthService } from '../../providers/auth.service';
+import { ConfigurationRepository } from '../../providers/configuration-repository.service';
 
 // This interface should be defined in a shared models file
 
@@ -74,6 +75,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     protected sanitizer: DomSanitizer,
     protected messagesService: ToastrMessagesService,
     protected authService: AuthService,
+    protected settingsService: ConfigurationRepository,
   ) { }
 
   /**
@@ -177,6 +179,8 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     // Determine if the parent provided explicit app(s) to show
     // (inputAppsToShow is undefined when the caller wants the default behavior)
 
+    // The Launch links follow the saved Apps URL
+    await this.settingsService.ensurePreferencesLoaded();
     // Load apps (will resolve string id(s) or fetch all when no input provided)
     await this.loadInitialApps();
     // Subscribe to search changes
@@ -347,7 +351,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     event.preventDefault();
     if (!app || !app.url) return;
     if (app.state !== 'running') return;
-    window.open(app.url, '_blank', 'noopener');
+    window.open(this.settingsService.appUrl(app.url), '_blank', 'noopener');
   }
 
   copyToClipboard(text: string) {

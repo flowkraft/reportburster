@@ -138,7 +138,13 @@ public class SystemService {
 		JAXBContext jc = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
 		Unmarshaller u = jc.createUnmarshaller();
 		try (FileInputStream fis = new FileInputStream(path)) {
-			return (DocumentBursterSettingsInternal) u.unmarshal(fis);
+			DocumentBursterSettingsInternal settings = (DocumentBursterSettingsInternal) u.unmarshal(fis);
+			// Never saved: the installation says where its apps are (DP_APPS_URL), else the browser runs
+			// on this machine and finds each app at localhost:<port>.
+			if (settings != null && settings.settings != null && StringUtils.isBlank(settings.settings.appsurl))
+				settings.settings.appsurl = StringUtils.defaultIfBlank(System.getenv("DP_APPS_URL"),
+						"http://localhost:{port}");
+			return settings;
 		}
 	}
 

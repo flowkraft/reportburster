@@ -53,7 +53,7 @@
               <!-- Running: clickable launch link with stop icon -->
               @if (chat2dbApp?.state === 'running') {
                 <a
-                  href="http://localhost:8440/chat2db"
+                  [href]="chat2dbUrl"
                   target="_blank"
                   id="btnLaunchChat2DB"
                   style="display: flex; align-items: center;"

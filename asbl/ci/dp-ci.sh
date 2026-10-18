@@ -110,6 +110,9 @@ DEV_URL=${DP_DEV_URL:-https://dp-dev.bkstg.flowkraft.com}
 DEV_M2=${DP_DEV_M2:-dp-ci-m2}
 DEV_LOG_LINK=${DEV_CONTAINER#datapallas-}-latest.log   # datapallas-dev -> dev-latest.log
 DEV_NETWORK=bridge_current_host_cross_containers_net  # the reverse proxy's network
+APPS_NETWORK=datapallas                               # the apps' own network (their docker-compose files)
+RPROXY_CONTAINER=ints-rproxy-gateway-bkstg            # the bkstg reverse proxy; its per-host files:
+RPROXY_CONF_DIR=/var/kraft-internalsystems/rproxy-gateway-bkstg/config/nginx/reverse-proxy-confs/bkstg.flowkraft.com
 DEV_PORT=14201                                        # TCP forwarder to `ng serve` (localhost:4201) in that container
 AI_HUB_PORT=3000                                      # `next dev` for the AI Hub start page, in --live only
 # The route to that dev start page: nginx file dp-dev-aihub.subdomain.conf on this host sends it to
@@ -858,14 +861,100 @@ PS
   [ "$probe" = "$expected" ] && [ "$fw" = 0 ]
 }
 
+# The apps DataPallas starts (AI Hub, playgrounds, CloudBeaver, ...) work from dp-dev as from an installation:
+# - their servers find DataPallas as `datapallas-server` on the `datapallas` network, the Docker server's own name
+#   and network (asbl/docker/docker-compose.yml): DP_API_URL for the AI Hub, Grails' RbUtils tries it first;
+# - a browser finds each app at https://<dev host>-<port>.<domain>: DP_APPS_URL is the Apps URL DataPallas uses
+#   until one is saved in More Settings, and dev_app_proxies() makes those hosts on the reverse proxy;
+# - the sign-in cookie covers the whole domain, so the app hosts see the same signed-in user.
+# One dev site at a time can hold the `datapallas-server` name (the apps' container names are fixed anyway).
+dev_app_proxies() {  # $1 = the dev site's host label (dp-dev), $2 = its domain (bkstg.flowkraft.com)
+  local made=() port target conf
+  [ -d "$RPROXY_CONF_DIR" ] || { echo "dp-dev apps: no reverse-proxy files at $RPROXY_CONF_DIR, app hosts not made"; return 0; }
+  # the proxy reaches each app by container name on the apps' network: host-published ports are dropped by ufw
+  docker network inspect "$APPS_NETWORK" -f '{{range .Containers}}{{.Name}} {{end}}' | tr ' ' '\n' | grep -qx "$RPROXY_CONTAINER" ||
+    docker network connect "$APPS_NETWORK" "$RPROXY_CONTAINER" || return 1
+  # one host per published port of every app (read from the apps' docker-compose files), made only when missing
+  while read -r port target; do
+    conf="$RPROXY_CONF_DIR/$1-$port.subdomain.conf"
+    [ -f "$conf" ] && continue
+    cat >"$conf" <<EOF
+# made by asbl/ci/dp-ci.sh (dev_app_proxies): app port $port of $1, behind the same Authelia login
+server {
+    listen      443 ssl http2;
+    server_name $1-$port.$2;
+    ssl_certificate         /etc/letsencrypt/live/$2/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/$2/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/$2/chain.pem;
+    include nginxconfig.io/general.conf;
+    include nginxconfig.io/security.conf;
+    include nginxconfig.io/authelia-location.conf;
+    location ^~ / {
+        proxy_http_version                 1.1;
+        proxy_cache_bypass                 \$http_upgrade;
+        proxy_set_header Upgrade           \$http_upgrade;
+        proxy_set_header Connection        \$connection_upgrade;
+        proxy_set_header Host              \$host;
+        proxy_set_header X-Real-IP         \$remote_addr;
+        proxy_set_header Forwarded         \$proxy_add_forwarded;
+        proxy_set_header X-Forwarded-For   \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout              600s;
+        proxy_send_timeout                 600s;
+        proxy_read_timeout                 600s;
+        include nginxconfig.io/authelia-authrequest.conf;
+        resolver   127.0.0.11  valid=30s;
+        set \$backend_url "http://$target";
+        proxy_pass \$backend_url;
+    }
+}
+server {
+    listen 80;
+    server_name $1-$port.$2;
+    return 301 https://\$server_name\$request_uri;
+}
+EOF
+    made+=("$conf")
+  done < <(echo "9090 datapallas-server:9090"
+           python3 - "$REPO/asbl/src/main/external-resources/db-template/_apps" <<'PY'
+import glob, re, sys
+for f in sorted(glob.glob(sys.argv[1] + "/**/docker-compose.yml", recursive=True)):
+    if "/xx-custom/" in f:
+        continue
+    service = name = None
+    for line in open(f):
+        m = re.match(r"^  ([\w-]+):\s*$", line)
+        if m:
+            service = name = m.group(1)
+        m = re.match(r"^\s+container_name:\s*(\S+)", line)
+        if m:
+            name = m.group(1)
+        m = re.match(r'^\s+-\s*"?(?:\$\{\w+:-)?(\d+)\}?:(\d+)"?', line)
+        if m and service:
+            print(m.group(1), "%s:%s" % (name, m.group(2)))
+PY
+          )
+  [ ${#made[@]} = 0 ] && return 0
+  if docker exec "$RPROXY_CONTAINER" nginx -t >/dev/null 2>&1; then
+    docker exec "$RPROXY_CONTAINER" nginx -s reload >/dev/null 2>&1 && echo "dp-dev apps: ${#made[@]} app hosts added on the reverse proxy"
+  else
+    rm -f "${made[@]}"
+    echo "FAIL  nginx refused the new app hosts, removed them again"; return 1
+  fi
+}
+
 # dp-dev runs in its own container on the reverse-proxy network (like www-datapallas-com-dev), NOT on the
 # host network: the reverse proxy cannot reach host-network ports (ufw drops them).
 start_dev_container() {
-  local sha log
+  local sha log host="${DEV_URL#*://}"
+  host="${host%%/*}"
   sha=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)
   [ -z "$(git -C "$REPO" status --porcelain 2>/dev/null)" ] || sha="$sha-dirty"
   log="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ)-dev-$sha.log"
   ln -sfn "$log" "$LOG_DIR/$DEV_LOG_LINK"
+  # created as compose itself would, so the apps' `docker compose up` takes it as their own
+  docker network inspect "$APPS_NETWORK" >/dev/null 2>&1 ||
+    docker network create --label com.docker.compose.network=default "$APPS_NETWORK" >/dev/null || return 1
   docker rm -f "$DEV_CONTAINER" >/dev/null 2>&1
   docker run -d --rm --name "$DEV_CONTAINER" --network "$DEV_NETWORK" --ulimit core=0 \
     -v "$REPO":"$REPO" -w "$REPO" \
@@ -873,7 +962,11 @@ start_dev_container() {
     -v "$DEV_M2":/root/.m2 -v dp-ci-npm:/root/.npm -v dp-ci-cache:/root/.cache \
     -v "$LOG_DIR":"$LOG_DIR" \
     -e REPO="$REPO" -e TASK=dev -e SHA="$sha" -e LOG="$log" \
+    -e DP_API_URL="http://datapallas-server:9090/api" -e DP_APPS_URL="https://${host%%.*}-{port}.${host#*.}" \
+    -e SERVER_SERVLET_SESSION_COOKIE_DOMAIN="${host#*.}" \
     "$CI_IMAGE" bash "$REPO/asbl/ci/dp-ci.sh" --inside >/dev/null || return 1
+  docker network connect --alias datapallas-server "$APPS_NETWORK" "$DEV_CONTAINER" || return 1
+  dev_app_proxies "${host%%.*}" "${host#*.}" || echo "dp-dev apps: the app hosts are not in place"
   echo "dp-dev:  $DEV_CONTAINER started, $DEV_URL answers once the backend and UI have compiled (a few minutes)"
   echo "ai-hub:  $AI_HUB_URL - the AI Hub start page and the Canvas, from the sources, hot-reloading"
   echo "log:     $log   (also $LOG_DIR/$DEV_LOG_LINK)"
@@ -1220,6 +1313,22 @@ AIHUBPY
   # The owner's e2e chain, unchanged: clean testground -> gulp starts the Spring Boot server from
   # testground/e2e + `ng serve` on 4201 -> Playwright (TEST_ENV=web, or Electron) -> server killed. gulp itself
   # does not return Playwright's exit code, so the verdict is read from the line gulp prints.
+  # The release lane starts the apps from the images compose finds on the host, and compose builds only an
+  # image that is missing: an image left by an earlier run hides every change to an app's sources (run-all A
+  # #25: M110 met a Canvas older than its commit). Building each app here answers from the layer cache in
+  # seconds when nothing changed and rebuilds only the changed layers when something did. A failed build
+  # stops the run rather than testing an old image.
+  app_images_build() {
+    local t="$REPO/frend/reporting/testground/e2e/_apps" c
+    [ -d "$t" ] || (cd "$REPO/frend/reporting" && npx gulp e2e-package-javastuff-if-needed) ||
+      { echo "!!! apps: could not fill the testground from the package"; return 1; }
+    for c in $(find "$t" -name docker-compose.yml -not -path '*/xx-custom/*' | sort); do
+      echo "apps: building $(basename "$(dirname "$c")") (cached unless its sources changed)"
+      (cd "$(dirname "$c")" && timeout 3600 docker compose build -q) ||
+        { echo "!!! apps: docker compose build failed for $c"; return 1; }
+    done
+  }
+
   e2e_web() {
     local out=/tmp/e2e-web.out code mode=targeted target="${E2E_TARGET:-web}"
     case "$target" in
@@ -1248,7 +1357,7 @@ AIHUBPY
       # is what tells the two lanes apart: the task dispatch at the bottom sets it on the loop lane and
       # empties it on the release lane, which proves the image DataPallas ships. A failure here stops
       # the run rather than quietly testing whatever image happens to be on the host.
-      if [ -n "${E2E_PACKAGE:-}" ]; then aihub_from_sources || return 1; fi
+      if [ -n "${E2E_PACKAGE:-}" ]; then aihub_from_sources || return 1; else app_images_build || return 1; fi
     fi
     # stuck tests cost tens of minutes, not hours (plan §4 D0); read by e2e/utils/constants.ts,
     # fluent-tester.ts, utils/helpers.ts and playwright.config.ts. Unset outside this script, so

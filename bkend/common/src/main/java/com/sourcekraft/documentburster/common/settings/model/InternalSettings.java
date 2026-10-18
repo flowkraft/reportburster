@@ -22,6 +22,11 @@ public class InternalSettings extends DumpToString {
     public String backendurl;
     public String copiloturl;
 
+    // Where a browser finds the apps DataPallas starts; {port} becomes each app's port.
+    // Not saved yet: DP_APPS_URL, else http://localhost:{port} (the browser runs on this machine).
+    // A server: http://reports.acme.com:{port}; behind a reverse proxy e.g. https://apps-{port}.acme.com
+    public String appsurl;
+
     // runtime: windows | linux | docker
     public String runtime;
 

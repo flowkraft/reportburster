@@ -16,27 +16,35 @@
       }
     </div>
 
-    <!-- Good AI Chat Options -->
+    <!-- Good AI Chat Options: the one in use is marked, another is one click (and a Yes) away -->
     <div class="mb-6">
       <h4 class="font-semibold mb-2">Good AI Chat Options</h4>
-      <div class="flex items-center justify-between py-1">
-        <span>ChatGPT</span>
-        <button type="button" class="btn btn-sm btn-ghost" (click)="copyToClipboard('https://chatgpt.com/')">
-          <i class="fa fa-copy"></i> Copy URL
-        </button>
-      </div>
-      <div class="flex items-center justify-between py-1">
-        <span>Microsoft Copilot</span>
-        <button type="button" class="btn btn-sm btn-ghost" (click)="copyToClipboard('https://copilot.microsoft.com/')">
-          <i class="fa fa-copy"></i> Copy URL
-        </button>
-      </div>
-      <div class="flex items-center justify-between py-1">
-        <span>Z.ai (GLM model)</span>
-        <button type="button" class="btn btn-sm btn-ghost" (click)="copyToClipboard('https://chat.z.ai/')">
-          <i class="fa fa-copy"></i> Copy URL
-        </button>
-      </div>
+      @for (option of aiChatOptions; track option.url) {
+        <div
+          class="flex items-center justify-between py-1 px-2 -mx-2 rounded-lg"
+          [class.bg-base-200]="isCurrentAiChat(option.url)"
+        >
+          <span class="flex items-center gap-2">
+            {{ option.name }}
+            @if (isCurrentAiChat(option.url)) {
+              <span class="badge badge-success badge-sm gap-1"><i class="fa fa-check"></i> In use</span>
+            }
+          </span>
+          @if (!isCurrentAiChat(option.url)) {
+            @if (confirmingAiChatUrl === option.url) {
+              <span class="flex items-center gap-2 text-sm">
+                Use {{ option.name }}?
+                <button type="button" class="btn btn-xs btn-primary" (click)="useAiChat(option.url)">Yes</button>
+                <button type="button" class="btn btn-xs btn-ghost" (click)="confirmingAiChatUrl = null">No</button>
+              </span>
+            } @else {
+              <button type="button" class="btn btn-sm btn-ghost" (click)="confirmingAiChatUrl = option.url">
+                Use this
+              </button>
+            }
+          }
+        </div>
+      }
     </div>
 
     <!-- Samples -->
@@ -52,6 +60,21 @@
           />
           <span class="label-text">Show sample connections, reports &amp; cubes</span>
         </label>
+      }
+    </div>
+
+    <!-- Apps URL -->
+    <div class="mb-6">
+      <h4 class="font-semibold mb-2">Apps URL</h4>
+      @if (settingsService.xmlInternalSettings?.documentburster?.settings) {
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          placeholder="http://localhost:&#123;port&#125;"
+          [(ngModel)]="settingsService.xmlInternalSettings.documentburster.settings.appsurl"
+          (ngModelChange)="onAppsUrlChanged.next($event)"
+        />
+        <p class="text-sm opacity-70 mt-1">Where browsers find the apps; &#123;port&#125; becomes each app's port.</p>
       }
     </div>
 

@@ -125,8 +125,13 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(highlighted);
   }
 
+  get chat2dbUrl(): string {
+    return this.settingsService.appUrl('http://localhost:8440/chat2db');
+  }
+
   async ngOnInit(): Promise<void> {
     try {
+      await this.settingsService.ensurePreferencesLoaded();
       this.loadPrompts();
       this.chat2dbApp = await this.appsManagerService.getAppById('flowkraft-data-canvas');
 

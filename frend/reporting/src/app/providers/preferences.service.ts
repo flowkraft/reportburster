@@ -18,6 +18,7 @@ export class PreferencesService {
         // login screen to recover through.
         backendurl: 'http://localhost:9090/api',
         copiloturl: 'https://chatgpt.com/',
+        appsurl: 'http://localhost:{port}',
         showsamples: false,
       },
     },
@@ -38,8 +39,11 @@ export class PreferencesService {
 
   public apiService = inject(ApiService);
 
+  private loaded = false;
+
   async loadPreferences(): Promise<any> {
     const loaded = await this.apiService.get('/system/preferences');
+    this.loaded = true;
     // Defensive default: if the loaded XML doesn't have the new field, it's false
     if (loaded?.settings && loaded.settings.showsamples === undefined) {
       loaded.settings.showsamples = false;
@@ -68,5 +72,31 @@ export class PreferencesService {
       this.xmlInternalSettings?.documentburster?.settings?.copiloturl ||
       'https://copilot.microsoft.com'
     );
+  }
+
+  /**
+   * An app's address as the viewer's browser reaches it. The apps are written
+   * `http://localhost:<port>`, right when the browser runs on the DataPallas machine; the Apps URL
+   * preference (`http://localhost:{port}` by default) says where they are for everyone else.
+   */
+  appUrl(url: string): string {
+    const pattern: string = this.xmlInternalSettings?.documentburster?.settings?.appsurl;
+    if (!url || !pattern?.includes('{port}')) return url;
+    return url.replace(/^http:\/\/localhost:(\d+)/, (_m, port) =>
+      pattern.replace(/\/+$/, '').replace('{port}', port),
+    );
+  }
+
+  /**
+   * The browser build cannot load the preferences at startup (they need a signed-in user), and
+   * the app links follow the saved Apps URL: a page with app links loads them if nobody has.
+   */
+  async ensurePreferencesLoaded(): Promise<void> {
+    if (this.loaded) return;
+    try {
+      this.xmlInternalSettings.documentburster = await this.loadPreferences();
+    } catch (e) {
+      console.warn('[PreferencesService] Failed to load preferences:', e);
+    }
   }
 }

@@ -15,6 +15,16 @@ import { StateStoreService } from '../../providers/state-store.service';
 })
 export class MoreSettingsComponent {
   onCopilotUrlChanged = new Subject<string>();
+  onAppsUrlChanged = new Subject<string>();
+
+  aiChatOptions = [
+    { name: 'ChatGPT', url: 'https://chatgpt.com/' },
+    { name: 'Microsoft Copilot', url: 'https://copilot.microsoft.com/' },
+    { name: 'Z.ai (GLM model)', url: 'https://chat.z.ai/' },
+  ];
+
+  /** The option whose "Use this" waits for its Yes / No. */
+  confirmingAiChatUrl: string | null = null;
 
   private destroyRef = inject(DestroyRef);
 
@@ -30,6 +40,14 @@ export class MoreSettingsComponent {
       this.settingsService.xmlInternalSettings.documentburster.settings.copiloturl = newUrl;
       await this.settingsService.savePreferences(this.settingsService.xmlInternalSettings);
       this.messagesService.showInfo('AI Assistant URL saved');
+    });
+    this.onAppsUrlChanged.pipe(
+      debounceTime(400),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(async (newUrl) => {
+      this.settingsService.xmlInternalSettings.documentburster.settings.appsurl = newUrl;
+      await this.settingsService.savePreferences(this.settingsService.xmlInternalSettings);
+      this.messagesService.showInfo('Apps URL saved');
     });
   }
 
@@ -70,8 +88,15 @@ export class MoreSettingsComponent {
     );
   }
 
-  copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    this.messagesService.showInfo('URL copied to clipboard!');
+  isCurrentAiChat(url: string): boolean {
+    const current: string = this.settingsService.xmlInternalSettings?.documentburster?.settings?.copiloturl || '';
+    return current.replace(/\/+$/, '') === url.replace(/\/+$/, '');
+  }
+
+  async useAiChat(url: string) {
+    this.confirmingAiChatUrl = null;
+    this.settingsService.xmlInternalSettings.documentburster.settings.copiloturl = url;
+    await this.settingsService.savePreferences(this.settingsService.xmlInternalSettings);
+    this.messagesService.showInfo('AI Assistant URL saved');
   }
 }
