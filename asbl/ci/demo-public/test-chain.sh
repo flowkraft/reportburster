@@ -1,15 +1,15 @@
 #!/bin/bash
 # Throwaway test of the public demo's two nginx hops, with TLS and a real browser, before anything is put on a gateway.
 #
-#   browser -> door (the storefront's vhost) -> origin (the bkstg gateway's vhost) -> a running DataPallas server
+#   browser -> edge (the storefront's vhost) -> origin (the bkstg gateway's vhost) -> a running DataPallas server
 #
 # It starts two nginx containers of the gateways' own image on the docker network, configured with the REAL files of this folder (only the
 # certificates, the host names behind them and the backend are swapped), then:
-#   1. opens the three dashboards in headless Chrome through the door and presses everything (check-frames.mjs) - any request the
+#   1. opens the three dashboards in headless Chrome through the edge and presses everything (check-frames.mjs) - any request the
 #      allowlist or the origin refuses fails the test, and so does a Country Sales page without its "Take the Tour" button;
 #   2. checks what must NOT work: the sign-in page, the admin API, a POST to a dashboard, a path walked out of /dashboard/, the
-#      origin asked directly by anybody but the door;
-#   3. checks the door's rate limit and what it says about caching and framing.
+#      origin asked directly by anybody but the edge;
+#   3. checks the edge's rate limit and what it says about caching and framing.
 # Nothing of production is touched. The tokens are read from a file and never printed.
 #
 #   bash asbl/ci/demo-public/test-chain.sh
@@ -29,7 +29,7 @@ TOKENS_FILE=${DEMO_TEST_TOKENS_FILE:-$(dirname "$(dirname "$REPO")")/company-biz
 GATEWAY_CONF=${DEMO_TEST_GATEWAY_CONF:-/var/kraft-internalsystems/rproxy-gateway-bkstg/config/nginx}   # for nginxconfig.io/*.conf
 NGINX_IMAGE=${DEMO_TEST_NGINX_IMAGE:-nginx:1.21.6-alpine}                                               # what both gateways run
 PW_IMAGE=${DEMO_TEST_PW_IMAGE:-custom-virgil-pers-apps-agent-browser-playwright:latest}
-DOOR=demo-test-door
+EDGE=demo-test-edge
 ORIGIN=demo-test-origin
 
 say() { echo "$(date -u +%H:%M:%S) $*"; }
@@ -40,7 +40,7 @@ check() {  # check <what> <expected> <got>
 
 TMP=$(mktemp -d /tmp/demo-chain.XXXXXX)
 chmod 755 "$TMP"
-cleanup() { docker rm -f "$DOOR" "$ORIGIN" >/dev/null 2>&1; rm -rf "$TMP"; }
+cleanup() { docker rm -f "$EDGE" "$ORIGIN" >/dev/null 2>&1; rm -rf "$TMP"; }
 trap cleanup EXIT
 
 token() { grep -m1 "^$1=" "$TOKENS_FILE" | cut -d= -f2-; }
@@ -49,7 +49,7 @@ T_COUNTRY=$(token DEMO_TOKEN_COUNTRY_SALES); T_DEMOS=$(token DEMO_TOKEN_DASHBOAR
 docker run --rm --network "$NET" --entrypoint sh "$PW_IMAGE" -c "curl -s -o /dev/null -m 10 http://$BACKEND/api/auth/first-run" ||
   { say "no DataPallas server answers on $BACKEND"; echo "DEMO_CHAIN result=fail reason=no-backend"; exit 1; }
 
-# a certificate for all three names, trusted by the door (that is the door's proxy_ssl_verify on, tested for real)
+# a certificate for all three names, trusted by the edge (that is the edge's proxy_ssl_verify on, tested for real)
 openssl req -x509 -newkey rsa:2048 -nodes -days 2 -keyout "$TMP/k.pem" -out "$TMP/c.pem" -subj /CN=demo-test \
   -addext "subjectAltName=DNS:demo.datapallas.com,DNS:dp-demo-public.bkstg.flowkraft.com,DNS:$ORIGIN" 2>/dev/null || { echo "DEMO_CHAIN result=fail reason=openssl"; exit 1; }
 chmod 644 "$TMP/k.pem" "$TMP/c.pem"
@@ -71,27 +71,27 @@ start_nginx() {  # start_nginx <name> <vhost file>
 }
 ip_of() { docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}" "$1"; }
 
-swap_certs < "$HERE/door.storefront.conf" \
+swap_certs < "$HERE/edge.storefront.conf" \
   | sed -e "s#proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;#proxy_ssl_trusted_certificate /t/c.pem;#" \
-        -e "s#set \$demo_origin_host dp-demo-public.bkstg.flowkraft.com;#set \$demo_origin_host $ORIGIN;#" > "$TMP/door.conf"
-start_nginx "$DOOR" "$TMP/door.conf"
-DOOR_IP=$(ip_of "$DOOR")
+        -e "s#set \$demo_origin_host dp-demo-public.bkstg.flowkraft.com;#set \$demo_origin_host $ORIGIN;#" > "$TMP/edge.conf"
+start_nginx "$EDGE" "$TMP/edge.conf"
+EDGE_IP=$(ip_of "$EDGE")
 
 swap_certs < "$HERE/origin.bkstg.conf" \
-  | sed -e "s#@DOOR_IP@#$DOOR_IP#" -e "s#http://datapallas-demo-public:9090#http://$BACKEND#" > "$TMP/origin.conf"
+  | sed -e "s#@EDGE_IP@#$EDGE_IP#" -e "s#http://datapallas-demo-public:9090#http://$BACKEND#" > "$TMP/origin.conf"
 start_nginx "$ORIGIN" "$TMP/origin.conf"
 sleep 2
-for c in "$DOOR" "$ORIGIN"; do
+for c in "$EDGE" "$ORIGIN"; do
   docker exec "$c" nginx -t >"$TMP/$c.t" 2>&1 || { say "FAIL  nginx -t in $c:"; cat "$TMP/$c.t"; echo "DEMO_CHAIN result=fail reason=nginx-t"; exit 1; }
 done
-say "both nginx configurations load (door $DOOR_IP, origin $(ip_of "$ORIGIN"), backend $BACKEND)"
+say "both nginx configurations load (edge $EDGE_IP, origin $(ip_of "$ORIGIN"), backend $BACKEND)"
 
-curlc() { docker run --rm --network "$NET" --add-host "demo.datapallas.com:$DOOR_IP" --entrypoint curl "$PW_IMAGE" -sk -m 30 "$@"; }
+curlc() { docker run --rm --network "$NET" --add-host "demo.datapallas.com:$EDGE_IP" --entrypoint curl "$PW_IMAGE" -sk -m 30 "$@"; }
 
 # 1. the browser
-say "browser: the three dashboards through the door"
+say "browser: the three dashboards through the edge"
 chmod 777 "$TMP"; mkdir -p "$TMP/shots"; chmod 777 "$TMP/shots"
-docker run --rm --network "$NET" --add-host "demo.datapallas.com:$DOOR_IP" \
+docker run --rm --network "$NET" --add-host "demo.datapallas.com:$EDGE_IP" \
   -e DEMO_BASE=https://demo.datapallas.com -e DEMO_INSECURE=1 -e DEMO_SHOTS=/shots \
   -e DEMO_TOKEN_COUNTRY_SALES="$T_COUNTRY" -e DEMO_TOKEN_DASHBOARD_DEMOS="$T_DEMOS" -e DEMO_TOKEN_CUBE_STORIES="$T_STORIES" \
   -v "$HERE/check-frames.mjs:/app/check-frames.mjs:ro" -v "$TMP/shots:/shots" -w /app "$PW_IMAGE" node check-frames.mjs 2>&1 | sed 's/^/        /'
@@ -108,7 +108,7 @@ check "GET /actuator/health"                    404 "$(code "$D/actuator/health"
 check "POST /dashboard/g-cube-country-sales"    404 "$(code -X POST "$D/dashboard/g-cube-country-sales?token=$T_COUNTRY")"
 check "a dashboard that is not one of the three" 404 "$(code "$D/dashboard/g-dd-sales-overview?token=$T_COUNTRY")"
 check "a path walked out of /dashboard/"        404 "$(code --path-as-is "$D/dashboard/g-cube-country-sales/../../api/auth/first-run")"
-check "the origin asked directly (not the door)" 403 "$(docker run --rm --network "$NET" --entrypoint curl "$PW_IMAGE" -sk -m 30 -o /dev/null -w '%{http_code}' -H 'Host: demo.datapallas.com' "https://$ORIGIN/dashboard/g-cube-country-sales?token=$T_COUNTRY")"
+check "the origin asked directly (not the edge)" 403 "$(docker run --rm --network "$NET" --entrypoint curl "$PW_IMAGE" -sk -m 30 -o /dev/null -w '%{http_code}' -H 'Host: demo.datapallas.com' "https://$ORIGIN/dashboard/g-cube-country-sales?token=$T_COUNTRY")"
 check "a dashboard with the right link"         200 "$(code "$D/dashboard/g-cube-country-sales?token=$T_COUNTRY")"
 WRONG=$(code "$D/dashboard/g-cube-country-sales?token=not-a-link")
 [ "$WRONG" != 200 ] && say "ok    a dashboard with a wrong link -> $WRONG (the application's answer, not 200)" || { say "FAIL  a wrong link opens the dashboard"; fail=1; }
@@ -120,7 +120,7 @@ printf '%s\n' "$HEADERS" | grep -i '^content-security-policy:' | grep -q "frame-
   say "ok    the application's frame-ancestors reaches the browser (datapallas.com may frame)" || { say "FAIL  no frame-ancestors with https://datapallas.com in the response"; fail=1; }
 printf '%s\n' "$HEADERS" | grep -qi '^cache-control: no-cache' && say "ok    Cache-Control: no-cache" || { say "FAIL  no Cache-Control: no-cache"; fail=1; }
 printf '%s\n' "$HEADERS" | grep -qi '^x-frame-options' && { say "FAIL  an X-Frame-Options header would stop the framing"; fail=1; } || say "ok    no X-Frame-Options"
-LIMITED=$(docker run --rm --network "$NET" --add-host "demo.datapallas.com:$DOOR_IP" --entrypoint sh "$PW_IMAGE" -c \
+LIMITED=$(docker run --rm --network "$NET" --add-host "demo.datapallas.com:$EDGE_IP" --entrypoint sh "$PW_IMAGE" -c \
   "seq 1 600 | xargs -P 60 -I{} curl -sk -m 20 -o /dev/null -w '%{http_code}\n' $D/rb-webcomponents/themes.css | sort | uniq -c | tr '\n' ' '")
 say "600 quick requests to one file: $LIMITED"
 case "$LIMITED" in *" 429 "*) say "ok    the rate limit answers 429 when one address floods" ;; *) say "FAIL  no 429 in a flood of 600"; fail=1 ;; esac

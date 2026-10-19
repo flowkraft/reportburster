@@ -149,7 +149,7 @@ load_publish_target() {
           echo "        TARGET_COMPOSE_DIR=/abs/path       # folder with docker-compose.yml and .env (DATAPALLAS_IMAGE=...)"
           echo "        TARGET_DATA_DIR=/abs/path          # the site's data folder (seeded on the first publish)"
           echo "        TARGET_APP=<app container name>"
-          echo "        TARGET_URL=                        # empty = no public URL check (the public door answers 404 on /)"
+          echo "        TARGET_URL=                        # empty = no public URL check (the public edge answers 404 on /)"
           echo "      and, to feed the website from it, the DEMO_* lines of asbl/ci/demo-links.sh (DEMO_URL, DEMO_SITE_*)."
           echo "      asbl/ci/demo-public/setup.sh writes this file for you."
           return 1
