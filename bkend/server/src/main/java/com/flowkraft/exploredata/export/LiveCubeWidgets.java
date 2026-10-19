@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * The canvas widgets the author ticked <b>Show In Dashboard</b> on — read once, here, so the three
  * parts of the exporter cannot disagree about which widget is a live cube.
@@ -35,8 +33,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * <p>Nothing here writes SQL, and nothing here is vendor-specific.
  */
 final class LiveCubeWidgets {
-
-    private static final ObjectMapper JSON = new ObjectMapper();
 
     private LiveCubeWidgets() {
     }
@@ -102,7 +98,7 @@ final class LiveCubeWidgets {
         }
 
         if (out.isEmpty()) return "";
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return DashboardFileGenerator.PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     /**

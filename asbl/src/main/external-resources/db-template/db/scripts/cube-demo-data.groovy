@@ -16,13 +16,13 @@
 // It runs once: the first run loads, every later run finds the data complete and does nothing, so
 // nobody loses what they changed in cube_demo by clicking Run again. To reload, run it with wipe.
 //
-// There is no transaction, and that is a decision, not an oversight. A single transaction is not
-// honest across the eleven vendors: MySQL, MariaDB and Oracle commit implicitly on every CREATE or
-// DROP TABLE and ClickHouse has no transactions at all, so only Postgres, SQL Server, Db2, SQLite
-// and DuckDB could roll a half-done load back. A transaction would protect half the vendors and
-// pretend on the rest, or need a vendor IF, which this codebase does not do. The marker gives the
-// same practical safety everywhere: it is written last, so a run that fails halfway leaves no
-// marker, and the next run sees "not complete" and loads everything again.
+// There is no transaction around the whole load, and that is a decision, not an oversight. A single
+// transaction is not honest across the eleven vendors: MySQL, MariaDB and Oracle commit implicitly
+// on every CREATE or DROP TABLE and ClickHouse has no transactions at all, so only Postgres, SQL
+// Server, Db2, SQLite and DuckDB could roll a half-done load back. The marker gives the same
+// practical safety everywhere: it is written last, so a run that fails halfway leaves no marker,
+// and the next run sees "not complete" and loads everything again. Each table's rows do go into
+// one transaction (not on ClickHouse), for speed only - see the INSERT below.
 
 import groovy.sql.Sql
 import java.sql.Types
@@ -484,20 +484,32 @@ TABLES.each { String table, String spec ->
     String insert = 'INSERT INTO cube_demo.' + table + ' (' + names.join(', ') + ') VALUES (' +
             names.collect { '?' }.join(', ') + ')'
 
-    dbSql.withBatch(1000, insert) { ps ->
-        lines.each { String line ->
-            List<String> raw = line.split('\\|', -1) as List
-            if (raw.size() != names.size()) {
-                throw new IllegalStateException("cube-demo-data.groovy read a row of "
-                        + raw.size() + " values in " + file.name + ", where the table has "
-                        + names.size() + " columns: " + line)
+    // The rows of one table in one transaction: outside a transaction SQLite commits every
+    // statement, a disk flush per row (32,313 rows took 20 s on Linux and 9 minutes on a Windows
+    // VM). The CREATE TABLE above stays outside it, so no vendor commits it implicitly. ClickHouse
+    // has no transactions (its driver refuses setAutoCommit(false)), and each batch is already one
+    // INSERT there.
+    Closure insertRows = {
+        dbSql.withBatch(1000, insert) { ps ->
+            lines.each { String line ->
+                List<String> raw = line.split('\\|', -1) as List
+                if (raw.size() != names.size()) {
+                    throw new IllegalStateException("cube-demo-data.groovy read a row of "
+                            + raw.size() + " values in " + file.name + ", where the table has "
+                            + names.size() + " columns: " + line)
+                }
+                List<String> cells = shiftCells(table, names, raw)
+                ps.addBatch([names, kinds, cells].transpose().collect { n, k, c ->
+                    def bound = value(k, c)
+                    bound == null ? Sql.in(sqlType(k), null) : bound
+                })
             }
-            List<String> cells = shiftCells(table, names, raw)
-            ps.addBatch([names, kinds, cells].transpose().collect { n, k, c ->
-                def bound = value(k, c)
-                bound == null ? Sql.in(sqlType(k), null) : bound
-            })
         }
+    }
+    if (isClickHouse) {
+        insertRows()
+    } else {
+        dbSql.withTransaction(insertRows)
     }
 
     loaded += lines.size()

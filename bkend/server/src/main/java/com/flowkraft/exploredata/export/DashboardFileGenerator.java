@@ -1,6 +1,9 @@
 package com.flowkraft.exploredata.export;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.flowkraft.reporting.dsl.common.BlockFormEmitter;
 import com.flowkraft.reporting.dsl.common.BlockFormRules;
 import org.commonmark.Extension;
@@ -32,6 +35,12 @@ public class DashboardFileGenerator {
     static { com.flowkraft.reporting.dsl.common.DSLPrinciplesReadme.iAmImportantReadme(); }
 
     private static final ObjectMapper JSON = new ObjectMapper();
+
+    // The JSON sidecars, indented the default way but always broken with "\n". Jackson's default
+    // pretty printer breaks lines with the OS separator, so on Windows the exporter wrote CRLF and
+    // its files differed from the shipped ones.
+    static final ObjectWriter PRETTY_JSON = JSON
+            .writer(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
 
     // Markdown → HTML for text-block widgets. GFM tables extension mirrors the
     // `remark-gfm` plugin the editor uses (react-markdown side), so published
@@ -774,7 +783,7 @@ public class DashboardFileGenerator {
             }
             out.put(componentId(w), entry);
         }
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     // ── Value / Number Config (JSON) ──────────────────────────────────────────
@@ -803,7 +812,7 @@ public class DashboardFileGenerator {
             }
             out.put(componentId(w), entry);
         }
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     /**
@@ -934,7 +943,7 @@ public class DashboardFileGenerator {
 
             out.put(componentId(w), entry);
         }
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     // ── Generic JSON Sidecar ──────────────────────────────────────────────────
@@ -963,7 +972,7 @@ public class DashboardFileGenerator {
             if (!formats.isEmpty()) entry.put("columnFormats", formats);
             out.put(componentId(w), entry);
         }
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     /** One column's format in the shape {@code <rb-detail>} takes: its kind, and what that kind
@@ -998,7 +1007,7 @@ public class DashboardFileGenerator {
             }
             out.put(componentId(w), entry);
         }
-        return JSON.writerWithDefaultPrettyPrinter().writeValueAsString(out) + "\n";
+        return PRETTY_JSON.writeValueAsString(out) + "\n";
     }
 
     // ── Internal helpers ──────────────────────────────────────────────────────

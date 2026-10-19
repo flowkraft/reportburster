@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 /**
  * Handles direct file queries using DuckDB without importing data.
@@ -140,7 +141,10 @@ public class DuckDBFileHandler {
     public List<Map<String, Object>> queryFile(Connection connection, FileQueryConfig config, String query) throws SQLException {
         // Replace "data" in the query with the actual file read function
         String fileFunction = buildFileFunction(config);
-        String actualQuery = query.replaceAll("(?i)\\bFROM\\s+data\\b", "FROM " + fileFunction);
+        // quoteReplacement: replaceAll reads backslashes in the replacement as escapes, and a Windows
+        // path is full of them (C:\Projects\... became C:Projects...).
+        String actualQuery = query.replaceAll("(?i)\\bFROM\\s+data\\b",
+                Matcher.quoteReplacement("FROM " + fileFunction));
 
         List<Map<String, Object>> results = new ArrayList<>();
 
