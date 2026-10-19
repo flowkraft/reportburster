@@ -78,6 +78,8 @@
 #                                   /var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env (TARGET_HOST
 #                                   local or an ssh host, TARGET_COMPOSE_DIR, TARGET_DATA_DIR, TARGET_APP, TARGET_URL).
 #                                   --reset wipes the site's data folder and starts it again from the image defaults.
+#                                   When that file has DEMO_SITE_ENV (the website's settings file), a publish ends by running
+#                                   asbl/ci/demo-links.sh --target <file>: three share links, the tour button, the website told.
 #   bash asbl/ci/dp-ci.sh win check | win ssh <words...> | win ps < script.ps1
 #   bash asbl/ci/dp-ci.sh win run <step> <windows-working-dir> <command...>   (on the VM's desktop)
 #                                   Windows VM lane (plan §4 Phase W). Runs ON THE HOST, not in a
@@ -147,7 +149,9 @@ load_publish_target() {
           echo "        TARGET_COMPOSE_DIR=/abs/path       # folder with docker-compose.yml and .env (DATAPALLAS_IMAGE=...)"
           echo "        TARGET_DATA_DIR=/abs/path          # the site's data folder (seeded on the first publish)"
           echo "        TARGET_APP=<app container name>"
-          echo "        TARGET_URL=https://demo.datapallas.com   # empty = no public URL check"
+          echo "        TARGET_URL=                        # empty = no public URL check (the public door answers 404 on /)"
+          echo "      and, to feed the website from it, the DEMO_* lines of asbl/ci/demo-links.sh (DEMO_URL, DEMO_SITE_*)."
+          echo "      asbl/ci/demo-public/setup.sh writes this file for you."
           return 1
         fi
         case "$(stat -c %a "$DEMO_DATAPALLAS_COM_CONF")" in
@@ -156,6 +160,7 @@ load_publish_target() {
         esac
         # shellcheck disable=SC1090
         . "$DEMO_DATAPALLAS_COM_CONF" || return 1
+        PUBLISH_SETTINGS_FILE="$DEMO_DATAPALLAS_COM_CONF"
         echo "publish target settings from $DEMO_DATAPALLAS_COM_CONF"
       fi
       ;;
@@ -163,6 +168,7 @@ load_publish_target() {
   if [ -n "${PUBLISH_TARGET_ENV:-}" ]; then
     # shellcheck disable=SC1090
     . "$PUBLISH_TARGET_ENV" || { echo "FAIL  cannot read PUBLISH_TARGET_ENV=$PUBLISH_TARGET_ENV"; return 1; }
+    PUBLISH_SETTINGS_FILE="$PUBLISH_TARGET_ENV"
     echo "publish target settings from $PUBLISH_TARGET_ENV"
   fi
   local v missing=""
@@ -247,6 +253,26 @@ firewall_close_when_run_ends() {  # $1 = log file
       docker wait \"\$CONTAINER\" >/dev/null 2>&1 || sleep 2
     done
     firewall_close $(printf '%q' "$1")" >/dev/null 2>&1 </dev/null &
+}
+
+# dp-dev frames three demo dashboards into the dev website through share links (asbl/ci/demo-links.sh; the same script feeds
+# datapallas.com from demo.datapallas.com, see publish_provision), and every run that
+# stops dp-dev also resets the testground those links live in: when dp-dev comes back they are gone, and the frames stay hidden
+# without a word. So a watcher outside any SSH session waits for THIS run's container to be gone (its EXIT trap starts dp-dev again)
+# and then has that script put the links back; the script itself waits until dp-dev answers. It only ever logs, so it cannot touch the
+# run's result. Not "every dp-ci run": a long Windows run that never stops dp-dev must not hold it up. The shared dp-dev only: a
+# private dev site (DP_DEV_CONTAINER) must not rewrite the shared website's .env.local.
+demo_links_in_background() {
+  [ "$DEV_CONTAINER" = datapallas-dev ] && [ -f "$REPO/asbl/ci/demo-links.sh" ] || return 0
+  setsid nohup bash "$REPO/asbl/ci/demo-links.sh" >>"$LOG_DIR/demo-links.log" 2>&1 </dev/null &
+}
+demo_links_when_run_ends() {
+  [ "$DEV_CONTAINER" = datapallas-dev ] && [ -f "$REPO/asbl/ci/demo-links.sh" ] || return 0
+  setsid nohup bash -c "$(declare -p CONTAINER REPO LOG_DIR)
+    while docker ps -q --filter name=\"^\$CONTAINER\\\$\" | grep -q .; do
+      docker wait \"\$CONTAINER\" >/dev/null 2>&1 || sleep 2
+    done
+    bash \"\$REPO/asbl/ci/demo-links.sh\"" >>"$LOG_DIR/demo-links.log" 2>&1 </dev/null &
 }
 
 # =============================================================================
@@ -1745,8 +1771,28 @@ HTML
     fi
   }
 
+  # A site that frames the instance (demo.datapallas.com -> datapallas.com) needs three share links on it and the tour button on its
+  # Country Sales page; both are gone after --reset, and the website must be told the new tokens (asbl/ci/demo-links.sh does all of it).
+  # Never fails the publish: the site IS published at this point, and rolling back would not help; it says what to run instead.
+  publish_provision() {
+    [ -n "${PUBLISH_SETTINGS_FILE:-}" ] && grep -q '^DEMO_SITE_ENV=' "$PUBLISH_SETTINGS_FILE" || return 0
+    local out rc
+    echo ""
+    echo "provisioning the website feed (asbl/ci/demo-links.sh --target $PUBLISH_SETTINGS_FILE)"
+    out=$(DEMO_LINKS_WAIT_SECS=${DEMO_LINKS_WAIT_SECS:-600} bash "$REPO/asbl/ci/demo-links.sh" --target "$PUBLISH_SETTINGS_FILE" 2>&1); rc=$?
+    printf '%s\n' "$out"
+    if [ "$rc" -eq 0 ]; then
+      echo "PUBLISH_PROVISION ok"
+    else
+      echo "!!! the site is published, but its website feed is NOT set up: after the cause is fixed, run"
+      echo "!!!   bash asbl/ci/demo-links.sh --target $PUBLISH_SETTINGS_FILE"
+      echo "PUBLISH_PROVISION failed"
+    fi
+    return 0
+  }
+
   publish_apply() {
-    publish_deploy && publish_smoke && return 0
+    publish_deploy && publish_smoke && { publish_provision; return 0; }
     publish_rollback
     return 1
   }
@@ -1997,6 +2043,7 @@ if [ "$TASK" = "win" ]; then
   esac
 fi
 PUBLISH_FLAGS=""
+PUBLISH_SETTINGS_FILE=""
 PUBLISH_TAG=""
 PUBLISH_RESET=0
 if [ "${TASK#publish-}" != "$TASK" ]; then
@@ -2022,6 +2069,11 @@ if [ "${TASK#publish-}" != "$TASK" ]; then
     PUBLISH_FLAGS="-v $TARGET_COMPOSE_DIR:$TARGET_COMPOSE_DIR -v $TARGET_DATA_DIR:$TARGET_DATA_DIR"
   else
     PUBLISH_FLAGS="-v /root/.ssh:/root/.ssh:ro"   # on_target runs ssh as root inside dp-ci
+  fi
+  # a site that feeds a website (demo-links.sh --target): the settings file, and root's ssh key when the website is on another host
+  if [ -n "$PUBLISH_SETTINGS_FILE" ] && grep -q '^DEMO_SITE_ENV=' "$PUBLISH_SETTINGS_FILE"; then
+    PUBLISH_FLAGS="$PUBLISH_FLAGS -v $PUBLISH_SETTINGS_FILE:$PUBLISH_SETTINGS_FILE:ro"
+    [ "$TARGET_HOST" != local ] || PUBLISH_FLAGS="$PUBLISH_FLAGS -v /root/.ssh:/root/.ssh:ro"
   fi
 fi
 
@@ -2063,6 +2115,7 @@ if [ "$TASK" = "dev" ]; then
     exit 0
   fi
   start_dev_container || { echo "FAIL  docker run $DEV_CONTAINER"; exit 1; }
+  demo_links_in_background
   echo "stop:    docker stop $DEV_CONTAINER"
   exit 0
 fi
@@ -2147,13 +2200,14 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --u
   -e E2E_CHROMIUM_EXECUTABLE="${E2E_CHROMIUM_EXECUTABLE:-}" \
   -e E2E_SLOW_MO="${E2E_SLOW_MO:-}" -e E2E_DD_SCREENSHOTS="${E2E_DD_SCREENSHOTS:-}" \
   -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" \
-  -e PUBLISH_TAG="$PUBLISH_TAG" -e PUBLISH_RESET="$PUBLISH_RESET" -e DRY_RUN="${DRY_RUN:-0}" -e FORCE="${FORCE:-0}" -e SMOKE_TIMEOUT_SECS="${SMOKE_TIMEOUT_SECS:-300}" \
+  -e PUBLISH_TAG="$PUBLISH_TAG" -e PUBLISH_RESET="$PUBLISH_RESET" -e PUBLISH_SETTINGS_FILE="$PUBLISH_SETTINGS_FILE" -e DRY_RUN="${DRY_RUN:-0}" -e FORCE="${FORCE:-0}" -e SMOKE_TIMEOUT_SECS="${SMOKE_TIMEOUT_SECS:-300}" \
   -e TARGET_HOST="${TARGET_HOST:-}" -e TARGET_COMPOSE_DIR="${TARGET_COMPOSE_DIR:-}" -e TARGET_DATA_DIR="${TARGET_DATA_DIR:-}" \
   -e TARGET_APP="${TARGET_APP:-}" -e TARGET_URL="${TARGET_URL:-}" \
   "$CI_IMAGE" bash "$REPO/asbl/ci/dp-ci.sh" --inside >/dev/null ||
   { echo "FAIL  docker run $CONTAINER"; [ "$TASK" = "e2e" ] && firewall_close "$LOG"
     [ "$RESTART_DEV" = 1 ] && start_dev_container; exit 1; }
 if [ "$TASK" = "e2e" ]; then firewall_close_when_run_ends "$LOG"; fi
+if [ "$RESTART_DEV" = 1 ]; then demo_links_when_run_ends; fi
 
 echo "STARTED  $CONTAINER  task=$TASK  commit=$SHA"
 echo "log:     $LOG   (also $LOG_DIR/latest.log)"
