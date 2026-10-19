@@ -48,12 +48,17 @@ public class FederatedIdentityBridge {
 	/**
 	 * Provision the user and return the authorities their session should carry.
 	 *
-	 * @return DataPallas authorities, or an empty list if the user could not be placed — an empty list
-	 *         means a session with no rights, which is the correct outcome for someone the identity
-	 *         provider vouches for but DataPallas cannot situate.
+	 * @return DataPallas authorities, or an empty list if the user could not be placed or has been
+	 *         disabled — an empty list means a session with no rights, which is the correct outcome for
+	 *         someone the identity provider vouches for but DataPallas cannot situate or has switched off.
 	 */
 	public List<GrantedAuthority> adopt(String username, Collection<String> groups, Map<String, String> groupRoleMap,
 			String defaultRole, String defaultTenant) {
+
+		// Somebody an administrator has disabled gets no session, whatever the provider says — and is not
+		// provisioned either, so Enable puts them back with the role and groups they had.
+		if (iamService.findUser(username).filter(user -> !user.isActive()).isPresent())
+			return List.of();
 
 		provisioner.provision(username, groups, groupRoleMap, defaultRole, defaultTenant);
 

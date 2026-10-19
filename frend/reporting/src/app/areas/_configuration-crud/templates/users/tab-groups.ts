@@ -136,19 +136,27 @@ export const tabGroupsTemplate = `
             <div class="text-xs opacity-60">No database connections yet.</div>
           }
         </div>
+
+        <!-- An empty list is a real setting (the members get no database connection at all), so it
+             is allowed — but said here, where it is chosen, and not discovered by the members. -->
+        @if (groupForm.connections.length === 0) {
+          <div id="groupNoConnectionsNote" class="text-xs text-warning mt-1 ml-6">
+            No connection is ticked: the members of this group will have no database connections at all.
+          </div>
+        }
       }
 
       <label class="label cursor-pointer justify-start gap-2 mt-2">
         <input id="groupScripts" type="checkbox" class="checkbox checkbox-sm"
                [(ngModel)]="groupForm.scripts" />
-        <span class="label-text">May run scripts (Groovy, Jasper templates, script-mode widgets)</span>
+        <span class="label-text">May write scripts (Groovy, Jasper templates, script-mode widgets)</span>
       </label>
 
       <!-- Said here, where the choice is made: a connection list is not a boundary while the same
            author can reach any database from a script. -->
       @if (groupForm.onlyTheseConnections && groupForm.scripts) {
         <div id="groupScriptsNote" class="text-xs text-warning mt-1">
-          Connection limits only hold when 'May run scripts' is off. A user who can run scripts can
+          Connection limits only hold when 'May write scripts' is off. A user who can write scripts can
           reach any database through them.
         </div>
       }

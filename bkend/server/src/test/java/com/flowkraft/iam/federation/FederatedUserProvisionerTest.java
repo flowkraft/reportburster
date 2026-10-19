@@ -1,7 +1,9 @@
 package com.flowkraft.iam.federation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -15,12 +17,16 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.iam.IamDatabase;
 import com.flowkraft.iam.IamRepository;
 import com.flowkraft.iam.IamService;
+import com.flowkraft.iam.IamUserDetailsService;
 import com.flowkraft.iam.Role;
 import com.flowkraft.iam.model.AppUser;
 import com.flowkraft.iam.model.Tenant;
@@ -45,6 +51,7 @@ class FederatedUserProvisionerTest {
 
 	private IamDatabase database;
 	private IamRepository repository;
+	private IamService iamService;
 	private FederatedUserProvisioner provisioner;
 
 	/** The group→role mapping under test; empty unless a test puts something in it. */
@@ -63,12 +70,13 @@ class FederatedUserProvisionerTest {
 		database.init();
 		repository = new IamRepository(database);
 
-		new IamService(repository, new BCryptPasswordEncoder(), new LicenseService() {
+		iamService = new IamService(repository, new BCryptPasswordEncoder(), new LicenseService() {
 			@Override
 			public LicenseDetails loadLicenseFile() {
 				return new LicenseDetails();
 			}
-		}).bootstrap();
+		});
+		iamService.bootstrap();
 
 		groupRoleMap = new LinkedHashMap<>();
 		provisioner = new FederatedUserProvisioner(repository);
@@ -246,6 +254,56 @@ class FederatedUserProvisionerTest {
 		provisioner.provision("jane.smith", List.of(), groupRoleMap, DEFAULT_ROLE, "no-such-tenant");
 
 		assertEquals(Role.JOB_OPERATOR, roleOf("jane.smith"));
+	}
+
+	// ============================================================
+	// disabled accounts
+	// ============================================================
+
+	/**
+	 * The Users screen says a disabled person "will no longer be able to sign in". An identity provider
+	 * vouching for them changes nothing about that: somebody an administrator has switched off gets no
+	 * session, and their record is left as it was, so Enable puts them back with the role they had.
+	 */
+	@Test
+	void aDisabledFederatedUserIsRefusedAtSignIn() {
+
+		FederatedIdentityBridge bridge = new FederatedIdentityBridge(iamService,
+				new IamUserDetailsService(iamService), provisioner);
+		groupRoleMap.put("DataPallas-Admins", "ADMIN");
+
+		assertFalse(bridge.adopt("jane.smith", List.of(), groupRoleMap, DEFAULT_ROLE, Tenant.DEFAULT_CODE).isEmpty(),
+				"an active person is let in");
+
+		iamService.disableUser("jane.smith");
+
+		assertTrue(bridge.adopt("jane.smith", List.of("ROLE_DataPallas-Admins"), groupRoleMap, DEFAULT_ROLE,
+				Tenant.DEFAULT_CODE).isEmpty(), "a disabled person gets no session");
+		assertEquals(Role.JOB_OPERATOR, roleOf("jane.smith"), "and the attempt must not change their role");
+
+		iamService.enableUser("jane.smith");
+
+		assertFalse(bridge.adopt("jane.smith", List.of(), groupRoleMap, DEFAULT_ROLE, Tenant.DEFAULT_CODE).isEmpty(),
+				"Enable lets them back in");
+	}
+
+	/**
+	 * Directory sign-in (LDAP, Active Directory) is a password login, so the local provider is asked
+	 * first, and a disabled account stops it there. That only works while the record a federated user
+	 * is given on first sign-in reads as disabled to the local provider, which is what this pins.
+	 */
+	@Test
+	void aDisabledFederatedUserIsStoppedByTheLocalProviderBeforeTheDirectoryIsAsked() {
+
+		provision("jane.smith");
+		iamService.disableUser("jane.smith");
+
+		DaoAuthenticationProvider local = new DaoAuthenticationProvider();
+		local.setUserDetailsService(new IamUserDetailsService(iamService));
+		local.setPasswordEncoder(new BCryptPasswordEncoder());
+
+		assertThrows(DisabledException.class,
+				() -> local.authenticate(new UsernamePasswordAuthenticationToken("jane.smith", "whatever")));
 	}
 
 	// ============================================================

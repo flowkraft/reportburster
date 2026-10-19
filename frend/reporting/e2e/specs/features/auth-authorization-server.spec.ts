@@ -2079,7 +2079,7 @@ test.describe('Auth — Server: groups', () => {
         .click('#groupLimitsEnabled')
         .click('#groupConnectionsSome')
         .click(`#groupConnection-${connectionCode}`)
-        // "May run scripts" is on by default, and while it is, a connection list is no boundary (a
+        // "May write scripts" is on by default, and while it is, a connection list is no boundary (a
         // script reaches any database): the dialog says so the moment "Only these" is chosen. This
         // group is the one that says no, and with scripts off the warning has nothing left to say.
         .waitOnElementToBecomeVisible('#groupScriptsNote')
