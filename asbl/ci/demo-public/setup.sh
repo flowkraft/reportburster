@@ -67,9 +67,11 @@ need() {
   return 1
 }
 door() { ssh -o BatchMode=yes -o ConnectTimeout=20 "$DOOR_SSH" "$1"; }
+# the door file it replaced is kept one folder up: nginx loads EVERY file of sites-enabled, so a copy next to it would define the same zones twice
+door_bak() { echo "$(dirname "$(dirname "$1")")/$(basename "$1").before-demo-public"; }
 
 # ---- files that are put in place (or taken out again when nginx refuses them) --------------------------------------------------
-# a "place" is one of: here <file>, door <file>; every place keeps the file it replaced next to it as <file>.before-demo-public
+# a "place" is one of: here <file>, door <file>; every place keeps the file it replaced as <file>.before-demo-public (door: one folder up, see door_bak)
 PLACED=()       # "<where> <dst>" of every file this run changed
 CHANGED=0       # something nginx has to be asked about again
 ANY_CHANGED=0   # anything at all
@@ -83,7 +85,7 @@ put_file() {
     [ ! -f "$dst" ] || cp -p "$dst" "$dst.before-demo-public"
     mkdir -p "$(dirname "$dst")" && cat "$src" > "$dst" || return 1
   else
-    door "if [ -f $(q "$dst") ]; then cp -p $(q "$dst") $(q "$dst.before-demo-public"); fi; cat > $(q "$dst")" < "$src" || return 1
+    door "if [ -f $(q "$dst") ]; then cp -p $(q "$dst") $(q "$(door_bak "$dst")"); fi; cat > $(q "$dst")" < "$src" || return 1
   fi
   PLACED+=("$where $dst"); CHANGED=1; ANY_CHANGED=1
   say "written:   ${where/here/this host}:$dst"
@@ -97,7 +99,7 @@ put_back() {
     if [ "$where" = here ]; then
       if [ -f "$dst.before-demo-public" ]; then mv "$dst.before-demo-public" "$dst"; else rm -f "$dst"; fi
     else
-      door "if [ -f $(q "$dst.before-demo-public") ]; then mv $(q "$dst.before-demo-public") $(q "$dst"); else rm -f $(q "$dst"); fi"
+      door "if [ -f $(q "$(door_bak "$dst")") ]; then mv $(q "$(door_bak "$dst")") $(q "$dst"); else rm -f $(q "$dst"); fi"
     fi
   done
   PLACED=()
