@@ -718,6 +718,11 @@ win_prepare_package() {
   fi
   echo "WIN_E2E_PACKAGE=stale (built from '${built:-nothing}', the VM is at $vm) - running pack-prepare-for-e2e.bat on the desktop"
   win_ssh "if exist $pkg\\.built-from del /q $pkg\\.built-from" >/dev/null 2>&1
+  # The package's web-component bundle is built by `vite build` in frend\rb-webcomponents, which needs its devDependencies
+  # (daisyui). The Linux lane installs them in npm_install; nothing did here, so the bundle was missing from the package
+  # of the 2026-10-19 run-all C build while the prepare step still ended with BUILD SUCCESS.
+  win_run npmwc "$WIN_REPO\\frend\\rb-webcomponents" 'npm ci --force' || {
+    echo "!!! npm ci in frend\\rb-webcomponents failed on the VM" >&2; return 1; }
   # A build killed by an earlier run (win_run_stop only ends the step's own cmd.exe) can leave Maven and its test JVM
   # alive, holding the files this step deletes: the 2026-10-03 rerun then "finished" in 3 minutes with exit 0 and no
   # package. Only processes of the CI's private toolchain (C:\ci\tools) are touched.

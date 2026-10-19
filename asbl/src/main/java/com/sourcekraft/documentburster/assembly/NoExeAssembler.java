@@ -157,7 +157,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// Execute from frend/reporting so the npm script `custom:compile-and-stage-web-components` runs
 		String reportingDir = Utils.getTopProjectFolderPath() + "/frend/reporting";
 		new ProcessExecutor().directory(new File(reportingDir))
-				.command(Utils.shellCommand("npm run custom:compile-and-stage-web-components")).redirectOutput(new LogOutputStream() {
+				.command(Utils.shellCommand("npm run custom:compile-and-stage-web-components")).exitValueNormal().redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
 						System.out.println(line);
