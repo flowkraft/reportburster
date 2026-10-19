@@ -13,10 +13,10 @@ folder('datapallas') {
 }
 
 // How to read a Playwright run's log, the same for both e2e jobs. The lines are dp-ci.sh's and Playwright's: keep this in step with them.
-def playwrightLog = '\n\nIts log (Playwright). Search the whole log with a regular expression, not only its end: a run waiting for a database (DB2) fills the end with thousands of "attempting JDBC connection" lines while its results sit further up. Every finished test attempt prints one line: \u2713  394 specs/features/reporting.spec.ts:810:31 \u203a <title> (2.2m) passed, \u2718 failed, - skipped, (retry #1) a second try of the same test; the number after the mark counts the attempts finished so far.' +
-  '\nHow many tests and how far: Running [0-9]+ tests, then the newest (\u2713|\u2718|-) +[0-9]+ specs/.' +
-  '\nRunning tally, counting the matches: \u2713 +[0-9]+ specs/ passed, \u2718 +[0-9]+ specs/ failed,  - +[0-9]+ specs/ skipped.' +
-  '\nWhich failed, and the retries: \u2718 +[0-9]+ specs/ and retry #[0-9]+ (a \u2713 on a retry = flaky, a \u2718 on a retry = really red). One test: its file and line, for example reporting\\.spec\\.ts:390, with 20 lines of context. Waiting for a database: attempting JDBC.' +
+def playwrightLog = '\n\nIts log (Playwright). Search the whole log with a regular expression, not only its end: a run waiting for a database (DB2) fills the end with thousands of "attempting JDBC connection" lines while its results sit further up. Every finished test attempt prints one line: \u2713  394 specs/features/reporting.spec.ts:810:31 \u203a <title> (2.2m) passed, \u2718 failed, - skipped, (retry #1) a second try of the same test; the number after the mark counts the attempts finished so far. On Windows (electron-windows-vm) the same line reads ok 394 specs\\features\\reporting.spec.ts:810:31 > <title>: ok for \u2713, x for \u2718, backslashes in the path, > for \u203a; the patterns below match both.' +
+  '\nHow many tests and how far: Running [0-9]+ tests, then the newest (\u2713|ok|\u2718|x|-) +[0-9]+ specs[/\\\\].' +
+  '\nRunning tally, counting the matches: (\u2713|ok) +[0-9]+ specs[/\\\\] passed, (\u2718|x) +[0-9]+ specs[/\\\\] failed,  - +[0-9]+ specs[/\\\\] skipped.' +
+  '\nWhich failed, and the retries: (\u2718|x) +[0-9]+ specs[/\\\\] and retry #[0-9]+ (a pass on a retry = flaky, a fail on a retry = really red). One test: its file and line, for example reporting\\.spec\\.ts:390, with 20 lines of context. Waiting for a database: attempting JDBC.' +
   '\nThe official end result, once the run has finished: E2E_RESULT|\\] (stdout: +)?[0-9]+ (passed|failed|flaky|skipped|did not run).' +
   '\nCounts during the run are attempts, not tests, and provisional: a test that failed and then passed on its retry shows once in each count. The official totals are Playwright\'s summary line (361 passed, 16 failed, 1 flaky), the E2E_RESULT line and the JSON report, written when the run ends.'
 
