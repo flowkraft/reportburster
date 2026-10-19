@@ -7,10 +7,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
+
+import com.sourcekraft.documentburster.common.db.SeedScriptRunner;
 
 /**
  * Shared Northwind test fixture, published to the other modules via
@@ -83,6 +86,7 @@ public final class NorthwindFixture {
 
 	private static Path canonicalDuckDb;
 	private static Path canonicalSqlite;
+	private static Path canonicalSqliteCubeDemo;
 	private static Path tempRoot;
 
 	private NorthwindFixture() {
@@ -134,6 +138,49 @@ public final class NorthwindFixture {
 		Files.createDirectories(destination.getParent());
 		Files.copy(sqliteFile(), destination, StandardCopyOption.REPLACE_EXISTING);
 		return destination;
+	}
+
+	/**
+	 * The cube_demo rows for SQLite, which has no schemas: a second file, to be attached to a
+	 * connection AS cube_demo. Seeded once per JVM by the product's own seed script, on the frozen
+	 * day. The DuckDB file carries cube_demo already; this is the same for SQLite, so a test copies
+	 * it instead of loading the 32,313 rows again (one load took 20 s on Linux and 9 minutes on a
+	 * Windows VM).
+	 */
+	public static synchronized Path sqliteCubeDemoFile() throws Exception {
+		build();
+		if (canonicalSqliteCubeDemo != null) {
+			return canonicalSqliteCubeDemo;
+		}
+
+		// The seed runs on a scratch copy of the main file, so the canonical one stays as built.
+		Path scripts = tempRoot.resolve("build").resolve("scripts");
+		Path main = tempRoot.resolve("build").resolve("cube-demo-seed-main.db");
+		Files.copy(canonicalSqlite, main, StandardCopyOption.REPLACE_EXISTING);
+		Path cubeDemo = tempRoot.resolve("canonical").resolve("cube-demo.db");
+
+		try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + forwardSlashes(main));
+				Statement statement = connection.createStatement()) {
+			statement.execute("ATTACH DATABASE '" + forwardSlashes(cubeDemo) + "' AS cube_demo");
+			SeedScriptRunner.run(connection, "SQLITE", scripts.resolve("cube-demo-data.groovy"),
+					cubeDemoSeedParams(scripts.resolve("cube-demo-data")));
+		}
+		canonicalSqliteCubeDemo = cubeDemo;
+		return canonicalSqliteCubeDemo;
+	}
+
+	/**
+	 * Copies the SQLite cube_demo file to {@code destination} and returns it. Same rule as
+	 * {@link #writableCopy(Path)}: never hand back the canonical file.
+	 */
+	public static Path writableSqliteCubeDemoCopy(Path destination) throws Exception {
+		Files.createDirectories(destination.getParent());
+		Files.copy(sqliteCubeDemoFile(), destination, StandardCopyOption.REPLACE_EXISTING);
+		return destination;
+	}
+
+	private static String forwardSlashes(Path file) {
+		return file.toAbsolutePath().toString().replace(File.separatorChar, '/');
 	}
 
 	/** DuckDB wants forward slashes even on Windows. */

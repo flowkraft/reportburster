@@ -5,23 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.flowkraft.queries.services.QueriesService;
-import com.sourcekraft.documentburster.common.db.SeedScriptRunner;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindFixture;
 
 import groovy.lang.Binding;
@@ -40,8 +36,6 @@ import groovy.lang.GroovyShell;
  * to all three.
  */
 class EmptyParameterMeansNoFilterTest {
-
-	private static final String DB_TEMPLATE_DB = "../../asbl/src/main/external-resources/db-template/db";
 
 	/** Every deal: what an unfiltered question answers (crm_deals.psv). */
 	private static final int ALL_DEALS = 1200;
@@ -522,16 +516,10 @@ class EmptyParameterMeansNoFilterTest {
 				.getConnection("jdbc:sqlite:" + main.toAbsolutePath().toString().replace("\\", "/"));
 		try (Statement statement = connection.createStatement()) {
 			statement.execute("ATTACH DATABASE '"
-					+ tempDir.resolve("cube-demo.db").toAbsolutePath().toString().replace("\\", "/")
+					+ NorthwindFixture.writableSqliteCubeDemoCopy(tempDir.resolve("cube-demo.db"))
+							.toAbsolutePath().toString().replace("\\", "/")
 					+ "' AS cube_demo");
 		}
-
-		Path script = Paths.get(DB_TEMPLATE_DB, "scripts", "cube-demo-data.groovy");
-		if (!Files.exists(script)) {
-			throw new IllegalStateException("The seed script is missing: " + script.toAbsolutePath());
-		}
-		SeedScriptRunner.run(connection, vendor.toUpperCase(Locale.ROOT), script,
-				NorthwindFixture.cubeDemoSeedParams(script.getParent().resolve("cube-demo-data")));
 		return connection;
 	}
 }

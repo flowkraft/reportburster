@@ -2,22 +2,18 @@ package com.flowkraft.exploredata.export;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.sourcekraft.documentburster.common.db.SeedScriptRunner;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindFixture;
 
 import groovy.lang.Binding;
@@ -34,12 +30,10 @@ import groovy.lang.GroovyShell;
  * {@code QueriesService}, so the two paths are held to one answer.
  *
  * <p>DuckDB runs on a copy of the shipped sample, which already carries {@code cube_demo}; SQLite
- * attaches a second file and seeds it with the product's own seed script, the way
- * {@code GeneratedSqlAllVendorsTest} does. Nothing shipped is ever written to.
+ * attaches a copy of the second file {@link NorthwindFixture} seeds once with the product's own
+ * seed script. Nothing shipped is ever written to.
  */
 class PublishedScriptParameterTypesTest {
-
-	private static final String DB_TEMPLATE_DB = "../../asbl/src/main/external-resources/db-template/db";
 
 	/** 425 of the 500 deals close on or before this date (truths-ai-hub.out, case p1a). */
 	private static final int DEALS_BY_DATE = 425;
@@ -215,21 +209,14 @@ class PublishedScriptParameterTypesTest {
 		Connection connection = DriverManager
 				.getConnection("jdbc:sqlite:" + main.toAbsolutePath().toString().replace("\\", "/"));
 		// SQLite has no schemas: cube_demo is a second file attached to this one connection, which
-		// is what the seed script asks for and what the shipped sample does.
+		// is what the seed script asks for and what the shipped sample does. The file is a copy of
+		// the one the fixture seeded on the pinned day, and the answers above are that day's.
 		try (Statement statement = connection.createStatement()) {
 			statement.execute("ATTACH DATABASE '"
-					+ tempDir.resolve("cube-demo.db").toAbsolutePath().toString().replace("\\", "/")
+					+ NorthwindFixture.writableSqliteCubeDemoCopy(tempDir.resolve("cube-demo.db"))
+							.toAbsolutePath().toString().replace("\\", "/")
 					+ "' AS cube_demo");
 		}
-
-		Path script = Paths.get(DB_TEMPLATE_DB, "scripts", "cube-demo-data.groovy");
-		if (!Files.exists(script)) {
-			throw new IllegalStateException("The seed script is missing: " + script.toAbsolutePath());
-		}
-		// The day is pinned, the way every other check of this data pins it: the script shifts the
-		// rows to the day it is given, and the answers above are that day's.
-		SeedScriptRunner.run(connection, vendor.toUpperCase(Locale.ROOT), script,
-				NorthwindFixture.cubeDemoSeedParams(script.getParent().resolve("cube-demo-data")));
 		return connection;
 	}
 }
