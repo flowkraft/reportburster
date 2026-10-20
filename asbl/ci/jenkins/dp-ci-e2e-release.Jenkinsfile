@@ -8,7 +8,7 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
-    timeout(time: 30, unit: 'HOURS')
+    timeout(time: 72, unit: 'HOURS')
   }
 
   environment {

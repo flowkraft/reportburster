@@ -856,8 +856,11 @@ PS
   # step's stdout can be quiet for minutes, and without a growing file to look at the stall timer
   # would kill a perfectly healthy run.
   WIN_RUN_WATCH="${WIN_RUN_WATCH:-$WIN_REPO\\frend\\reporting\\testground\\e2e\\logs\\info.log}"
-  # A full Electron suite is hours; the Linux full run is capped at 72000 s and this matches it.
-  WIN_RUN_TIMEOUT="${WIN_RUN_TIMEOUT:-$([ "$mode" = full ] && echo 72000 || echo 10800)}"
+  # A full Electron suite is hours, and the VM runs it about twice as slowly as Linux (the Linux full
+  # run took 10 h 22 min). Run-all C's build #29 was cut at the old 20 h cap (72000 s) with 24 spec
+  # files never started. 230400 s (64 h), plus the package rebuild and the results, fit inside the
+  # 72 h of the run-all D plan and of its Jenkins job. The targeted cap stays.
+  WIN_RUN_TIMEOUT="${WIN_RUN_TIMEOUT:-$([ "$mode" = full ] && echo 230400 || echo 10800)}"
   # A quiet test is not a stalled run. One wait may block for E2E_MAX_WAIT_MS (40 min) and one whole
   # test for E2E_MAX_TEST_MS (90 min) without printing a single line, so win_run's 20-minute silence
   # budget is certain to shoot a healthy suite sooner or later - it killed the 2026-09-21 full run
