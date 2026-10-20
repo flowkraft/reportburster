@@ -1080,6 +1080,9 @@ export class ConnectionsTestHelper {
         fullTimeout,
       );
       seq = this._waitForStarterPackToBeInState(seq, packId, 'running', fullTimeout);
+      // The container runs before the start job ends, and while a job runs every job button is disabled. The
+      // postgres start also seeds the academy datasets: about 70 s on Linux, 11 to 13 min on the Windows VM.
+      seq = seq.appShouldBeReadyToRunNewJobs();
       return seq;
     }
 
