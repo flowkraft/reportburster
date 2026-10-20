@@ -783,6 +783,29 @@ win_e2e() {
   esac
   echo "WIN_E2E_DOCKER=$dockerv"
 
+  # A build killed at its cap (win_run_stop only ends the step's process tree) leaves the app stacks its tests
+  # started running, and Docker Desktop's bind mounts keep their files open: after the killed run-all C #29,
+  # nine flowkraft-ai-hub-* containers held testground\e2e\_apps\...\synapse\homeserver.log, and #30's
+  # clean-testground retried for 20+ minutes until they were stopped by hand. Linux unlinks open files, and
+  # its docker-server lane takes its stacks down itself. Only compose projects whose working directory is
+  # inside this checkout's testground are touched, and without -v.
+  win_ps 2>&1 <<PS | tr -d '\r'
+\$ErrorActionPreference = "Continue"
+\$testground = '$WIN_REPO\\frend\\reporting\\testground\\'
+\$projects = @{}
+foreach (\$id in (& docker ps -aq)) {
+  # PowerShell 5.1 strips the quotes of {{.Label "..."}}, so the labels are read as JSON.
+  \$labels = (& docker inspect \$id --format '{{json .Config.Labels}}') | ConvertFrom-Json
+  \$dir = \$labels.'com.docker.compose.project.working_dir'
+  \$project = \$labels.'com.docker.compose.project'
+  if (\$project -and \$dir -and \$dir.StartsWith(\$testground, [StringComparison]::OrdinalIgnoreCase)) { \$projects[\$project] = \$dir }
+}
+foreach (\$project in \$projects.Keys) {
+  & docker compose -p \$project down --remove-orphans 2>&1 | Out-Null
+  "WIN_E2E_LEFTOVER_STACK=\$project taken down"
+}
+PS
+
   out="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-e2e-$(date -u +%Y%m%dT%H%M%SZ).log}"
   mkdir -p "$(dirname "$out")" 2>/dev/null
 
