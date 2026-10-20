@@ -806,6 +806,15 @@ foreach (\$project in \$projects.Keys) {
 }
 PS
 
+  # Playwright workers that are killed leave their playwright-artifacts-* folders in %TEMP% behind: on 2026-10-20
+  # there were 398 of them, 30.85 GB, with 12.9 GB free on C:. Each run makes its own new ones.
+  win_ps 2>&1 <<'PS' | tr -d '\r'
+$left = @(Get-ChildItem -Path $env:TEMP -Directory -Filter 'playwright-artifacts-*' -ErrorAction SilentlyContinue)
+$left | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+$freed = @($left | Where-Object { -not (Test-Path -LiteralPath $_.FullName) }).Count
+"WIN_E2E_TEMP_FREED=$freed folders"
+PS
+
   out="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-e2e-$(date -u +%Y%m%dT%H%M%SZ).log}"
   mkdir -p "$(dirname "$out")" 2>/dev/null
 
