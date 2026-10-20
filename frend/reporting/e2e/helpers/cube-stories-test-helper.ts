@@ -866,13 +866,40 @@ export function cubeDemoSeedScript(): string {
 export type AdminFetch = (url: string, init?: RequestInit) => Promise<globalThis.Response>;
 
 /**
- * Is the cube demo data on the day the checks were computed for, and is its load over?
+ * Wait until no seed run is going on in the server under test.
+ *
+ * `run-seed` writes the script it was sent to a `seed-*.groovy` file in the server's temp folder
+ * before it answers, and the job deletes that file when the run ends, whether it loaded the data or
+ * failed (GenericSeedExecutor, JobExecutionService). So the file is the run - the signal
+ * CubeDemoSeedTabJourneyTest waits on too. Asking the data instead is not only early: the seed opens
+ * the DuckDB file read-write and every query opens it read-only, and whichever comes second is
+ * refused. A refused query is harmless, but a refused seed fails without a word while its job still
+ * reports done, and a wait on the data then waited its whole 900 s for rows that never came.
+ */
+export async function waitForSeedRunToEnd(): Promise<void> {
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+  if (!portableDir) throw new Error('PORTABLE_EXECUTABLE_DIR is not set');
+  const temp = path.join(portableDir, 'temp');
+  const seedRuns = (): string[] => {
+    try {
+      return fs.readdirSync(temp).filter((name: string) => name.startsWith('seed-') && name.endsWith('.groovy'));
+    } catch (noTempFolder) {
+      return [];
+    }
+  };
+  await expect
+    .poll(seedRuns, { message: `the seed run ended (no seed-*.groovy left in ${temp})`, timeout: 900_000, intervals: [1_000, 2_000, 5_000] })
+    .toEqual([]);
+}
+
+/**
+ * Is the cube demo data on the day the checks were computed for?
  *
  * The seed script ends by writing one row, `cube_demo.demo_info`, after the 19 tables - its own
  * words for "the seed finished" - and drops it before it touches the first of them. So the row is
  * asked for, and `seeded_on` is the day the data was loaded for. Nothing about the tables
  * themselves says the same: until each one's turn comes the old one is still there, with the same
- * counts. A question that fails - the file is being written - is simply "not yet".
+ * counts. A question that fails is "no".
  */
 async function cubeDemoDataIsPinned(adminFetch: AdminFetch, baseUrl: string): Promise<boolean> {
   try {
@@ -905,12 +932,11 @@ async function cubeDemoDataIsPinned(adminFetch: AdminFetch, baseUrl: string): Pr
  * Data that is on that day already is left alone: loading it again would give
  * the same rows, and would drop the tables from under whatever page is open
  * while it does. `run-seed` accepts the script and answers at once; the load
- * itself goes on behind it, so the wait is for the marker row the script writes
- * when it is over (see `cubeDemoDataIsPinned`).
+ * itself goes on behind it, so the wait is for the run to end (see
+ * `waitForSeedRunToEnd`), and then the marker row the script writes when it is
+ * over must be there: a run that ended without it is a seed that failed.
  *
- * The marker being there is not the file being quiet: the job closes it a moment
- * later, and a page opened in between can meet a file that cannot be read yet. So
- * the last wait is for a cube to answer from it.
+ * The last wait is for a cube to answer from the file, as a page opened next will.
  */
 export async function reseedCubeDemoData(adminFetch: AdminFetch, baseUrl: string): Promise<void> {
   if (await cubeDemoDataIsPinned(adminFetch, baseUrl)) return;
@@ -923,9 +949,11 @@ export async function reseedCubeDemoData(adminFetch: AdminFetch, baseUrl: string
   expect(accepted.status, 'the demo data seed was accepted').toBe(200);
   expect((await accepted.json()).ok, 'the demo data seed was accepted').toBeTruthy();
 
-  await expect
-    .poll(() => cubeDemoDataIsPinned(adminFetch, baseUrl), { timeout: 900_000, intervals: [5_000] })
-    .toBe(true);
+  await waitForSeedRunToEnd();
+  expect(
+    await cubeDemoDataIsPinned(adminFetch, baseUrl),
+    `the seed ran but did not pin the day ${CUBE_DEMO_SEED_PARAMS.today}, see logs/errors.log`,
+  ).toBe(true);
 
   await expect
     .poll(async () => {
