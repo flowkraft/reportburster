@@ -752,10 +752,16 @@ win_e2e() {
   win_sync_repo || return $?
   win_prepare_package || return $?
   spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
-  # On Windows the target is Electron, so BOTH specs the Linux lane excludes belong in the full run:
-  # let-me-update-migrate-configuration is Electron-only (it returns at once on web) and
-  # auth-authorization-server has no target guard at all. 48 files here, 46 there - plan 5.2a.
-  [ -z "$spec" ] && [ -z "$gexp" ] && mode=full
+  # A full run here is the whole suite minus auth-authorization-server. That file is SERVER ONLY: it opens the
+  # web UI (E2E_BASE_URL, else ng serve on :4201), and the Electron flow serves no web UI. It runs alone on
+  # Linux (web, docker-server). Its last test also changes burst's password on purpose, so every later spec
+  # that signs in as burst failed after it (reporting-dashboards got a 401 in run-all C #33). Plan 5.2a's
+  # "it has no target guard, so it belongs here" was wrong (.docs/linux-windows-full-cicd-release-plan.md
+  # 6.34). let-me-update-migrate-configuration stays in: it is Electron-only.
+  if [ -z "$spec" ] && [ -z "$gexp" ]; then
+    mode=full
+    spec='^(?!.*auth-authorization-server).*\.spec\.ts$'
+  fi
   # A targeted run shows each failure as it is; a full run retries a failed test once, so one run
   # still collects every failure instead of stopping at the first flake (plan W7).
   if [ "$mode" = full ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
