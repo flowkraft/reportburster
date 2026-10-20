@@ -268,7 +268,8 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
   });
 
   test('(dashboard demos gallery) a demo that is also a pattern carries a stamp that opens its text, and one switch shows only those', async () => {
-    test.setTimeout(5 * 60_000);
+    // 64 s on Linux; 6 to 7 min on the Windows VM, where each action on the big shared Gallery page costs 1 to 5 s.
+    test.setTimeout(15 * 60_000);
 
     const patterns = DEMOS.filter((demo) => demo.pattern);
     expect(patterns.length, 'the index marks some demos as patterns').toBeGreaterThan(0);
