@@ -187,9 +187,12 @@ export class Helpers {
       ],
       env: env as { [key: string]: string },
     });
+    // No DOM snapshots in this trace of the Electron window: CI never collects it (it is saved to
+    // e2e/tracing/trace.zip and overwritten by every worker), and its snapshots cost about 0.1 s per
+    // action on the Windows CI VM. The screenshots stay.
     this.currentElectronApp.context().tracing.start({
       screenshots: true,
-      snapshots: true,
+      snapshots: false,
     });
     this.firstPage = await this.currentElectronApp.firstWindow();
     await this.firstPage.waitForLoadState('domcontentloaded');
