@@ -27,7 +27,7 @@
 // Written and checked, never run by this phase: the owner runs it.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { test, expect, type APIRequestContext, type APIResponse, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type APIResponse, type Page, type Request } from '@playwright/test';
 
 const fs = require('fs');
 const path = require('path');
@@ -181,16 +181,19 @@ function galleryUrl(token: string, params: Record<string, unknown> = {}): string
     + (query ? `&${query}` : '');
 }
 
-// One page, opened once per worker: 25 live dashboards are a heavy page, and every test asks the same
-// page a different question, in the order a reader would. No test needs what an earlier one did - each
-// demo puts its own card back and reads its neighbour before and after itself, the others open their
-// own pages - so the file is not serial: a red test does not skip the ones after it, which run on a
-// fresh worker that opens the page again.
+// One page per worker, opened afresh before every test: a share page renews itself after 58 minutes
+// (DashboardController.java, the token's life minus 2 min), and this file takes about 44 min on Linux and
+// longer than that on the Windows VM, where the page reloaded under DD24. Every test asks the page a
+// different question, in the order a reader would. No test needs what an earlier one did - each demo puts
+// its own card back and reads its neighbour before and after itself, the others open their own pages - so
+// the file is not serial: a red test does not skip the ones after it.
 
 test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
   let page: Page;
   let watch: ErrorWatch;
   let shareToken: string;
+  /** The page's requests that have not ended yet. */
+  const inFlight = new Set<Request>();
 
   test.beforeAll(async ({ browser }) => {
     test.setTimeout(30 * 60_000);
@@ -203,7 +206,24 @@ test.describe('Dashboard Demos — the gallery of 25 dashboards', () => {
 
     page = await browser.newPage();
     watch = watchForErrors(page);
+    page.on('request', (request) => inFlight.add(request));
+    page.on('requestfinished', (request) => inFlight.delete(request));
+    page.on('requestfailed', (request) => inFlight.delete(request));
+  });
+
+  // The Gallery opened afresh. Leaving the page cancels what it was still loading for the test before
+  // (net::ERR_ABORTED): those failures are this goto's doing, not the page's, so they are let go, and
+  // everything else the watch heard is kept.
+  test.beforeEach(async () => {
+    const leaving = [...inFlight].map((request) => `failed: ${request.method()} ${request.url()} (net::ERR_ABORTED)`);
+    const heard = watch.messages.length;
     await page.goto(galleryUrl(shareToken), { timeout: 120_000, waitUntil: 'networkidle' });
+    const since = watch.messages.splice(heard);
+    for (const message of since) {
+      const cancelled = leaving.indexOf(message);
+      if (cancelled >= 0) leaving.splice(cancelled, 1);
+      else watch.messages.push(message);
+    }
   });
 
   test.afterAll(async () => {
