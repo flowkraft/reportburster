@@ -664,7 +664,9 @@ async function eBuildDslPrompt(page: Page, requirement: string): Promise<string>
 }
 
 async function eClipboardText(page: Page): Promise<string> {
-  return page.evaluate(() => navigator.clipboard.readText());
+  // Chromium writes plain text to the Windows clipboard with CRLF line endings, and that is right for a
+  // Windows user who pastes it; the tests compare the text, so its line endings are made LF.
+  return (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
 }
 
 // ── Group F ─────────────────────────────────────────────────────────────────
@@ -7076,7 +7078,7 @@ test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embe
       const token = /embed-token="([^"]+)"/.exec(code)?.[1];
       expect(token, 'the code carries an embed token').toBeTruthy();
       await page.locator('#btnCopyEmbedCode').click();
-      expect(await page.evaluate(() => navigator.clipboard.readText()), 'the clipboard holds the code').toBe(code);
+      expect(await eClipboardText(page), 'the clipboard holds the code').toBe(code);
 
       // − the embed code is no share link: none was created.
       await expect(page.locator('#tableShareLinks [id^="shareLink-"]')).toHaveCount(0);
