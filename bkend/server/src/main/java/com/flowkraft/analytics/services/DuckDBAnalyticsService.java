@@ -21,8 +21,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -449,8 +451,15 @@ public class DuckDBAnalyticsService {
     }
 
     /**
+     * Rows per INSERT when script data is copied into DuckDB. DuckDB runs every statement of a JDBC batch
+     * on its own, so one row per statement took 10 s for 24,000 rows (27 to 30 s on the Windows CI VM, where
+     * the published pivot waits 30 s); 100 to 1000 rows per statement took under 1 s.
+     */
+    static final int INSERT_CHUNK_ROWS = 500;
+
+    /**
      * Create DuckDB table from in-memory data with automatic schema inference.
-     * Uses batch INSERT for performance.
+     * Inserts INSERT_CHUNK_ROWS rows per statement, the remainder in one last statement.
      */
     void createTableFromData(Connection conn, String tableName,
                                      List<LinkedHashMap<String, Object>> data,
@@ -483,25 +492,38 @@ public class DuckDBAnalyticsService {
             stmt.execute(createSql.toString());
         }
 
-        // Build INSERT statement with placeholders
-        StringBuilder insertSql = new StringBuilder();
-        insertSql.append("INSERT INTO ").append(quoteIdentifier(tableName)).append(" VALUES (");
-        for (int i = 0; i < columns.size(); i++) {
-            if (i > 0) insertSql.append(", ");
-            insertSql.append("?");
-        }
-        insertSql.append(")");
-
-        // Batch insert all rows
-        try (PreparedStatement pstmt = conn.prepareStatement(insertSql.toString())) {
-            for (Map<String, Object> row : data) {
-                for (int i = 0; i < columns.size(); i++) {
-                    Object value = row.get(columns.get(i));
-                    pstmt.setObject(i + 1, value);
+        int fullChunks = data.size() / INSERT_CHUNK_ROWS;
+        if (fullChunks > 0) {
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSql(tableName, columns.size(), INSERT_CHUNK_ROWS))) {
+                for (int c = 0; c < fullChunks; c++) {
+                    bindRows(pstmt, data.subList(c * INSERT_CHUNK_ROWS, (c + 1) * INSERT_CHUNK_ROWS), columns);
+                    pstmt.executeUpdate();
                 }
-                pstmt.addBatch();
             }
-            pstmt.executeBatch();
+        }
+        int rest = data.size() - fullChunks * INSERT_CHUNK_ROWS;
+        if (rest > 0) {
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSql(tableName, columns.size(), rest))) {
+                bindRows(pstmt, data.subList(fullChunks * INSERT_CHUNK_ROWS, data.size()), columns);
+                pstmt.executeUpdate();
+            }
+        }
+    }
+
+    /** INSERT INTO <table> VALUES (?, …), (?, …): one row of placeholders per row to insert. */
+    private String insertSql(String tableName, int columnCount, int rowCount) {
+        String row = "(" + String.join(", ", Collections.nCopies(columnCount, "?")) + ")";
+        return "INSERT INTO " + quoteIdentifier(tableName) + " VALUES " + String.join(", ", Collections.nCopies(rowCount, row));
+    }
+
+    /** Binds the rows' values, row after row, column after column, to the statement's placeholders. */
+    private static void bindRows(PreparedStatement pstmt, List<LinkedHashMap<String, Object>> rows,
+                                 List<String> columns) throws SQLException {
+        int p = 1;
+        for (Map<String, Object> row : rows) {
+            for (String column : columns) {
+                pstmt.setObject(p++, row.get(column));
+            }
         }
     }
 
