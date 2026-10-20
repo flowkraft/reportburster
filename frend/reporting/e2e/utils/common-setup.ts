@@ -16,6 +16,13 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('unhandledRejection', (reason, p) => {
+  // Playwright 1.41.2 rejects FrameSession.dispose's _firstNonInitialNavigationCommittedPromise when a page
+  // closes, and nothing awaits it: rethrown here, it killed the worker after M91's page.goBack() (run-all C
+  // #35). Playwright 1.50 adds `.catch(() => {})` there; remove this when Playwright is upgraded.
+  if (reason instanceof Error && reason.name === 'TargetClosedError' && /FrameSession\.dispose/.test(reason.stack ?? '')) {
+    console.warn('Ignored the Playwright-internal rejection of FrameSession.dispose (fixed in Playwright 1.50):', reason.message);
+    return;
+  }
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
   // Throw the error to get a stack trace
   throw reason;
