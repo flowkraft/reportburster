@@ -252,6 +252,11 @@ export async function clickShowMe(root: Locator, demo: Demo, story: Story | stri
     `Show Me on '${storyId}' asks before it applies`,
   ).toBeVisible();
   await root.locator(`#btnShowMeYes-${demo.reportId}-${storyId}`).click();
+  // The toast names the question that is now showing. It lives 7 s (RbReport.wc.svelte, say()), so it is
+  // read first, before the state that lasts: on the Windows VM those three checks took 8 s.
+  if (typeof story !== 'string')
+    await expect(storyToastOf(root, demo), 'the toast names the story that was applied')
+      .toContainText(story.question.trim());
   await expect(
     root.locator(`#story-${demo.reportId}-${storyId}`),
     `the story '${storyId}' is marked as the one that was asked`,
@@ -259,10 +264,6 @@ export async function clickShowMe(root: Locator, demo: Demo, story: Story | stri
   await expect(root.locator(`#storyGate-${demo.reportId}-${storyId}`), 'Yes closes the gate').toHaveCount(0);
   await expect(root.locator(`#storyApplied-${demo.reportId}-${storyId}`), 'the story says it is applied')
     .toBeVisible();
-  // The toast names the question that is now showing; it stays a few seconds, so it is read before the charts are waited for.
-  if (typeof story !== 'string')
-    await expect(storyToastOf(root, demo), 'the toast names the story that was applied')
-      .toContainText(story.question.trim());
   await waitForChartsIn(root);
   expect(new URL(root.page().url()).pathname, 'Show Me sets the filters; it does not navigate')
     .toBe(pageBefore);
