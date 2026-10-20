@@ -410,13 +410,18 @@ async function cWaitPivot(
   ok: (p: CPivotState) => boolean,
   message: string,
 ): Promise<CPivotState> {
+  // Hands back the very snapshot the poll accepted, not a second read: a published pivot asks the server
+  // again 150 ms after a change, and a read while that answer is coming shows the rows it counts meanwhile.
+  let accepted: CPivotState | null = null;
   await expect
     .poll(async () => {
       const p = await cReadPivot(locator);
-      return p !== null && ok(p);
+      if (p === null || !ok(p)) return false;
+      accepted = p;
+      return true;
     }, { message, timeout: 30_000, intervals: [500] })
     .toBe(true);
-  return (await cReadPivot(locator)) as CPivotState;
+  return accepted as unknown as CPivotState;
 }
 
 /** The sum of a pivot's cells, for "the cells add up to the table's rows". */
@@ -4042,13 +4047,13 @@ test('(canvas mechanics) M54 Published pivot: renderer, aggregator, value field 
       // + the row sort cycles key → value ascending → value descending → key; the cells never change.
       const statusTotals = g5Totals('status');
       await page.locator('[id$="btnPivotRowOrder"]').click();
-      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'value_a_to_z', 'rows by value, ascending');
+      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'value_a_to_z' && g5CellsMatch(x, counts), 'rows by value, ascending');
       expect(g5NonDecreasing(p.rowKeys, statusTotals), `rows ordered by their order count: ${p.rowKeys}`).toBe(true);
       await page.locator('[id$="btnPivotRowOrder"]').click();
-      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'value_z_to_a', 'rows by value, descending');
+      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'value_z_to_a' && g5CellsMatch(x, counts), 'rows by value, descending');
       expect(g5NonDecreasing(p.rowKeys, statusTotals, true), `rows ordered by their order count, descending: ${p.rowKeys}`).toBe(true);
       await page.locator('[id$="btnPivotRowOrder"]').click();
-      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'key_a_to_z', 'rows by key again');
+      p = await cWaitPivot(pivot, (x) => x.state.rowOrder === 'key_a_to_z' && g5CellsMatch(x, counts), 'rows by key again');
       expect(p.rowKeys, 'back to A→Z').toEqual(g5Statuses);
       // − sorting the rows leaves the columns where they were, and the numbers alone.
       expect(p.colKeys).toEqual(g5Channels);
@@ -4057,10 +4062,10 @@ test('(canvas mechanics) M54 Published pivot: renderer, aggregator, value field 
       // + the column sort is its own cycle.
       const channelTotals = g5Totals('channel');
       await page.locator('[id$="btnPivotColOrder"]').click();
-      p = await cWaitPivot(pivot, (x) => x.state.colOrder === 'value_a_to_z', 'columns by value, ascending');
+      p = await cWaitPivot(pivot, (x) => x.state.colOrder === 'value_a_to_z' && g5CellsMatch(x, counts), 'columns by value, ascending');
       expect(g5NonDecreasing(p.colKeys, channelTotals), `columns ordered by their order count: ${p.colKeys}`).toBe(true);
       await page.locator('[id$="btnPivotColOrder"]').click();
-      p = await cWaitPivot(pivot, (x) => x.state.colOrder === 'value_z_to_a', 'columns by value, descending');
+      p = await cWaitPivot(pivot, (x) => x.state.colOrder === 'value_z_to_a' && g5CellsMatch(x, counts), 'columns by value, descending');
       expect(g5NonDecreasing(p.colKeys, channelTotals, true), `columns descending: ${p.colKeys}`).toBe(true);
       // − and the rows stayed A→Z while the columns moved.
       expect(p.rowKeys).toEqual(g5Statuses);
