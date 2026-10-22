@@ -6,12 +6,17 @@
 # What survives what: the tests run on the VM as a scheduled task, so they outlive anything on this side.
 # The driver started here (a setsid process, not tied to the SSH session) is what collects the verdict;
 # closing Jenkins, the browser or the SSH session leaves it running. A reboot of this host kills the
-# driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` shows what the VM did.
+# driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` (or `docker-e2e`) shows what the VM did.
 #
-#   E2E_SPEC / E2E_GREP / E2E_ROTATION_DATE  passed on to dp-ci.sh win e2e (both filters empty = full suite)
+#   bash win-e2e.sh [e2e|docker-e2e]         which lane: e2e (default) = electron-windows-vm, docker-e2e = docker-windows-vm
+#   E2E_SPEC / E2E_GREP / E2E_ROTATION_DATE  passed on to dp-ci.sh win <lane> (both filters empty = its default set)
 set -uo pipefail
 
+LANE="${1:-e2e}"
+case "$LANE" in e2e|docker-e2e) ;; *) echo "FAIL  lane must be e2e or docker-e2e (got '$LANE')"; exit 2 ;; esac
+
 LOG_DIR="${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}"
+# one pid file for both lanes: they share the VM's desktop, its port 9090 and its Docker Desktop
 PIDFILE="$LOG_DIR/win-e2e.pid"
 mkdir -p "$LOG_DIR"
 
@@ -20,19 +25,19 @@ if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; the
   exit 1
 fi
 
-LOG="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ)-win-e2e-$(git rev-parse --short HEAD).log"
+LOG="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ)-win-$LANE-$(git rev-parse --short HEAD).log"
 : > "$LOG"
 ln -sfn "$LOG" "$LOG_DIR/win-e2e-latest.log"
 
 # The driver. Its own step log is kept apart (WIN_E2E_LOG): everything it prints already lands in $LOG.
 WIN_E2E_LOG="${LOG%.log}-step.log" setsid nohup bash -c '
   echo $$ > "$0"
-  bash asbl/ci/dp-ci.sh win e2e; rc=$?
+  bash asbl/ci/dp-ci.sh win "$1"; rc=$?
   if [ "$rc" -eq 0 ]; then echo "PIPELINE_RESULT=SUCCESS  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   else echo "PIPELINE_RESULT=FAILED_EXIT_$rc  $(date -u +%Y-%m-%dT%H:%M:%SZ)"; fi
   rm -f "$0"
-' "$PIDFILE" >> "$LOG" 2>&1 < /dev/null &
+' "$PIDFILE" "$LANE" >> "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [ -s "$PIDFILE" ] && break; sleep 0.5; done
 
-echo "started the Windows e2e driver, pid $(cat "$PIDFILE" 2>/dev/null)"
+echo "started the Windows $LANE driver, pid $(cat "$PIDFILE" 2>/dev/null)"
 echo "log:     $LOG   (also $LOG_DIR/win-e2e-latest.log)"

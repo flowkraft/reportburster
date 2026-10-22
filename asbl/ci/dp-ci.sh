@@ -89,6 +89,11 @@
 #                                   intact. `ssh` goes through cmd.exe (quote-free commands only);
 #                                   `ps` ships a PowerShell script from stdin as -EncodedCommand, so
 #                                   nothing in it ever needs escaping. Use `ps` for anything real.
+#   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e
+#                                   The two Windows e2e targets (Jenkins dp-ci-e2e-release, launched by jenkins/win-e2e.sh):
+#                                   electron-windows-vm = the desktop app on the VM; docker-windows-vm = DataPallas Server in the
+#                                   VM's Docker Desktop, from datapallas-server-docker.zip as the self-host page installs it, with
+#                                   the image `build` made from the VM's commit; by default a light set of five spec files.
 #
 # The launcher returns within seconds. The work runs in a detached container named dp-ci, owned by
 # the Docker daemon, so closing SSH / Code Server / the browser has no effect on it. It builds IN
@@ -743,8 +748,74 @@ PS
   echo "WIN_E2E_PACKAGE=built ($vm)"
 }
 
+# Docker Desktop is a hard prerequisite of both Windows lanes, not an optional extra: every containerised
+# app the specs start (analytics-olap, apps-ai-hub, apps-cms-wordpress, apps-custom and the
+# grails/nextjs family) goes through e2e/helpers/docker-test-helper.ts. With the daemon down they
+# do NOT fail fast - each one walks into "Please start Docker before - Docker is NEEDED to run
+# this", gets retried, and the run carries on for hours collecting failures that mean nothing.
+# The 2026-09-21 full run lost its first 2h19m and ~20 tests that way (plan 6.18). Five seconds
+# of asking the VM, before the testground is touched, is the whole fix. Docker Desktop does not start
+# by itself after a VM restart.
+win_docker_ok() {
+  local dockerv
+  dockerv=$(win_ssh 'docker info --format "{{.ServerVersion}}"' 2>&1 | tr -d '\r' | tail -1)
+  case "$dockerv" in
+    ''|*[Ee]rror*|*'cannot connect'*|*'not running'*|*'dockerDesktopLinuxEngine'*)
+      echo "FAIL  Docker Desktop is not running on the VM - the e2e suite needs it." >&2
+      echo "      docker info said: ${dockerv:-<no output>}" >&2
+      echo "      Start it in the VM's desktop session, wait until 'docker info' answers, re-run." >&2
+      return 2 ;;
+  esac
+  echo "WIN_E2E_DOCKER=$dockerv"
+}
+
+# A build killed at its cap (win_run_stop only ends the step's process tree) leaves the app stacks its tests
+# started running, and Docker Desktop's bind mounts keep their files open: after the killed run-all C #29,
+# nine flowkraft-ai-hub-* containers held testground\e2e\_apps\...\synapse\homeserver.log, and #30's
+# clean-testground retried for 20+ minutes until they were stopped by hand. Linux unlinks open files, and
+# its docker-server lane takes its stacks down itself. Only compose projects whose working directory is
+# inside this checkout's testground are touched, and without -v.
+# win_stacks_down server   also takes down, with -v, what the Docker server started through docker.sock: compose
+# records the working dir the server passed, which is the container's own /app or the bundle's folder in
+# whatever form Docker Desktop shows it to the container (the same rule as docker_server_down on Linux).
+win_stacks_down() {
+  local server=0
+  [ "${1:-}" = server ] && server=1
+  win_ps 2>&1 <<PS | tr -d '\r'
+\$ErrorActionPreference = "Continue"
+\$testground = '$WIN_REPO\\frend\\reporting\\testground\\'
+\$server = $server
+\$projects = @{}
+foreach (\$id in (& docker ps -aq)) {
+  # PowerShell 5.1 strips the quotes of {{.Label "..."}}, so the labels are read as JSON.
+  \$labels = (& docker inspect \$id --format '{{json .Config.Labels}}') | ConvertFrom-Json
+  \$dir = \$labels.'com.docker.compose.project.working_dir'
+  \$project = \$labels.'com.docker.compose.project'
+  if (-not (\$project -and \$dir)) { continue }
+  if (\$dir.StartsWith(\$testground, [StringComparison]::OrdinalIgnoreCase)) { \$projects[\$project] = '' }
+  elseif (\$server -and (\$dir -match '^/app(/|\$)' -or (\$dir -replace '\\\\', '/') -match '/frend/reporting/testground/docker-server/')) { \$projects[\$project] = '-v' }
+}
+foreach (\$project in \$projects.Keys) {
+  if (\$projects[\$project]) { & docker compose -p \$project down -v --remove-orphans 2>&1 | Out-Null }
+  else { & docker compose -p \$project down --remove-orphans 2>&1 | Out-Null }
+  "WIN_E2E_LEFTOVER_STACK=\$project taken down"
+}
+PS
+}
+
+# Playwright workers that are killed leave their playwright-artifacts-* folders in %TEMP% behind: on 2026-10-20
+# there were 398 of them, 30.85 GB, with 12.9 GB free on C:. Each run makes its own new ones.
+win_temp_clean() {
+  win_ps 2>&1 <<'PS' | tr -d '\r'
+$left = @(Get-ChildItem -Path $env:TEMP -Directory -Filter 'playwright-artifacts-*' -ErrorAction SilentlyContinue)
+$left | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+$freed = @($left | Where-Object { -not (Test-Path -LiteralPath $_.FullName) }).Count
+"WIN_E2E_TEMP_FREED=$freed folders"
+PS
+}
+
 win_e2e() {
-  local mode=targeted out code retries spec gexp dockerv
+  local mode=targeted out code retries spec gexp
   [ -n "${WIN_REPO:-}" ] || {
     echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
     return 2
@@ -766,54 +837,9 @@ win_e2e() {
   # still collects every failure instead of stopping at the first flake (plan W7).
   if [ "$mode" = full ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
 
-  # Docker Desktop is a hard prerequisite of this suite, not an optional extra: every containerised
-  # app the specs start (analytics-olap, apps-ai-hub, apps-cms-wordpress, apps-custom and the
-  # grails/nextjs family) goes through e2e/helpers/docker-test-helper.ts. With the daemon down they
-  # do NOT fail fast - each one walks into "Please start Docker before - Docker is NEEDED to run
-  # this", gets retried, and the run carries on for hours collecting failures that mean nothing.
-  # The 2026-09-21 full run lost its first 2h19m and ~20 tests that way (plan 6.18). Five seconds
-  # of asking the VM, before the testground is touched, is the whole fix.
-  dockerv=$(win_ssh 'docker info --format "{{.ServerVersion}}"' 2>&1 | tr -d '\r' | tail -1)
-  case "$dockerv" in
-    ''|*[Ee]rror*|*'cannot connect'*|*'not running'*|*'dockerDesktopLinuxEngine'*)
-      echo "FAIL  Docker Desktop is not running on the VM - the e2e suite needs it." >&2
-      echo "      docker info said: ${dockerv:-<no output>}" >&2
-      echo "      Start it in the VM's desktop session, wait until 'docker info' answers, re-run." >&2
-      return 2 ;;
-  esac
-  echo "WIN_E2E_DOCKER=$dockerv"
-
-  # A build killed at its cap (win_run_stop only ends the step's process tree) leaves the app stacks its tests
-  # started running, and Docker Desktop's bind mounts keep their files open: after the killed run-all C #29,
-  # nine flowkraft-ai-hub-* containers held testground\e2e\_apps\...\synapse\homeserver.log, and #30's
-  # clean-testground retried for 20+ minutes until they were stopped by hand. Linux unlinks open files, and
-  # its docker-server lane takes its stacks down itself. Only compose projects whose working directory is
-  # inside this checkout's testground are touched, and without -v.
-  win_ps 2>&1 <<PS | tr -d '\r'
-\$ErrorActionPreference = "Continue"
-\$testground = '$WIN_REPO\\frend\\reporting\\testground\\'
-\$projects = @{}
-foreach (\$id in (& docker ps -aq)) {
-  # PowerShell 5.1 strips the quotes of {{.Label "..."}}, so the labels are read as JSON.
-  \$labels = (& docker inspect \$id --format '{{json .Config.Labels}}') | ConvertFrom-Json
-  \$dir = \$labels.'com.docker.compose.project.working_dir'
-  \$project = \$labels.'com.docker.compose.project'
-  if (\$project -and \$dir -and \$dir.StartsWith(\$testground, [StringComparison]::OrdinalIgnoreCase)) { \$projects[\$project] = \$dir }
-}
-foreach (\$project in \$projects.Keys) {
-  & docker compose -p \$project down --remove-orphans 2>&1 | Out-Null
-  "WIN_E2E_LEFTOVER_STACK=\$project taken down"
-}
-PS
-
-  # Playwright workers that are killed leave their playwright-artifacts-* folders in %TEMP% behind: on 2026-10-20
-  # there were 398 of them, 30.85 GB, with 12.9 GB free on C:. Each run makes its own new ones.
-  win_ps 2>&1 <<'PS' | tr -d '\r'
-$left = @(Get-ChildItem -Path $env:TEMP -Directory -Filter 'playwright-artifacts-*' -ErrorAction SilentlyContinue)
-$left | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-$freed = @($left | Where-Object { -not (Test-Path -LiteralPath $_.FullName) }).Count
-"WIN_E2E_TEMP_FREED=$freed folders"
-PS
+  win_docker_ok || return 2
+  win_stacks_down
+  win_temp_clean
 
   out="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-e2e-$(date -u +%Y%m%dT%H%M%SZ).log}"
   mkdir -p "$(dirname "$out")" 2>/dev/null
@@ -905,6 +931,204 @@ PS
     "passed=$(e2e_count passed "$out") failed=$(e2e_count failed "$out") flaky=$(e2e_count flaky "$out")" \
     "skipped=$(e2e_count skipped "$out") didnotrun=$(e2e_count "did not run" "$out") exit=${code:-none}"
   [ "$code" = "0" ]
+}
+
+# Target docker-windows-vm: DataPallas Server in Docker on Windows, installed the way a Windows user installs it
+# (https://datapallas.com/docs/server/self-host, "Install"): datapallas-server-docker.zip - DockerAssembler's
+# output, as `dp-ci.sh build` left it in asbl/dist - extracted, `cd DataPallas`, `docker compose up -d` under the
+# VM's Docker Desktop, then http://localhost:9090 in a browser on the VM's desktop, signed in as burst.
+# The one step that cannot be the user's: their compose pulls the released image from Docker Hub, and an unreleased
+# build is not there. So the image `dp-ci.sh build` made from the commit under test is copied to the VM (docker save
+# / load) and given the version tag the bundle's compose names; the compose file is not touched, and the run aborts
+# unless the container runs exactly that image (the same rule as the Linux docker-server lane).
+#
+# What the container runs is the Linux image the docker-server lane already tests on Linux, every spec. What only
+# this lane tests is where it meets Windows: the bundle's folders bind-mounted from NTFS, the server starting apps
+# through Docker Desktop's docker.sock with Windows host paths, the published port. So by default it runs a light set
+# chosen for that, which the owner agreed to on 2026-10-22:
+#   quick-start                      samples/ in, output/ and logs/ out: the core burst
+#   configuration                    settings saved into config/
+#   log-files-viewer-separate-tabs   logs/ read back in the UI
+#   cubes-definitions                the sample databases in db/
+#   apps-ai-hub                      an app the server starts through docker.sock
+# E2E_SPEC / E2E_GREP replace the set (retries 0 then, like every targeted run).
+# Unlike Linux, the images compose builds for the apps are kept between runs: the AI Hub's take hours to build on
+# the VM, and what is in them is the Linux docker-server lane's to prove; starting them from Windows is this one's.
+# The specs run from the VM's checkout and the node_modules already in it, as the Electron lane's do.
+WIN_DOCKER_LIGHT_SPEC='[\\/](features[\\/]quick-start|areas[\\/]configuration|components[\\/]log-files-viewer-separate-tabs|areas[\\/]cubes-definitions|features[\\/]apps-ai-hub)\.spec\.ts$'
+
+win_docker_e2e() {
+  local mode=targeted out code retries spec gexp vm f tag tagsha version image_id vm_id running_id tmp key
+  local zip="$REPO/asbl/dist/datapallas-server-docker.zip" step=docker-e2e
+  local root="$WIN_REPO\\frend\\reporting\\testground\\docker-server"
+  local bundle="$root\\DataPallas"
+  [ -n "${WIN_REPO:-}" ] || {
+    echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
+    return 2
+  }
+  win_sync_repo || return $?
+  vm=$(win_ssh "git -C $WIN_REPO rev-parse --short HEAD" 2>/dev/null | tr -d '\r' | tail -1)
+  [ -n "$vm" ] || { echo "FAIL  could not read the VM's commit" >&2; return 2; }
+
+  # The image and the bundle of the newest successful build, which must be the VM's commit (the tag is <version>-<commit>).
+  for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
+    grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
+    tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
+    [ -n "$tag" ] && { echo "docker-windows-vm: image of the newest successful build $(basename "$f") -> $tag"; break; }
+  done
+  [ -n "${tag:-}" ] || { echo "FAIL  no successful build log with an IMAGE_TAG line - run job dp-ci-package first" >&2; return 2; }
+  tagsha="${tag#*-}"
+  # two git versions may abbreviate the same commit to different lengths
+  [ "${vm#"$tagsha"}" != "$vm" ] || [ "${tagsha#"$vm"}" != "$tagsha" ] ||
+    { echo "FAIL  the image was built from '$tagsha', the VM tests '$vm' - run job dp-ci-package on that commit first" >&2; return 2; }
+  image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
+    { echo "FAIL  image $SERVER_IMAGE_REPO:$tag is not on this host - run job dp-ci-package first" >&2; return 2; }
+  [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-package first" >&2; return 2; }
+  version=$(printf '%s' "$tag" | cut -d- -f1)
+
+  spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
+  if [ -z "$spec" ] && [ -z "$gexp" ]; then mode=light; spec="$WIN_DOCKER_LIGHT_SPEC"; fi
+  if [ "$mode" = light ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
+
+  win_docker_ok || return 2
+  # the previous run's bundle, and anything its server started, before its folder is replaced
+  win_stacks_down server
+  win_temp_clean
+
+  # The image, once per commit: about 2 GB, so it is copied only when the VM does not have this tag yet.
+  vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
+  case "$vm_id" in
+    sha256:*) echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag already on the VM" ;;
+    *)
+      echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag copying to the VM (docker save, scp, docker load)"
+      tmp=$(mktemp --suffix=.tar.gz) || return 1
+      docker save "$SERVER_IMAGE_REPO:$tag" | gzip -1 > "$tmp" || { rm -f "$tmp"; echo "FAIL  docker save failed" >&2; return 1; }
+      win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
+      win_scp "$tmp" C:/dp-ci/tmp/datapallas-server-image.tar.gz || { rm -f "$tmp"; echo "FAIL  could not copy the image to the VM" >&2; return 1; }
+      rm -f "$tmp"
+      win_ssh "docker load -q -i C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" 2>&1 | tr -d '\r'
+      win_ssh "del /q C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" >/dev/null 2>&1
+      vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
+      case "$vm_id" in sha256:*) ;; *) echo "FAIL  the image did not load on the VM" >&2; return 1 ;; esac ;;
+  esac
+
+  # The bundle, as the user gets it: the zip extracted, nothing changed in it.
+  win_scp "$zip" C:/dp-ci/tmp/datapallas-server-docker.zip || { echo "FAIL  could not copy the bundle to the VM" >&2; return 1; }
+  win_ps 2>&1 <<PS | tr -d '\r' || return 1
+\$ErrorActionPreference = "Continue"
+\$repo = '$SERVER_IMAGE_REPO'; \$tag = '$tag'; \$version = '$version'
+\$root = '$root'
+# older builds' images: 2 GB each, on a disk that has run out before
+foreach (\$t in (& docker images \$repo --format '{{.Tag}}')) {
+  if (\$t -ne \$tag -and \$t -ne \$version) { & docker rmi "\${repo}:\$t" 2>&1 | Out-Null; "removed the old image \${repo}:\$t" }
+}
+# the name the bundle's compose pins
+& docker tag "\${repo}:\$tag" "\${repo}:\$version"
+if (\$LASTEXITCODE -ne 0) { "FAIL  docker tag failed"; exit 1 }
+if (Test-Path \$root) { Remove-Item -Recurse -Force \$root }
+if (Test-Path \$root) { "FAIL  could not remove the previous bundle (a file in it is still open)"; exit 1 }
+New-Item -ItemType Directory -Force \$root | Out-Null
+& tar.exe -xf 'C:\\dp-ci\\tmp\\datapallas-server-docker.zip' -C \$root
+\$rc = \$LASTEXITCODE
+Remove-Item 'C:\\dp-ci\\tmp\\datapallas-server-docker.zip' -ErrorAction SilentlyContinue
+if (\$rc -ne 0 -or -not (Test-Path "\$root\\DataPallas\\docker-compose.yml")) { "FAIL  could not extract the bundle"; exit 1 }
+"WIN_DOCKER_BUNDLE=extracted"
+PS
+
+  # "cd DataPallas" and "docker compose up -d", as the page says; then the page's http://localhost:9090.
+  win_ps 2>&1 <<PS | tr -d '\r' || { win_docker_down "$bundle"; return 1; }
+\$ErrorActionPreference = "Continue"
+Set-Location '$bundle'
+& docker compose up -d 2>&1 | ForEach-Object { "compose: \$_" }
+if (\$LASTEXITCODE -ne 0) { "FAIL  docker compose up -d failed"; exit 1 }
+# 10 minutes, twice Linux's: the VM runs Docker Desktop nested
+for (\$i = 0; \$i -lt 120; \$i++) {
+  try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 'http://localhost:9090' | Out-Null; "WIN_DOCKER_SERVER=answering"; exit 0 } catch { Start-Sleep 5 }
+}
+"FAIL  http://localhost:9090 did not answer within 10 minutes"; exit 1
+PS
+
+  running_id=$(win_ssh "docker inspect datapallas-server --format {{.Image}}" 2>/dev/null | tr -d '\r' | tail -1)
+  [ "$running_id" = "$vm_id" ] ||
+    { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$bundle"; return 1; }
+  echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
+
+  out="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-docker-e2e-$(date -u +%Y%m%dT%H%M%SZ).log}"
+  mkdir -p "$(dirname "$out")" 2>/dev/null
+  # the reports of an earlier run must not be pulled as this one's
+  win_ps >/dev/null 2>&1 <<PS
+Remove-Item -Recurse -Force '$WIN_RUNS\\$step\\playwright.json', '$WIN_RUNS\\$step\\playwright.xml', '$WIN_RUNS\\$step\\playwright-html' -ErrorAction SilentlyContinue
+PS
+
+  # The Linux docker-server lane's environment (no gulp: the server under test is the container, and the tests read
+  # and write the bundle folder it bind-mounts), with the Windows lane's caps. The licence key is the one the dev
+  # chain's npm script passes, read from package.json like the Linux lane does.
+  key=$(grep -aoE 'TEST_LICENSE_KEY=[0-9a-f]+' "$REPO/frend/reporting/package.json" | head -1 | cut -d= -f2)
+  [ -n "$key" ] || { echo "FAIL  TEST_LICENSE_KEY not found in frend/reporting/package.json" >&2; win_docker_down "$bundle"; return 1; }
+  WIN_RUN_ENV=$(printf '%s\n' \
+    "TEST_ENV=web" \
+    "RUNNING_IN_E2E=true" \
+    "TEST_LICENSE_KEY=$key" \
+    "E2E_BASE_URL=http://localhost:9090" \
+    "PORTABLE_EXECUTABLE_DIR=$bundle" \
+    "E2E_DOCKER_SERVER=datapallas-server" \
+    "E2E_SPEC=$spec" \
+    "E2E_GREP=$gexp" \
+    "E2E_RETRIES=$retries" \
+    "E2E_REPEAT_EACH=${E2E_REPEAT_EACH:-1}" \
+    "E2E_SLOW_MO=${E2E_SLOW_MO:-0}" \
+    "E2E_MAX_WAIT_MS=${E2E_MAX_WAIT_MS:-2400000}" \
+    "E2E_MAX_TEST_MS=${E2E_MAX_TEST_MS:-5400000}" \
+    "E2E_ACTION_TIMEOUT_MS=${E2E_ACTION_TIMEOUT_MS:-300000}" \
+    "E2E_CLEAN_STATE_ATTEMPTS=${E2E_CLEAN_STATE_ATTEMPTS:-60}" \
+    "E2E_FAILFAST=${E2E_FAILFAST:-1}" \
+    "E2E_START_EVIDENCE_MS=${E2E_START_EVIDENCE_MS:-300000}" \
+    "E2E_STALL_MS=${E2E_STALL_MS:-600000}" \
+    "E2E_ROTATION_DATE=${E2E_ROTATION_DATE:-$(date -u +%F)}" \
+    "E2E_LICENSE_INSTANCE_ID=${E2E_LICENSE_INSTANCE_ID:-dp-ci-win-e2e}" \
+    "E2E_JSON_REPORT=$WIN_RUNS\\$step\\playwright.json")
+  export WIN_RUN_ENV
+
+  echo "WIN_E2E_MODE=$mode  target=docker-windows-vm  spec='$spec'  grep='$gexp'  retries=$retries"
+  echo "WIN_E2E_LOG=$out"
+  WIN_RUN_WATCH="${WIN_RUN_WATCH:-$bundle\\logs\\info.log}"
+  WIN_RUN_TIMEOUT="${WIN_RUN_TIMEOUT:-10800}"
+  WIN_RUN_STALL="${WIN_RUN_STALL:-4800}"
+  export WIN_RUN_WATCH WIN_RUN_TIMEOUT WIN_RUN_STALL
+
+  # Playwright runs in the foreground of the step, so the step prints its exit code in the line the Linux lanes parse
+  # (`call echo %%ERRORLEVEL%%` reads it after npx has finished, not when the line is read).
+  win_run "$step" "$WIN_REPO\\frend\\reporting" \
+    'npx playwright test -c e2e/playwright.config.ts e2e/ & call echo Main Playwright process exited with code %%ERRORLEVEL%%' 2>&1 | tee "$out"
+
+  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.json" | tr '\\' '/')" "${out%.log}-playwright.json" \
+    2>/dev/null && echo "WIN_E2E_REPORT=${out%.log}-playwright.json"
+  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.xml" | tr '\\' '/')" "${out%.log}-playwright.xml" 2>/dev/null
+  WIN_SCP_EXTRA=-r win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright-html" | tr '\\' '/')" "${out%.log}-playwright-html" 2>/dev/null
+  # the server's whole log of the run: clean state empties the bundle's logs between tests
+  win_ssh "docker logs datapallas-server" > "${out%.log}-datapallas-server.log" 2>&1 &&
+    echo "DOCKER_SERVER_LOG=${out%.log}-datapallas-server.log"
+  win_docker_down "$bundle"
+
+  code=$(grep -aoE "Main Playwright process exited with code [0-9]+" "$out" | tail -1 | grep -oE "[0-9]+$")
+  echo "--- Playwright result ---"
+  grep -aoE "[0-9]+ (passed|failed|flaky|skipped|did not run|interrupted)( \([^)]*\))?" "$out" | tail -6
+  echo "WIN_E2E_RESULT mode=$mode target=docker-windows-vm spec='$spec' grep='$gexp'" \
+    "passed=$(e2e_count passed "$out") failed=$(e2e_count failed "$out") flaky=$(e2e_count flaky "$out")" \
+    "skipped=$(e2e_count skipped "$out") didnotrun=$(e2e_count "did not run" "$out") exit=${code:-none}"
+  [ "$code" = "0" ]
+}
+
+# Stops the bundle (the page's "docker compose down") and what its server started; keeps the folder, which is the
+# evidence of the run (config, logs, output), until the next run replaces it.
+win_docker_down() {
+  echo "--- datapallas-server container log (last 300 lines) ---"
+  win_ssh "docker logs --tail 300 datapallas-server" 2>&1 | tr -d '\r' | sed 's/^/datapallas-server: /'
+  win_ps 2>&1 <<PS | tr -d '\r'
+Set-Location '$1' -ErrorAction SilentlyContinue
+if (\$?) { & docker compose down 2>&1 | Out-Null; "WIN_DOCKER_SERVER=stopped" }
+PS
+  win_stacks_down server
 }
 
 # W1 "done when": the VM answers, and no firewall window was needed to make it answer.
@@ -2063,7 +2287,7 @@ fi
 case "$TASK" in
   build|e2e|junit|quality|dev|win|publish-demo-bkstg|publish-demo-datapallas.com) ;;
   # release: reserved for the real software release (plan §3 O7)
-  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
+  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
 esac
 
 # The Windows lane runs here on the host, before any container exists: it only talks to the VM over
@@ -2078,6 +2302,7 @@ if [ "$TASK" = "win" ]; then
     poll)  shift 2; win_run_poll "$@"; exit $? ;;
     stop)  shift 2; win_run_stop "$@"; exit $? ;;
     e2e)   shift 2; win_e2e "$@"; exit $? ;;
+    docker-e2e) win_docker_e2e; exit $? ;;
     sync)  win_sync_repo; exit $? ;;
     prepare) win_sync_repo && win_prepare_package; exit $? ;;
     *)     echo "usage: $0 win check | $0 win ssh <words...> | $0 win ps < script.ps1"
@@ -2085,7 +2310,8 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win poll <step> [offset] | $0 win stop <step>"
            echo "       $0 win sync         (fast-forward the VM's checkout to origin/main; win e2e does this first)"
            echo "       $0 win prepare      (sync, then rebuild the VM's package when it is not from the VM's commit; win e2e does this too)"
-           echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"; exit 2 ;;
+           echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
+           echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"; exit 2 ;;
   esac
 fi
 PUBLISH_FLAGS=""
