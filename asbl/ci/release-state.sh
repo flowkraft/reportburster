@@ -15,15 +15,21 @@
 #   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
 #   bash asbl/ci/release-state.sh show [<commit>]                                the table of one commit
 #   bash asbl/ci/release-state.sh rehearsed docker|windows <version>             the newest PASSED rehearsal of that version on that
-#                                                                                channel, on whichever commit: "REHEARSED <commit> <time>";
-#                                                                                exit 1 ("NOT REHEARSED ...") when there is none
+#                                                                                channel, on whichever commit, whose files were not
+#                                                                                deleted: "REHEARSED <commit> <time>"; exit 1
+#                                                                                ("NOT REHEARSED ...") when there is none
+#   bash asbl/ci/release-state.sh removed docker|windows <folder>                the files of the rehearsal in <folder>
+#                                                                                (rehearsal/<version>-<commit>/) were deleted
+#                                                                                (release-publish.sh's cleanup): its verdicts get
+#                                                                                removed=<time>, the rest of them stays (digest=)
 #   bash asbl/ci/release-state.sh version-check [docker|windows] [--print]       is there a version to release on that channel
 #                                                                                (below; docker when not given)
-#   bash asbl/ci/release-state.sh released                                       the released version of each channel, read as
+#   bash asbl/ci/release-state.sh released [docker|windows]                      the released version of each channel, read as
 #                                                                                version-check reads it, and the current release (the
 #                                                                                higher one): "RELEASED current=<v> docker=<v> windows=<v>";
 #                                                                                exit 2 when a channel cannot be read (step 0,
-#                                                                                asbl/ci/jenkins/release-set-version.sh)
+#                                                                                asbl/ci/jenkins/release-set-version.sh); with a
+#                                                                                channel only that one: "RELEASED <channel>=<v>"
 #
 # The commit is RELEASE_COMMIT when set (any form git knows: full, short), else this checkout's HEAD; folders use the full
 # hash. A verdict is the file <RELEASE_STATE_DIR>/<commit>/<name>, key=value lines: result, version (settings.xml of
@@ -268,7 +274,7 @@ case "$cmd" in
     case "$ch" in docker|windows) ;; *) echo "usage: $0 rehearsed docker|windows <version>"; exit 2 ;; esac
     best=""; best_time=""; red=0
     for f in "$RELEASE_STATE_DIR"/*/rehearsal."$ch"; do
-      [ -f "$f" ] && [ "$(field "$f" version)" = "$v" ] || continue
+      [ -f "$f" ] && [ "$(field "$f" version)" = "$v" ] && [ -z "$(field "$f" removed)" ] || continue
       if [ "$(field "$f" result)" = PASS ]; then
         t=$(field "$f" time)
         [[ "$t" > "$best_time" ]] && { best_time="$t"; best=$(field "$f" commit); }
@@ -279,6 +285,17 @@ case "$cmd" in
     [ -n "$best" ] && { echo "REHEARSED $best $best_time"; exit 0; }
     echo "NOT REHEARSED: no passed rehearsal of $v on the $ch channel ($red red)"
     exit 1
+    ;;
+  removed)
+    ch="${1:-}"; folder="${2:-}"; base="${folder#rehearsal/}"; base="${base%/}"
+    case "$ch" in docker|windows) ;; *) echo "usage: $0 removed docker|windows rehearsal/<version>-<commit>/"; exit 2 ;; esac
+    printf '%s' "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-[0-9a-f]{8}$' || { echo "FAIL  removed: '$folder' is not rehearsal/<version>-<commit>/"; exit 2; }
+    v="${base%-*}"; c8="${base##*-}"; n=0
+    for f in "$RELEASE_STATE_DIR/$c8"*/rehearsal."$ch" "$RELEASE_STATE_DIR/$c8"*/rehearsal."$ch"-*; do
+      [ -f "$f" ] && [ "$(field "$f" version)" = "$v" ] && [ -z "$(field "$f" removed)" ] || continue
+      echo "removed=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$f" && n=$((n + 1))
+    done
+    echo "RELEASE_STATE removed: $folder ($ch), $n verdict(s) marked"
     ;;
   get)
     f="$dir/${1:-}"; [ -n "${2:-}" ] || { echo "usage: $0 get <name> <key>"; exit 2; }
@@ -301,6 +318,12 @@ case "$cmd" in
     echo "step 1 for a release: complete"
     ;;
   released)
+    case "${1:-}" in
+      docker|windows) r=$(released_version "$1") || { echo "CANNOT CHECK  $(channel_source "$1") did not answer"; exit 2; }
+                      echo "RELEASED $1=${r:-none}"; exit 0 ;;
+      "") ;;
+      *) echo "usage: $0 released [docker|windows]"; exit 2 ;;
+    esac
     d=$(released_docker) || { echo "CANNOT CHECK  $(channel_source docker) did not answer"; exit 2; }
     w=$(released_windows) || { echo "CANNOT CHECK  $(channel_source windows) did not answer"; exit 2; }
     echo "RELEASED current=$(printf '%s\n' $d $w | sort -V | tail -1) docker=${d:-none} windows=$w"
@@ -325,5 +348,5 @@ case "$cmd" in
     version_check "$ch"
     ;;
   *)
-    sed -n '2,59p' "$0"; exit 2 ;;
+    sed -n '2,65p' "$0"; exit 2 ;;
 esac

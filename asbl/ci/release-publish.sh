@@ -10,7 +10,8 @@
 #       <log>-step-release-files.txt: 'commit', 'version' and 'sha256' lines; a line with a note after the name is not
 #       staged), taken from <dir>: each checked against its sha256, uploaded to backblaze:datapallas/rehearsal/<version>-<commit>/,
 #       downloaded back from downloads.datapallas.com and checked again. Records rehearsal.windows (PASS with rehearsal= and
-#       sha256=, or FAIL with reason=). Nothing outside rehearsal/ is written.
+#       sha256=, or FAIL with reason=). Nothing outside rehearsal/ is written. Before it uploads, the Windows files an earlier
+#       rehearsal left anywhere under rehearsal/ are deleted (the cleanup, below).
 #
 #   bash asbl/ci/release-publish.sh stage-docker
 #       The Docker rehearsal's upload (job dp-ci-release-step2-release-docker), built once on this host: this checkout on
@@ -20,19 +21,24 @@
 #       logged in with a throwaway DOCKER_CONFIG, so this host's own docker login is never touched) and the registry's
 #       digest read back; then asbl/dist/datapallas-server-docker.zip, the zip whose compose pins that tag, uploaded to
 #       rehearsal/<version>-<commit>/ and checked by download. Records rehearsal.docker-stage (digest=, which version-check
-#       accepts as staged by a rehearsal, rehearsal=, sha256=). Exit 3 = nothing to release (nothing pushed).
+#       accepts as staged by a rehearsal, rehearsal=, sha256=). Exit 3 = nothing to release (nothing pushed). Before it
+#       pushes, the docker zips an earlier rehearsal left anywhere under rehearsal/ are deleted (the cleanup, below).
 #
 #   DRY_RUN=no|yes  bash asbl/ci/release-publish.sh publish docker|windows <version> <commit>
 #       MODE=public's copy, minutes, parts marked PUBLIC STEP n/N: the version gate of the channel (nothing to release:
 #       green, nothing done), the passed rehearsal of <version> on <commit> (rehearsal.<channel>; its folder
-#       rehearsal/<version>-<commit>/), each of its files downloaded and checked against the sha256 that was tested, and for
-#       docker the registry's :<version> still the rehearsed digest. Then the files copied server side to newest/ and to
-#       <version>/ (the archive), each newest/ file checked by download, the Cloudflare cache of those links purged; docker:
-#       :latest pointed at :<version> (no pull, no push of layers) and checked; then newest/<channel>-version.txt
-#       (version, commit, sha256s) written, checked and purged, and public.<channel> recorded. A failure before anything
-#       public changes records nothing (run it again once fixed); :latest moved to anything but the rehearsed digest records
-#       public.docker FAIL, and version-check then refuses until a person looks. DRY_RUN=yes: the checks (no download),
-#       then what each part would do.
+#       rehearsal/<version>-<commit>/, not removed), each of its files downloaded and checked against the sha256 that was
+#       tested, and for docker the registry's :<version> still the rehearsed digest. Then the outgoing release archived: each
+#       file of the channel in newest/ that the folder of the channel's released version lacks (release-state.sh released
+#       <channel>) copied there server side and checked by download, so the hand-made 16.5.0 gets its 16.5.0/ at the first
+#       public release of each channel. Then the files copied server side to newest/ and to <version>/ (the archive), each
+#       newest/ file checked by download, the Cloudflare cache of those links purged; docker: :latest pointed at :<version>
+#       (no pull, no push of layers) and checked; then newest/<channel>-version.txt (version, commit, sha256s) written,
+#       checked and purged, public.<channel> recorded, and the copied rehearsal's files deleted (the cleanup, below; a failed
+#       delete is a WARN line, the release is public all the same). A failure before anything public changes records nothing
+#       (run it again once fixed); :latest moved to anything but the rehearsed digest records public.docker FAIL, and
+#       version-check then refuses until a person looks. DRY_RUN=yes: the checks (no download), then what each part would
+#       do (archive, copy, delete): nothing archived, copied or deleted.
 #
 #   DRY_RUN=no|yes  bash asbl/ci/release-publish.sh preflight docker|files [public] [copy]
 #       What a release job needs, checked within seconds before anything slow (the jobs run it right after the version
@@ -41,12 +47,21 @@
 #       PREREQUISITES OK, exit 0, or PREREQUISITES MISSING (<n>): ..., exit 1. Names only, never a value of the file.
 #       Both: rclone, curl and sha256sum; the credentials file (present, root's, mode 600; not read otherwise);
 #       RCLONE_CONFIG with the remote RELEASE_RCLONE_REMOTE names; the key can write (a few bytes to
-#       rehearsal/_preflight/, downloaded back and removed; DRY_RUN=yes: a listing of rehearsal/ only); the download
+#       rehearsal/_preflight/, downloaded back and deleted; DRY_RUN=yes: a listing of rehearsal/ only); the download
 #       site answers. docker: the Docker engine and buildx; DOCKERHUB_USER and DOCKERHUB_TOKEN accepted by docker login
 #       (a throwaway DOCKER_CONFIG); the token may push RELEASE_IMAGE_REPO (Docker Hub's token service, nothing pushed;
 #       skipped for another registry); the Windows VM of the rehearsal's part 6 (dp-ci.sh win prereq docker-e2e).
 #       public: also CLOUDFLARE_ZONE_ID and the purge token (Cloudflare's read-only token check, nothing purged).
 #       copy: a MODE=public run that only copies a passed rehearsal: the VM is not needed, not checked.
+#
+#   The cleanup (owner 2026-10-22: no old rehearsal stays in the bucket): moment 1, publish deletes the rehearsal it copied
+#   (its channel's files) once the public files are checked and recorded; moment 2, a new rehearsal (stage-files,
+#   stage-docker) first deletes every file of its channel left anywhere under rehearsal/ (red, abandoned, or passed and never
+#   made public), one CLEAN line per file. Each rehearsal whose files go is marked removed in the release record
+#   (release-state.sh removed), so it is never copied. Per channel: windows = datapallas.zip, datapallas-server.zip,
+#   datapallas-src.zip; docker = datapallas-server-docker.zip. Both stage into the same rehearsal/<version>-<commit>/, so one
+#   channel never deletes the other's files; nothing outside rehearsal/ is ever deleted. The deletes are hard (rclone
+#   --b2-hard-delete): a plain delete stays in the bucket as a hidden file for 90 days.
 #
 # The commit is RELEASE_COMMIT (the full hash the list names). The credentials are the owner's root-only file
 # (decision OD3, 2026-10-22), sourced silently, never printed: DOCKERHUB_USER, DOCKERHUB_TOKEN, RCLONE_CONFIG (the path of
@@ -75,6 +90,10 @@ creds() {  # the OD3 file: present, mode 600, then sourced with no output at all
 }
 abs() { case "$1" in /*|"") echo "$1" ;; *) echo "$CALLER_PWD/$1" ;; esac; }  # a path given relative to the caller
 sha_of() { sha256sum "$1" 2>/dev/null | cut -d' ' -f1; }
+EMPTY_SHA=$(printf '' | sha256sum | cut -d' ' -f1)   # what sha_by_download gives when nothing came
+channel_files() { case "$1" in docker) echo datapallas-server-docker.zip ;; windows) echo datapallas.zip datapallas-server.zip datapallas-src.zip ;; esac; }
+# hard_delete <path in the bucket>: one file, gone at once (a plain delete stays in the bucket as a hidden file for 90 days)
+hard_delete() { rclone deletefile -q --b2-hard-delete "$RELEASE_RCLONE_REMOTE/$1" 2>&1; }
 # the sha256 of a published file as a user downloads it; the query string only gets past the CDN's cache
 sha_by_download() { curl -fsSL --max-time 3600 "$1?check=$(date +%s)-$RANDOM" 2>/dev/null | sha256sum | cut -d' ' -f1; }
 upload_checked() {  # upload_checked <file> <folder> [<name>]: rclone it to <folder>/, download it back, compare the sha256
@@ -105,6 +124,53 @@ purge() {  # purge <url>...: the Cloudflare cache of those links; the token goes
   printf '%s' "$out" | python3 -c 'import json,sys; sys.exit(0 if json.load(sys.stdin).get("success") is True else 1)' 2>/dev/null ||
     { printf '%s\n' "$out" | head -c 600; echo; return 1; }
   echo "PUBLIC  Cloudflare purged ${files%,}"
+}
+
+# clean_rehearsals docker|windows: the cleanup's moment 2 (top of this file), before a new rehearsal uploads
+clean_rehearsals() {
+  local ch="$1" list p d n out folders="" left=0
+  if ! list=$(rclone lsf -q -R --files-only --max-depth 2 "$RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/" 2>&1); then
+    case "$list" in
+      *"directory not found"*) list="" ;;
+      *) printf '%s\n' "$list" | tail -3; echo "WARN  $REHEARSAL_FOLDER/ could not be listed: no leftover $ch rehearsal deleted"; return 0 ;;
+    esac
+  fi
+  for p in $list; do
+    d=${p%/*}; n=${p##*/}
+    [ "$d" != "$p" ] && [ "$d" != _preflight ] || continue
+    case " $(channel_files "$ch") " in *" $n "*) ;; *) continue ;; esac
+    if out=$(hard_delete "$REHEARSAL_FOLDER/$p"); then
+      echo "CLEAN  $REHEARSAL_FOLDER/$p  left by an earlier $ch rehearsal: deleted"
+    else
+      printf '%s\n' "$out" | tail -2; echo "WARN  $REHEARSAL_FOLDER/$p could not be deleted: it stays"; left=$((left + 1))
+    fi
+    case " $folders " in *" $d "*) ;; *) folders="$folders $d" ;; esac
+  done
+  for d in $folders; do bash "$HERE/release-state.sh" removed "$ch" "$REHEARSAL_FOLDER/$d/"; done
+  [ -n "$folders" ] || echo "CLEAN  no $ch rehearsal file left in $REHEARSAL_FOLDER/"
+  [ "$left" = 0 ] || echo "WARN  $left leftover $ch rehearsal file(s) could not be deleted: the next rehearsal tries again"
+}
+
+# archive_outgoing <channel> <dry 0|1>: before newest/ is replaced, each file of the channel in newest/ that the folder of the
+# channel's released version lacks, copied there server side and checked by download; rc 1 = not archived (nothing public changed)
+archive_outgoing() {
+  local ch="$1" dry="$2" r rv have inv n out h s
+  r=$(bash "$HERE/release-state.sh" released "$ch") || { printf '%s\n' "$r"; echo "FAIL  the released $ch version cannot be read"; return 1; }
+  rv=$(printf '%s\n' "$r" | sed -n "s/^RELEASED $ch=//p")
+  case "$rv" in ""|none) echo "ARCHIVE  nothing to archive: no $ch release yet"; return 0 ;; esac
+  have=$(rclone lsf -q --files-only "$RELEASE_RCLONE_REMOTE/newest/" 2>&1) || {
+    printf '%s\n' "$have" | tail -3; echo "FAIL  newest/ could not be listed"; return 1; }
+  inv=$(rclone lsf -q --files-only "$RELEASE_RCLONE_REMOTE/$rv/" 2>/dev/null)   # no such folder yet = nothing in it
+  for n in $(channel_files "$ch"); do
+    printf '%s\n' "$have" | grep -qxF "$n" || continue
+    if printf '%s\n' "$inv" | grep -qxF "$n"; then echo "ARCHIVE  $rv/$n is there already"; continue; fi
+    if [ "$dry" = 1 ]; then echo "dry run: would archive newest/$n (the outgoing $rv) in $rv/ and check it by download"; continue; fi
+    out=$(rclone copyto -q "$RELEASE_RCLONE_REMOTE/newest/$n" "$RELEASE_RCLONE_REMOTE/$rv/$n" 2>&1) || {
+      printf '%s\n' "$out" | tail -5; echo "FAIL  rclone could not copy newest/$n to $rv/"; return 1; }
+    h=$(sha_by_download "$RELEASE_DOWNLOAD_BASE/newest/$n"); s=$(sha_by_download "$RELEASE_DOWNLOAD_BASE/$rv/$n")
+    [ "$h" != "$EMPTY_SHA" ] && [ "$s" = "$h" ] || { echo "FAIL  $rv/$n as downloaded is not newest/$n (sha256 ${s:0:16}..., newest/ ${h:0:16}...)"; return 1; }
+    echo "ARCHIVE  newest/$n (the outgoing $rv) copied to $rv/, downloaded: the same sha256 ${h:0:16}..."
+  done
 }
 
 # publish <channel> <version> <commit>: MODE=public's copy, in minutes. The rehearsal of <version> that passed on <commit>
@@ -141,6 +207,8 @@ publish() {
     folder=$(rec rehearsal.windows rehearsal); sums=$(rec rehearsal.windows sha256)
   fi
   [ "$folder" = "$REHEARSAL_FOLDER/$v-$c8/" ] || { refuse "the rehearsal staged in '$folder', not $REHEARSAL_FOLDER/$v-$c8/"; return 1; }
+  [ -z "$(rec "rehearsal.$([ "$ch" = docker ] && echo docker-stage || echo windows)" removed)" ] ||
+    { refuse "the files of the rehearsal in $folder were deleted (a later rehearsal cleaned them up): rehearse again"; return 1; }
   [ -n "$sums" ] || { refuse "the rehearsal's record has no sha256 list"; return 1; }
   for p in $sums; do
     printf '%s' "$p" | grep -qE '^[A-Za-z0-9._-]+:[0-9a-f]{64}$' || { refuse "the record's sha256 list has '$p'"; return 1; }
@@ -170,17 +238,21 @@ publish() {
     [ "$ch" = docker ] && { echo "image=$RELEASE_IMAGE_REPO:$v"; echo "digest=$digest"; }; } > "$vfile"
   if [ "$dry" = 1 ]; then
     mark_next "PUBLIC STEP 2/$n_parts" "the files (dry run)"
+    if creds >/dev/null 2>&1; then archive_outgoing "$ch" 1 || echo "dry run: (the archive above would refuse: nothing would be copied)"
+    else echo "dry run: would archive the outgoing release's $ch files of newest/ in its version's folder (not listed: no credentials)"; fi
     for p in $sums; do echo "dry run: would copy $folder${p%%:*} to newest/ and $v/, check newest/${p%%:*} by download and purge its Cloudflare cache"; done
     [ "$ch" = docker ] && { mark_next "PUBLIC STEP 3/4" ":latest (dry run)"; echo "dry run: would point $RELEASE_IMAGE_REPO:latest at :$v ($digest)"; }
     mark_next "PUBLIC STEP $n_parts/$n_parts" "newest/$ch-version.txt (dry run)"
     echo "dry run: would write newest/$ch-version.txt, check it by download, purge it, record public.$ch:"; sed 's/^/  /' "$vfile"
+    for p in $sums; do echo "dry run: then would delete $folder${p%%:*} (the copied rehearsal) and mark it removed in the release record"; done
     rm -f "$vfile"
-    echo "RELEASE_PUBLIC DRY RUN $ch $v: nothing copied, purged or retagged"
+    echo "RELEASE_PUBLIC DRY RUN $ch $v: nothing archived, copied, purged, retagged or deleted"
     return 0
   fi
   creds || { rm -f "$vfile"; refuse "no publish credentials (above)"; return 1; }
 
-  mark_next "PUBLIC STEP 2/$n_parts" "the files: $folder copied to newest/ and $v/, each newest/ file checked by download, its Cloudflare cache purged"
+  mark_next "PUBLIC STEP 2/$n_parts" "the files: the outgoing release archived, $folder copied to newest/ and $v/, each newest/ file checked by download, its Cloudflare cache purged"
+  archive_outgoing "$ch" 0 || { rm -f "$vfile"; refuse "the outgoing release was not archived (above), so newest/ was left as it is"; return 1; }
   for p in $sums; do
     n=${p%%:*}
     for s in "$v" newest; do
@@ -231,6 +303,11 @@ publish() {
     RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" record public.windows PASS "version=$v" \
       "rehearsal=$folder" "newest=newest/" "archive=$v/" "sha256=$sums"
   fi || echo "FAIL  the files are public, but public.$ch could not be recorded: record it by hand"
+  for p in $sums; do   # the cleanup's moment 1: the copied rehearsal (top of this file)
+    if out=$(hard_delete "$folder${p%%:*}"); then echo "CLEAN  $folder${p%%:*}  the copied rehearsal: deleted"
+    else printf '%s\n' "$out" | tail -2; echo "WARN  $folder${p%%:*} could not be deleted (the release is public all the same): the next $ch rehearsal deletes it"; fi
+  done
+  bash "$HERE/release-state.sh" removed "$ch" "$folder"
   if [ "$ch" = docker ]; then
     echo "MANUAL  not done by this job: the Docker Hub page, asbl/docker/push-dockerhub-readme.ps1 (on Windows, with its own Docker Hub token)"
     echo "MANUAL  not done by this job: the public demo, Jenkins job dp-ci-release-step4-demo-public (it installs this release)"
@@ -303,7 +380,7 @@ preflight() {
         else
           missing "the test file written to $REHEARSAL_FOLDER/_preflight/, by download from $RELEASE_DOWNLOAD_BASE (it did not come back): every upload is checked by download, so the bucket must be the one the download site serves"
         fi
-        rclone --config "$RCLONE_CONFIG" deletefile -q "$RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/_preflight/$name" >/dev/null 2>&1 ||
+        rclone --config "$RCLONE_CONFIG" deletefile -q --b2-hard-delete "$RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/_preflight/$name" >/dev/null 2>&1 ||
           echo "WARN  the test file $REHEARSAL_FOLDER/_preflight/$name could not be removed: remove it by hand"
       fi
       rm -f "$tmp"
@@ -406,6 +483,7 @@ case "$cmd" in
       echo "STAGE  $n  sha256 ${want:0:16}... as the list says"
     done
     creds || fail "no publish credentials (above)"
+    clean_rehearsals windows
     folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
     sums=""
     for n in $names; do
@@ -450,6 +528,7 @@ case "$cmd" in
     [ -s "$zip" ] || fail "$zip is missing (the build's)"
     docker image inspect "$RELEASE_IMAGE_REPO:$tag" >/dev/null 2>&1 || fail "the build's image $RELEASE_IMAGE_REPO:$tag is not on this host"
     creds || fail "no publish credentials (above)"
+    clean_rehearsals docker
     docker tag "$RELEASE_IMAGE_REPO:$tag" "$RELEASE_IMAGE_REPO:$v" || fail "docker tag $RELEASE_IMAGE_REPO:$v failed"
     # the registry of the image name (Docker Hub when the name has no host part)
     reg="${RELEASE_IMAGE_REPO%%/*}"; case "$reg" in *.*|*:*|localhost) ;; *) reg="" ;; esac
@@ -478,5 +557,5 @@ case "$cmd" in
     mark_run publish "$@"
     ;;
   *)
-    sed -n '2,55p' "$0"; exit 2 ;;
+    sed -n '2,70p' "$0"; exit 2 ;;
 esac
