@@ -7,6 +7,8 @@
 #
 # Usage
 #   bash asbl/ci/set-version.sh --show              what is the version now, and in which files
+#   bash asbl/ci/set-version.sh --versions          each file's own version, one '<version> <file>' line per file
+#                                                   (the release jobs check that all of them say the same)
 #   bash asbl/ci/set-version.sh --dry-run 16.6.0    show every edit it would make, change nothing
 #   bash asbl/ci/set-version.sh 16.6.0              make the edits, then YOU review and commit
 #
@@ -48,11 +50,36 @@ asbl/src/main/external-resources/db-template/CHANGELOG.md
 MODE=apply
 case "${1:-}" in
   --show)    MODE=show ;;
+  --versions) MODE=versions ;;
   --dry-run) MODE=dry; shift ;;
-  -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+  -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
   '')        echo "usage: $0 [--show | --dry-run] <new-version>"; exit 2 ;;
 esac
 NEW="${1:-}"
+
+if [ "$MODE" = versions ]; then
+  # What each file itself declares, read with the same per-kind pattern the editor below uses (a lock file's two
+  # header occurrences are both shown, comma-separated, when they differ). '?' = the pattern found nothing.
+  FILES="$FILES" python3 - <<'PY'
+import io, os, re
+for line in os.environ['FILES'].strip().splitlines():
+    path, kind = line.split('|')
+    try:
+        text = io.open(path, encoding='utf-8').read()
+    except OSError:
+        print('? %s' % path); continue
+    if kind == 'pom':
+        found = re.findall(r'<revision>([^<]+)</revision>', text)[:1]
+    elif kind == 'pkg':
+        found = re.findall(r'(?m)^  "version": "([^"]+)"', text)[:1]
+    elif kind == 'lock':
+        found = sorted(set(re.findall(r'"version": "([^"]+)"', '\n'.join(text.split('\n')[:12]))))
+    else:
+        found = re.findall(r'<version>([^<]+)</version>', text)[:1]
+    print('%s %s' % (','.join(found) or '?', path))
+PY
+  exit 0
+fi
 
 OLD=$(grep -m1 -oP '(?<=<revision>)[^<]+' pom.xml) || true
 [ -n "$OLD" ] || { echo "FAIL  could not read <revision> from pom.xml"; exit 1; }

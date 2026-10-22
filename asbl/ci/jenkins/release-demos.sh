@@ -1,16 +1,18 @@
 #!/bin/bash
-# Job dp-ci-release-demos: the demos on the code of origin/main. Its own build first (only when there is no build of that
-# commit yet), then that very image published. Plain script, run on the host: Jenkins calls it over SSH, it also runs by hand.
+# Job dp-ci-release-demos: the two demos (decision OD4 (a), 2026-10-22). Plain script, run on the host: Jenkins calls it over SSH,
+# it also runs by hand.
 #
 #   DEMO=dp-demo.bkstg|demo.datapallas.com|both  RESET_DEMO_DATA=no|yes  DRY_RUN=no|yes  bash asbl/ci/jenkins/release-demos.sh
 #
-#   dp-demo.bkstg        https://dp-demo.bkstg.flowkraft.com: dp-ci.sh publish-demo-bkstg
-#   demo.datapallas.com  the public demo, the three parts of the Rundeck job ops/change/demo-publish: setup.sh and
-#                        setup.sh --edge (its folders and its two vhosts), dp-ci.sh publish-demo-datapallas.com,
-#                        setup.sh --check (must end with DEMO_SETUP result=ok)
+#   dp-demo.bkstg        https://dp-demo.bkstg.flowkraft.com shows origin/main, the preview before a release: its own build first
+#                        (only when there is no build of that commit yet), then that very image (dp-ci.sh publish-demo-bkstg)
+#   demo.datapallas.com  the public demo is a plain install of the published release, nothing built: setup.sh and setup.sh --edge
+#                        (its folders and its two vhosts), asbl/ci/demo-public/install-release.sh (newest/datapallas-server-docker.zip,
+#                        its own folder per version, the data carried over, rolled back when it does not answer; nothing to do
+#                        when it already runs the released version), setup.sh --check (must end with DEMO_SETUP result=ok)
 #   both                 dp-demo.bkstg first, then demo.datapallas.com
-# RESET_DEMO_DATA=yes wipes demo.datapallas.com's data and seeds it again from the image (what visitors made is gone).
-# DRY_RUN=yes builds nothing and changes nothing: it says whether a build is needed and what each publish would do.
+# RESET_DEMO_DATA=yes: demo.datapallas.com's next release starts from the bundle's own data, not the previous version's (what
+# visitors made stays in the previous folder). DRY_RUN=yes builds nothing and changes nothing: it says what each part would do.
 # Every part is marked START/END with its time (asbl/ci/marks.sh). The output is masked the way the Rundeck job masks it.
 set -uo pipefail
 cd "$(dirname "$0")/../../.." || exit 2
@@ -42,24 +44,24 @@ PY
 main() {
   local total n=1 tag bl dry=0 args=()
   [ "$DRY" = yes ] && dry=1
-  case "$DEMO" in dp-demo.bkstg) total=2 ;; demo.datapallas.com) total=4 ;; both) total=5 ;; esac
+  case "$DEMO" in dp-demo.bkstg) total=2 ;; demo.datapallas.com) total=3 ;; both) total=5 ;; esac
   echo "DEMOS: demo=$DEMO reset_demo_data=$RESET dry_run=$DRY  checkout: $(git log -1 --format='%h %s')"
 
-  mark_start "DEMOS STEP $n/$total" "the build of origin/main, only when there is none yet (dp-ci.sh build-if-needed)"
-  bl=$(mktemp)
-  DRY_RUN=$dry bash asbl/ci/dp-ci.sh build-if-needed | tee "$bl"
-  [ "${PIPESTATUS[0]}" -eq 0 ] || { rm -f "$bl"; echo "FAILED: no build to publish (above)"; return 1; }
-  tag=$(sed -n 's/^BUILD_TAG=//p' "$bl" | tail -1); rm -f "$bl"
-  [ -n "$tag" ] || [ "$dry" = 1 ] || { echo "FAILED: build-if-needed printed no BUILD_TAG line"; return 1; }
-  [ -n "$tag" ] && args+=("$tag")
-
   if [ "$DEMO" != demo.datapallas.com ]; then
+    mark_start "DEMOS STEP $n/$total" "dp-demo.bkstg: the build of origin/main, only when there is none yet (dp-ci.sh build-if-needed)"
+    bl=$(mktemp)
+    DRY_RUN=$dry bash asbl/ci/dp-ci.sh build-if-needed | tee "$bl"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { rm -f "$bl"; echo "FAILED: no build to publish (above)"; return 1; }
+    tag=$(sed -n 's/^BUILD_TAG=//p' "$bl" | tail -1); rm -f "$bl"
+    [ -n "$tag" ] || [ "$dry" = 1 ] || { echo "FAILED: build-if-needed printed no BUILD_TAG line"; return 1; }
+    [ -n "$tag" ] && args+=("$tag")
     n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "publish to dp-demo.bkstg (dp-ci.sh publish-demo-bkstg ${tag:-<the build a real run makes>})"
     DRY_RUN=$dry bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh publish-demo-bkstg "${args[@]}" || return 1
+    [ "$DEMO" = dp-demo.bkstg ] && { mark_end 0; return 0; }
+    n=$((n + 1)); mark_end 0
   fi
-  [ "$DEMO" = dp-demo.bkstg ] && { mark_end 0; return 0; }
 
-  n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "demo.datapallas.com setup: its folders and its two vhosts (setup.sh, setup.sh --edge)"
+  mark_start "DEMOS STEP $n/$total" "demo.datapallas.com setup: its folders and its two vhosts (setup.sh, setup.sh --edge)"
   if [ "$dry" = 1 ]; then
     echo "dry run: only looking (setup.sh --check)"
     bash asbl/ci/demo-public/setup.sh --check
@@ -67,14 +69,18 @@ main() {
     bash asbl/ci/demo-public/setup.sh || return 1
     bash asbl/ci/demo-public/setup.sh --edge || return 1
   fi
-  [ "$RESET" = yes ] && args+=(--reset)
-  n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "publish to demo.datapallas.com (dp-ci.sh publish-demo-datapallas.com ${args[*]:-<the build a real run makes>})"
-  DRY_RUN=$dry bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh publish-demo-datapallas.com "${args[@]}" || return 1
+  n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "demo.datapallas.com: install the published release (asbl/ci/demo-public/install-release.sh)"
+  bl=$(mktemp)
+  DRY_RUN=$DRY RESET_DEMO_DATA=$RESET bash asbl/ci/demo-public/install-release.sh 2>&1 | tee "$bl"
+  case "$(tail -n 1 "$bl")" in
+    "DEMO_INSTALL result=installed"|"DEMO_INSTALL result=nothing-to-do"|"DEMO_INSTALL result=dry-run") rm -f "$bl" ;;
+    *) rm -f "$bl"; echo "FAILED: the release is not installed on demo.datapallas.com (above)"; return 1 ;;
+  esac
   n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "demo.datapallas.com check: edge to instance (setup.sh --check)"
   if [ "$dry" = 1 ]; then echo "dry run: nothing was changed, nothing to check"; mark_end 0; return 0; fi
   local out; out=$(bash asbl/ci/demo-public/setup.sh --check 2>&1); echo "$out"
   [ "$(printf '%s\n' "$out" | tail -n 1)" = "DEMO_SETUP result=ok" ] || { echo "FAILED: setup.sh --check found problems (above)"; return 1; }
-  echo "the demo is published and the chain checks out"
+  echo "the demo runs the release and the chain checks out"
   mark_end 0
 }
 

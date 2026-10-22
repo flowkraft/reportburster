@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-release-step1-e2e-prerelease. Step 1 of 2 of a release (then, when every target is green, dp-ci-release-step2-pack-and-uat). The REAL end-to-end tests, the prerelease check: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). docker-server, windows-vm-docker and windows-vm-server first build origin/main when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fix-and-retry loop use dp-ci-e2e-loop.
+// Job datapallas/dp-ci-release-step1-e2e-prerelease. Step 1 of 4 of a release (then dp-ci-release-step2-pack-and-uat-docker and dp-ci-release-step3-pack-and-uat-windows, in either order, then dp-ci-release-step4-publish). A release needs docker-server full and auth, windows-vm-electron full and windows-vm-server light green on one commit (OD5); each build records its verdict (asbl/ci/release-state.sh). The REAL end-to-end tests, the prerelease check: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). docker-server, windows-vm-docker and windows-vm-server first build origin/main when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fix-and-retry loop use dp-ci-e2e-loop.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
 // the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -53,7 +53,10 @@ case "$E2E_TARGET" in
   *)
     STEPS="$JS 'JOB STEP 1/1' 'e2e $E2E_TARGET' $RUN" ;;
 esac
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && export E2E_SPEC=$(q "$E2E_SPEC") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES") && $STEPS"
+# Around the steps, the release record (asbl/ci/release-state.sh): first the version line (what a release would do now:
+# settings.xml against Docker Hub's :latest; this job runs anyway, it is also the everyday e2e job), last the lane's
+# verdict, step1.<target>-<full|auth|light|targeted>, which steps 2 and 3 of a release require on their commit.
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") || exit 2; export E2E_SPEC=$(q "$E2E_SPEC") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES"); bash asbl/ci/release-state.sh version-check --print; t0=\\$(date +%s); $STEPS; rc=\\$?; RELEASE_STEP_START=\\$t0 bash asbl/ci/release-state.sh record-step1 $(q "$E2E_TARGET") \\$rc; exit \\$rc"
 '''
         }
       }

@@ -7,7 +7,8 @@
 #                                   this checkout on origin/main, then `build` only when the newest successful build is not of
 #                                   this commit; ends with BUILD_TAG=<version>-<commit>. The jobs that install what `build` makes
 #                                   run it first themselves: dp-ci-release-step1-e2e-prerelease (docker-server, windows-vm-docker,
-#                                   windows-vm-server) and dp-ci-release-demos. DRY_RUN=1 = only say whether a build is needed.
+#                                   windows-vm-server), dp-ci-release-step2-pack-and-uat-docker (the release's Docker files, built
+#                                   once, here) and dp-ci-release-demos (dp-demo.bkstg). DRY_RUN=1 = only say whether a build is needed.
 #   E2E_SPEC=<regex> E2E_GREP=<regex> bash asbl/ci/dp-ci.sh e2e
 #                                   e2e via the SAME gulp flow as `npm run custom:start-server-and-e2e-web`
 #                                   (targeted when E2E_SPEC/E2E_GREP are set; both empty = the full suite without
@@ -21,6 +22,9 @@
 #                                   the bundle is unpacked fresh into frend/reporting/testground/docker-server and started with the
 #                                   image of the last successful `dp-ci.sh build` — it never builds or pulls, and it aborts unless
 #                                   the running container uses exactly that image (line DOCKER_SERVER_IMAGE=<tag> <id> in the log).
+#                                   E2E_DOCKER_FROM_URL=<zip url> (the Docker release, job dp-ci-release-step2-pack-and-uat-docker):
+#                                   the bundle downloaded from that URL instead, its image pulled, the running digest = the one
+#                                   step 2 pushed (release record), then the one-command `docker run` of the self-host page.
 #                                   Ends with one parsable line: E2E_RESULT mode=... passed=N failed=N ... exit=N
 #                                   Stuck tests cost minutes, not hours (plan §4 D0): E2E_MAX_WAIT_MS (15 min per wait),
 #                                   E2E_MAX_TEST_MS (60 min per test), E2E_ACTION_TIMEOUT_MS (5 min per click),
@@ -101,11 +105,21 @@
 #                                   the image `build` made from the VM's commit; windows-vm-server = DataPallas Server on the VM's
 #                                   own Java 17, from datapallas-server.zip as the installation page installs it (startServer.bat).
 #                                   Both server targets run the same light set of five spec files by default.
-#                                   `win release` is the release itself (job dp-ci-release-step2-pack-and-uat, step 2 of 2, run last):
-#                                   pack-datapallas.bat once, then the Robot UAT and Docker on Windows and Linux, all on
-#                                   the very files that pack made - see win_release.
+#                                   `win docker-e2e` with E2E_DOCKER_FROM_URL: the Docker release's own download, as in `e2e` above.
+#                                   `win release` is the release's Windows files (job dp-ci-release-step3-pack-and-uat-windows, step 3
+#                                   of 4): pack-datapallas.bat once, the Robot UAT on its very files, then datapallas.zip,
+#                                   datapallas-server.zip and datapallas-src.zip staged in the candidate folder - see win_release.
 #                                   Each lane marks its parts START/END with the time they took (asbl/ci/marks.sh):
 #                                   grep -aE '^######## ' <log>.
+#
+# The release, in order (asbl/ci/jenkins/jenkins.md, "The release, in order"): four Jenkins jobs on one commit of origin/main.
+#   1 dp-ci-release-step1-e2e-prerelease        `e2e` / `win ...` per target; the required lanes' verdicts go to the release record
+#   2 dp-ci-release-step2-pack-and-uat-docker   asbl/ci/jenkins/release-docker.sh: built once here, :<version> and the zip staged,
+#                                               the light set from the download on Linux and on Windows
+#   3 dp-ci-release-step3-pack-and-uat-windows  `win release` (2 and 3 in either order, never at once: one VM)
+#   4 dp-ci-release-step4-publish               asbl/ci/release-publish.sh promote: newest/, :latest, the cache purge (owner only)
+# then dp-ci-release-demos. Each starts with the version gate (asbl/ci/release-state.sh version-check: settings.xml against the
+# released :latest; the same = nothing to release, green) and refuses unless the step before is green on the same commit.
 #
 # The launcher returns within seconds. The work runs in a detached container named dp-ci, owned by
 # the Docker daemon, so closing SSH / Code Server / the browser has no effect on it. It builds IN
@@ -1017,6 +1031,20 @@ if (\$rc -ne 0 -or -not (Test-Path "\$root\\DataPallas\\$3")) { "FAIL  could not
 PS
 }
 
+# win_bundle_download <url> <VM folder> <file DataPallas\ must hold>: the zip downloaded on the VM (curl.exe, as a user
+# gets it from the page), then extracted like a copied one (win_bundle_extract); the download stays in C:\dp-ci\tmp.
+win_bundle_download() {
+  local name="${1##*/}"
+  win_ps 2>&1 <<PS | tr -d '\r' || return 1
+\$ErrorActionPreference = "Continue"
+New-Item -ItemType Directory -Force 'C:\\dp-ci\\tmp' | Out-Null
+& curl.exe -fsSL --max-time 1800 -o 'C:\\dp-ci\\tmp\\$name' '$1'
+if (\$LASTEXITCODE -ne 0) { "FAIL  could not download $1 on the VM"; exit 1 }
+"WIN_BUNDLE_DOWNLOAD=$1 sha256 " + (Get-FileHash -Algorithm SHA256 'C:\\dp-ci\\tmp\\$name').Hash.ToLower()
+PS
+  win_bundle_extract "C:\\dp-ci\\tmp\\$name" "$2" "$3"
+}
+
 # http://localhost:9090 on the VM, the address the page sends the user to. GET / is public: the web UI has to load before
 # anyone can sign in. 10 minutes, twice Linux's: Docker Desktop runs nested and the VM is slow.
 win_wait_9090() {
@@ -1121,7 +1149,7 @@ win_web_result() {
 WIN_LIGHT_SPEC='[\\/](features[\\/]quick-start|areas[\\/]configuration|components[\\/]log-files-viewer-separate-tabs|areas[\\/]cubes-definitions|features[\\/]apps-ai-hub)\.spec\.ts$'
 
 win_docker_e2e() {
-  local from="${1:-build}" target=windows-vm-docker mode=targeted retries spec gexp tag version image_id vm_id running_id tmp
+  local target=windows-vm-docker mode=targeted retries spec gexp tag version image_id vm_id running_id tmp want="" vmc
   local zip="$REPO/asbl/dist/datapallas-server-docker.zip" step=docker-e2e
   local root="$WIN_REPO\\frend\\reporting\\testground\\docker-server"
   local inst="$root\\DataPallas"
@@ -1129,14 +1157,18 @@ win_docker_e2e() {
     echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
     return 2
   }
-  [ "$from" = release ] && target=release-docker-windows
-  mark_start "$target STEP 1/3" "the image: the build of the VM's commit, copied to the VM when it is not there yet"
-  if [ "$from" = release ]; then
-    # `win docker-e2e release`, part 3 of `win release`: the zip and the image pack-datapallas.bat has just made on the
-    # VM, as they are - nothing copied, nothing tagged (the pack tags the image with the version the bundle pins).
-    tag="${RELEASE_VERSION:?}"; version="$RELEASE_VERSION"; image_id="${RELEASE_IMAGE_ID:?}"; vm_id="$RELEASE_IMAGE_ID"
-    zip="$WIN_REPO\\asbl\\dist\\datapallas-server-docker.zip"
+  if [ -n "${E2E_DOCKER_FROM_URL:-}" ]; then
+    # The Docker release (step 2): the self-host install from the download, as on Linux (docker_server_up): the zip
+    # from E2E_DOCKER_FROM_URL, the image its compose names pulled from the registry, and the running image must be
+    # the one the release pushed. Docker Desktop numbers images its own way: the check is on RepoDigests, not the id.
+    mark_start "$target STEP 1/3" "the release: the VM on origin/main, the digest step 2 pushed"
+    win_sync_repo || return $?
+    vmc=$(win_ssh "git -C $WIN_REPO rev-parse HEAD" 2>/dev/null | tr -d '\r' | tail -1)
+    want=$(RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-state.sh" get step2.docker-stage digest 2>/dev/null)
+    [ -n "$want" ] || { echo "FAIL  no step2.docker-stage digest recorded for '${vmc:0:8}' - stage the release first" >&2; return 2; }
+    echo "WIN_DOCKER_IMAGE=the release's $SERVER_IMAGE_REPO@$want, pulled by compose"
   else
+    mark_start "$target STEP 1/3" "the image: the build of the VM's commit, copied to the VM when it is not there yet"
     win_sync_repo || return $?
     tag=$(win_vm_build_tag) || return $?
     image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
@@ -1154,24 +1186,24 @@ win_docker_e2e() {
   win_stacks_down server
   win_temp_clean
 
-  # The image, once per commit: about 2 GB, so it is copied only when the VM does not have this tag yet.
-  [ "$from" = release ] || {
-  vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
-  case "$vm_id" in
-    sha256:*) echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag already on the VM" ;;
-    *)
-      echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag copying to the VM (docker save, scp, docker load)"
-      tmp=$(mktemp --suffix=.tar.gz) || return 1
-      docker save "$SERVER_IMAGE_REPO:$tag" | gzip -1 > "$tmp" || { rm -f "$tmp"; echo "FAIL  docker save failed" >&2; return 1; }
-      win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
-      win_scp "$tmp" C:/dp-ci/tmp/datapallas-server-image.tar.gz || { rm -f "$tmp"; echo "FAIL  could not copy the image to the VM" >&2; return 1; }
-      rm -f "$tmp"
-      win_ssh "docker load -q -i C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" 2>&1 | tr -d '\r'
-      win_ssh "del /q C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" >/dev/null 2>&1
-      vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
-      case "$vm_id" in sha256:*) ;; *) echo "FAIL  the image did not load on the VM" >&2; return 1 ;; esac ;;
-  esac
-  win_ps 2>&1 <<PS | tr -d '\r' || return 1
+  if [ -z "$want" ]; then
+    # The image, once per commit: about 2 GB, so it is copied only when the VM does not have this tag yet.
+    vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
+    case "$vm_id" in
+      sha256:*) echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag already on the VM" ;;
+      *)
+        echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag copying to the VM (docker save, scp, docker load)"
+        tmp=$(mktemp --suffix=.tar.gz) || return 1
+        docker save "$SERVER_IMAGE_REPO:$tag" | gzip -1 > "$tmp" || { rm -f "$tmp"; echo "FAIL  docker save failed" >&2; return 1; }
+        win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
+        win_scp "$tmp" C:/dp-ci/tmp/datapallas-server-image.tar.gz || { rm -f "$tmp"; echo "FAIL  could not copy the image to the VM" >&2; return 1; }
+        rm -f "$tmp"
+        win_ssh "docker load -q -i C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" 2>&1 | tr -d '\r'
+        win_ssh "del /q C:\\dp-ci\\tmp\\datapallas-server-image.tar.gz" >/dev/null 2>&1
+        vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
+        case "$vm_id" in sha256:*) ;; *) echo "FAIL  the image did not load on the VM" >&2; return 1 ;; esac ;;
+    esac
+    win_ps 2>&1 <<PS | tr -d '\r' || return 1
 \$ErrorActionPreference = "Continue"
 \$repo = '$SERVER_IMAGE_REPO'; \$tag = '$tag'; \$version = '$version'
 # older builds' images: 2 GB each, on a disk that has run out before
@@ -1182,22 +1214,40 @@ foreach (\$t in (& docker images \$repo --format '{{.Tag}}')) {
 & docker tag "\${repo}:\$tag" "\${repo}:\$version"
 if (\$LASTEXITCODE -ne 0) { "FAIL  docker tag failed"; exit 1 }
 PS
-  }
+  fi
 
   mark_next "$target STEP 2/3" "install: datapallas-server-docker.zip extracted, docker compose up -d, :9090 answers"
-  win_bundle_extract "$zip" "$root" docker-compose.yml || return 1
-  # "cd DataPallas" and "docker compose up -d", as the page says
+  if [ -n "$want" ]; then
+    win_bundle_download "$E2E_DOCKER_FROM_URL" "$root" docker-compose.yml || return 1
+  else
+    win_bundle_extract "$zip" "$root" docker-compose.yml || return 1
+  fi
+  # "cd DataPallas" and "docker compose up -d", as the page says; from the download, with no local copy of the image
   win_ps 2>&1 <<PS | tr -d '\r' || { win_docker_down "$inst"; return 1; }
 \$ErrorActionPreference = "Continue"
 Set-Location '$inst'
-& docker compose up -d 2>&1 | ForEach-Object { "compose: \$_" }
+\$extra = @()
+if ('$want' -ne '') {
+  \$img = (& docker compose config --images) | Where-Object { \$_ -like '${SERVER_IMAGE_REPO}:*' } | Select-Object -First 1
+  if (\$img) { & docker image rm \$img 2>&1 | Out-Null; "untagged the local \$img (none on a user's machine)" }
+  \$extra = @('--pull', 'always')
+}
+& docker compose up -d @extra 2>&1 | ForEach-Object { "compose: \$_" }
 if (\$LASTEXITCODE -ne 0) { "FAIL  docker compose up -d failed"; exit 1 }
 PS
   win_wait_9090 || { win_docker_down "$inst"; return 1; }
   running_id=$(win_ssh "docker inspect datapallas-server --format {{.Image}}" 2>/dev/null | tr -d '\r' | tail -1)
-  [ "$running_id" = "$vm_id" ] ||
-    { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$inst"; return 1; }
-  echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
+  if [ -n "$want" ]; then
+    case "$(win_ssh "docker image inspect $running_id --format \"{{json .RepoDigests}}\"" 2>/dev/null | tr -d '\r' | tail -1)" in
+      *"\"$SERVER_IMAGE_REPO@$want\""*) echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO@$want (pulled; on the VM: $running_id)" ;;
+      *) echo "FAIL  the container runs image '$running_id', not the release's $SERVER_IMAGE_REPO@$want - aborting" >&2
+         win_docker_down "$inst"; return 1 ;;
+    esac
+  else
+    [ "$running_id" = "$vm_id" ] ||
+      { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$inst"; return 1; }
+    echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
+  fi
   mark_next "$target STEP 3/3" "the tests ($mode set) in a browser on the VM, then the server's log"
 
   win_web_e2e "$target" "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
@@ -1293,24 +1343,31 @@ PS
   win_run_stop dp-server >/dev/null 2>&1
 }
 
-# Job dp-ci-release-step2-pack-and-uat (`dp-ci.sh win release`): the release files, built once and accepted the way a
-# user meets them. Step 2 of 2, run last: after step 1 (every dp-ci-release-step1-e2e-prerelease target) is green on the
-# same commit. One run makes one pack, so every check below is of the very files that may be published; their sha256
-# are printed and kept in <log>-step-release-files.txt (owner, 2026-10-22):
+# Job dp-ci-release-step3-pack-and-uat-windows (`dp-ci.sh win release`): the Windows release files, built once, accepted
+# the way a user meets them, then staged for step 4. Step 3 of 4: after step 1 (the release lanes of
+# dp-ci-release-step1-e2e-prerelease, as asbl/ci/release-state.sh records them) is green on the same commit; before or
+# after step 2 (the Docker release), never at the same time (one VM). One run makes one pack, so every check below is
+# of the very files that are staged; their sha256 are printed and kept in <log>-step-release-files.txt (owner, 2026-10-22):
+#   first              the version gate (release-state.sh version-check: settings.xml against the released version;
+#                      nothing to release ends here, green, with no pack) and step 1's record of this commit
+#                      (release-state.sh require step1); this host's checkout and the VM's both on origin/main
 #   1. pack            asbl\pack-datapallas.bat on the VM, unchanged: empties dist, target and the project's Maven cache,
 #                      builds everything again (DataPallas.exe included), and leaves datapallas.zip, datapallas-server.zip,
 #                      datapallas-server-docker.zip and datapallas-src.zip in asbl\dist, and the flowkraft/datapallas-server
-#                      image in Docker Desktop. Its upload and push lines are comments: nothing is published.
+#                      image in Docker Desktop. Its upload and push lines are comments. Its docker zip and image are not
+#                      shipped: the Docker release is built once, on Linux, by step 2.
 #   2. Robot UAT       asbl\src\uat\run-tests.bat, unchanged: extracts datapallas.zip and datapallas-server.zip and runs every
 #                      .robot file as a user meets the product - Java and Chocolatey removed and installed, the exe, the
 #                      command line, the server and its Windows service. A bare step: the machine's Java, never the CI's.
-#   3. docker Windows  that datapallas-server-docker.zip and that image in the VM's Docker Desktop, the light set
-#   4. docker Linux    the same zip and image copied to this host, the docker-server target, the light set
-# Green only when all four are. A red one means a new commit and steps 1 and 2 again, never a patched zip. Uploading the
-# zips and pushing the image stay the owner's, by hand, of the files in the list.
+#   3. stage           still origin/main and step 1 still green, then datapallas.zip, datapallas-server.zip and
+#                      datapallas-src.zip copied to this host, checked against the pack's sha256, uploaded to the
+#                      release's candidate folder and checked again by download (asbl/ci/release-publish.sh stage-files,
+#                      which records step3.windows). No public link moves: step 4 publishes.
+# Green only when all three are (or when there is nothing to release). A red one means a new commit and the steps again,
+# never a patched zip.
 win_release() {
-  local base vmc hostc files ok=1 rc res_robot=FAIL res_dw=FAIL res_dl=FAIL
-  local uat rdir rtag created_host counts pass fail skip
+  local base vmc hostc files ok=1 rc gate res_robot=FAIL res_stage=NOT_RUN
+  local uat rdir n counts pass fail skip
   [ -n "${WIN_REPO:-}" ] || {
     echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
     return 2
@@ -1319,12 +1376,25 @@ win_release() {
   base="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-release-$(date -u +%Y%m%dT%H%M%SZ)-step.log}"
   base="${base%.log}"
   mkdir -p "$(dirname "$base")" 2>/dev/null
-  mark_start "RELEASE STEP 1/4" "pack: the VM on origin/main, asbl\\pack-datapallas.bat, then the files' sha256"
+  mark_start "RELEASE STEP 1/3" "the version gate and step 1's record, then the pack: the VM on origin/main, asbl\\pack-datapallas.bat, the files' sha256"
+  (cd "$REPO" && sync_host_repo) || return 2
+  gate=$(bash "$REPO/asbl/ci/release-state.sh" version-check); rc=$?
+  printf '%s\n' "$gate"
+  case "$rc" in
+    0) RELEASE_VERSION=$(printf '%s\n' "$gate" | sed -n 's/^RELEASE_VERSION=\([^ ]*\) .*/\1/p') ;;
+    3) echo "RELEASE_RESULT nothing to release: no pack, nothing staged"; return 0 ;;
+    *) echo "RELEASE_RESULT refused by the version gate (above): no pack"; return 1 ;;
+  esac
+  hostc=$(git -C "$REPO" rev-parse HEAD)
+  RELEASE_COMMIT="$hostc" bash "$REPO/asbl/ci/release-state.sh" require step1 || {
+    echo "RELEASE_RESULT commit=${hostc:0:8} refused: step 1 is not green on origin/main (a lane missing or red, or main moved since step 1): no pack"
+    return 1; }
   win_sync_repo || return $?
-  vmc=$(win_ssh "git -C $WIN_REPO rev-parse --short HEAD" 2>/dev/null | tr -d '\r' | tail -1)
+  vmc=$(win_ssh "git -C $WIN_REPO rev-parse HEAD" 2>/dev/null | tr -d '\r' | tail -1)
   [ -n "$vmc" ] || { echo "FAIL  could not read the VM's commit" >&2; return 2; }
-  echo "RELEASE_COMMIT=$vmc"
-  # the pack builds the image in Docker Desktop, and parts 3 and 4 run it
+  [ "$vmc" = "$hostc" ] || { echo "FAIL  the VM is at ${vmc:0:8}, this host at ${hostc:0:8}: origin/main moved during the start, run it again" >&2; return 2; }
+  echo "RELEASE_COMMIT=${vmc:0:8} RELEASE_VERSION=$RELEASE_VERSION"
+  # the pack builds the server image in Docker Desktop too (not shipped from here, but the pack fails without it)
   win_docker_ok || return 2
   win_server_down "$WIN_REPO\\frend\\reporting\\testground\\server\\DataPallas" >/dev/null
   win_stacks_down server
@@ -1338,11 +1408,12 @@ win_release() {
     win_ps 2>&1 <<PS | tr -d '\r'
 Get-Content '$WIN_REPO\\asbl\\pack-datapallas.log' -Tail 60 -ErrorAction SilentlyContinue
 PS
-    echo "RELEASE_RESULT commit=$vmc pack=FAIL(exit $rc) robot=NOT_RUN docker-windows=NOT_RUN docker-linux=NOT_RUN"
+    RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record step3.windows FAIL \
+      "version=$RELEASE_VERSION" "pack=FAIL"
+    echo "RELEASE_RESULT commit=${vmc:0:8} version=$RELEASE_VERSION pack=FAIL(exit $rc) robot=NOT_RUN stage=NOT_RUN"
     return 1
   fi
-  # what the pack made: the four zips with their sha256, and the image (its version label names the tag the bundle pins;
-  # PowerShell 5.1 strips the quotes of {{index .Config.Labels "version"}}, so the labels are read as JSON)
+  # what the pack made: the four zips with their sha256
   files=$(win_ps 2>&1 <<PS | tr -d '\r'
 \$ok = \$true
 foreach (\$n in 'datapallas.zip', 'datapallas-server.zip', 'datapallas-server-docker.zip', 'datapallas-src.zip') {
@@ -1350,27 +1421,25 @@ foreach (\$n in 'datapallas.zip', 'datapallas-server.zip', 'datapallas-server-do
   if (Test-Path \$f) { "RELEASE_FILE " + (Get-FileHash -Algorithm SHA256 \$f).Hash.ToLower() + "  " + (Get-Item \$f).Length + "  " + \$n }
   else { "FAIL  \$n is not in asbl\\dist"; \$ok = \$false }
 }
-\$labels = (& docker image inspect '$SERVER_IMAGE_REPO:latest' --format '{{json .Config.Labels}}' 2>\$null) | ConvertFrom-Json
-\$v = \$labels.version
-\$id = (& docker image inspect "$SERVER_IMAGE_REPO:\$v" --format '{{.Id}}' 2>\$null)
-\$created = (& docker image inspect "$SERVER_IMAGE_REPO:\$v" --format '{{.Created}}' 2>\$null)
-if (\$v -and \$id) { "RELEASE_IMAGE $SERVER_IMAGE_REPO:\$v \$id \$created" } else { "FAIL  the image the pack builds is not in Docker Desktop"; \$ok = \$false }
 if (\$ok) { exit 0 } else { exit 1 }
 PS
 )
   rc=$?
   printf '%s\n' "$files"
-  [ "$rc" -eq 0 ] || { echo "RELEASE_RESULT commit=$vmc pack=FAIL(output) robot=NOT_RUN docker-windows=NOT_RUN docker-linux=NOT_RUN"; return 1; }
-  read -r _ RELEASE_IMAGE RELEASE_IMAGE_ID RELEASE_IMAGE_CREATED <<< "$(printf '%s\n' "$files" | grep '^RELEASE_IMAGE ')"
-  RELEASE_VERSION="${RELEASE_IMAGE##*:}"
-  export RELEASE_VERSION RELEASE_IMAGE_ID
+  if [ "$rc" -ne 0 ]; then
+    RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record step3.windows FAIL \
+      "version=$RELEASE_VERSION" "pack=FAIL(output)"
+    echo "RELEASE_RESULT commit=${vmc:0:8} version=$RELEASE_VERSION pack=FAIL(output) robot=NOT_RUN stage=NOT_RUN"
+    return 1
+  fi
   { echo "commit   $vmc"
-    echo "image    $RELEASE_IMAGE  $RELEASE_IMAGE_ID  created $RELEASE_IMAGE_CREATED"
-    printf '%s\n' "$files" | sed -n 's/^RELEASE_FILE /sha256   /p'
+    echo "version  $RELEASE_VERSION"
+    printf '%s\n' "$files" | sed -n 's/^RELEASE_FILE /sha256   /p' |
+      sed 's/\(datapallas-server-docker\.zip\)$/\1   (not shipped: step 2 ships the Linux build'"'"'s)/'
   } > "$base-release-files.txt"
   echo "RELEASE_FILES=$base-release-files.txt"
 
-  mark_next "RELEASE STEP 2/4" "Robot Framework UAT: asbl\\src\\uat\\run-tests.bat on the pack's zips"
+  mark_next "RELEASE STEP 2/3" "Robot Framework UAT: asbl\\src\\uat\\run-tests.bat on the pack's zips"
   # the suite's own set-up, once: its venv
   win_ps 2>&1 <<PS | tr -d '\r'
 if (-not (Test-Path '$uat\\.venv\\Scripts\\activate.bat')) {
@@ -1398,45 +1467,37 @@ PY
   fi
   [ "$res_robot" = PASS ] || ok=0
 
-  mark_end "$([ "$res_robot" = PASS ] && echo 0 || echo 1)"; mark_start "RELEASE STEP 3/4" "docker on Windows: the pack's datapallas-server-docker.zip and image, the light set"
-  if E2E_SPEC="" E2E_GREP="" E2E_RETRIES="" WIN_E2E_LOG="$base.log" mark_run win_docker_e2e release; then res_dw=PASS; else ok=0; fi
-
-  mark_end "$([ "$res_dw" = PASS ] && echo 0 || echo 1)"; mark_start "RELEASE STEP 4/4" "docker on Linux: the same zip and image copied to this host, docker-server, the light set"
-  hostc=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)
-  rdir="$REPO/asbl/dist/release"; rtag="$RELEASE_VERSION-$vmc-release"
-  if [ "${hostc#"$vmc"}" = "$hostc" ] && [ "${vmc#"$hostc"}" = "$vmc" ]; then
-    echo "FAIL  this host's checkout is at '$hostc', the release is of '$vmc' - bring it to origin/main and run step 2 again"
-    ok=0
+  mark_end "$([ "$res_robot" = PASS ] && echo 0 || echo 1)"
+  mark_start "RELEASE STEP 3/3" "stage: datapallas.zip, datapallas-server.zip, datapallas-src.zip to the candidate folder, checked by download"
+  if [ "$res_robot" != PASS ]; then
+    echo "not staged: the Robot UAT is not green"
+    RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record step3.windows FAIL \
+      "version=$RELEASE_VERSION" "pack=PASS" "robot=$res_robot"
+  # hours after the start: still origin/main, and step 1 still green on it (a later step-1 run may have recorded red)
+  elif ! git -C "$REPO" fetch -q origin || [ "$(git -C "$REPO" rev-parse origin/main)" != "$vmc" ] ||
+       ! RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-state.sh" require step1; then
+    echo "not staged: origin/main moved since the start (or could not be read), or step 1 is no longer green on ${vmc:0:8}"
+    res_stage=FAIL; ok=0
   else
+    # copied here first: the upload and its check run on this host, where the credentials are (never on the VM)
+    rdir="$REPO/asbl/dist/release-windows"
     rm -rf "$rdir" && mkdir -p "$rdir"
-    win_pull "$(printf '%s' "$WIN_REPO\\asbl\\dist\\datapallas-server-docker.zip" | tr '\\' '/')" "$rdir/datapallas-server-docker.zip" 2>/dev/null
-    win_ssh "docker tag $SERVER_IMAGE_REPO:$RELEASE_VERSION $SERVER_IMAGE_REPO:$rtag && docker save -o C:\\dp-ci\\tmp\\release-image.tar $SERVER_IMAGE_REPO:$rtag" 2>&1 | tr -d '\r'
-    win_pull C:/dp-ci/tmp/release-image.tar "$rdir/image.tar" 2>/dev/null
-    win_ssh "del /q C:\\dp-ci\\tmp\\release-image.tar & docker rmi $SERVER_IMAGE_REPO:$rtag" >/dev/null 2>&1
-    # the release tags of earlier runs on this host: 2 GB each
-    docker images "$SERVER_IMAGE_REPO" --format '{{.Tag}}' | grep -- '-release$' | grep -vx -- "$rtag" |
-      while read -r t; do docker rmi "$SERVER_IMAGE_REPO:$t" >/dev/null 2>&1; done
-    docker load -q -i "$rdir/image.tar" 2>&1; rm -f "$rdir/image.tar"
-    # the same image: Docker Desktop and this host may number it differently (image stores), its build time is its own
-    created_host=$(docker image inspect "$SERVER_IMAGE_REPO:$rtag" --format '{{.Created}}' 2>/dev/null)
-    if [ -z "$created_host" ] || [ "$created_host" != "$RELEASE_IMAGE_CREATED" ]; then
-      echo "FAIL  the image on this host ('${created_host:-none}') is not the pack's (created $RELEASE_IMAGE_CREATED)"; ok=0
-    elif [ "$(sha256sum "$rdir/datapallas-server-docker.zip" 2>/dev/null | cut -d' ' -f1)" != \
-           "$(sed -n 's/^sha256   \([0-9a-f]*\) .*datapallas-server-docker.zip$/\1/p' "$base-release-files.txt")" ]; then
-      echo "FAIL  the zip copied to this host is not the pack's (sha256 differs)"; ok=0
-    elif (cd "$REPO" && E2E_TARGET=docker-server E2E_SPEC="$WIN_LIGHT_SPEC" E2E_GREP="" E2E_RETRIES=1 \
-          E2E_DOCKER_RELEASE_TAG="$rtag" E2E_DOCKER_RELEASE_ZIP="$rdir/datapallas-server-docker.zip" \
-          FOLLOW_PIDFILE="" bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e); then
-      res_dl=PASS
+    for n in datapallas.zip datapallas-server.zip datapallas-src.zip; do
+      win_pull "$(printf '%s' "$WIN_REPO\\asbl\\dist\\$n" | tr '\\' '/')" "$rdir/$n" 2>/dev/null || echo "FAIL  could not copy $n from the VM"
+    done
+    if RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" \
+       bash "$REPO/asbl/ci/release-publish.sh" stage-files "$RELEASE_VERSION" "$base-release-files.txt" "$rdir"; then
+      res_stage=PASS
     else
-      ok=0
+      res_stage=FAIL; ok=0
     fi
+    rm -rf "$rdir"
   fi
 
-  mark_end "$([ "$res_dl" = PASS ] && echo 0 || echo 1)"
+  mark_end "$([ "$res_stage" = PASS ] && echo 0 || echo 1)"
   echo ""
   cat "$base-release-files.txt"
-  echo "RELEASE_RESULT commit=$vmc version=$RELEASE_VERSION pack=PASS robot=$res_robot docker-windows=$res_dw docker-linux=$res_dl"
+  echo "RELEASE_RESULT commit=${vmc:0:8} version=$RELEASE_VERSION pack=PASS robot=$res_robot stage=$res_stage"
   [ "$ok" = 1 ]
 }
 
@@ -1936,7 +1997,7 @@ AIHUBPY
   }
 
   e2e_web() {
-    local out=/tmp/e2e-web.out code mode=targeted target="${E2E_TARGET:-web}"
+    local out=/tmp/e2e-web.out code mode=targeted target="${E2E_TARGET:-web}" one_command=""
     case "$target" in
       web|electron|docker-server) ;;
       *) echo "!!! E2E_TARGET must be web, electron or docker-server (got '$target')"; return 2 ;;
@@ -2013,6 +2074,7 @@ AIHUBPY
       echo "Main Playwright process exited with code ${PIPESTATUS[0]}" >> "$out"
       e2e_openapi
       docker_server_down
+      [ -z "${E2E_DOCKER_FROM_URL:-}" ] || docker_one_command || one_command=FAIL
     else
       (cd frend/reporting && timeout --kill-after=60 "${E2E_TIMEOUT_SECS:-72000}" \
         xvfb-run -a --server-args="-screen 0 1920x1080x24" npx gulp "utils:start-server-and-e2e-$target") 2>&1 | tee "$out"
@@ -2024,7 +2086,7 @@ AIHUBPY
     echo "E2E_RESULT mode=$mode spec='${E2E_SPEC:-}' grep='${E2E_GREP:-}'" \
       "passed=$(e2e_count passed "$out") failed=$(e2e_count failed "$out") flaky=$(e2e_count flaky "$out")" \
       "skipped=$(e2e_count skipped "$out") didnotrun=$(e2e_count "did not run" "$out") exit=${code:-none} target=$target"
-    [ "$code" = "0" ]
+    [ "$code" = "0" ] && [ "$one_command" != FAIL ]
   }
 
   # springdoc OpenAPI + Swagger UI (J11): while the shipped server is still up at the end of a docker-server run, save its /v3/api-docs as
@@ -2061,17 +2123,26 @@ HTML
   # unpacked datapallas-server-docker.zip plus the flowkraft/datapallas-server image built by the last
   # successful `dp-ci.sh build` on this host. Nothing is built or pulled here: a missing image or zip is a
   # failure, and so is a container running any other image.
+  # E2E_DOCKER_FROM_URL=<zip url> (the Docker release, step 2): the self-host install from the download instead, as a
+  # user does it (datapallas.com/docs/server/self-host): that zip, the image its compose names pulled from the registry
+  # (the local tag of that name removed first; the build's <version>-<commit> tag keeps the layers), and the running
+  # image must be the one the release pushed (the digest step2.docker-stage recorded for this commit). After the
+  # tests, the page's other way in: the image alone, `docker run --rm -p <port>:9090 <image>`, must answer 200.
   DOCKER_SERVER_DIR=""
+  DOCKER_SERVER_IMAGE=""
   DOCKER_SERVER_URL="http://localhost:9090"
   docker_server_up() {
     local zip="$REPO/asbl/dist/datapallas-server-docker.zip" root="$REPO/frend/reporting/testground/docker-server"
-    local f tag image_id running_id i
+    local f tag image_id running_id i want pull=never
 
-    if [ -n "${E2E_DOCKER_RELEASE_TAG:-}" ]; then
-      # `dp-ci.sh win release` (job dp-ci-release-step2-pack-and-uat): the zip and the image the release pack made on
-      # the Windows VM, copied here as they are. The release has checked they are of this commit.
-      tag="$E2E_DOCKER_RELEASE_TAG"; zip="${E2E_DOCKER_RELEASE_ZIP:-}"
-      echo "docker-server: the release files -> $SERVER_IMAGE_REPO:$tag, $zip"
+    if [ -n "${E2E_DOCKER_FROM_URL:-}" ]; then
+      want=$(bash "$REPO/asbl/ci/release-state.sh" get step2.docker-stage digest 2>/dev/null)
+      [ -n "$want" ] || { echo "!!! docker-server: no step2.docker-stage digest recorded for this commit — stage the release first"; return 1; }
+      zip="$root.zip"; pull=always
+      mkdir -p "${root%/*}" && rm -f "$zip" || return 1
+      curl -fsSL --max-time 1800 -o "$zip" "$E2E_DOCKER_FROM_URL" ||
+        { echo "!!! docker-server: cannot download $E2E_DOCKER_FROM_URL"; return 1; }
+      echo "docker-server: downloaded $E2E_DOCKER_FROM_URL (sha256 $(sha256sum "$zip" | cut -c1-16)...), the release image $want"
     else
       for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
         grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
@@ -2083,19 +2154,22 @@ HTML
       # build would test old code under this commit's name (nothing is built here, so the only safe answer is no).
       [ "${tag#*-}" = "$SHA" ] ||
         { echo "!!! docker-server: the image was built from '${tag#*-}', the commit under test is '$SHA' — run 'dp-ci.sh build-if-needed' first"; return 1; }
-    fi
-    image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
-      { echo "!!! docker-server: image $SERVER_IMAGE_REPO:$tag is not on this host — run 'dp-ci.sh build' first"; return 1; }
-    [ -s "$zip" ] || { echo "!!! docker-server: $zip is missing — run 'dp-ci.sh build' first"; return 1; }
+      image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
+        { echo "!!! docker-server: image $SERVER_IMAGE_REPO:$tag is not on this host — run 'dp-ci.sh build' first"; return 1; }
+      [ -s "$zip" ] || { echo "!!! docker-server: $zip is missing — run 'dp-ci.sh build' first"; return 1; }
 
-    # The bundle's compose pins the released tag, and that is the file customers run: give the locally built
-    # image that name here (never pulled: --pull never below, and the id check proves which image runs).
-    docker tag "$SERVER_IMAGE_REPO:$tag" "$SERVER_IMAGE_REPO:$(printf '%s' "$tag" | cut -d- -f1)" || return 1
+      # The bundle's compose pins the released tag, and that is the file customers run: give the locally built
+      # image that name here (never pulled: --pull never below, and the id check proves which image runs).
+      docker tag "$SERVER_IMAGE_REPO:$tag" "$SERVER_IMAGE_REPO:$(printf '%s' "$tag" | cut -d- -f1)" || return 1
+    fi
 
     rm -rf "$root" && mkdir -p "$root" || return 1
     unzip -q "$zip" -d "$root" || { echo "!!! docker-server: cannot unpack $zip"; return 1; }
     DOCKER_SERVER_DIR="$root/DataPallas"
     [ -f "$DOCKER_SERVER_DIR/docker-compose.yml" ] || { echo "!!! docker-server: $DOCKER_SERVER_DIR/docker-compose.yml missing"; return 1; }
+    DOCKER_SERVER_IMAGE=$(cd "$DOCKER_SERVER_DIR" && docker compose config --images | grep "^$SERVER_IMAGE_REPO:" | head -1)
+    # a user's machine has no copy of it: compose pulls the release's (--pull always below)
+    [ "$pull" = always ] && { docker image rm "$DOCKER_SERVER_IMAGE" >/dev/null 2>&1 || true; }
 
     # The apps the tests start (next-playground, grails-playground, ai-hub, …) are built by compose from the
     # bundle's _apps sources, and compose reuses an image that already exists: an image left by an earlier run
@@ -2113,7 +2187,7 @@ HTML
       docker image inspect "$img" >/dev/null 2>&1 || docker pull -q "$img" ||
         { echo "!!! docker-server: cannot pull $img"; return 1; }
     done
-    (cd "$DOCKER_SERVER_DIR" && docker compose up -d --pull never) || { echo "!!! docker-server: compose up failed"; docker_server_down; return 1; }
+    (cd "$DOCKER_SERVER_DIR" && docker compose up -d --pull "$pull") || { echo "!!! docker-server: compose up failed"; docker_server_down; return 1; }
 
     for i in $(seq 1 60); do
       curl -fsS -o /dev/null -m 5 "$DOCKER_SERVER_URL" && break
@@ -2122,9 +2196,18 @@ HTML
     curl -fsS -o /dev/null -m 5 "$DOCKER_SERVER_URL" || { echo "!!! docker-server: $DOCKER_SERVER_URL did not answer within 5 minutes"; docker_server_down; return 1; }
 
     running_id=$(docker inspect datapallas-server --format '{{.Image}}' 2>/dev/null)
-    [ "$running_id" = "$image_id" ] ||
-      { echo "!!! docker-server: the container runs image $running_id, the build made $image_id — aborting"; docker_server_down; return 1; }
-    echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id"
+    if [ -n "${E2E_DOCKER_FROM_URL:-}" ]; then
+      case " $(docker image inspect "$running_id" --format '{{join .RepoDigests " "}}' 2>/dev/null) " in
+        *" $SERVER_IMAGE_REPO@$want "*) ;;
+        *) echo "!!! docker-server: the container runs $DOCKER_SERVER_IMAGE as $running_id, not the release's $SERVER_IMAGE_REPO@$want — aborting"
+           docker_server_down; return 1 ;;
+      esac
+      echo "DOCKER_SERVER_IMAGE=$DOCKER_SERVER_IMAGE $SERVER_IMAGE_REPO@$want (pulled)"
+    else
+      [ "$running_id" = "$image_id" ] ||
+        { echo "!!! docker-server: the container runs image $running_id, the build made $image_id — aborting"; docker_server_down; return 1; }
+      echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id"
+    fi
     # The whole server log of the run, next to the run log: clean state empties the bundle's logs between tests,
     # and the last lines printed by docker_server_down do not reach back to a failure hours earlier.
     docker logs -f datapallas-server > "${LOG%.log}-datapallas-server.log" 2>&1 &
@@ -2159,6 +2242,23 @@ HTML
       echo "docker-server: removing compose project '$project', started by the server and still running"
       docker compose -p "$project" down -v --remove-orphans >/dev/null 2>&1 || true
     done
+  }
+
+  # The self-host page's one command, `docker run --rm -p 9090:9090 <image>`: the release's image alone must answer 200
+  # within 3 minutes. Run after the bundle is down, on a free local port; stopped (and so removed) after.
+  docker_one_command() {
+    local port code="" i name=dp-ci-one-command
+    for port in $(seq 19090 19190); do (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null || break; done
+    docker run -d --rm --name "$name" -p "127.0.0.1:$port:9090" "$DOCKER_SERVER_IMAGE" >/dev/null ||
+      { echo "DOCKER_ONE_COMMAND result=FAIL image=$DOCKER_SERVER_IMAGE (docker run failed)"; return 1; }
+    for i in $(seq 1 36); do
+      code=$(curl -s -L -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1:$port/" 2>/dev/null)
+      [ "$code" = 200 ] && break
+      sleep 5
+    done
+    docker stop "$name" >/dev/null 2>&1
+    echo "DOCKER_ONE_COMMAND result=$([ "$code" = 200 ] && echo PASS || echo FAIL) image=$DOCKER_SERVER_IMAGE port=$port http=${code:-none}"
+    [ "$code" = 200 ]
   }
 
   # dp-dev: the owner's everyday web dev chain, unchanged (`npm run custom:start-server-and-ui-web`): gulp compiles
@@ -2607,6 +2707,24 @@ case "$TASK" in
   *) echo "usage: $0 build|build-if-needed|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e|release>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
 esac
 
+# An e2e tests the newest pushed code, whichever lane runs it: put this host's checkout on origin/main first (the
+# Windows lane does the same on the VM, win_sync_repo). Strictly a fast-forward; changes to tracked files, or a history
+# that cannot fast-forward, stop the run and change nothing. Commits not pushed yet are tested as they are (and said so).
+sync_host_repo() {
+  local dirty ahead=""
+  git fetch -q origin || { echo "FAIL  could not fetch origin - not running on code of unknown age." >&2; return 2; }
+  dirty=$(git status --porcelain --untracked-files=no)
+  [ -z "$dirty" ] || { echo "FAIL  this checkout has local changes to tracked files; nothing was touched:" >&2
+    printf '%s\n' "$dirty" | head -10 >&2; return 2; }
+  git merge -q --ff-only origin/main >/dev/null 2>&1 ||
+    ahead=$(git rev-list --count origin/main..HEAD)
+  if [ -n "$ahead" ]; then
+    [ "$(git rev-list --count HEAD..origin/main)" = 0 ] ||
+      { echo "FAIL  this checkout and origin/main have diverged; nothing was changed." >&2; return 2; }
+    echo "WARN  $ahead commit(s) here are not pushed; testing them as they are." >&2
+  fi
+  return 0
+}
 # The Windows lane runs here on the host, before any container exists: it only talks to the VM over
 # SSH. It deliberately skips the "one dp-ci run at a time" interlock below - reading the VM's state
 # is safe while a Linux run is going, and W6-W9 will take the interlock themselves when they need it.
@@ -2633,7 +2751,7 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
            echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"
            echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"
-           echo "       $0 win release      (the release: pack-datapallas.bat, then Robot UAT and Docker on Windows and Linux on its very files)"; exit 2 ;;
+           echo "       $0 win release      (the Windows release: pack-datapallas.bat, Robot UAT on its very files, then staged)"; exit 2 ;;
   esac
 fi
 PUBLISH_FLAGS=""
@@ -2713,24 +2831,6 @@ if [ "$TASK" = "dev" ]; then
   echo "stop:    docker stop $DEV_CONTAINER"
   exit 0
 fi
-# An e2e tests the newest pushed code, whichever lane runs it: put this host's checkout on origin/main first (the
-# Windows lane does the same on the VM, win_sync_repo). Strictly a fast-forward; changes to tracked files, or a history
-# that cannot fast-forward, stop the run and change nothing. Commits not pushed yet are tested as they are (and said so).
-sync_host_repo() {
-  local dirty ahead=""
-  git fetch -q origin || { echo "FAIL  could not fetch origin - not running on code of unknown age." >&2; return 2; }
-  dirty=$(git status --porcelain --untracked-files=no)
-  [ -z "$dirty" ] || { echo "FAIL  this checkout has local changes to tracked files; nothing was touched:" >&2
-    printf '%s\n' "$dirty" | head -10 >&2; return 2; }
-  git merge -q --ff-only origin/main >/dev/null 2>&1 ||
-    ahead=$(git rev-list --count origin/main..HEAD)
-  if [ -n "$ahead" ]; then
-    [ "$(git rev-list --count HEAD..origin/main)" = 0 ] ||
-      { echo "FAIL  this checkout and origin/main have diverged; nothing was changed." >&2; return 2; }
-    echo "WARN  $ahead commit(s) here are not pushed; testing them as they are." >&2
-  fi
-  return 0
-}
 if [ "$TASK" = e2e ]; then sync_host_repo || exit 2; fi
 # build-if-needed: what a job that installs the files `build` makes runs first. This checkout on origin/main, then `build`
 # only when the newest successful build is not of this commit - the rule docker-server, the Windows server lanes and the
@@ -2818,7 +2918,6 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --u
   -e JUNIT_MODULE="${JUNIT_MODULE:-}" -e JUNIT_TEST="${JUNIT_TEST:-}" \
   -e E2E_SPEC="${E2E_SPEC:-}" -e E2E_GREP="${E2E_GREP:-}" -e E2E_TIMEOUT_SECS="${E2E_TIMEOUT_SECS:-}" -e E2E_RETRIES="${E2E_RETRIES:-}" \
   -e E2E_TARGET="${E2E_TARGET:-web}" \
-  -e E2E_DOCKER_RELEASE_TAG="${E2E_DOCKER_RELEASE_TAG:-}" -e E2E_DOCKER_RELEASE_ZIP="${E2E_DOCKER_RELEASE_ZIP:-}" \
   -e E2E_MAX_WAIT_MS="${E2E_MAX_WAIT_MS:-}" -e E2E_MAX_TEST_MS="${E2E_MAX_TEST_MS:-}" -e E2E_ACTION_TIMEOUT_MS="${E2E_ACTION_TIMEOUT_MS:-}" \
   -e E2E_CLEAN_STATE_ATTEMPTS="${E2E_CLEAN_STATE_ATTEMPTS:-}" -e E2E_FAILFAST="${E2E_FAILFAST:-}" \
   -e E2E_START_EVIDENCE_MS="${E2E_START_EVIDENCE_MS:-}" -e E2E_STALL_MS="${E2E_STALL_MS:-}" -e E2E_REPEAT_EACH="${E2E_REPEAT_EACH:-}" \
@@ -2826,7 +2925,7 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --u
   -e DEBUG="${DEBUG:-}" \
   -e E2E_CHROMIUM_EXECUTABLE="${E2E_CHROMIUM_EXECUTABLE:-}" \
   -e E2E_SLOW_MO="${E2E_SLOW_MO:-}" -e E2E_DD_SCREENSHOTS="${E2E_DD_SCREENSHOTS:-}" \
-  -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" \
+  -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" -e E2E_DOCKER_FROM_URL="${E2E_DOCKER_FROM_URL:-}" \
   -e PUBLISH_TAG="$PUBLISH_TAG" -e PUBLISH_RESET="$PUBLISH_RESET" -e PUBLISH_SETTINGS_FILE="$PUBLISH_SETTINGS_FILE" -e DRY_RUN="${DRY_RUN:-0}" -e FORCE="${FORCE:-0}" -e SMOKE_TIMEOUT_SECS="${SMOKE_TIMEOUT_SECS:-300}" \
   -e TARGET_HOST="${TARGET_HOST:-}" -e TARGET_COMPOSE_DIR="${TARGET_COMPOSE_DIR:-}" -e TARGET_DATA_DIR="${TARGET_DATA_DIR:-}" \
   -e TARGET_APP="${TARGET_APP:-}" -e TARGET_URL="${TARGET_URL:-}" \

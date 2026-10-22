@@ -1,0 +1,43 @@
+# DataPallas public demo - https://demo.datapallas.com, a plain install of the published release (decision OD4 (a), 2026-10-22).
+# asbl/ci/demo-public/install-release.sh unzips newest/datapallas-server-docker.zip as it is and puts this file next to its
+# docker-compose.yml; `docker compose up -d` in that folder reads both. Only what a public demo needs on top of the bundle:
+# NO Docker socket and no MailHog (the public sees three dashboards, nothing that starts a container or sends a mail, and a socket
+# on a container the internet talks to would hand over the host), no host port (the bkstg gateway reaches the app by container
+# name on the proxy network), a memory limit, no-new-privileges.
+name: custom-datapallas-demo-public
+
+services:
+  datapallas-server:
+    container_name: datapallas-demo-public
+    ports: !reset []
+    extra_hosts: !reset []
+    # the bundle's own folders, without the Docker socket
+    volumes: !override
+      - ./_apps:/app/_apps
+      - ./backup:/app/backup
+      - ./config:/app/config
+      - ./db:/app/db
+      - ./input-files:/app/input-files
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./poll:/app/poll
+      - ./quarantine:/app/quarantine
+      - ./samples:/app/samples
+      - ./scripts:/app/scripts
+      - ./temp:/app/temp
+      - ./templates:/app/templates
+      - ./tools/jasper-legacy/lib:/app/tools/jasper-legacy/lib
+    networks: [proxy]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 4g
+    restart: unless-stopped
+
+  # not started: a profile nobody turns on
+  mailhog:
+    profiles: [never]
+
+networks:
+  proxy:
+    name: bridge_current_host_cross_containers_net
+    external: true

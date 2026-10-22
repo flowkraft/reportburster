@@ -1,6 +1,6 @@
-// Job datapallas/dp-ci-release-demos. The demos on the code of origin/main: asbl/ci/jenkins/release-demos.sh builds it first
-// when it is not built yet (dp-ci.sh build-if-needed), then publishes that image to dp-demo.bkstg, demo.datapallas.com or both.
-// Not a step of a release: run it whenever a demo should show origin/main, best after dp-ci-release-step1-e2e-prerelease is green on it.
+// Job datapallas/dp-ci-release-demos, asbl/ci/jenkins/release-demos.sh (decision OD4 (a)). dp-demo.bkstg shows origin/main: built first
+// when it is not built yet (dp-ci.sh build-if-needed), then that image published. demo.datapallas.com is a plain install of the
+// published release (asbl/ci/demo-public/install-release.sh), nothing built: run it after step 4 (dp-ci-release-step4-publish).
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log (see asbl/ci/jenkins/jenkins.md).
 pipeline {

@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-release-step2-pack-and-uat. Step 2 of 2 of a release, the last (after dp-ci-release-step1-e2e-prerelease is green on every target, on the same commit): dp-ci.sh win release. On the Windows VM, asbl\pack-datapallas.bat builds the release files once, from clean; then the Robot Framework UAT (asbl\src\uat\run-tests.bat) and the Docker light set on Windows and on Linux test those very files the way a user meets them. Green only when all pass; the sha256 of the files that may be published are in the log and in the release-files report. Nothing is published.
+// Job datapallas/dp-ci-release-step3-pack-and-uat-windows. Step 3 of 4 of a release (after dp-ci-release-step1-e2e-prerelease is green on the same commit; before or after step 2, never at the same time): dp-ci.sh win release. First the version gate (nothing to release = green, no pack). On the Windows VM, asbl\pack-datapallas.bat builds the Windows release files once, from clean; the Robot Framework UAT (asbl\src\uat\run-tests.bat) tests those very files the way a user meets them; then datapallas.zip, datapallas-server.zip and datapallas-src.zip are staged in the release's candidate folder, checked by download. Green only when all pass; the sha256 of the files are in the log and in the release-files report. No public link moves: step 4 publishes.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The driver is a detached host process and the VM steps are scheduled tasks,
 // so closing the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -14,8 +14,8 @@ pipeline {
   environment {
     DP_HOST = 'root@172.19.0.1'
     DP_REPO = '/var/kraft-internalsystems/projects/all-repos/src/products/reportburster'
-    // the release's step log names its files <log>-step-...: the Robot results, the Playwright report of Docker on Windows, the release files
-    REPORT_PATHS = '@run/-step-robot @run/-step-playwright.xml @run/-step-playwright-html @run/-step-release-files.txt'
+    // the release's step log names its files <log>-step-...: the Robot results, the release files
+    REPORT_PATHS = '@run/-step-robot @run/-step-release-files.txt'
   }
 
   stages {
@@ -26,9 +26,9 @@ pipeline {
         sh '''#!/bin/bash
 set -o pipefail
 q() { printf '%q' "$1"; }
-# the Windows lanes' launcher and its pid file: never two Windows runs at once. The job is one step; its four parts are
-# marked RELEASE STEP 1/4 .. 4/4 inside, each START/END with the time it took (asbl/ci/marks.sh): grep '^######## ' in the console.
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && bash asbl/ci/jenkins/job-step.sh 'JOB STEP 1/1' 'the release: dp-ci.sh win release' env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release"
+# the Windows lanes' launcher and its pid file: never two Windows runs at once. The job is one step; its three parts are
+# marked RELEASE STEP 1/3 .. 3/3 inside, each START/END with the time it took (asbl/ci/marks.sh): grep '^######## ' in the console.
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && bash asbl/ci/jenkins/job-step.sh 'JOB STEP 1/1' 'the Windows release: dp-ci.sh win release' env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release"
 '''
         }
       }
@@ -42,8 +42,6 @@ q() { printf '%q' "$1"; }
 LOGLINK=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e-latest.log
 ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && set -f && CI_LOG_LINK=$(q "$LOGLINK") bash asbl/ci/jenkins/pull-reports.sh $REPORT_PATHS" | tar xzf - -C reports || echo "Reports: nothing pulled"
 # the run's files are named after its log: give them the fixed names the publishers need
-for f in reports/*-playwright.xml; do [ -e "$f" ] && mv "$f" reports/playwright.xml; done
-for d in reports/*-playwright-html; do [ -e "$d" ] && rm -rf reports/playwright-html && mv "$d" reports/playwright-html; done
 for d in reports/*-robot; do [ -e "$d" ] && rm -rf reports/robot && mv "$d" reports/robot; done
 for f in reports/*-release-files.txt; do [ -e "$f" ] && mv "$f" reports/release-files.txt; done
 exit 0
@@ -54,10 +52,7 @@ exit 0
             robot outputPath: 'reports/robot', outputFileName: 'output.xml', logFileName: 'log.html', reportFileName: 'report.html', passThreshold: 0.0, unstableThreshold: 0.0, otherFiles: '**/*.png'
           }
         }
-        // Docker on Windows (the light set): test counts and the Playwright report. Docker on Linux keeps its report next to its own run log.
-        junit testResults: 'reports/playwright.xml', allowEmptyResults: true, skipMarkingBuildUnstable: true
-        publishHTML(target: [reportName: 'Playwright report', reportDir: 'reports/playwright-html', reportFiles: 'index.html', keepAll: false, allowMissing: true, alwaysLinkToLastBuild: true])
-        // the sha256 of the files this run accepted: the ones that may be published
+        // the sha256 of the files this run accepted and staged: the ones step 4 publishes
         archiveArtifacts artifacts: 'reports/release-files.txt', allowEmptyArchive: true
       }
     }
