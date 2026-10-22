@@ -15,16 +15,16 @@ The jobs are in the Jenkins folder `datapallas` (https://jenkins.bkstg.flowkraft
 | Run one JUnit class or method | `dp-ci-dev-junit` | `JUNIT_MODULE=bkend/server`, `JUNIT_TEST=ReportsServiceTest#aFolderHoldingOnlyOneTemplateNeedsNoInference` (a class: `JUNIT_TEST=ReportsServiceTest`) |
 | See a saved change in a browser | `dp-ci-dev-server` | `ACTION=start` (`DEV_MODE=live`): https://dp-dev-live.bkstg.flowkraft.com |
 | See one commit that nothing can move | `dp-ci-dev-server` | `ACTION=start`, `DEV_MODE=pinned`, `PINNED_SHA=<sha>`: https://dp-dev-pinned.bkstg.flowkraft.com |
-| Stop a dev server | `dp-ci-dev-server` | `ACTION=stop` (with `DEV_MODE=pinned` for the pinned one) |
+| See Kate's clone in a browser | `dp-ci-dev-server` | `ACTION=start`, `DEV_MODE=kate`: https://dp-kate.bkstg.flowkraft.com |
+| Start a running dev server again | `dp-ci-dev-server` | `ACTION=restart` (with its `DEV_MODE`) |
+| Stop a dev server | `dp-ci-dev-server` | `ACTION=stop` (with `DEV_MODE=pinned` or `kate` for those) |
 | The whole trunk on Linux | `dp-ci-release-step1-e2e-prerelease` | `E2E_TARGET=web`, `E2E_SPEC` and `E2E_GREP` empty (about 10.5 to 15 h) |
 | The whole trunk on Windows | `dp-ci-release-step1-e2e-prerelease` | `E2E_TARGET=windows-vm-electron`, `E2E_SPEC` and `E2E_GREP` empty (about 25 h) |
 | One Windows test by its title | `dp-ci-release-step1-e2e-prerelease` | `E2E_TARGET=windows-vm-electron`, `E2E_SPEC=[\\/]samples\.spec\.ts$` (Windows paths have backslashes), `E2E_GREP=<a piece of its title>` |
 | A release, start to end (e.g. 16.6.0) | steps 0 to 4 | step 0 `RELEASE_VERSION=16.6.0`; step 1's four lanes; steps 2 and 3 `MODE=rehearsal`, a look, then `MODE=public` one after the other; step 4. See "The release, in order" |
 | Make a version public after its rehearsal passed | `dp-ci-release-step2-release-docker` and `dp-ci-release-step3-release-windows-vm` | `MODE=public` (one after the other): the passed rehearsal copied in minutes |
 | Make a version public directly, no rehearsal run before | the same two jobs | `MODE=public`: it finds no passed rehearsal of the version, says `rehearsing first`, rehearses, and copies only when that is green |
-| The preview demo should show `origin/main` | `dp-ci-dev-demo-preview-bkstg` | nothing to change (`DRY_RUN=yes` only looks) |
 | The public demo, after a release went public | `dp-ci-release-step4-demo-public` | nothing to change; `RESET_DEMO_DATA=yes` when the release changed the dashboards |
-| The public demo with an image that is not a release | Rundeck `servers` > `ops/change/demo-publish`, not a Jenkins job | its own options (it runs `dp-ci.sh publish-demo-datapallas.com`) |
 | The code-quality report | `dp-ci-dev-quality-report` | no parameters |
 | A job says `PREREQUISITES MISSING` | the same job, again, once fixed | each `MISSING <what>: <what to do>` line says what to do; nothing was started. Lists: "What each job needs before it starts" and "Before the first release"; by hand: `bash asbl/ci/dp-ci.sh prereq <check...>`, `bash asbl/ci/release-publish.sh preflight docker\|files [public]` |
 
@@ -76,15 +76,6 @@ Where the time goes: every job that does several things marks each part with a S
 
 The times below are measured from the CI logs and Jenkins' build durations, unless they say "not measured yet".
 
-### dp-ci-dev-demo-preview-bkstg
-
-- **What:** https://dp-demo.bkstg.flowkraft.com shows `origin/main`: `asbl/ci/jenkins/release-demos.sh` with `DEMO=dp-demo.bkstg`: the build of `origin/main` first, only when there is none yet (`dp-ci.sh build-if-needed`), then that very image published (`dp-ci.sh publish-demo-bkstg`: the image switched, a smoke test, the previous image back when it fails). It shows the build's Trivy table. Not a step of a release.
-- **When:** any time, best after step 1 is green on that commit. The public demo is `dp-ci-release-step4-demo-public`; an image that is not a release goes there only by Rundeck (`servers` > `ops/change/demo-publish`).
-- **Parameters:** `DRY_RUN` (`no`; `yes` = build and publish nothing: the prerequisites, whether a build is needed, what each part would do; while origin/main is not built yet, the dry publish checks the newest earlier build's image instead, and fails when that image is gone).
-- **Needs:** this host's Docker engine and the site's publish target (`dp-ci.sh prereq docker publish-target publish-demo-bkstg`), before the build.
-- **Time:** about a minute when `origin/main` is built already; about 40 min more when it builds first.
-- **Log:** `DEMOS STEP 1/2` (the build), `2/2` (the publish); `DEMOS_RESULT` is the verdict.
-
 ### dp-ci-dev-e2e-one-spec
 
 - **What:** the fix-and-retry loop, `dp-ci.sh e2e-loop`: one spec file, or some of its tests, on `web` or `electron-linux`, retries 0. The jars and the Angular UI are built from the tree on every run; the package (the content the tests start from) is never rebuilt, `E2E_PACKAGE` says what happens to it (built first only when there is none). It never counts for a release.
@@ -117,11 +108,11 @@ The times below are measured from the CI logs and Jenkins' build durations, unle
 
 ### dp-ci-dev-server
 
-- **What:** starts or stops a dev web server, `dp-ci.sh dev --live` or `--pinned <sha>`, and prints its URL. `live` = the checkout as it is saved, hot-reloading (Java in about 10 s, the UI at once): https://dp-dev-live.bkstg.flowkraft.com (`dp-dev` is an alias). `pinned` = a separate clone parked at one commit, no hot reload: https://dp-dev-pinned.bkstg.flowkraft.com. It keeps running after the build until `ACTION=stop`; build, JUnit and e2e runs stop the live one for their length and start it again. A second start prints `already running at <URL>`; it refuses while a `dp-ci` run holds the server.
+- **What:** starts, restarts or stops a dev web server, `dp-ci.sh dev --live`, `--pinned <sha>` or `dev` in Kate's clone, and prints its URL. `live` = the checkout as it is saved, hot-reloading (Java in about 10 s, the UI at once): https://dp-dev-live.bkstg.flowkraft.com (`dp-dev` is an alias). `pinned` = a separate clone parked at one commit, no hot reload: https://dp-dev-pinned.bkstg.flowkraft.com. `kate` = Kate's own clone (`agents-headquarter/office-kate/projects/src/products/reportburster`) as it is saved, hot-reloading: https://dp-kate.bkstg.flowkraft.com. It keeps running after the build until `ACTION=stop`; build, JUnit and e2e runs stop the live one for their length and start it again. A second start prints `already running at <URL>`, `restart` starts it again; it refuses while a `dp-ci` run holds the server.
 - **When:** to look at a change. Never a proof: only the e2e jobs prove, and no e2e runs against it (an e2e cleans the testground it reads and starts its own server).
-- **Parameters:** `ACTION` (`start`, `stop`), `DEV_MODE` (`live`, `pinned`), `PINNED_SHA` (a pinned start only; a commit this checkout has). In `live`, an edited db-template file reaches the site at once; a new sample or dataset needs `dp-ci.sh dev --refresh-content` (by hand, about 3 min).
-- **Needs:** this host's Docker engine (at a start); `live` also this checkout's Linux package (`asbl/target/package/verified-db-noexe`, which an e2e run builds when there is none): not checked, and without it the start fails after the backend build. **Time:** a start about 3.5 min until the site answers (a pinned commit's first start is longer: not measured yet); a stop seconds.
-- **Log:** `ready: <URL>`, `already running at`, `stopped:`, `FAIL`.
+- **Parameters:** `ACTION` (`start`, `restart`, `stop`), `DEV_MODE` (`live`, `pinned`, `kate`), `PINNED_SHA` (a pinned start or restart only; a commit this checkout has). In `live`, an edited db-template file reaches the site at once; a new sample or dataset needs `dp-ci.sh dev --refresh-content` (by hand, about 3 min).
+- **Needs:** this host's Docker engine (at a start); `live` and `kate` also their checkout's Linux package (`asbl/target/package/verified-db-noexe`, which an e2e run builds when there is none): not checked, and without it the start fails after the backend build. **Time:** a start or restart about 3.5 min until the site answers (a pinned commit's first start is longer: not measured yet); a stop seconds.
+- **Log:** `ready: <URL>`, `already running at`, `restart:`, `stopped:`, `FAIL`.
 
 ### dp-ci-release-step0-set-version
 
@@ -168,7 +159,7 @@ The times below are measured from the CI logs and Jenkins' build durations, unle
 ### dp-ci-release-step4-demo-public
 
 - **What:** step 4 of a release: demo.datapallas.com (the public demo that datapallas.com frames) installs the published release, nothing built (OD4): `asbl/ci/jenkins/release-demos.sh` with `DEMO=demo.datapallas.com`: `setup.sh` and `setup.sh --edge`, then `asbl/ci/demo-public/install-release.sh` (`newest/datapallas-server-docker.zip` unzipped into a folder of its own per version, with `asbl/ci/demo-public/docker-compose.override.yml`: no Docker socket, no host port, no MailHog; the data carried over from the running version; the previous version started again when the new one does not answer; nothing to do when it already runs the released version; its verdict is the `DEMO_INSTALL result=` line), then `setup.sh --check` and the demo links. The output is masked like the Rundeck job's.
-- **When:** after step 2's `MODE=public`. An image that is not a release: Rundeck `servers` > `ops/change/demo-publish`.
+- **When:** after step 2's `MODE=public`.
 - **Parameters:** `RESET_DEMO_DATA` (`no`; `yes` = the new version starts from the bundle's own data, the old data stays in the previous version's folder; for a release that changed the dashboards), `DRY_RUN` (`no`, `yes`: changes nothing).
 - **Needs:** the Docker release public; the demo's two root-only settings files, written when it was set up (`demo-datapallas-com.env` and `demo-public-storefront.env` in `/var/kraft-internalsystems/config/datapallas-ci/`, named in `asbl/ci/demo-public/setup.sh`). **Time:** minutes (not measured yet). **Log:** `DEMOS STEP 1/3` .. `3/3`; `DEMOS_RESULT` is the verdict.
 
@@ -178,14 +169,13 @@ scripts wraps each in `job-step.sh "JOB STEP n/N" "<what>" <command...>`, so its
 
 **What each job needs before it starts.** Each job checks it first, within seconds, before anything slow: one line per check, `OK <what>` or `MISSING <what>: <what to do>`, then `PREREQUISITES OK` or `PREREQUISITES MISSING (<n>): nothing was started. Fix what is listed above, then run the job again.` By hand, on this host: `bash asbl/ci/dp-ci.sh prereq <check...>` (`docker`, `vm`, `vm-docker`, `vm-java`, `vm-mvn`, `vm-free`, `publish-target <task>`) or `bash asbl/ci/dp-ci.sh win prereq e2e|docker-e2e|server-e2e|release` (a Windows lane's set). The checks only read. The jobs with a build label (steps 0, 2 and 3) then show `prerequisites missing: see the log`.
 
-- Every job that runs `dp-ci.sh` on this host (`dp-ci-dev-junit`, `dp-ci-dev-quality-report`, `dp-ci-dev-e2e-one-spec`, `dp-ci-dev-server`, step 1's `web`, `electron-linux` and `docker-server`, the builds in steps 1 and 2 and in `dp-ci-dev-demo-preview-bkstg`): the Docker engine on this host (`docker`): `MISSING a running Docker engine on this host: start it (systemctl start docker), then run the job again`.
+- Every job that runs `dp-ci.sh` on this host (`dp-ci-dev-junit`, `dp-ci-dev-quality-report`, `dp-ci-dev-e2e-one-spec`, `dp-ci-dev-server`, step 1's `web`, `electron-linux` and `docker-server`, the builds in steps 1 and 2): the Docker engine on this host (`docker`): `MISSING a running Docker engine on this host: start it (systemctl start docker), then run the job again`.
 - Step 1, the Windows targets, at the start of the lane (before the VM's sync and package rebuild); `windows-vm-docker` and `windows-vm-server` also before their build, with no other Windows run going (`vm-free`: `MISSING a free Windows VM: another Windows run is going ...`):
   - all three: the VM (`vm`): `MISSING WIN_HOST, ... in <win-ci.env>: the Windows VM's settings ...` or `MISSING an answer from the Windows VM over SSH ...: start the VM, or repair its SSH, ...`; its Docker Desktop (`vm-docker`): `MISSING Docker Desktop running on the Windows VM: start it in the VM's desktop session, wait until docker info answers, ...`;
   - `windows-vm-electron`: Java 17 and Maven on the VM's PATH as the registry has it, the test gulp makes before it starts the server (`vm-java`, `vm-mvn`): `MISSING Java 17 on the Windows VM: ...`, `MISSING Maven (mvn) on the Windows VM: ...` (without them gulp tests the Install screen instead of the app);
   - `windows-vm-docker`: also the Docker engine on this host, which its image is copied from (not when a release's download is tested);
   - `windows-vm-server`: also the machine's Java 17 (`vm-java`), which `startServer.bat` runs on.
 - `dp-ci-release-step2-release-docker` and `dp-ci-release-step3-release-windows-vm`: "Before the first release", below; step 3 also the VM answering over SSH (`vm`), unless it only copies.
-- `dp-ci-dev-demo-preview-bkstg`, before its build: the Docker engine on this host and the site's publish target (`publish-target publish-demo-bkstg`: its settings and `docker-compose.yml`): `MISSING a ready publish target for publish-demo-bkstg: <why>; set it up ..., then run the job again`.
 - `dp-ci-release-step4-demo-public` builds nothing and has no check of its own: a part that fails stops it with `FAILED` and why.
 
 ## The release, in order
@@ -216,7 +206,7 @@ Why this order:
 - **Old releases stay, rehearsals do not.** Before `newest/` is replaced, the outgoing release's files are copied to its own `<version>/` when they are not there yet (so the first job release archives the hand release 16.5.0 too). After the copy, the rehearsal it copied is deleted; a new rehearsal first deletes its channel's earlier rehearsal files (red, abandoned or never made public), each marked removed in the release record. Only `rehearsal/` is ever cleaned, with a hard delete that frees the space at once; `newest/` and `<version>/` never. `DRY_RUN=yes` prints what it would archive and delete.
 - **One commit per rehearsal**: a rehearsal refuses unless step 1 is green on its commit of `origin/main`: keep `main` still from step 1 until both rehearsals are green. `MODE=public` copies the rehearsed commit's files even when `main` has moved since.
 - **Each channel is released on its own**, with its own released version and its own public run. Between the two public runs, `newest/` holds one channel's new files next to the other's old ones: run the two public runs one after the other.
-- **Step 4, demo.datapallas.com**, installs the published release like any user (OD4); dp-demo.bkstg keeps showing builds of `origin/main` (`dp-ci-dev-demo-preview-bkstg`).
+- **Step 4, demo.datapallas.com**, installs the published release like any user (OD4).
 
 **The version gate.** Every release job starts with `bash asbl/ci/release-state.sh version-check docker|windows`. The version is `<version>` in `bkend/reporting/src/main/external-resources/template/config/burst/settings.xml`, which step 0 sets (`dp-ci-release-step0-set-version`: `asbl/ci/set-version.sh <version>` on `origin/main`, with the other version files; `--versions` lists them, they must agree). Each channel has its released version: Docker's is the one Docker Hub's `:latest` has; Windows' is the `version=` line of `newest/windows-version.txt`, read by its download link, and until the first Windows `MODE=public` writes that file, 16.5.0, the last version both channels were released together by hand (a constant in `release-state.sh`). The same: `NOTHING TO RELEASE: ... For a new release, run dp-ci-release-step0-set-version with a bigger version (...)`, the job ends green and does nothing. Greater: the release goes on. Lower, or already published: refused. Step 1 only prints the `RELEASE_VERSION` line and runs anyway, as the everyday e2e job. `release-state.sh released` prints each channel's released version and the current release (the higher one): step 0 compares with it.
 
@@ -297,7 +287,7 @@ dashboard, a *List View* that includes all jobs, or `seed` appears again in any 
 | `release-docker.sh` | on the host: job `dp-ci-release-step2-release-docker`. `MODE=rehearsal`: the build, the stage (`asbl/ci/release-publish.sh stage-docker`), then the install from the download on Linux and on the VM. `MODE=public`: the copy of a passed rehearsal (`asbl/ci/release-publish.sh publish docker`) |
 | `release-set-version.sh` | on the host: job `dp-ci-release-step0-set-version`: a bigger version written into the version files of `origin/main` (`asbl/ci/set-version.sh`, in a throwaway worktree), checked, committed and pushed to `main` |
 | `release-label.sh` | on the host: the label of a step 0, 2 or 3 build in the build list, read from the run's output (`release-run.out` in the job's workspace), set by the Jenkinsfile's `post { always }` |
-| `release-demos.sh` | on the host: jobs `dp-ci-dev-demo-preview-bkstg` (`DEMO=dp-demo.bkstg`: `dp-ci.sh build-if-needed`, then the publish) and `dp-ci-release-step4-demo-public` (`DEMO=demo.datapallas.com`: `asbl/ci/demo-public/install-release.sh`), masked |
+| `release-demos.sh` | on the host: job `dp-ci-release-step4-demo-public` (`DEMO=demo.datapallas.com`: `asbl/ci/demo-public/install-release.sh`), masked |
 | `follow-ci.sh` | on the host: runs a launcher and follows its log until the run ends (`run`), or follows the current one (`attach`) |
 | `plugins.txt` | the plugins needed beyond a standard install: `job-dsl`, and the report publishers of the quality plan (`htmlpublisher`, `coverage`, `warnings-ng`, `robot`) |
 | `pull-reports.sh` | on the host: streams the report files of a run as a tar.gz, which the `Reports` stage of a Jenkinsfile unpacks into the build's workspace (see "Reports") |
@@ -340,7 +330,7 @@ the first-run checklist is at the end. Jenkins folder `datapallas`, each job's b
 | Playwright | `dp-ci-release-step1-e2e-prerelease` | "Test Result" (JUnit XML) and "Playwright report" (HTML: steps, screenshots, trace) |
 | Robot Framework UAT | `dp-ci-release-step3-release-windows-vm` | "Robot Results"; the sha256 of the accepted files are the archived `release-files.txt` |
 | springdoc OpenAPI + Swagger UI | `dp-ci-release-step1-e2e-prerelease` with `E2E_TARGET=docker-server` | "Swagger UI (OpenAPI)" and the archived `openapi.json` |
-| Trivy (image CVEs, HIGH and CRITICAL)  | `dp-ci-release-step1-e2e-prerelease` (`docker-server`, `windows-vm-docker`, `windows-vm-server`), `dp-ci-release-step2-release-docker` and `dp-ci-dev-demo-preview-bkstg` | "Trivy" warnings table of the newest build; the same table is in that build's own log |
+| Trivy (image CVEs, HIGH and CRITICAL)  | `dp-ci-release-step1-e2e-prerelease` (`docker-server`, `windows-vm-docker`, `windows-vm-server`) and `dp-ci-release-step2-release-docker` | "Trivy" warnings table of the newest build; the same table is in that build's own log |
 | Javadoc | `dp-ci-dev-quality-report` | "Javadoc" |
 | Compodoc | `dp-ci-dev-quality-report` | "Compodoc" |
 | ESLint (Angular, AI Hub) | `dp-ci-dev-quality-report` | "ESLint Angular", "ESLint AI Hub" |
@@ -464,3 +454,7 @@ New: `dp-ci-release-step0-set-version`, step 0 of a release, sets the version (b
 ## Job renames and removals (2026-10-22, the CI explains itself)
 
 The name says the moment: `dp-ci-dev-...` any time while developing, `dp-ci-release-stepN-...` a release, in that order. `dp-ci-dev-live` is now `dp-ci-dev-server`, `dp-ci-e2e-loop` is now `dp-ci-dev-e2e-one-spec`, `dp-ci-junit` is now `dp-ci-dev-junit`, `dp-ci-quality` is now `dp-ci-dev-quality-report`. `dp-ci-release-demos` is now two jobs: `dp-ci-dev-demo-preview-bkstg` (dp-demo.bkstg) and `dp-ci-release-step4-demo-public` (demo.datapallas.com, step 4 of a release); `DEMO=both` is gone. The `dp-ci.sh` subcommands keep their names. Every job's description in Jenkins now has the same blocks (what, when, order, needs, time, examples, log, more). `seed` never deletes a job: once it had created the new ones, the six old jobs still in Jenkins (`dp-ci-dev-live`, `dp-ci-e2e-loop`, `dp-ci-junit`, `dp-ci-quality`, and `dp-ci-e2e-release` and `dp-ci-package` of the first renames that day) were deleted there by hand on 2026-10-22, each archived first with its build history (`/var/kraft-internalsystems/logs/datapallas-ci/deleted-jenkins-jobs/`). `dp-ci-release-demos` and the other names of `c3d1c29c` were never created (its seed was not applied).
+
+## Job removals (2026-10-22, dp-demo.bkstg retired)
+
+`dp-ci-dev-demo-preview-bkstg`, `dp-ci.sh publish-demo-bkstg` and the preview site dp-demo.bkstg are gone: dp-dev.bkstg (`dp-ci-dev-server`) shows the code under development, and the dev website dp-www-dev.bkstg shows its demos from it. `release-demos.sh` installs demo.datapallas.com only (step 4, unchanged). `dp-ci.sh publish-demo-datapallas.com` needs its TAG now (its default was the image dp-demo.bkstg ran). The Rundeck jobs `ops/change/demo-publish` and `dev/datapallas` are gone too: DataPallas jobs are Jenkins jobs only, and Kate's dev site is `dp-ci-dev-server` with `DEV_MODE=kate`. The old job was deleted in Jenkins by hand after `seed` ran; its folder is archived in `logs/datapallas-ci/deleted-jenkins-jobs/`.

@@ -3,7 +3,7 @@
 # `dp-ci.sh publish-demo-datapallas.com`). Data: /var/kraft-internalsystems/apps/cvs/custom-datapallas-demo-public, seeded on the first
 # publish and wiped by `publish-demo-datapallas.com --reset`. No host ports: the bkstg gateway reaches the app by container name.
 #
-# Unlike dp-demo.bkstg this one has NO Docker socket and no MailHog: the public sees three dashboards, nothing that starts a container
+# This one has NO Docker socket and no MailHog: the public sees three dashboards, nothing that starts a container
 # or sends a mail, and a socket on a container the internet talks to would hand over the host.
 name: custom-datapallas-demo-public
 

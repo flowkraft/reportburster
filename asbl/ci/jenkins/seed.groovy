@@ -18,11 +18,10 @@ def guideUrl   = 'https://github.com/flowkraft/datapallas/blob/main/asbl/ci/jenk
 folder('datapallas') {
   description('DataPallas CI. Each job runs a plain script of the repository (asbl/ci) on the CI host, the same command as by hand. The jobs are defined in asbl/ci/jenkins/seed.groovy: change them there, not here. The guide: ' + guideUrl +
     '\n\nWhich job, and when (each job\'s own description says how, with examples):' +
-    '\n  dp-ci-dev-demo-preview-bkstg: any time: dp-demo.bkstg shows origin/main (its own build first when there is none)' +
     '\n  dp-ci-dev-e2e-one-spec: after a fix: one spec file, or some of its tests, on web or electron-linux' +
     '\n  dp-ci-dev-junit: after a Java change: one test class or method, or all' +
     '\n  dp-ci-dev-quality-report: any time: lint, bug finder, format, complexity; never blocks anything' +
-    '\n  dp-ci-dev-server: to look at a change in a browser: start or stop the dev server, live or pinned' +
+    '\n  dp-ci-dev-server: to look at a change in a browser: start, restart or stop a dev server, live, pinned or kate' +
     '\n  dp-ci-release-step0-set-version: a release starts here: the new version committed (left as it is: nothing done)' +
     '\n  dp-ci-release-step1-e2e-prerelease: the full e2e: a release\'s four lanes, and the everyday check of the trunk' +
     '\n  dp-ci-release-step2-release-docker: the Docker release: MODE=rehearsal, then MODE=public (or public directly)' +
@@ -128,21 +127,6 @@ println "RELEASE_VERSION default: '${currentRelease}' (${currentFrom ?: 'nothing
 // name -> [what it is, parameters]; the Jenkinsfile is asbl/ci/jenkins/<name>.Jenkinsfile. Add an entry to add a job.
 // A parameter's text: the first line says what it is and its default, then when to change it, then examples.
 def jobs = [
-  'dp-ci-dev-demo-preview-bkstg': [
-    about: describe(
-      WHAT: 'The preview demo, https://dp-demo.bkstg.flowkraft.com, shows origin/main: the build of origin/main first, only when there is none yet (dp-ci.sh build-if-needed), then that very image published (dp-ci.sh publish-demo-bkstg: the image switched, a smoke test, the previous image back when it fails). Not a step of a release.',
-      WHEN: 'any time the preview should show origin/main, best after dp-ci-release-step1-e2e-prerelease is green on that commit. The public demo, demo.datapallas.com, is dp-ci-release-step4-demo-public; an image that is not a release goes there only by Rundeck (servers > ops/change/demo-publish), never by a Jenkins job.',
-      ORDER: 'any time.',
-      NEEDS: 'checked first, within seconds, before the build: this host\'s Docker engine, and the site\'s settings and docker-compose.yml (dp-ci.sh prereq docker publish-target publish-demo-bkstg). Missing: MISSING <what>: <what to do>, then PREREQUISITES MISSING; nothing built or published.',
-      TIME: 'about a minute when origin/main is built already (the publish and its smoke test); about 40 min more when it builds first (measured: 37 to 42 min).',
-      EXAMPLES: ['show origin/main on the preview: nothing to change', 'see whether it would build, and what it would do: DRY_RUN=yes'],
-      LOG: 'the parts (DEMOS STEP 1/2 the build, 2/2 the publish, each START and END with the time it took) and the verdict: ^######## |PREREQUISITES|^MISSING |BUILD:|BUILD_TAG=|PIPELINE_RESULT|DEMOS_RESULT. The build page shows the image\'s Trivy table.',
-      MORE: guide('dp-ci-dev-demo-preview-bkstg', 'asbl/ci/jenkins/release-demos.sh with DEMO=dp-demo.bkstg')
-    ),
-    params: [
-      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it: build origin/main when it is not built yet, then publish it.\nyes = build and publish nothing: the prerequisites, whether a build is needed, and what each part would do. While origin/main is not built yet, the dry publish checks the newest earlier build\'s image instead, and fails when that image is gone.\nUse yes to see what a run would do.'],
-    ],
-  ],
   'dp-ci-dev-e2e-one-spec': [
     about: describe(
       WHAT: 'The fix-and-retry loop (dp-ci.sh e2e-loop): one spec file, or some of its tests, on the web or electron-linux target, with no retries. The jars and the Angular UI are built from the tree on every run; the package (the content the tests start from: sample apps, db-template, config, samples, scripts) is never rebuilt: E2E_PACKAGE says what happens to it (built first only when there is none). It never counts for a release.',
@@ -202,23 +186,25 @@ def jobs = [
   ],
   'dp-ci-dev-server': [
     about: describe(
-      WHAT: 'Starts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing.',
+      WHAT: 'Starts, restarts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. kate: Kate\'s own clone (agents-headquarter/office-kate/projects/src/products/reportburster) as it is saved, hot-reloading, https://dp-kate.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing; restart starts it again (dp-ci.sh dev replaces the running container).',
       WHEN: 'to look at a change in a browser. It is for looking, never a proof: only the e2e jobs prove (dp-ci-dev-e2e-one-spec, dp-ci-release-step1-e2e-prerelease), and no e2e runs against this server (an e2e cleans the testground it reads and starts its own).',
       ORDER: 'any time; it refuses to start while a dp-ci run holds the server.',
-      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker). live also needs this checkout\'s Linux package (asbl/target/package/verified-db-noexe, which an e2e run builds when there is none): it is not checked, and without it the start fails after the backend build (cp ... ENOENT, server exited).',
-      TIME: 'start: about 3.5 min until the site answers (measured 3.2 to 3.7 min; pinned: longer the first time for a commit, which it assembles first, not measured yet); already running: seconds; stop: seconds.',
+      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker). live and kate also need their checkout\'s Linux package (asbl/target/package/verified-db-noexe, which an e2e run builds when there is none): it is not checked, and without it the start fails after the backend build (cp ... ENOENT, server exited).',
+      TIME: 'start or restart: about 3.5 min until the site answers (measured 3.2 to 3.7 min; pinned: longer the first time for a commit, which it assembles first, not measured yet); already running: seconds; stop: seconds.',
       EXAMPLES: [
         'see a saved change: ACTION=start',
         'a test session nothing can move: ACTION=start  DEV_MODE=pinned  PINNED_SHA=<a commit, e.g. c3d1c29c>',
-        'free the machine: ACTION=stop (with DEV_MODE=pinned for the pinned one)',
+        'start a running site again (a change it does not hot-reload): ACTION=restart',
+        'Kate\'s site: DEV_MODE=kate (with ACTION=start, restart or stop)',
+        'free the machine: ACTION=stop (with DEV_MODE=pinned or kate for those)',
       ],
-      LOG: 'ready: <URL> (the site answers), already running at, stopped:, FAIL.',
-      MORE: guide('dp-ci-dev-server', 'asbl/ci/dp-ci.sh dev --live, or dev --pinned <sha>')
+      LOG: 'ready: <URL> (the site answers), already running at, restart:, stopped:, FAIL.',
+      MORE: guide('dp-ci-dev-server', 'asbl/ci/dp-ci.sh dev --live, dev --pinned <sha>, or dev in Kate\'s clone')
     ),
     params: [
-      ACTION    : [choices: ['start', 'stop'], text: 'WHAT to do. start (default): bring the server up and print its URL; when it is already running, only print the URL.\nstop: stop it (nothing to do when it is not running).'],
-      DEV_MODE  : [choices: ['live', 'pinned'], text: 'WHICH dev site. live (default): the checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, an edited db-template file at once; a new sample or dataset needs dp-ci.sh dev --refresh-content, by hand).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload.\nUse pinned for a test session that must not move.'],
-      PINNED_SHA: [text: 'The commit to park the pinned site at (a sha, e.g. c3d1c29c). Empty by default; needed for DEV_MODE=pinned with ACTION=start, ignored otherwise.\nIt must be a commit this checkout has (made here, or pushed and pulled here). A pinned site that is already running stays at its commit: stop it first to pin another one.'],
+      ACTION    : [choices: ['start', 'restart', 'stop'], text: 'WHAT to do. start (default): bring the server up and print its URL; when it is already running, only print the URL.\nrestart: start it again, also when it runs (dp-ci.sh dev removes the running container first).\nstop: stop it (nothing to do when it is not running).'],
+      DEV_MODE  : [choices: ['live', 'pinned', 'kate'], text: 'WHICH dev site. live (default): the checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, an edited db-template file at once; a new sample or dataset needs dp-ci.sh dev --refresh-content, by hand).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload.\nkate: Kate\'s own clone (agents-headquarter/office-kate/projects/src/products/reportburster) as it is saved, hot-reloading, https://dp-kate.bkstg.flowkraft.com (container datapallas-dev-kate).\nUse pinned for a test session that must not move.'],
+      PINNED_SHA: [text: 'The commit to park the pinned site at (a sha, e.g. c3d1c29c). Empty by default; needed for DEV_MODE=pinned with ACTION=start or restart, ignored otherwise.\nIt must be a commit this checkout has (made here, or pushed and pulled here). A pinned site that is already running stays at its commit on a start: restart it to pin another one.'],
     ],
   ],
   'dp-ci-release-step0-set-version': [
@@ -357,7 +343,7 @@ def jobs = [
   'dp-ci-release-step4-demo-public': [
     about: describe(
       WHAT: 'The public demo, https://demo.datapallas.com (the one datapallas.com frames), installs the published release the way a user does, building nothing (asbl/ci/jenkins/release-demos.sh with DEMO=demo.datapallas.com): setup.sh and setup.sh --edge (its folders and its two vhosts), then asbl/ci/demo-public/install-release.sh: newest/datapallas-server-docker.zip unzipped into a folder of its own per version, with docker-compose.override.yml (no Docker socket, no host port, no MailHog), the data carried over from the running version, the previous version started again when the new one does not answer; then setup.sh --check and the demo links. Nothing to do when it already runs the released version. The output is masked (share-link tokens, passwords).',
-      WHEN: 'after the Docker release went public (dp-ci-release-step2-release-docker, MODE=public). To show an image that is not a release on demo.datapallas.com: Rundeck, servers > ops/change/demo-publish (not a Jenkins job). The preview, dp-demo.bkstg, is dp-ci-dev-demo-preview-bkstg.',
+      WHEN: 'after the Docker release went public (dp-ci-release-step2-release-docker, MODE=public).',
       ORDER: 'step 4, the last step of a release.',
       NEEDS: 'the Docker release public: its released version (the one Docker Hub\'s :latest has) and newest/datapallas-server-docker.zip; the demo\'s two root-only settings files, written when it was set up (/var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env and demo-public-storefront.env, named in asbl/ci/demo-public/setup.sh). It builds nothing and has no prerequisite check of its own: a part that fails stops it with FAILED and why.',
       TIME: 'minutes (not measured yet).',

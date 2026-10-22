@@ -19,7 +19,7 @@
 # Tokens are never printed. Who starts it:
 #   dev:    dp-ci.sh, after a run that stopped dp-dev and after `dp-ci.sh dev`  (the defaults below)
 #   public: asbl/ci/demo-public/install-release.sh, at the end of an install (Jenkins job dp-ci-release-step4-demo-public), and
-#           dp-ci.sh publish-demo-datapallas.com, at the end of a publish (Rundeck servers > ops/change/demo-publish)
+#           dp-ci.sh publish-demo-datapallas.com, at the end of a publish (by hand only, no job runs it)
 #                                                                              (--target <the publish settings file>)
 # By hand:  bash asbl/ci/demo-links.sh                                                  (dev)
 #           bash asbl/ci/demo-links.sh --target /var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env   (public)

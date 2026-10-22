@@ -6,17 +6,16 @@
 # and asbl/ci/jenkins/jenkins.md say when to use which). The details of each follow below the release order.
 #   build                                  the full build of the checkout as it is: by hand only (the jobs use build-if-needed)
 #   build-if-needed                        origin/main, then `build` only when it is not built yet: dp-ci-release-step1-e2e-prerelease,
-#                                          dp-ci-release-step2-release-docker, dp-ci-dev-demo-preview-bkstg
+#                                          dp-ci-release-step2-release-docker
 #   e2e                                    the real e2e (web, electron-linux, docker-server): dp-ci-release-step1-e2e-prerelease
 #   e2e-loop                               the fix-and-retry loop, one spec file: dp-ci-dev-e2e-one-spec
 #   junit                                  the Java unit tests: dp-ci-dev-junit
 #   quality                                the quality tools, never gating: dp-ci-dev-quality-report
 #   dev [--live | --pinned <sha> | --refresh-content [--pinned]]
 #                                          the dev web server: dp-ci-dev-server (start, stop; --refresh-content by hand)
-#   publish-demo-bkstg [TAG]               an image to dp-demo.bkstg: dp-ci-dev-demo-preview-bkstg
-#   publish-demo-datapallas.com [TAG] [--reset]
-#                                          any image to demo.datapallas.com: Rundeck servers > ops/change/demo-publish, not
-#                                          Jenkins (a release's public demo is installed by dp-ci-release-step4-demo-public)
+#   publish-demo-datapallas.com <TAG> [--reset]
+#                                          any image to demo.datapallas.com, by hand only: no job runs it (a release's
+#                                          public demo is installed by dp-ci-release-step4-demo-public)
 #   prereq <check...>                      what a job needs, checked in seconds: every heavy job runs it first
 #   win e2e | docker-e2e | server-e2e      the Windows VM's e2e targets windows-vm-electron, windows-vm-docker, windows-vm-server:
 #                                          dp-ci-release-step1-e2e-prerelease (docker-e2e also dp-ci-release-step2-release-docker)
@@ -139,16 +138,12 @@
 #       A private dev site of one agent: DP_DEV_CONTAINER, DP_DEV_URL, DP_DEV_M2, DP_AIHUB_URL (below, next to DEV_URL).
 #       Log <LOG_DIR>/dev-latest.log; stop: docker stop datapallas-dev (datapallas-pinned).
 #
-#   bash asbl/ci/dp-ci.sh publish-demo-bkstg [TAG]
-#       ON DEMAND: https://dp-demo.bkstg.flowkraft.com runs flowkraft/datapallas-server:<TAG> [the <version>-<commit> tag of
-#       the newest successful build]. Prints tag, image, commit, dirty flag, the last full e2e result and what runs now;
-#       then .env + docker compose up -d + smoke test (SMOKE_TIMEOUT_SECS [300]), rollback when the smoke test fails.
+#   bash asbl/ci/dp-ci.sh publish-demo-datapallas.com <TAG> [--reset]
+#       ON DEMAND, owner only: https://demo.datapallas.com runs flowkraft/datapallas-server:<TAG> (a build's
+#       <version>-<commit> tag). Prints tag, image, commit, dirty flag, the last full e2e result and what runs now; then
+#       .env + docker compose up -d + smoke test (SMOKE_TIMEOUT_SECS [300]), rollback when the smoke test fails.
 #       DRY_RUN=1 = print only; FORCE=1 = allow a -dirty image. PUBLISH_TARGET_ENV=<file> replaces the target settings
-#       (tests use a throwaway target).
-#
-#   bash asbl/ci/dp-ci.sh publish-demo-datapallas.com [TAG] [--reset]
-#       ON DEMAND, owner only: https://demo.datapallas.com runs any image, the same steps [TAG: the image dp-demo.bkstg
-#       runs]. Rundeck's job servers > ops/change/demo-publish runs this; no Jenkins job does: a release is installed on
+#       (tests use a throwaway target). By hand only, no job runs this: a release is installed on
 #       demo.datapallas.com by dp-ci-release-step4-demo-public (asbl/ci/demo-public/install-release.sh). Target settings:
 #       the root-only file /var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env (TARGET_HOST local or
 #       an ssh host, TARGET_COMPOSE_DIR, TARGET_DATA_DIR, TARGET_APP, TARGET_URL). --reset wipes the site's data folder and
@@ -160,8 +155,8 @@
 #       MISSING <what>: <what to do> (NOT CHECKED when it needs one listed MISSING), then PREREQUISITES OK (exit 0) or
 #       PREREQUISITES MISSING (<n>): nothing was started ... (exit 1). Checks: docker (this host's engine), vm (the VM's
 #       settings and an answer over SSH), vm-docker (its Docker Desktop), vm-java (Java 17 on its PATH as the registry has
-#       it), vm-mvn (Maven on that PATH), vm-free (no other Windows run), publish-target <publish-demo-bkstg|
-#       publish-demo-datapallas.com> (its settings and docker-compose.yml). Every Linux task checks docker itself first
+#       it), vm-mvn (Maven on that PATH), vm-free (no other Windows run), publish-target
+#       publish-demo-datapallas.com (its settings and docker-compose.yml). Every Linux task checks docker itself first
 #       (not a dry build-if-needed, which starts nothing), and each Windows lane its own set at its top.
 #
 #   bash asbl/ci/dp-ci.sh win <subcommand>
@@ -250,16 +245,8 @@ SERVER_IMAGE_REPO=flowkraft/datapallas-server
 # with root's ssh key. PUBLISH_TARGET_ENV=<file> replaces these settings; the tests of the publish commands use it
 # so that they never touch a real site.
 DEMO_DATAPALLAS_COM_CONF=/var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env
-DP_DEMO_ENV=/var/kraft-internalsystems/apps/program-files/custom-datapallas-demo/.env
 load_publish_target() {
   case "$1" in
-    publish-demo-bkstg)
-      TARGET_HOST=local
-      TARGET_COMPOSE_DIR=/var/kraft-internalsystems/apps/program-files/custom-datapallas-demo
-      TARGET_DATA_DIR=/var/kraft-internalsystems/apps/cvs/custom-datapallas-demo
-      TARGET_APP=datapallas-demo
-      TARGET_URL=https://dp-demo.bkstg.flowkraft.com
-      ;;
     publish-demo-datapallas.com)
       if [ -z "${PUBLISH_TARGET_ENV:-}" ]; then
         if [ ! -f "$DEMO_DATAPALLAS_COM_CONF" ]; then
@@ -923,7 +910,7 @@ PS
 #                          also the Java startServer.bat runs on
 #   vm-mvn                 Maven on that PATH (gulp's Maven test); without it gulp tests the Install screen, not the app
 #   vm-free                no other Windows run is going (win-e2e.pid; a run checking from inside its own driver is not "other")
-#   publish-target <task>  the publish target of publish-demo-bkstg or publish-demo-datapallas.com (load_publish_target),
+#   publish-target <task>  the publish target of publish-demo-datapallas.com (load_publish_target),
 #                          nothing published
 prereq() {
   local c n names miss=0 vm_ok=0 v pid p t java=""
@@ -1000,8 +987,8 @@ prereq() {
       publish-target)
         t=${1:-}; [ "$#" -gt 0 ] && shift
         case "$t" in
-          publish-demo-bkstg|publish-demo-datapallas.com) ;;
-          *) echo "FAIL  prereq: publish-target needs publish-demo-bkstg or publish-demo-datapallas.com (got '$t')"; return 2 ;;
+          publish-demo-datapallas.com) ;;
+          *) echo "FAIL  prereq: publish-target needs publish-demo-datapallas.com (got '$t')"; return 2 ;;
         esac
         if v=$( (load_publish_target "$t") 2>&1 ); then
           echo "OK the publish target of $t (its settings and its docker-compose.yml; nothing published)"
@@ -2283,7 +2270,7 @@ AIHUBPY
       docker_server_up || return 1
     else
       # The product's startTestEmailServer.sh runs MailHog as a container named "mailhog" by default. On this
-      # host that name belongs to dp-demo's MailHog, so the e2e runs use their own container.
+      # host another stack may use that name, so the e2e runs use their own container.
       export DATAPALLAS_TEST_EMAIL_SERVER_CONTAINER="${DATAPALLAS_TEST_EMAIL_SERVER_CONTAINER:-dp-e2e-mailhog}"
       (cd frend/reporting && npm run custom:clean-testground) || return 1
       # The loop lane serves the start page from the sources (`aihub_from_sources` above). E2E_PACKAGE
@@ -2608,7 +2595,7 @@ HTML
     echo "IMAGE_TAG=$VERSION-$SHA"
   }
 
-  # Trivy (J15): scans the image tag_image has just tagged. Report only: JSON for Jenkins (<log>-trivy/trivy.json, pulled by the jobs dp-ci-release-step1-e2e-prerelease, dp-ci-release-step2-release-docker and dp-ci-dev-demo-preview-bkstg)
+  # Trivy (J15): scans the image tag_image has just tagged. Report only: JSON for Jenkins (<log>-trivy/trivy.json, pulled by the jobs dp-ci-release-step1-e2e-prerelease and dp-ci-release-step2-release-docker)
   # plus the HIGH/CRITICAL table in this log. Never fails the build (a scan or database-download problem is printed and the run goes on).
   trivy_scan() {
     local out img="$SERVER_IMAGE_REPO:$VERSION-$SHA"
@@ -2632,15 +2619,7 @@ HTML
   q() { printf '%q' "$1"; }
 
   publish_summary() {
-    local tag="${PUBLISH_TAG:-}" f t commit dirty=no e2e running
-    if [ -z "$tag" ]; then
-      for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
-        grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
-        t=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
-        [ -n "$t" ] && { tag="$t"; echo "TAG not given: newest successful build $(basename "$f") -> $tag"; break; }
-      done
-      [ -n "$tag" ] || { echo "!!! no TAG given and no successful build log with an IMAGE_TAG line: run a build, or pass the tag"; return 1; }
-    fi
+    local tag="${PUBLISH_TAG:-}" commit dirty=no e2e running
     PUBLISH_IMAGE="$SERVER_IMAGE_REPO:$tag"
     docker image inspect "$PUBLISH_IMAGE" >/dev/null 2>&1 || { echo "!!! image $PUBLISH_IMAGE does not exist on this host"; return 1; }
     commit="${tag#*-}"                      # <version>-<commit>[-dirty]
@@ -2968,9 +2947,9 @@ elif [ "$TASK" = e2e ]; then
   E2E_PACKAGE=""
 fi
 case "$TASK" in
-  build|build-if-needed|e2e|junit|quality|dev|win|prereq|publish-demo-bkstg|publish-demo-datapallas.com) ;;
+  build|build-if-needed|e2e|junit|quality|dev|win|prereq|publish-demo-datapallas.com) ;;
   # release: reserved for the real software release (plan §3 O7)
-  *) echo "usage: $0 build|build-if-needed|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e|release|sync|prepare|prereq>|prereq <check...>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
+  *) echo "usage: $0 build|build-if-needed|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e|release|sync|prepare|prereq>|prereq <check...>|publish-demo-datapallas.com <TAG> [--reset]"; exit 2 ;;
 esac
 
 # prereq <check...>: only the checks asked for, nothing started (a caller checks before its own slow part; see prereq)
@@ -3047,14 +3026,7 @@ if [ "${TASK#publish-}" != "$TASK" ]; then
     esac
   done
   load_publish_target "$TASK" || exit 1
-  if [ "$TASK" = publish-demo-datapallas.com ] && [ -z "$PUBLISH_TAG" ]; then
-    # default: exactly the image dp-demo.bkstg runs
-    PUBLISH_TAG=$(sed -n "s#^DATAPALLAS_IMAGE=$SERVER_IMAGE_REPO:##p" "$DP_DEMO_ENV" 2>/dev/null)
-    case "$PUBLISH_TAG" in
-      ""|not-deployed-yet) echo "FAIL  no TAG given and dp-demo.bkstg has not been published yet ($DP_DEMO_ENV): pass a TAG"; exit 1 ;;
-    esac
-    echo "TAG not given: the image dp-demo.bkstg runs -> $PUBLISH_TAG"
-  fi
+  [ -n "$PUBLISH_TAG" ] || { echo "FAIL  no TAG given: pass the <version>-<commit> tag of the image to publish"; exit 2; }
   if [ "$TARGET_HOST" = local ]; then
     mkdir -p "$TARGET_DATA_DIR" || exit 1
     PUBLISH_FLAGS="-v $TARGET_COMPOSE_DIR:$TARGET_COMPOSE_DIR -v $TARGET_DATA_DIR:$TARGET_DATA_DIR"
