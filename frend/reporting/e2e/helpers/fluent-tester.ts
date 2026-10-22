@@ -607,6 +607,24 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   /**
+   * Like waitOnElementToBecomeEnabled, for a button that stays disabled while its job runs (e.g. `#btnRunCustomSeed`),
+   * but fails fast with "UI missed the job's end" once info.log shows the job ended and the button is still
+   * disabled 30 s later (run-all D: a 63-second seed run, then a 40-minute wait on a button that never came back).
+   */
+  public waitOnJobButtonToBecomeEnabled(
+    selector: string,
+    waitTime?: number,
+  ): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = (): Promise<void> =>
+      this.doWaitOnJobButtonToBecomeEnabled(selector, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
    * Clears the log files the way a user does, before starting a job that refuses to run on non-empty logs.
    * Waits for Clear Logs to become enabled first: the app learns that the logs are dirty by polling, so
    * clicking a job button "to get the Clear Logs dialog" can instead start a REAL job when the poll has not
@@ -3675,6 +3693,47 @@ export class FluentTester implements PromiseLike<void> {
     }
     throw new Error(
       `Processing did not finish within ${limit} ms. ${await this.appStateForErrorMessage()}`,
+    );
+  }
+
+  /**
+   * Built like doWaitOnJobToFinishOrStall. The job has ended once an "Execution Ended" follows the last "Program
+   * Started" in info.log; a newer "Program Started" (the job only starting now) restarts the 30 s count.
+   */
+  private async doWaitOnJobButtonToBecomeEnabled(
+    selector: string,
+    waitTime: number,
+  ): Promise<void> {
+    const infoLog = path.resolve(
+      slash(`${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`),
+    );
+    const missedAfterMs = 30_000;
+    const limit = Constants.capWait(waitTime) as number;
+
+    const began = Date.now();
+    let endedStartLine = -1;
+    let endedSeenAt = 0;
+    while (Date.now() - began < limit) {
+      if (await this.window.locator(selector).isEnabled({ timeout: 1_000 }).catch(() => false))
+        return;
+      const lines = (jetpack.read(infoLog) || '').split(/\r?\n/);
+      const startLine = lines.map((line) => line.includes('Program Started')).lastIndexOf(true);
+      const ended =
+        startLine >= 0 && lines.slice(startLine + 1).some((line) => line.includes('Execution Ended'));
+      if (!ended) {
+        endedStartLine = -1;
+      } else if (startLine !== endedStartLine) {
+        endedStartLine = startLine;
+        endedSeenAt = Date.now();
+      } else if (Date.now() - endedSeenAt >= missedAfterMs) {
+        throw new Error(
+          `UI missed the job's end: info.log shows the job ended ${Math.round((Date.now() - endedSeenAt) / 1000)} s ago, but ${selector} is still disabled. info.log: ${lines[startLine].trim()}. ${await this.appStateForErrorMessage()}`,
+        );
+      }
+      await this.window.waitForTimeout(1_000);
+    }
+    throw new Error(
+      `${selector} did not become enabled within ${limit} ms. ${await this.appStateForErrorMessage()}`,
     );
   }
 

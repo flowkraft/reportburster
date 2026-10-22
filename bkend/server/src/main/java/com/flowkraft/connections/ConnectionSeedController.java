@@ -6,6 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
  * REST endpoints for the Seed Data tab in the Connection Details modal.
  *
  * POST /api/connections/{connectionCode}/run-seed     — execute a Groovy seed script
+ * GET  /api/connections/{connectionCode}/run-seed/{jobId} — the state of one seed run
  * GET  /api/connections/{connectionCode}/seed-status  — check seed_inv_* table state
  * GET  /api/connections/seed-templates                — list bundled .groovy templates
  *
@@ -44,7 +46,8 @@ public class ConnectionSeedController {
      * Execute a Groovy seed script against the named connection.
      *
      * Body: { "script": "...", "params": { "N": 10000, ... } }
-     * Response: { "ok": bool, "durationMs": long, "rowCounts": { table: count }, "error"?: string }
+     * Response: { "ok": true, "submitted": true, "jobId": string } at once (the script runs in the
+     * background), or { "ok": false, "durationMs": 0, "error": string } when there is no script.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/api/connections/{connectionCode}/run-seed",
@@ -64,6 +67,23 @@ public class ConnectionSeedController {
             log.info("run-custom-seed: connectionCode={}, scriptLen={}", connectionCode, script.length());
             return seedExecutor.execute(connectionCode, script, params);
         });
+    }
+
+    /**
+     * The state of one seed run, by the jobId that run-seed returned:
+     * { "id", "type": "run-seed", "status": "queued|running|done|failed", "startedAt", "completedAt"?,
+     * "resultMetadata"?: { "error" } }, or 404 when this connection has no such run (an unknown id, or
+     * one the in-memory job list has already dropped). The tab follows a run with it, so a missed
+     * on.process.complete WebSocket message no longer leaves its Run button disabled.
+     */
+    @GetMapping(value = "/api/connections/{connectionCode}/run-seed/{jobId}",
+                consumes = MediaType.ALL_VALUE)
+    public Mono<ResponseEntity<Map<String, Object>>> seedRun(
+            @PathVariable String connectionCode,
+            @PathVariable String jobId) {
+        return Mono.fromCallable(() -> seedExecutor.findRun(connectionCode, jobId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build()));
     }
 
     /**

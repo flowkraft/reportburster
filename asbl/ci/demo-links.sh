@@ -18,7 +18,9 @@
 #   6. DEMO_VERIFY_PUBLIC=1: opens the three links through the public address, from here.
 # Tokens are never printed. Who starts it:
 #   dev:    dp-ci.sh, after a run that stopped dp-dev and after `dp-ci.sh dev`  (the defaults below)
-#   public: dp-ci.sh publish-demo-datapallas.com, at the end of a publish      (--target <the publish settings file>)
+#   public: asbl/ci/demo-public/install-release.sh, at the end of an install (Jenkins job dp-ci-release-step4-demo-public), and
+#           dp-ci.sh publish-demo-datapallas.com, at the end of a publish (Rundeck servers > ops/change/demo-publish)
+#                                                                              (--target <the publish settings file>)
 # By hand:  bash asbl/ci/demo-links.sh                                                  (dev)
 #           bash asbl/ci/demo-links.sh --target /var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env   (public)
 # The last line says what happened: DEMO_LINKS result=valid|minted|failed

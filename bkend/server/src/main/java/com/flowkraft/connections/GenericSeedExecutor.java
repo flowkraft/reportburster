@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.jobs.models.JobRecord;
 import com.flowkraft.jobs.services.JobExecutionService;
+import com.flowkraft.jobs.services.JobStore;
 import com.flowkraft.queries.ConnectionFactory;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.settings.Settings;
@@ -46,15 +49,26 @@ public class GenericSeedExecutor {
     @Autowired
     private JobExecutionService jobExecutionService;
 
+    @Autowired
+    private JobStore jobStore;
+
+    /** The JobRecord type of a seed run (see findRun). */
+    static final String RUN_SEED_JOB_TYPE = "run-seed";
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
      * Execute a Groovy script against the given connection — fire-and-forget,
-     * exactly like the Burst button: delegates to JobExecutionService.executeAsync()
+     * like the Burst button: delegates to JobExecutionService.executeTracked()
      * which runs on the job-executor thread pool, creates/deletes the .job file via
      * CliJob._createJobFile(), and sends the on.process.complete WebSocket event.
      *
-     * Returns { ok: true, submitted: true } immediately.
+     * The run is also a JobRecord, so its end is kept: the Seed tab follows it by
+     * jobId (findRun, GET .../run-seed/{jobId}) instead of depending on that one
+     * WebSocket message, which the server pushes once to whoever is connected at
+     * that moment and which a UI reconnecting after a drop (30 s) never gets.
+     *
+     * Returns { ok: true, submitted: true, jobId } immediately.
      */
     public Map<String, Object> execute(String connectionCode, String script, Map<String, Object> params)
             throws Exception {
@@ -97,13 +111,28 @@ public class GenericSeedExecutor {
             }
         }
 
-        // Fire-and-forget — same pattern as Burst; temp file cleaned up after CLI job finishes
-        jobExecutionService.executeAsync(argList.toArray(new String[0]), tempScript::delete);
+        // Fire-and-forget — same pattern as Burst; the temp file is removed when the CLI job ends,
+        // before the run's status becomes done/failed
+        JobRecord run = jobStore.create(RUN_SEED_JOB_TYPE, Map.of("connectionCode", connectionCode), null);
+        jobExecutionService.executeTracked(argList.toArray(new String[0]), run.id, jobStore, tempScript::delete);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("ok",        true);
         result.put("submitted", true);
+        result.put("jobId",     run.id);
         return result;
+    }
+
+    /**
+     * The state of a seed run that execute() started on this connection: the JobRecord's map
+     * (status queued|running|done|failed, resultMetadata.error when it failed). Empty when there
+     * is no such run on this connection, or the in-memory job list has dropped it.
+     */
+    public Optional<Map<String, Object>> findRun(String connectionCode, String jobId) {
+        return jobStore.find(jobId)
+                .filter(rec -> RUN_SEED_JOB_TYPE.equals(rec.type)
+                        && connectionCode.equals(rec.params.get("connectionCode")))
+                .map(JobRecord::toMap);
     }
 
     /**

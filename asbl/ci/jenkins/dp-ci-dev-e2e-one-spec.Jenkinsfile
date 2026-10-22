@@ -1,8 +1,10 @@
-// Job datapallas/dp-ci-e2e-loop. The fix-and-retry LOOP: dp-ci.sh e2e-loop. One spec file (E2E_SPEC required), web or electron-linux target, and it never rebuilds the package:
-// E2E_PACKAGE says what happens to it (package-reuse-as-is, package-rsync-simple-file-changes, package-repackage). Not a release check: that is dp-ci-release-step1-e2e-prerelease.
-// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
-// only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
-// the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
+// Job datapallas/dp-ci-dev-e2e-one-spec: the fix-and-retry loop, dp-ci.sh e2e-loop: one spec file, or some of its tests, on web or
+// electron-linux, never a package rebuild (E2E_PACKAGE says what happens to the package). Never counts for a release.
+// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file only starts it and
+// shows its log. The run is a detached container owned by the Docker daemon, so closing the browser or restarting Jenkins never
+// stops it.
+// Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
+// the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-dev-e2e-one-spec.
 pipeline {
   agent any
 

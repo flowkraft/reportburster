@@ -15,6 +15,13 @@ process.on('uncaughtException', (err) => {
   throw err;
 });
 
+// Playwright's worker registers its own unhandledRejection listener (workerMain.js:73 in 1.41.2) before any spec
+// imports this file, and that listener fails the running test by itself: filtering only here did not stop M91
+// failing in run-all D. So the one listener below takes over the listeners already registered and calls them itself.
+// This goes together with the filter below when Playwright is 1.50 or later.
+const runnerRejectionListeners = process.listeners('unhandledRejection');
+process.removeAllListeners('unhandledRejection');
+
 process.on('unhandledRejection', (reason, p) => {
   // Playwright 1.41.2 rejects FrameSession.dispose's _firstNonInitialNavigationCommittedPromise when a page
   // closes, and nothing awaits it: rethrown here, it killed the worker after M91's page.goBack() (run-all C
@@ -23,6 +30,8 @@ process.on('unhandledRejection', (reason, p) => {
     console.warn('Ignored the Playwright-internal rejection of FrameSession.dispose (fixed in Playwright 1.50):', reason.message);
     return;
   }
+  // every other rejection reaches the runner's listeners exactly as before
+  for (const listener of runnerRejectionListeners) listener(reason, p);
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
   // Throw the error to get a stack trace
   throw reason;

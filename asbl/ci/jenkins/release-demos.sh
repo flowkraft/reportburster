@@ -1,16 +1,20 @@
 #!/bin/bash
-# Job dp-ci-release-demos: the two demos (decision OD4 (a), 2026-10-22). Plain script, run on the host: Jenkins calls it over SSH,
-# it also runs by hand.
+# The two demos (decision OD4 (a), 2026-10-22), one Jenkins job each: dp-ci-dev-demo-preview-bkstg (DEMO=dp-demo.bkstg, any time)
+# and dp-ci-release-step4-demo-public (DEMO=demo.datapallas.com, step 4 of a release). Plain script, run on the host: Jenkins calls
+# it over SSH, it also runs by hand.
 #
-#   DEMO=dp-demo.bkstg|demo.datapallas.com|both  RESET_DEMO_DATA=no|yes  DRY_RUN=no|yes  bash asbl/ci/jenkins/release-demos.sh
+#   DEMO=dp-demo.bkstg|demo.datapallas.com  RESET_DEMO_DATA=no|yes  DRY_RUN=no|yes  bash asbl/ci/jenkins/release-demos.sh
 #
-#   dp-demo.bkstg        https://dp-demo.bkstg.flowkraft.com shows origin/main, the preview before a release: its own build first
-#                        (only when there is no build of that commit yet), then that very image (dp-ci.sh publish-demo-bkstg)
+#   dp-demo.bkstg        https://dp-demo.bkstg.flowkraft.com shows origin/main, the preview before a release: its prerequisites
+#                        first, in seconds (dp-ci.sh prereq docker publish-target publish-demo-bkstg: this host's Docker engine,
+#                        the site's settings and docker-compose.yml), then its own build (only when there is no build of that
+#                        commit yet), then that very image (dp-ci.sh publish-demo-bkstg)
 #   demo.datapallas.com  the public demo is a plain install of the published release, nothing built: setup.sh and setup.sh --edge
 #                        (its folders and its two vhosts), asbl/ci/demo-public/install-release.sh (newest/datapallas-server-docker.zip,
 #                        its own folder per version, the data carried over, rolled back when it does not answer; nothing to do
-#                        when it already runs the released version), setup.sh --check (must end with DEMO_SETUP result=ok)
-#   both                 dp-demo.bkstg first, then demo.datapallas.com
+#                        when it already runs the released version), setup.sh --check (must end with DEMO_SETUP result=ok).
+#                        An image that is not a release goes there by Rundeck only (servers > ops/change/demo-publish, which runs
+#                        dp-ci.sh publish-demo-datapallas.com)
 # RESET_DEMO_DATA=yes: demo.datapallas.com's next release starts from the bundle's own data, not the previous version's (what
 # visitors made stays in the previous folder). DRY_RUN=yes builds nothing and changes nothing: it says what each part would do.
 # Every part is marked START/END with its time (asbl/ci/marks.sh). The output is masked the way the Rundeck job masks it.
@@ -19,7 +23,7 @@ cd "$(dirname "$0")/../../.." || exit 2
 . asbl/ci/marks.sh
 
 DEMO="${DEMO:-dp-demo.bkstg}"; RESET="${RESET_DEMO_DATA:-no}"; DRY="${DRY_RUN:-no}"
-case "$DEMO" in dp-demo.bkstg|demo.datapallas.com|both) ;; *) echo "FAIL  DEMO must be dp-demo.bkstg, demo.datapallas.com or both (got '$DEMO')"; exit 2 ;; esac
+case "$DEMO" in dp-demo.bkstg|demo.datapallas.com) ;; *) echo "FAIL  DEMO must be dp-demo.bkstg or demo.datapallas.com (got '$DEMO')"; exit 2 ;; esac
 case "$RESET" in no|yes) ;; *) echo "FAIL  RESET_DEMO_DATA must be no or yes (got '$RESET')"; exit 2 ;; esac
 case "$DRY" in no|yes) ;; *) echo "FAIL  DRY_RUN must be no or yes (got '$DRY')"; exit 2 ;; esac
 [ "$RESET" = no ] || [ "$DEMO" != dp-demo.bkstg ] || { echo "FAIL  RESET_DEMO_DATA=yes is for demo.datapallas.com"; exit 2; }
@@ -44,10 +48,13 @@ PY
 main() {
   local total n=1 tag bl dry=0 args=()
   [ "$DRY" = yes ] && dry=1
-  case "$DEMO" in dp-demo.bkstg) total=2 ;; demo.datapallas.com) total=3 ;; both) total=5 ;; esac
+  case "$DEMO" in dp-demo.bkstg) total=2 ;; demo.datapallas.com) total=3 ;; esac
   echo "DEMOS: demo=$DEMO reset_demo_data=$RESET dry_run=$DRY  checkout: $(git log -1 --format='%h %s')"
 
-  if [ "$DEMO" != demo.datapallas.com ]; then
+  if [ "$DEMO" = dp-demo.bkstg ]; then
+    # what dp-demo.bkstg needs, in seconds, before the build (about 40 min): this host's Docker engine and the publish target
+    bash asbl/ci/dp-ci.sh prereq docker publish-target publish-demo-bkstg ||
+      { echo "FAILED: prerequisites missing (above): nothing built or published"; return 1; }
     mark_start "DEMOS STEP $n/$total" "dp-demo.bkstg: the build of origin/main, only when there is none yet (dp-ci.sh build-if-needed)"
     bl=$(mktemp)
     DRY_RUN=$dry bash asbl/ci/dp-ci.sh build-if-needed | tee "$bl"
@@ -57,8 +64,7 @@ main() {
     [ -n "$tag" ] && args+=("$tag")
     n=$((n + 1)); mark_next "DEMOS STEP $n/$total" "publish to dp-demo.bkstg (dp-ci.sh publish-demo-bkstg ${tag:-<the build a real run makes>})"
     DRY_RUN=$dry bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh publish-demo-bkstg "${args[@]}" || return 1
-    [ "$DEMO" = dp-demo.bkstg ] && { mark_end 0; return 0; }
-    n=$((n + 1)); mark_end 0
+    mark_end 0; return 0
   fi
 
   mark_start "DEMOS STEP $n/$total" "demo.datapallas.com setup: its folders and its two vhosts (setup.sh, setup.sh --edge)"

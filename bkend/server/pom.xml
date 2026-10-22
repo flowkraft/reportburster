@@ -512,7 +512,7 @@
 			</plugin>
 			<!-- Error Prone + NullAway (J17): static analysis INSIDE the javac run, warnings only. They live only in annotationProcessorPaths: not a dependency of any module, not in any jar,
 			     and the compiled classes are the same as without them. All checks are off except DefaultCharset and NullAway, both at WARN (no error-level check). The -J flags are what Error Prone
-			     needs on JDK 17 (the compile is forked). The warnings are published by dp-ci-junit (Warnings Next Generation). If a compile ever breaks because of this block, delete the block. -->
+			     needs on JDK 17 (the compile is forked). The warnings are published by dp-ci-dev-junit (Warnings Next Generation). If a compile ever breaks because of this block, delete the block. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

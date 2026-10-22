@@ -1,43 +1,62 @@
 #!/bin/bash
-# The release record: which step of a release passed on which commit, and whether there is a version to release at all.
-# Plain files on this host, one folder per commit, so that each release job can refuse to start when the step before it
-# is not green on the same commit, and so that `show` tells at any time where a release stands. Run on the host (the
-# Jenkins jobs call it over SSH, it also runs by hand):
+# The release record: which part of a release passed on which commit, and whether there is a version to release at all, per
+# release channel (docker: the image and its zip; windows: the three Windows zips). Plain files on this host, one folder per
+# commit, so that a release job can refuse to start when step 1 is not green on its commit, can find the rehearsal it copies,
+# and so that `show` tells at any time where a release stands. Run on the host (the Jenkins jobs call it over SSH, it also
+# runs by hand):
 #
-#   bash asbl/ci/release-state.sh record <step.lane> PASS|FAIL [key=value ...]   write one verdict
-#   bash asbl/ci/release-state.sh record-step1 <e2e target> <rc>                  the verdict of one step-1 lane (its job calls it;
-#                                                                                 RELEASE_STEP_START = when the lane started, epoch s)
-#   bash asbl/ci/release-state.sh require <step.lane|step1>...                   exit 1 unless every one is PASS
-#   bash asbl/ci/release-state.sh get <step.lane> <key>                          print one recorded value
+#   bash asbl/ci/release-state.sh record <name> PASS|FAIL [key=value ...]       write one verdict
+#   bash asbl/ci/release-state.sh record-step1 <e2e target> <rc>                 the verdict of one step-1 lane (its job calls it;
+#                                                                                RELEASE_STEP_START = when the lane started, epoch s)
+#   bash asbl/ci/release-state.sh require <name|step1>...                        exit 1 unless every one is PASS
+#   bash asbl/ci/release-state.sh step1-guard                                    the release jobs' guard: exit 1 with one line, "REFUSED:
+#                                                                                step 1 is not green on <commit>: <lanes>. Run ...", unless
+#                                                                                the four lanes a release needs are PASS
+#   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
 #   bash asbl/ci/release-state.sh show [<commit>]                                the table of one commit
-#   bash asbl/ci/release-state.sh version-check [--print]                        is there a version to release (below)
+#   bash asbl/ci/release-state.sh rehearsed docker|windows <version>             the newest PASSED rehearsal of that version on that
+#                                                                                channel, on whichever commit: "REHEARSED <commit> <time>";
+#                                                                                exit 1 ("NOT REHEARSED ...") when there is none
+#   bash asbl/ci/release-state.sh version-check [docker|windows] [--print]       is there a version to release on that channel
+#                                                                                (below; docker when not given)
+#   bash asbl/ci/release-state.sh released                                       the released version of each channel, read as
+#                                                                                version-check reads it, and the current release (the
+#                                                                                higher one): "RELEASED current=<v> docker=<v> windows=<v>";
+#                                                                                exit 2 when a channel cannot be read (step 0,
+#                                                                                asbl/ci/jenkins/release-set-version.sh)
 #
 # The commit is RELEASE_COMMIT when set (any form git knows: full, short), else this checkout's HEAD; folders use the full
-# hash. A verdict is the file <RELEASE_STATE_DIR>/<commit>/<step.lane>, key=value lines: result, version (settings.xml of
+# hash. A verdict is the file <RELEASE_STATE_DIR>/<commit>/<name>, key=value lines: result, version (settings.xml of
 # this checkout unless given), time, log (RELEASE_LOG when set), then whatever the caller adds (digest=, sha256 lists).
-# Recording again replaces the verdict: the last run of a step is the one that counts.
+# Recording again replaces the verdict: the last run of a part is the one that counts.
 #
 # Verdict names (the jobs, in order):
-#   step1.<target>-<mode>   dp-ci-release-step1-e2e-prerelease, one per target and mode (full | auth | light | targeted)
-#   step2.docker-stage      dp-ci-release-step2-pack-and-uat-docker: the image pushed as :<version> (digest=) and the zip staged
-#   step2.docker            dp-ci-release-step2-pack-and-uat-docker: the whole step
-#   step3.windows           dp-ci-release-step3-pack-and-uat-windows
-#   step4.publish           dp-ci-release-step4-publish
+#   step1.<target>-<mode>    dp-ci-release-step1-e2e-prerelease, one per target and mode (full | auth | light | targeted)
+#   rehearsal.docker-stage   dp-ci-release-step2-release-docker: the image pushed as :<version> (digest=), the zip staged in rehearsal/
+#   rehearsal.docker         dp-ci-release-step2-release-docker: the whole rehearsal (MODE=rehearsal, or the one MODE=public runs first)
+#   rehearsal.windows        dp-ci-release-step3-release-windows-vm: the pack, the Robot UAT, the three zips staged in rehearsal/
+#   public.docker            dp-ci-release-step2-release-docker, MODE=public: the rehearsed zip in newest/ and <version>/, :latest
+#   public.windows           dp-ci-release-step3-release-windows-vm, MODE=public: the rehearsed zips in newest/ and <version>/
+# Until 2026-10-22 they were step2.docker-stage, step2.docker, step3.windows and step4.publish (none was ever recorded for real).
 # `require step1` = the step-1 lanes a release needs (owner decision OD5, 2026-10-22): the list below.
 # A `targeted` run (own E2E_SPEC/E2E_GREP) is recorded for the table but never counts for a release.
 #
-# version-check (owner, 2026-10-22: the release takes its version from settings.xml; the same as the released version =
-# do nothing, greater = release). Every release job runs it before any work:
+# version-check <channel> (owner, 2026-10-22: the release takes its version from settings.xml; the same as the released
+# version = do nothing, greater = release). Each release job runs it for its own channel before any work:
 #   - the version to release is <version> in bkend/reporting/src/main/external-resources/template/config/burst/settings.xml;
 #   - the other files that declare it (asbl/ci/set-version.sh --versions) must say the same: dp-ci.sh tags the image from
 #     pom.xml, DockerAssembler pins the zip's image tag from settings.xml;
-#   - the released version is the x.y.z tag whose digest is the one :latest has on Docker Hub (public API, no login);
-#     the release record's last publish, when there is one, must agree;
-#   - equal: "NOTHING TO RELEASE", exit 3 (the jobs end green, nothing done); lower: refused, exit 1;
-#     greater: exit 0, unless :<version> is already on Docker Hub and no release step staged it (pushed by hand), or the
-#     record says it was published: refused, exit 1. Docker Hub not answering: exit 2.
+#   - the released version of the channel: docker = the x.y.z tag whose digest is the one :latest has on Docker Hub (public
+#     API, no login); windows = the version line of newest/windows-version.txt on the download site (written by the
+#     Windows job's MODE=public; until the first one, WINDOWS_RELEASED_BY_HAND below). The channel's last public.<channel>
+#     record, when there is one, must agree;
+#   - equal: "NOTHING TO RELEASE", exit 3 (the jobs end green, nothing done; the line names step 0,
+#     dp-ci-release-step0-set-version, which sets a bigger version); lower: refused, exit 1;
+#     greater: exit 0, unless the record says it was already made public on that channel, or (docker) :<version> is already
+#     on Docker Hub and no rehearsal staged it (pushed by hand): refused, exit 1. Docker Hub or the download site not
+#     answering: exit 2.
 #   --print (step 1, which is also the everyday e2e job and never skips): one RELEASE_VERSION line, always exit 0.
-# DOCKERHUB_API and RELEASE_IMAGE_REPO are variables so a test can point them at a local fixture.
+# DOCKERHUB_API, RELEASE_IMAGE_REPO and RELEASE_DOWNLOAD_BASE are variables so a test can point them at a local fixture.
 set -uo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$(dirname "$0")/../.." || exit 2
@@ -48,6 +67,10 @@ SETTINGS_XML=bkend/reporting/src/main/external-resources/template/config/burst/s
 DOCKERHUB_API="${DOCKERHUB_API:-https://hub.docker.com/v2/repositories}"
 RELEASE_IMAGE_REPO="${RELEASE_IMAGE_REPO:-flowkraft/datapallas-server}"
 LOG_DIR="${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}"
+RELEASE_DOWNLOAD_BASE="${RELEASE_DOWNLOAD_BASE:-https://downloads.datapallas.com/file/datapallas}"
+# The Windows channel's released version until its first MODE=public writes newest/windows-version.txt: the last version
+# both channels were released together, by hand (newest/'s zips uploaded 2026-08-15 14:08Z, Docker Hub's :16.5.0 14:25Z).
+WINDOWS_RELEASED_BY_HAND=16.5.0
 
 commit_of() {  # the full hash of RELEASE_COMMIT or HEAD; the given text itself when git does not know it
   local c="${RELEASE_COMMIT:-HEAD}" full
@@ -55,7 +78,7 @@ commit_of() {  # the full hash of RELEASE_COMMIT or HEAD; the given text itself 
   [ "$c" != HEAD ] && echo "$c"
 }
 tree_version() { grep -m1 -oP '(?<=<version>)[^<]+' "$SETTINGS_XML" 2>/dev/null; }
-valid_name() { printf '%s' "$1" | grep -qE '^step[1-4]\.[a-z0-9-]+$'; }
+valid_name() { printf '%s' "$1" | grep -qE '^(step1|rehearsal|public)\.[a-z0-9-]+$'; }
 field() { sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1; }  # field <file> <key>
 
 hub_get() {  # hub_get <path under tags/> -> its JSON; rc 0 found, 1 no such tag (404), 2 Docker Hub not answering
@@ -70,7 +93,7 @@ hub_get() {  # hub_get <path under tags/> -> its JSON; rc 0 found, 1 no such tag
 }
 json_digest() { python3 -c 'import json,sys; print(json.load(sys.stdin).get("digest") or "")'; }
 
-released_version() {  # the x.y.z tag :latest points to ('' = nothing released yet); rc 2 when Docker Hub does not answer
+released_docker() {  # the x.y.z tag :latest points to ('' = nothing released yet); rc 2 when Docker Hub does not answer
   local j d
   j=$(hub_get latest); case $? in 0) ;; 1) echo ""; return 0 ;; *) return 2 ;; esac
   d=$(printf '%s' "$j" | json_digest)
@@ -83,10 +106,32 @@ names = [r["name"] for r in json.load(sys.stdin).get("results", [])
 names.sort(key=lambda v: [int(x) for x in v.split(".")])
 print(names[-1] if names else "")'
 }
+released_windows() {  # the version newest/windows-version.txt names, or WINDOWS_RELEASED_BY_HAND when there is no such file yet
+  local out code v
+  out=$(mktemp) || return 2
+  # the query string only gets past the CDN's cache
+  code=$(curl -sS -o "$out" -w '%{http_code}' --max-time 30 "$RELEASE_DOWNLOAD_BASE/newest/windows-version.txt?check=$(date +%s)-$RANDOM" 2>/dev/null)
+  v=$(sed -n 's/^version=//p' "$out" | head -1); rm -f "$out"
+  case "$code" in
+    200) printf '%s' "$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || return 2; echo "$v" ;;
+    404) echo "$WINDOWS_RELEASED_BY_HAND" ;;
+    *)   return 2 ;;
+  esac
+}
+released_version() { case "$1" in docker) released_docker ;; windows) released_windows ;; *) return 2 ;; esac; }
+bigger_versions() {  # bigger_versions 16.5.0 -> "16.5.1, 16.6.0, 17.0.0": the examples a message gives for a new release
+  printf '%s' "$1" | awk -F. '{ printf "%d.%d.%d, %d.%d.0, %d.0.0", $1, $2, $3 + 1, $1, $2 + 1, $1 + 1 }'
+}
+channel_source() {  # where a channel's released version is read
+  case "$1" in
+    docker) echo "Docker Hub ($DOCKERHUB_API/$RELEASE_IMAGE_REPO)" ;;
+    *)      echo "the download site ($RELEASE_DOWNLOAD_BASE/newest/windows-version.txt)" ;;
+  esac
+}
 
 VC_VERSION=""; VC_RELEASED="?"
-version_check() {  # prints why; rc 0 GO, 3 nothing to release, 1 refused, 2 cannot check
-  local v r bad j d pub
+version_check() {  # version_check docker|windows: prints why; rc 0 GO, 3 nothing to release, 1 refused, 2 cannot check
+  local ch="$1" v r bad j d pub
   v=$(tree_version); VC_VERSION="$v"
   [ -n "$v" ] || { echo "REFUSED  cannot read <version> from $SETTINGS_XML"; return 1; }
   printf '%s' "$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "REFUSED  $SETTINGS_XML says '$v', not x.y.z"; return 1; }
@@ -94,48 +139,50 @@ version_check() {  # prints why; rc 0 GO, 3 nothing to release, 1 refused, 2 can
   if [ -n "$bad" ]; then
     echo "REFUSED  $SETTINGS_XML says $v, these files say otherwise:"
     printf '%s\n' "$bad" | sed 's/^/           /'
-    echo "         one version everywhere: bash asbl/ci/set-version.sh $v changes all of them at once (run it while they"
-    echo "         still agree on the old one), then commit"
+    echo "         one version everywhere: put these back to what the others say and commit; dp-ci-release-step0-set-version then"
+    echo "         changes all of them at once (asbl/ci/set-version.sh, which needs them to agree)"
     return 1
   fi
-  r=$(released_version) || { echo "CANNOT CHECK  Docker Hub did not answer ($DOCKERHUB_API/$RELEASE_IMAGE_REPO)"; return 2; }
+  r=$(released_version "$ch") || { echo "CANNOT CHECK  $(channel_source "$ch") did not answer"; return 2; }
   VC_RELEASED="${r:-none}"
-  pub=$(sed -n 's/^version=//p' "$RELEASE_STATE_DIR"/*/step4.publish 2>/dev/null | sort -V | tail -1)
+  pub=$(sed -n 's/^version=//p' "$RELEASE_STATE_DIR"/*/public."$ch" 2>/dev/null | sort -V | tail -1)
   if [ -n "$pub" ] && [ "$pub" != "$r" ]; then
-    echo "REFUSED  Docker Hub's :latest is '${r:-none}', the release record's last publish is $pub: look at both before releasing"
+    echo "REFUSED  the released $ch version is '${r:-none}' ($(channel_source "$ch")), the release record's last public.$ch is $pub: look at both before releasing"
     return 1
   fi
   if [ -n "$r" ] && [ "$v" = "$r" ]; then
-    echo "NOTHING TO RELEASE: settings.xml says $v, $v is already released"
+    echo "NOTHING TO RELEASE: settings.xml says $v, $v is already released. For a new release, run dp-ci-release-step0-set-version with a bigger version ($(bigger_versions "$v"))."
     return 3
   fi
   if [ -n "$r" ] && [ "$(printf '%s\n%s\n' "$v" "$r" | sort -V | tail -1)" != "$v" ]; then
     echo "REFUSED  settings.xml says $v, lower than the released $r"
     return 1
   fi
-  if grep -qx "version=$v" "$RELEASE_STATE_DIR"/*/step4.publish 2>/dev/null; then
-    echo "REFUSED  the release record says $v was already published: raise the version in settings.xml"
+  if grep -qx "version=$v" "$RELEASE_STATE_DIR"/*/public."$ch" 2>/dev/null; then
+    echo "REFUSED  the release record says $v was already made public on the $ch channel: run dp-ci-release-step0-set-version with a bigger version ($(bigger_versions "$v"))"
     return 1
   fi
-  j=$(hub_get "$v")
-  case $? in
-    1) ;;
-    0) d=$(printf '%s' "$j" | json_digest)
-       if ! grep -qx "digest=$d" "$RELEASE_STATE_DIR"/*/step2.docker-stage 2>/dev/null; then
-         echo "REFUSED  $RELEASE_IMAGE_REPO:$v is already on Docker Hub ($d) and no release step staged it (pushed by hand?):"
-         echo "         raise the version in settings.xml"
-         return 1
-       fi
-       echo "note: $RELEASE_IMAGE_REPO:$v is on Docker Hub, staged by an earlier step 2 and never promoted: it may be staged again" ;;
-    *) echo "CANNOT CHECK  Docker Hub did not answer ($DOCKERHUB_API/$RELEASE_IMAGE_REPO)"; return 2 ;;
-  esac
-  echo "RELEASE_VERSION=$v RELEASED=${r:-none} GO"
+  if [ "$ch" = docker ]; then
+    j=$(hub_get "$v")
+    case $? in
+      1) ;;
+      0) d=$(printf '%s' "$j" | json_digest)
+         if ! grep -qx "digest=$d" "$RELEASE_STATE_DIR"/*/rehearsal.docker-stage 2>/dev/null; then
+           echo "REFUSED  $RELEASE_IMAGE_REPO:$v is already on Docker Hub ($d) and no rehearsal staged it (pushed by hand?):"
+           echo "         run dp-ci-release-step0-set-version with a bigger version ($(bigger_versions "$v"))"
+           return 1
+         fi
+         echo "note: $RELEASE_IMAGE_REPO:$v is on Docker Hub, staged by an earlier rehearsal and not public yet: it may be staged again" ;;
+      *) echo "CANNOT CHECK  $(channel_source docker) did not answer"; return 2 ;;
+    esac
+  fi
+  echo "RELEASE_VERSION=$v RELEASED=${r:-none} CHANNEL=$ch GO"
   return 0
 }
 
 cmd="${1:-}"; [ "$#" -gt 0 ] && shift
 case "$cmd" in
-  record|require|get|show)
+  record|require|get|show|step1-guard)
     commit=$(commit_of) || true
     [ -n "$commit" ] || { echo "FAIL  cannot tell which commit (RELEASE_COMMIT='${RELEASE_COMMIT:-}', HEAD)"; exit 2; }
     dir="$RELEASE_STATE_DIR/$commit" ;;
@@ -144,7 +191,7 @@ esac
 case "$cmd" in
   record)
     name="${1:-}"; result="${2:-}"
-    valid_name "$name" || { echo "FAIL  record: '$name' is not a verdict name (step<1-4>.<lane>)"; exit 2; }
+    valid_name "$name" || { echo "FAIL  record: '$name' is not a verdict name (step1.<lane>, rehearsal.<channel>, public.<channel>)"; exit 2; }
     case "$result" in PASS|FAIL) ;; *) echo "FAIL  record: the result must be PASS or FAIL (got '$result')"; exit 2 ;; esac
     shift 2
     mkdir -p "$dir" || exit 2
@@ -191,7 +238,7 @@ case "$cmd" in
     RELEASE_COMMIT="$c" RELEASE_LOG="$log" bash "$SELF" record "step1.$target-$mode" "$res" "rc=$rc"
     ;;
   require)
-    [ "$#" -gt 0 ] || { echo "usage: $0 require <step.lane|step1>..."; exit 2; }
+    [ "$#" -gt 0 ] || { echo "usage: $0 require <name|step1>..."; exit 2; }
     names=""
     for n in "$@"; do [ "$n" = step1 ] && names="$names $REQUIRED_STEP1" || names="$names $n"; done
     bad=0
@@ -207,8 +254,34 @@ case "$cmd" in
     echo "RELEASE_STATE require FAILED commit=${commit:0:8}: run the steps above on this commit first"
     exit 1
     ;;
+  step1-guard)
+    bad=""
+    for n in $REQUIRED_STEP1; do
+      case "$(field "$dir/$n" result)" in PASS) ;; FAIL) bad="$bad, ${n#step1.} red" ;; *) bad="$bad, ${n#step1.} missing" ;; esac
+    done
+    if [ -z "$bad" ]; then echo "ok: step 1 is green on ${commit:0:8} (${REQUIRED_STEP1//step1./})"; exit 0; fi
+    echo "REFUSED: step 1 is not green on ${commit:0:8}: ${bad#, }. Run dp-ci-release-step1-e2e-prerelease first."
+    exit 1
+    ;;
+  rehearsed)
+    ch="${1:-}"; v="${2:-}"
+    case "$ch" in docker|windows) ;; *) echo "usage: $0 rehearsed docker|windows <version>"; exit 2 ;; esac
+    best=""; best_time=""; red=0
+    for f in "$RELEASE_STATE_DIR"/*/rehearsal."$ch"; do
+      [ -f "$f" ] && [ "$(field "$f" version)" = "$v" ] || continue
+      if [ "$(field "$f" result)" = PASS ]; then
+        t=$(field "$f" time)
+        [[ "$t" > "$best_time" ]] && { best_time="$t"; best=$(field "$f" commit); }
+      else
+        red=$((red + 1))
+      fi
+    done
+    [ -n "$best" ] && { echo "REHEARSED $best $best_time"; exit 0; }
+    echo "NOT REHEARSED: no passed rehearsal of $v on the $ch channel ($red red)"
+    exit 1
+    ;;
   get)
-    f="$dir/${1:-}"; [ -n "${2:-}" ] || { echo "usage: $0 get <step.lane> <key>"; exit 2; }
+    f="$dir/${1:-}"; [ -n "${2:-}" ] || { echo "usage: $0 get <name> <key>"; exit 2; }
     [ -f "$f" ] || exit 1
     v=$(field "$f" "$2"); [ -n "$v" ] || exit 1
     printf '%s\n' "$v"
@@ -218,7 +291,7 @@ case "$cmd" in
     echo "release record of commit ${commit:0:8} ($dir)"
     printf '%-34s %-6s %-10s %-21s %s\n' VERDICT RESULT VERSION TIME MORE
     found=0
-    for f in "$dir"/step*; do
+    for f in "$dir"/step1.* "$dir"/rehearsal.* "$dir"/public.*; do
       [ -f "$f" ] || continue; found=1
       printf '%-34s %-6s %-10s %-21s %s\n' "$(basename "$f")" "$(field "$f" result)" "$(field "$f" version)" "$(field "$f" time)" \
         "$(grep -vE '^(result|commit|version|time)=' "$f" | tr '\n' ' ' | cut -c1-120)"
@@ -227,21 +300,30 @@ case "$cmd" in
     for n in $REQUIRED_STEP1; do [ "$(field "$dir/$n" result)" = PASS ] || { echo "step 1 for a release: NOT complete (needs $REQUIRED_STEP1)"; exit 0; }; done
     echo "step 1 for a release: complete"
     ;;
+  released)
+    d=$(released_docker) || { echo "CANNOT CHECK  $(channel_source docker) did not answer"; exit 2; }
+    w=$(released_windows) || { echo "CANNOT CHECK  $(channel_source windows) did not answer"; exit 2; }
+    echo "RELEASED current=$(printf '%s\n' $d $w | sort -V | tail -1) docker=${d:-none} windows=$w"
+    ;;
   version-check)
-    if [ "${1:-}" = --print ]; then
-      out=$(mktemp); version_check > "$out"; rc=$?
+    ch=docker; print=0
+    for a in "$@"; do
+      case "$a" in docker|windows) ch="$a" ;; --print) print=1 ;; *) echo "usage: $0 version-check [docker|windows] [--print]"; exit 2 ;; esac
+    done
+    if [ "$print" = 1 ]; then
+      out=$(mktemp); version_check "$ch" > "$out"; rc=$?
       case "$rc" in
         0) what="would release" ;;
         3) what="nothing to release" ;;
         1) what="a release would be refused: $(head -1 "$out" | sed 's/^REFUSED  //')" ;;
-        *) what="cannot check (Docker Hub did not answer)" ;;
+        *) what="cannot check ($(channel_source "$ch" | sed 's/ (.*//') did not answer)" ;;
       esac
       rm -f "$out"
       echo "RELEASE_VERSION settings.xml=${VC_VERSION:-?} released=$VC_RELEASED: $what"
       exit 0
     fi
-    version_check
+    version_check "$ch"
     ;;
   *)
-    sed -n '2,42p' "$0"; exit 2 ;;
+    sed -n '2,59p' "$0"; exit 2 ;;
 esac

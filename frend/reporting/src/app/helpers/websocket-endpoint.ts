@@ -27,6 +27,11 @@ export class WebSocketEndpoint {
   // socket closing late cannot schedule a second, duplicate connection.
   private connectionGeneration = 0;
 
+  // One console line when a live connection closes and one when it is back, so a job end missed while it
+  // was down shows its cause (the e2e output prints the renderer console as [RENDERER ...]).
+  private live = false;
+  private lostAt: number | null = null;
+
   constructor() {}
 
   async makeWSConnection(topicsOptions: TopicOptions[]) {
@@ -197,13 +202,25 @@ export class WebSocketEndpoint {
     //disable logging
     this._socket.stomp.debug = () => {};
     this._socket.stomp.onclose = () => {
-      if (isCurrent()) this.scheduleReconnection();
+      if (!isCurrent()) return;
+      if (this.live) {
+        this.live = false;
+        this.lostAt = Date.now();
+        console.warn(`WebSocket ${this.socketUrl}: the connection closed; reconnecting in ${this.reconnectionTimeout / 1000} s`);
+      }
+      this.scheduleReconnection();
     };
 
     return this._socket.stomp.connect(
       headers,
       () => {
-        if (isCurrent()) this._socketListener();
+        if (!isCurrent()) return;
+        this.live = true;
+        if (this.lostAt !== null) {
+          console.warn(`WebSocket ${this.socketUrl}: the connection is back after ${Math.round((Date.now() - this.lostAt) / 1000)} s`);
+          this.lostAt = null;
+        }
+        this._socketListener();
       },
       (errorMsg: any) => {
         if (isCurrent()) this._onSocketError(errorMsg);

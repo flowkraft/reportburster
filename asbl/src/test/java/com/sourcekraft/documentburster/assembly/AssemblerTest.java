@@ -54,15 +54,9 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:DataPallasServerSpringBootAssembler ... -------------------------------------");
 
-		// Build a Docker image from the project root (requires docker daemon available)
-		AbstractAssembler dockerAssembler = new DockerAssembler();
-		dockerAssembler.assemble();
-		dockerAssembler.verify();
-		dockerAssembler.install();
-		
-		System.out.println(
-				"------------------------------------- FINISHED Assembler:DockerAssembler ... -------------------------------------");
-		
+		// No Docker image here: the Linux build (assembleDataPallasServerLinux) makes the one the
+		// Docker release ships (asbl/ci/jenkins/release-docker.sh).
+
 		AbstractAssembler rbSourceAssembler = new DataPallasSourceAssembler();
 		
 		rbSourceAssembler.assemble();
@@ -74,9 +68,10 @@ public class AssemblerTest {
 
 	}
 
-	// Linux CI (asbl/ci/dp-ci.sh): the same chain as assembleDataPallasAndDataPallasServer minus
-	// DataPallasAssembler, whose DataPallas.exe can only be built on Windows. The server package is
-	// assembled from the NoExe package instead.
+	// Linux CI (asbl/ci/dp-ci.sh): NoExeAssembler and DataPallasServerSpringBootAssembler, as in
+	// assembleDataPallasAndDataPallasServer but without DataPallasAssembler, whose DataPallas.exe can only
+	// be built on Windows (the server package is assembled from the NoExe package instead), then
+	// DockerAssembler: the Docker image is built here only, and the Docker release ships this build's image.
 	@Test
 	public void assembleDataPallasServerLinux() throws Exception {
 

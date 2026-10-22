@@ -1,8 +1,9 @@
-// Job datapallas/dp-ci-release-demos, asbl/ci/jenkins/release-demos.sh (decision OD4 (a)). dp-demo.bkstg shows origin/main: built first
-// when it is not built yet (dp-ci.sh build-if-needed), then that image published. demo.datapallas.com is a plain install of the
-// published release (asbl/ci/demo-public/install-release.sh), nothing built: run it after step 4 (dp-ci-release-step4-publish).
-// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
-// only starts it and shows its log (see asbl/ci/jenkins/jenkins.md).
+// Job datapallas/dp-ci-dev-demo-preview-bkstg: dp-demo.bkstg shows origin/main, built first when it is not built yet
+// (asbl/ci/jenkins/release-demos.sh with DEMO=dp-demo.bkstg: dp-ci.sh build-if-needed, then dp-ci.sh publish-demo-bkstg).
+// Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
+// the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-dev-demo-preview-bkstg.
+// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file only starts it and
+// shows its log and the build's Trivy table.
 pipeline {
   agent any
 
@@ -26,7 +27,7 @@ pipeline {
 set -o pipefail
 q() { printf '%q' "$1"; }
 # its parts are marked DEMOS STEP n/N, each START/END with the time it took (asbl/ci/marks.sh): grep '^######## ' in the console
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && DEMO=$(q "$DEMO") RESET_DEMO_DATA=$(q "$RESET_DEMO_DATA") DRY_RUN=$(q "$DRY_RUN") bash asbl/ci/jenkins/release-demos.sh"
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && DEMO=dp-demo.bkstg DRY_RUN=$(q "$DRY_RUN") bash asbl/ci/jenkins/release-demos.sh"
 '''
         }
       }

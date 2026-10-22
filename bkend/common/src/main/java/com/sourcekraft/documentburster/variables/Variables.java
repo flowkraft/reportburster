@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +94,8 @@ public class Variables {
 	public Variables(String documentName, String language, String country, int numberOfUserVariables) {
 
 		globalVars.put(INPUT_DOCUMENT_NAME, documentName);
-		globalVars.put(INPUT_DOCUMENT_EXTENSION, FilenameUtils.getExtension(documentName));
-		globalVars.put(OUTPUT_TYPE_EXTENSION, FilenameUtils.getExtension(documentName));
+		globalVars.put(INPUT_DOCUMENT_EXTENSION, extensionOf(documentName));
+		globalVars.put(OUTPUT_TYPE_EXTENSION, extensionOf(documentName));
 
 		addDateSystemVariables(language, country);
 
@@ -104,6 +103,21 @@ public class Variables {
 		// Keep it for now for backward compatibility with text parsing
 		this.numberOfUserVariables = numberOfUserVariables;
 
+	}
+
+	/**
+	 * The extension of a document name: the text after its last '.', when that dot comes after the last '/' or
+	 * '\'; "" when there is none. This is what FilenameUtils.getExtension returns on Linux, without its
+	 * Windows-only refusal of a ':' (an NTFS alternate data stream), which is about opening files, not about
+	 * reading a name: a report or dashboard named "Subscriptions: MRR & Churn" failed to load its data on
+	 * Windows (run-all D, DD15).
+	 */
+	private static String extensionOf(String documentName) {
+		if (documentName == null)
+			return null;
+		int dot = documentName.lastIndexOf('.');
+		int separator = Math.max(documentName.lastIndexOf('/'), documentName.lastIndexOf('\\'));
+		return dot > separator ? documentName.substring(dot + 1) : "";
 	}
 
 	private void addDateSystemVariables(String language, String country) {

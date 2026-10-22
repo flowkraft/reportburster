@@ -215,11 +215,41 @@ class CubeDemoSeedTabJourneyTest {
 				Map.of("script", scriptText, "params", Map.of("N", "200"))));
 
 		assertTrue(answer.path("ok").asBoolean(), "the invoice seeder was accepted too: " + answer);
+		String jobId = answer.path("jobId").asText();
+		assertTrue(!jobId.isEmpty(), "the tab gets the run's jobId, to follow it by: " + answer);
 
 		waitForTheRunToFinish();
 
+		assertEquals("done", theRunsEnd(jobId).path("status").asText(),
+				"the server keeps the run's end, so the tab learns it even when it missed the WebSocket message");
+		assertEquals(HttpStatus.NOT_FOUND,
+				admin.get("/api/connections/" + CONNECTION + "/run-seed/no-such-run").getStatusCode(),
+				"an unknown run is not found");
+		assertEquals(HttpStatus.NOT_FOUND,
+				admin.get("/api/connections/db-another-connection/run-seed/" + jobId).getStatusCode(),
+				"a run is found only on the connection it ran on");
+
 		assertEquals("200", inTheDatabase("SELECT COUNT(*) FROM seed_inv_invoice"),
 				"the seed that was there before the cube demo still loads through the same endpoint");
+	}
+
+	/**
+	 * What the tab does after Run: it asks GET .../run-seed/{jobId} until the run has ended. The
+	 * temp script (what waitForTheRunToFinish watches) is removed just before the status becomes
+	 * done or failed, so this takes a moment at most.
+	 */
+	private JsonNode theRunsEnd(String jobId) throws Exception {
+		long until = System.currentTimeMillis() + 30_000;
+		JsonNode run = null;
+		while (System.currentTimeMillis() < until) {
+			run = json(admin.get("/api/connections/" + CONNECTION + "/run-seed/" + jobId));
+			String status = run.path("status").asText();
+			if ("done".equals(status) || "failed".equals(status)) {
+				return run;
+			}
+			Thread.sleep(200);
+		}
+		throw new AssertionError("The seed run had not ended after 30 s: " + run);
 	}
 
 	@Test

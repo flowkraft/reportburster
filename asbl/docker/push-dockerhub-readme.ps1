@@ -8,8 +8,8 @@
     results live on the Hub *repository* record and are only reachable through the
     Hub API. This script pushes both from README-dockerhub.md.
 
-    Run it after the two `docker push` calls documented at the bottom of
-    pack-datapallas.bat. It is independent of the image, so it can also be run on
+    Run it after the Docker release job's MODE=public (dp-ci-release-step2-release-docker),
+    which prints it as a MANUAL step. It is independent of the image, so it can also be run on
     its own whenever the overview text changes — no rebuild needed.
 
     Categories (the Hub sidebar taxonomy) have no dependable public API. Set those

@@ -275,6 +275,16 @@ export class ConnectionsService {
     return this.apiService.post(`/connections/${encodeURIComponent(connectionCode)}/run-seed`, { script, params });
   }
 
+  /** One seed run's state, by the jobId runCustomSeed returned (it rejects on 404: no such run). */
+  async getSeedRun(
+    connectionCode: string,
+    jobId: string,
+  ): Promise<{ id: string; status: string; resultMetadata?: { error?: string } }> {
+    return this.apiService.get(
+      `/connections/${encodeURIComponent(connectionCode)}/run-seed/${encodeURIComponent(jobId)}`,
+    );
+  }
+
   async getSeedStatus(connectionCode: string): Promise<{ hasSeedData: boolean; tables: Array<{ name: string; count: number }> }> {
     return this.apiService.get(`/connections/${encodeURIComponent(connectionCode)}/seed-status`);
   }

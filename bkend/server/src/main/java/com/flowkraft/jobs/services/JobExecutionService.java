@@ -74,6 +74,17 @@ public class JobExecutionService {
 	 * so existing UI stats panels continue to work alongside the new job model.
 	 */
 	public void executeTracked(String[] args, String jobId, JobStore jobStore) {
+		executeTracked(args, jobId, jobStore, null);
+	}
+
+	/**
+	 * The same, with a callback that runs after the job ends (success or failure), before its status
+	 * becomes done/failed: whoever reads the status as ended may rely on the callback's work being
+	 * done. Used by GenericSeedExecutor to delete the seed run's temp script.
+	 *
+	 * @param onComplete may be null
+	 */
+	public void executeTracked(String[] args, String jobId, JobStore jobStore, Runnable onComplete) {
 		final String cmdDescription = String.join(" ", args);
 		log.info("Submitting tracked job {}: {}", jobId, cmdDescription);
 
@@ -92,12 +103,14 @@ public class JobExecutionService {
 				Settings.PORTABLE_EXECUTABLE_DIR_PATH = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH;
 				DocumentBurster.execute(args);
 				log.info("Tracked job completed: {} ({})", jobId, cmdDescription);
+				runOnComplete(onComplete, cmdDescription);
 				jobStore.updateStatus(jobId, "done");
 				messagingTemplate.convertAndSend(Constants.WS_TOPIC_EXECUTION_STATS,
 						new WebSocketJobsExecutionStatsInfo("on.process.complete", 0));
 			} catch (Throwable e) {
 				log.error("Tracked job failed: {} ({}): {}", jobId, cmdDescription, e.getMessage(), e);
 				jobStore.find(jobId).ifPresent(rec -> rec.resultMetadata.put("error", e.getMessage()));
+				runOnComplete(onComplete, cmdDescription);
 				jobStore.updateStatus(jobId, "failed");
 				WebSocketJobsExecutionStatsInfo info = new WebSocketJobsExecutionStatsInfo("on.process.failed");
 				info.setExceptionMessage(e.getMessage());
@@ -106,6 +119,16 @@ public class JobExecutionService {
 				Settings.ACTIVE_JOB_FILE_PATH_SINK.remove();
 			}
 		});
+	}
+
+	private static void runOnComplete(Runnable onComplete, String cmdDescription) {
+		if (onComplete == null)
+			return;
+		try {
+			onComplete.run();
+		} catch (Exception e) {
+			log.warn("Post-completion callback failed for {}: {}", cmdDescription, e.getMessage());
+		}
 	}
 
 	/**

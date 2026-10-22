@@ -52,6 +52,7 @@ GET /api/auth/providers -> (none)
 # the limit is on databases.
 GET /api/connections -> REPORT_AUTHOR
 GET /api/connections/seed-templates -> ADMIN
+GET /api/connections/{connectionCode}/run-seed/{jobId} -> ADMIN
 GET /api/connections/{connectionCode}/seed-status -> ADMIN
 # and then by data: limitsService.assertDatabaseConnectionAllowed - a connection outside the
 # caller's limits is refused by name, not quietly emptied.

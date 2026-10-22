@@ -22,6 +22,8 @@
 // Needs the web components staged first: npm run custom:compile-and-stage-web-components.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import * as http from 'http';
+import type { AddressInfo } from 'net';
 import {
   type Browser,
   type BrowserContext,
@@ -7050,6 +7052,7 @@ test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embe
   test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
   let reportId: string | undefined;
   let portalContext: BrowserContext | undefined;
+  let portalServer: http.Server | undefined;
 
   try {
     await withFreshCanvas(page, 'E2E mech M97 Embed code', async (canvasId) => {
@@ -7093,13 +7096,20 @@ test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embe
       // locked channel fixed, and its number the truth.
       portalContext = await page.context().browser()!.newContext();
       const portal = await portalContext.newPage();
-      const portalUrl = 'http://localhost:8599/portal.html';
-      await portal.route(portalUrl, (route) =>
-        route.fulfill({
-          contentType: 'text/html',
-          body: `<!doctype html><html><head><meta charset="utf-8"><title>Portal</title></head><body>\n${code}\n</body></html>`,
-        }),
-      );
+      // Served by a real server on loopback, not portal.route(): a page fulfilled by Playwright has no server
+      // address, so Chromium 142+ (the VM's Edge) treats it as a public site reaching into the local network
+      // and holds its components script for a permission nobody grants (M97 red in run-all D). Loopback to
+      // loopback is never blocked; localhost:<any port> is still another site, and an origin the server allows.
+      const portalHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Portal</title></head><body>\n${code}\n</body></html>`;
+      portalServer = http.createServer((req, res) => {
+        if (req.url !== '/portal.html') {
+          res.writeHead(404).end();
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(portalHtml);
+      });
+      await new Promise<void>((resolve) => portalServer!.listen(0, '127.0.0.1', resolve));
+      const portalUrl = `http://localhost:${(portalServer.address() as AddressInfo).port}/portal.html`;
       await portal.goto(portalUrl, { waitUntil: 'networkidle', timeout: 60_000 });
       await expect
         .poll(async () => bDigits(await portal.locator(`[id="widgetValue-${numberIds[0]}"]`).innerText().catch(() => '')), {
@@ -7118,6 +7128,10 @@ test('(canvas mechanics) M97 The Share dialog gives the embed code, with an embe
     });
   } finally {
     if (portalContext) await portalContext.close();
+    if (portalServer) {
+      portalServer.closeAllConnections();
+      await new Promise((resolve) => portalServer!.close(resolve));
+    }
     if (reportId) await deleteReportAsAdmin(reportId);
   }
 });

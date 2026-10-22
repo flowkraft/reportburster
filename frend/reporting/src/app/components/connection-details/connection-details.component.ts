@@ -1,6 +1,8 @@
 ﻿import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
+  inject,
   input,
   model,
   OnInit,
@@ -16,6 +18,9 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-groovy';
 
 import * as pako from 'pako';
+import { from, interval, Subscription } from 'rxjs';
+import { exhaustMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   ExtConnection,
@@ -153,9 +158,13 @@ export class ConnectionDetailsComponent implements OnInit {
       : this.getExampleCustomSeedScript();
   }
   isSeedDataExampleActive = false;
-  // True between Run Script click and the on.process.complete WebSocket event.
+  // True between Run Script click and the run's end: the on.process.complete WebSocket event, or the
+  // end the server reports for the run (followCustomSeedRun), whichever comes first.
   // Covers the gap when scripts complete faster than the 250ms .job-file poll cycle.
   isCustomSeedRunning = false;
+  private customSeedRunPoll: Subscription | null = null;
+  private customSeedRunEndCallback: (() => void) | null = null;
+  private destroyRef = inject(DestroyRef);
 
   // dp-tabs active-index bindings (drive [activeIndex] inputs)
   emailActiveTabIndex = 0;
@@ -3235,17 +3244,59 @@ export class ConnectionDetailsComponent implements OnInit {
     this.isCustomSeedRunning = true;
     this.cdRef.detectChanges();
 
-    this.webSocketService.callBacksProcessing.onProcessingComplete = () => {
-      this.isCustomSeedRunning = false;
-      this.cdRef.detectChanges();
-    };
+    this.customSeedRunEndCallback = () => this.endCustomSeedRun();
+    this.webSocketService.callBacksProcessing.onProcessingComplete = this.customSeedRunEndCallback;
 
-    this.connectionsService.runCustomSeed(connectionCode, this.customSeedScript, {})
-      .catch(err => {
-        this.isCustomSeedRunning = false;
-        this.cdRef.detectChanges();
-        this.messagesService.showError(`Failed to submit script: ${err?.message || err}`);
+    try {
+      const submitted = await this.connectionsService.runCustomSeed(connectionCode, this.customSeedScript, {});
+      if (submitted?.jobId) this.followCustomSeedRun(connectionCode, submitted.jobId);
+    } catch (err) {
+      this.endCustomSeedRun();
+      this.messagesService.showError(`Failed to submit script: ${err?.message || err}`);
+    }
+  }
+
+  /**
+   * Follows the seed run by its jobId, once a second, until the server says it ended. The WebSocket
+   * message on.process.complete is pushed once, to whoever is connected at that moment, and after a
+   * drop the UI reconnects only 30 s later: a message sent in that gap is lost, and the Run button
+   * stayed disabled for 40 minutes after a 63-second seed (run-all D, [duckdb] seed-wipe on the
+   * Windows VM). When the WebSocket message arrives first, the run ends exactly as before.
+   */
+  private followCustomSeedRun(connectionCode: string, jobId: string): void {
+    if (!this.isCustomSeedRunning) return; // the WebSocket message came before the answer to Run
+    this.customSeedRunPoll = interval(1000)
+      .pipe(
+        exhaustMap(() => from(this.connectionsService.getSeedRun(connectionCode, jobId))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (run) => {
+          if (run?.status === 'done') this.endCustomSeedRun();
+          else if (run?.status === 'failed' && this.endCustomSeedRun())
+            this.messagesService.showError(run.resultMetadata?.error || 'The seed script failed');
+        },
+        error: () => {
+          if (this.endCustomSeedRun()) this.messagesService.showError('Lost track of the seed run');
+        },
       });
+  }
+
+  /**
+   * Ends the seed run once, whoever learns of its end first: the WebSocket message, the poll, or a
+   * failed submit. Returns false when it had already ended.
+   */
+  private endCustomSeedRun(): boolean {
+    this.customSeedRunPoll?.unsubscribe();
+    this.customSeedRunPoll = null;
+    const callbacks = this.webSocketService.callBacksProcessing;
+    if (this.customSeedRunEndCallback && callbacks.onProcessingComplete === this.customSeedRunEndCallback)
+      callbacks.onProcessingComplete = null;
+    this.customSeedRunEndCallback = null;
+    if (!this.isCustomSeedRunning) return false;
+    this.isCustomSeedRunning = false;
+    this.cdRef.detectChanges();
+    return true;
   }
 
   copyExampleSeedScriptToClipboard(): void {

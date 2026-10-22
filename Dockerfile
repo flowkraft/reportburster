@@ -10,7 +10,8 @@
 #      `version="0.0.0"` placeholder in the LABEL block below with the
 #      real value (e.g. version="15.2.0")
 #   3. Runs `docker build` with TWO tags: :latest AND :<version>
-# See asbl/pack-datapallas.bat for the push step that uploads both tags.
+# It runs in the Linux build (dp-ci.sh build); the Docker release job, dp-ci-release-step2-release-docker
+# (asbl/ci/jenkins/release-docker.sh), pushes that image: :<version>, then :latest pointed at it.
 #
 # BUILD MODES:
 #

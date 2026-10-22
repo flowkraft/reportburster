@@ -1,8 +1,10 @@
-// Job datapallas/dp-ci-dev-live. Brings up the hot-reloading dev server (dp-ci.sh dev --live, or --pinned <sha>) and prints its URL,
-// or stops it. No e2e. The server is a detached container owned by the Docker daemon, so it keeps running after this build ends,
-// until ACTION=stop. A diagnosis tool, never a verification: only dp-ci-e2e-loop and dp-ci-release-step1-e2e-prerelease may tick a TODO.
-// The work is the plain script named below (dp-ci.sh dev), run on the host over SSH exactly as it is run by hand; this file only
-// adds what a button needs: "already running" instead of a second start, a stop, and the wait until the site answers.
+// Job datapallas/dp-ci-dev-server: starts or stops a dev web server (dp-ci.sh dev --live, or --pinned <sha>) and prints its URL.
+// The server is a detached container owned by the Docker daemon, so it keeps running after this build ends, until ACTION=stop.
+// For looking, never a proof: only the e2e jobs prove. The work is the plain script named below (dp-ci.sh dev), run on the host
+// over SSH exactly as it is run by hand; this file only adds what a button needs: "already running" instead of a second start,
+// a stop, and the wait until the site answers.
+// Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
+// the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-dev-server.
 pipeline {
   agent any
 

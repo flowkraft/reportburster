@@ -17,6 +17,7 @@ import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.Utils;
+import com.sourcekraft.documentburster.variables.Variables;
 
 public class BuiltInVariablesTest {
 
@@ -139,5 +140,23 @@ public class BuiltInVariablesTest {
 
         }
     };
+
+    // A report or dashboard name is not a file name: "Subscriptions: MRR & Churn" has no extension, and its ':'
+    // must not throw (commons-io refuses a ':' on Windows only, which broke DD15's data there in run-all D).
+    // On Linux this pins the behaviour; the Windows case is proven by the e2e DD15 tests on the Windows VM.
+    @Test
+    public final void documentExtensionOfReportAndFileNames() {
+
+        String[][] cases = { { "Subscriptions: MRR & Churn", "" }, { "Payslips.pdf", "pdf" },
+                { "C:\\x\\y.xlsx", "xlsx" }, { "/a.b/c.xlsx", "xlsx" }, { "dir.v1/file", "" } };
+
+        for (String[] c : cases) {
+            Variables variables = new Variables(c[0], null, null, 0);
+            assertEquals(c[0], c[1], variables.get(Variables.INPUT_DOCUMENT_EXTENSION));
+            assertEquals(c[0], c[1], variables.get(Variables.OUTPUT_TYPE_EXTENSION));
+        }
+
+        assertNull(new Variables(null, null, null, 0).get(Variables.INPUT_DOCUMENT_EXTENSION));
+    }
 
 }

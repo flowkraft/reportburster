@@ -173,12 +173,22 @@ const _splitVerifyBigFile = (
   //.waitOnElementToBecomeVisible('#resumeJobsBurstReportsTab #btnResume')
   if (pauseCancelMode === 'pause-after-pdf-generated-and-then-resume') {
     ft.click('#resumeJobsBurstReportsTab #btnResume')
-      // wait for the 'Clear Logs' modal to come
+      // Resume is refused while the logs are not empty: the information dialog
+      // ("You need to press the Clear Logs button first"), whose OK is clicked next
+      .waitOnInfoDialogToBecomeVisible()
       .clickYesDoThis()
       .click('#btnClearLogsBurstReportsTab')
       .clickYesDoThis()
-      //.waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab')
+      // Clear Logs has finished only when the logs viewer is gone: it shows exactly
+      // while foundDirtyLogFiles holds, the flag Resume refuses on. Without this
+      // wait the next Resume came 0.2 s after Clear Logs on the Windows VM (run-all D),
+      // was refused, and clickYesDoThis() dismissed the refusal itself
+      .waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab')
       .click('#resumeJobsBurstReportsTab #btnResume')
+      // the confirm dialog's own Yes: an information dialog here is a refusal,
+      // and fails now instead of 5 minutes later waiting for a job that never starts
+      .waitOnConfirmDialogToBecomeVisible()
+      .elementShouldBeVisible('#btnConfirmDialogYes:visible')
       .clickYesDoThis()
       .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
       // check when the first PDF file was created

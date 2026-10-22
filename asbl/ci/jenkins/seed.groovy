@@ -1,94 +1,377 @@
 // Job DSL: creates every Jenkins job of this project from the repository, so the Jenkins can be rebuilt and
-// no job is made by clicking. Run by the one hand-made job `seed` (see jenkins.md, "Seed job").
+// no job is made by clicking. Run by the one hand-made job `seed` (see jenkins.md, "The seed job").
 //
 // One job per step the owner starts on its own. Each job loads its Jenkinsfile from this repository, and the
 // Jenkinsfile runs a plain script from asbl/ci on the host over SSH: the very scripts that are run by hand,
 // in the very same CI container. No secrets in here: the repository is public.
+//
+// The texts below are what the owner and the agents read to use the jobs (Jenkins shows them as plain text, the line
+// breaks kept, links not clickable): each job's description stands on its own, in the same blocks (describe, below).
+// Keep them in step with the scripts; the longer guide is asbl/ci/jenkins/jenkins.md.
 
 def repoUrl    = 'https://github.com/flowkraft/datapallas.git'
 def repoBranch = '*/main'
+def guideUrl   = 'https://github.com/flowkraft/datapallas/blob/main/asbl/ci/jenkins/jenkins.md'
 
+// The map of the folder. Jenkins lists the jobs alphabetically, which is this order: dev = any time while developing,
+// release-stepN = a release, in that order.
 folder('datapallas') {
-  description('DataPallas CI. The jobs are defined in asbl/ci/jenkins/seed.groovy: change them there, not here.')
+  description('DataPallas CI. Each job runs a plain script of the repository (asbl/ci) on the CI host, the same command as by hand. The jobs are defined in asbl/ci/jenkins/seed.groovy: change them there, not here. The guide: ' + guideUrl +
+    '\n\nWhich job, and when (each job\'s own description says how, with examples):' +
+    '\n  dp-ci-dev-demo-preview-bkstg: any time: dp-demo.bkstg shows origin/main (its own build first when there is none)' +
+    '\n  dp-ci-dev-e2e-one-spec: after a fix: one spec file, or some of its tests, on web or electron-linux' +
+    '\n  dp-ci-dev-junit: after a Java change: one test class or method, or all' +
+    '\n  dp-ci-dev-quality-report: any time: lint, bug finder, format, complexity; never blocks anything' +
+    '\n  dp-ci-dev-server: to look at a change in a browser: start or stop the dev server, live or pinned' +
+    '\n  dp-ci-release-step0-set-version: a release starts here: the new version committed (left as it is: nothing done)' +
+    '\n  dp-ci-release-step1-e2e-prerelease: the full e2e: a release\'s four lanes, and the everyday check of the trunk' +
+    '\n  dp-ci-release-step2-release-docker: the Docker release: MODE=rehearsal, then MODE=public (or public directly)' +
+    '\n  dp-ci-release-step3-release-windows-vm: the Windows release: the same two modes' +
+    '\n  dp-ci-release-step4-demo-public: after step 2\'s MODE=public: demo.datapallas.com installs the release' +
+    '\n\nA release = step 0, then step 1\'s four lanes, then steps 2 and 3 (each MODE=rehearsal, a look, then MODE=public, the two public runs one after the other; once trusted, MODE=public directly), then step 4.')
 }
 
-// How to read a Playwright run's log, the same for both e2e jobs. The lines are dp-ci.sh's and Playwright's: keep this in step with them.
-def playwrightLog = '\n\nIts log (Playwright). Search the whole log with a regular expression, not only its end: a run waiting for a database (DB2) fills the end with thousands of "attempting JDBC connection" lines while its results sit further up. Every finished test attempt prints one line: \u2713  394 specs/features/reporting.spec.ts:810:31 \u203a <title> (2.2m) passed, \u2718 failed, - skipped, (retry #1) a second try of the same test; the number after the mark counts the attempts finished so far. On Windows (windows-vm-electron) the same line reads ok 394 specs\\features\\reporting.spec.ts:810:31 > <title>: ok for \u2713, x for \u2718, backslashes in the path, > for \u203a; the patterns below match both.' +
-  '\nHow many tests and how far: Running [0-9]+ tests, then the newest (\u2713|ok|\u2718|x|-) +[0-9]+ specs[/\\\\].' +
-  '\nRunning tally, counting the matches: (\u2713|ok) +[0-9]+ specs[/\\\\] passed, (\u2718|x) +[0-9]+ specs[/\\\\] failed,  - +[0-9]+ specs[/\\\\] skipped.' +
-  '\nWhich failed, and the retries: (\u2718|x) +[0-9]+ specs[/\\\\] and retry #[0-9]+ (a pass on a retry = flaky, a fail on a retry = really red). One test: its file and line, for example reporting\\.spec\\.ts:390, with 20 lines of context. Waiting for a database: attempting JDBC.' +
-  '\nThe official end result, once the run has finished: E2E_RESULT|\\] (stdout: +)?[0-9]+ (passed|failed|flaky|skipped|did not run).' +
-  '\nCounts during the run are attempts, not tests, and provisional: a test that failed and then passed on its retry shows once in each count. The official totals are Playwright\'s summary line (361 passed, 16 failed, 1 flaky), the E2E_RESULT line and the JSON report, written when the run ends.'
+// A job's description: the same blocks for every job, so a reader finds each fact in the same place. A block given as a
+// list is shown one item per line.
+def describe = { Map b ->
+  ['WHAT', 'WHEN', 'ORDER', 'NEEDS', 'TIME', 'EXAMPLES', 'LOG', 'MORE'].collect { k ->
+    def v = b[k]
+    assert v : "describe: the block ${k} is missing"
+    k + ': ' + (v instanceof List ? '\n  ' + v.join('\n  ') : v)
+  }.join('\n\n')
+}
+def guide = { String job, String runs ->
+  "asbl/ci/jenkins/jenkins.md, the section ${job} (${guideUrl}). It runs ${runs} on the CI host: the same command runs by hand there."
+}
+// What every job that runs dp-ci.sh on this host checks first (dp-ci.sh prereq docker), and its one-run-at-a-time rule.
+def needsDocker = 'checked first, within seconds: this host\'s Docker engine (dp-ci.sh prereq docker; missing: MISSING a running Docker engine on this host: start it ..., then PREREQUISITES MISSING, nothing started). One dp-ci run at a time: while another runs, it stops at once (a dp-ci container already exists).'
 
-// name -> [Jenkinsfile, what it is, parameters]. Add an entry to add a job.
+// How to read a Playwright run's log, the same for both e2e jobs. The lines are dp-ci.sh's and Playwright's: keep this in step with them.
+def playwrightLog = 'Playwright. Search the whole log with a regular expression, not only its end: a run waiting for a database (DB2) fills the end with thousands of "attempting JDBC connection" lines while its results sit further up. Every finished test attempt prints one line: ✓  394 specs/features/reporting.spec.ts:810:31 › <title> (2.2m) passed, ✘ failed, - skipped, (retry #1) a second try of the same test; the number after the mark counts the attempts finished so far. On Windows (windows-vm-electron) the same line reads ok 394 specs\\features\\reporting.spec.ts:810:31 > <title>: ok for ✓, x for ✘, backslashes in the path, > for ›; the patterns below match both.' +
+  '\n  How many tests and how far: Running [0-9]+ tests, then the newest (✓|ok|✘|x|-) +[0-9]+ specs[/\\\\].' +
+  '\n  Running tally, counting the matches: (✓|ok) +[0-9]+ specs[/\\\\] passed, (✘|x) +[0-9]+ specs[/\\\\] failed,  - +[0-9]+ specs[/\\\\] skipped.' +
+  '\n  Which failed, and the retries: (✘|x) +[0-9]+ specs[/\\\\] and retry #[0-9]+ (a pass on a retry = flaky, a fail on a retry = really red). One test: its file and line, for example reporting\\.spec\\.ts:390, with 20 lines of context. Waiting for a database: attempting JDBC.' +
+  '\n  The official end result, once the run has finished: E2E_RESULT|\\] (stdout: +)?[0-9]+ (passed|failed|flaky|skipped|did not run).' +
+  '\n  Counts during the run are attempts, not tests, and provisional: a test that failed and then passed on its retry shows once in each count. The official totals are Playwright\'s summary line (361 passed, 16 failed, 1 flaky), the E2E_RESULT line and the JSON report, written when the run ends.'
+
+// RELEASE_VERSION's pre-filled value (job dp-ci-release-step0-set-version): the current release, the higher of the two
+// channels' released versions, read now, while seed generates the jobs, from the public places the version gate reads
+// (asbl/ci/release-state.sh released; no credentials): the x.y.z tag that Docker Hub's :latest has, and the version line of
+// newest/windows-version.txt (until the first Windows MODE=public writes it: WINDOWS_RELEASED_BY_HAND in release-state.sh).
+// Docker Hub not answering: <version> in settings.xml on origin/main. A parameter's default is fixed when seed runs, so a
+// MODE=public that went through queues seed again, and the field shows the new release.
+def dockerHubTags = 'https://hub.docker.com/v2/repositories/flowkraft/datapallas-server/tags'
+def downloadBase  = 'https://downloads.datapallas.com/file/datapallas'
+def rawMain       = 'https://raw.githubusercontent.com/flowkraft/datapallas/main'
+def fetch = { String url ->
+  def c = new URL(url).openConnection()
+  c.connectTimeout = 15000
+  c.readTimeout = 30000
+  c.inputStream.withCloseable { it.getText('UTF-8') }
+}
+def isXyz = { v -> v instanceof String && v ==~ /\d+\.\d+\.\d+/ }
+def vcmp = { String a, String b ->
+  def x = a.tokenize('.')*.toInteger()
+  def y = b.tokenize('.')*.toInteger()
+  (0..2).collect { x[it] <=> y[it] }.find { it != 0 } ?: 0
+}
+def biggerVersions = { String v ->
+  def x = v.tokenize('.')*.toInteger()
+  "${x[0]}.${x[1]}.${x[2] + 1}, ${x[0]}.${x[1] + 1}.0, ${x[0] + 1}.0.0"
+}
+def releasedDocker = null, releasedWindows = null, windowsFrom = 'the download site did not answer'
+try {
+  def slurper = new groovy.json.JsonSlurper()
+  def digest = slurper.parseText(fetch("${dockerHubTags}/latest")).digest
+  def names = slurper.parseText(fetch("${dockerHubTags}/?page_size=100")).results.findAll { it.digest == digest && isXyz(it.name) }*.name
+  if (digest && names) releasedDocker = names.max(vcmp)
+} catch (e) {
+  println "RELEASE_VERSION default: Docker Hub not read (${e})"
+}
+try {
+  def line = fetch("${downloadBase}/newest/windows-version.txt?check=${System.currentTimeMillis()}").readLines().find { it.startsWith('version=') }
+  windowsFrom = 'newest/windows-version.txt has no x.y.z version line'
+  if (line && isXyz(line.substring(8))) { releasedWindows = line.substring(8); windowsFrom = 'newest/windows-version.txt' }
+} catch (FileNotFoundException e) {
+  windowsFrom = 'newest/windows-version.txt not written yet, and WINDOWS_RELEASED_BY_HAND not read from asbl/ci/release-state.sh on origin/main'
+  try {
+    def m = fetch("${rawMain}/asbl/ci/release-state.sh") =~ /(?m)^WINDOWS_RELEASED_BY_HAND=(\S+)/
+    if (m.find() && isXyz(m.group(1))) { releasedWindows = m.group(1); windowsFrom = 'newest/windows-version.txt not written yet: the last release made by hand, WINDOWS_RELEASED_BY_HAND in asbl/ci/release-state.sh' }
+  } catch (e2) {
+    println "RELEASE_VERSION default: release-state.sh on origin/main not read (${e2})"
+  }
+} catch (e) {
+  println "RELEASE_VERSION default: the download site not read (${e})"
+}
+def currentRelease = '', currentFrom = ''
+if (releasedDocker) {
+  currentRelease = [releasedDocker, releasedWindows].findAll { it }.max(vcmp)
+  currentFrom = "Docker ${releasedDocker} (the version Docker Hub's :latest has), " +
+    (releasedWindows ? "Windows ${releasedWindows} (${windowsFrom})" : "Windows not read (${windowsFrom})")
+} else {
+  try {
+    def m = fetch("${rawMain}/bkend/reporting/src/main/external-resources/template/config/burst/settings.xml") =~ /<version>([^<]+)<\/version>/
+    if (m.find() && isXyz(m.group(1))) {
+      currentRelease = m.group(1)
+      currentFrom = "Docker Hub did not answer, so this is <version> in settings.xml on origin/main, which may already be the next release"
+    }
+  } catch (e) {
+    println "RELEASE_VERSION default: settings.xml on origin/main not read (${e})"
+  }
+}
+def readAt = java.time.Instant.now().toString().substring(0, 16).replace('T', ' ')
+def releaseVersionText = currentRelease ?
+  "${currentRelease} is the current release: left as it is, this job does nothing. Fill a bigger release number whenever you want to push a new release (${biggerVersions(currentRelease)}).\nRead when the jobs were last generated (seed, ${readAt} UTC): ${currentFrom}. The job reads the released versions again when it runs, and changes nothing unless the number is bigger." :
+  "The current release could not be read when the jobs were last generated (seed, ${readAt} UTC): left empty, this job prints the current release and does nothing. Fill a bigger release number (x.y.z) whenever you want to push a new release."
+println "RELEASE_VERSION default: '${currentRelease}' (${currentFrom ?: 'nothing read'})"
+
+// name -> [what it is, parameters]; the Jenkinsfile is asbl/ci/jenkins/<name>.Jenkinsfile. Add an entry to add a job.
+// A parameter's text: the first line says what it is and its default, then when to change it, then examples.
 def jobs = [
-  'dp-ci-quality': [
-    about: 'The quality tools (lint, bug finder, format check, documentation) of the working tree on the server (dp-ci.sh quality). No package, no tests, no e2e; never gating.' +
-      '\n\nIts log: what each tool reported, and the summary line (QUALITY_RESULT tools=N ok=N failed=N ...): quality: |QUALITY_RESULT.',
+  'dp-ci-dev-demo-preview-bkstg': [
+    about: describe(
+      WHAT: 'The preview demo, https://dp-demo.bkstg.flowkraft.com, shows origin/main: the build of origin/main first, only when there is none yet (dp-ci.sh build-if-needed), then that very image published (dp-ci.sh publish-demo-bkstg: the image switched, a smoke test, the previous image back when it fails). Not a step of a release.',
+      WHEN: 'any time the preview should show origin/main, best after dp-ci-release-step1-e2e-prerelease is green on that commit. The public demo, demo.datapallas.com, is dp-ci-release-step4-demo-public; an image that is not a release goes there only by Rundeck (servers > ops/change/demo-publish), never by a Jenkins job.',
+      ORDER: 'any time.',
+      NEEDS: 'checked first, within seconds, before the build: this host\'s Docker engine, and the site\'s settings and docker-compose.yml (dp-ci.sh prereq docker publish-target publish-demo-bkstg). Missing: MISSING <what>: <what to do>, then PREREQUISITES MISSING; nothing built or published.',
+      TIME: 'about a minute when origin/main is built already (the publish and its smoke test); about 40 min more when it builds first (measured: 37 to 42 min).',
+      EXAMPLES: ['show origin/main on the preview: nothing to change', 'see whether it would build, and what it would do: DRY_RUN=yes'],
+      LOG: 'the parts (DEMOS STEP 1/2 the build, 2/2 the publish, each START and END with the time it took) and the verdict: ^######## |PREREQUISITES|^MISSING |BUILD:|BUILD_TAG=|PIPELINE_RESULT|DEMOS_RESULT. The build page shows the image\'s Trivy table.',
+      MORE: guide('dp-ci-dev-demo-preview-bkstg', 'asbl/ci/jenkins/release-demos.sh with DEMO=dp-demo.bkstg')
+    ),
+    params: [
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it: build origin/main when it is not built yet, then publish it.\nyes = build and publish nothing: the prerequisites, whether a build is needed, and what each part would do.\nUse yes to see what a run would do.'],
+    ],
+  ],
+  'dp-ci-dev-e2e-one-spec': [
+    about: describe(
+      WHAT: 'The fix-and-retry loop (dp-ci.sh e2e-loop): one spec file, or some of its tests, on the web or electron-linux target, with no retries. The jars and the Angular UI are built from the tree on every run; the package (the content the tests start from: sample apps, db-template, config, samples, scripts) is never rebuilt: E2E_PACKAGE says what happens to it (built first only when there is none). It never counts for a release.',
+      WHEN: 'after a fix: the failed tests (E2E_GREP), then the whole file. To confirm a file on a package built from this exact commit, or to test on Windows or Docker: dp-ci-release-step1-e2e-prerelease (with E2E_SPEC, or E2E_GREP). Commit the fix first: the run puts this checkout on origin/main (a fast-forward) and stops on local changes to tracked files; commits not pushed yet are tested as they are.',
+      ORDER: 'any time.',
+      NEEDS: needsDocker,
+      TIME: 'about 4 min of setup, then the tests: one test about 5 min in all; over the last 40 runs a median of 16 min, from seconds up to 4.8 h for several big files at once (measured). package-repackage: about 3.5 min more; no package yet: about 30 min more.',
+      EXAMPLES: [
+        'one failed test after a fix: E2E_SPEC=/features/samples\\.spec\\.ts$  E2E_GREP=02_dashboard_demos',
+        'a whole file: E2E_SPEC=/areas/cube-stories\\.spec\\.ts$',
+        'after a fix to a db-template sample: E2E_SPEC=/features/samples\\.spec\\.ts$  E2E_PACKAGE=package-rsync-simple-file-changes',
+        'a desktop-only spec: E2E_SPEC=/features/let-me-update-migrate-configuration\\.spec\\.ts$  E2E_TARGET=electron-linux',
+      ],
+      LOG: playwrightLog + '\n  Which package it ran on: E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>.',
+      MORE: guide('dp-ci-dev-e2e-one-spec', 'asbl/ci/dp-ci.sh e2e-loop')
+    ),
+    params: [
+      E2E_SPEC  : [text: 'WHICH FILE to run: a regex on the spec file\'s path; end it with $ to match one file only. No default: needed unless E2E_GREP is set (then every file is searched for those titles, slower).\nUse it: every run, a different file each time. Leave E2E_GREP empty to run the whole file (the normal case).\nExamples:\n  /areas/cube-stories\\.spec\\.ts$\n  /features/samples\\.spec\\.ts$\n  /areas/connections\\.spec\\.ts$\n  /features/explore-data-   -> every explore-data-*.spec.ts (several files: slower, the exception)\nThe files are under frend/reporting/e2e/specs/.'],
+      E2E_GREP  : [text: 'WHICH TESTS inside that file: a regex on the test titles. Empty (the default) = every test of the file (the normal case).\nUse it: to re-run only the test or tests that failed after a fix. Run the whole file again (empty) before you call the file green.\nExamples:\n  Show Me   -> the tests whose title contains Show Me\n  refus|SQL vendor   -> the tests whose title contains either text (| means or)\n  \\[duckdb\\] Database Schema   -> + ( ) [ ] . ? * and | have a meaning in a regex: put a backslash before them to match them as written. Same for palette \\+ default config\nTip: copy a piece of the title from the failure line of the run log or from the Playwright report.\nCareful: in a serial file (cube-stories, dashboard-demos, auth-authorization-server) a test depends on the ones before it, so a filtered run can fail for that reason alone.'],
+      E2E_TARGET: [choices: ['web', 'electron-linux'], text: 'WHAT the tests run against. web (default, the everyday one): the server and the Angular UI built from this tree, in a browser.\nelectron-linux: the desktop application on Linux, for the specs that only run there (for example let-me-update-migrate-configuration).\nThe Docker and Windows targets are release checks: dp-ci-release-step1-e2e-prerelease.'],
+      E2E_PACKAGE: [choices: ['package-reuse-as-is', 'package-rsync-simple-file-changes', 'package-repackage'], text: 'WHAT HAPPENS TO THE PACKAGE before the run. package-reuse-as-is (default): run on the package exactly as it stands. The package holds the content the tests start from (sample apps, db-template, config, samples, scripts, sample databases); the jars and the Angular UI are always built from the tree, so a fix to Java, the UI, specs or helpers needs nothing more.\npackage-reuse-as-is: instant. Use it for almost every run.\npackage-rsync-simple-file-changes: copy the plain db-template files changed since the package was built (commits, and new untracked files) into the package and the testground. A few seconds. Use it after a small fix under db-template (for example a sample or the AI Hub app). If a changed file is not a plain copy in the package (generated, transformed or checked by the assembler), the run stops with: use package-repackage. With nothing changed it copies 0 files.\npackage-repackage: package the content again on the jars already built (AssemblerTest#refreshContentForE2E), about 3.5 min. Use it after a fix to config, samples or scripts that the rsync mode refuses. It is not a full rebuild: that is dp-ci.sh build (about 40 min).\nIf you forget the package after a content fix, the run tests the OLD content and its result is wrong. The log says which package ran: the line E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>.\nIf there is no package yet, one is built first (about 30 min).'],
+    ],
+  ],
+  'dp-ci-dev-junit': [
+    about: describe(
+      WHAT: 'The Java unit tests (dp-ci.sh junit) of the CI host\'s checkout as it is: one module and test pattern, or every test of the three modules when both are empty. No package, no e2e. The build page shows the test results, the JaCoCo coverage and the Error Prone warnings (reports only: they never change the result).',
+      WHEN: 'after a Java change: the class or method you touched; everything (both empty) before you call wide Java changes done.',
+      ORDER: 'any time.',
+      NEEDS: needsDocker,
+      TIME: 'one class: 1 to 4 min; everything: about 24 min (both measured).',
+      EXAMPLES: [
+        'one class: JUNIT_MODULE=bkend/server  JUNIT_TEST=ReportsServiceTest',
+        'one method: JUNIT_MODULE=bkend/server  JUNIT_TEST=ReportsServiceTest#aFolderHoldingOnlyOneTemplateNeedsNoInference',
+        'every Jasper test class of a module: JUNIT_MODULE=bkend/reporting  JUNIT_TEST=Jasper*Test',
+        'everything: JUNIT_MODULE and JUNIT_TEST empty',
+      ],
+      LOG: 'the total of each module: TOTAL classes: ; the test classes with failures or errors: Tests run:.*(Failures: [1-9]|Errors: [1-9]) (with 5 lines of context); the verdict: PIPELINE_RESULT.',
+      MORE: guide('dp-ci-dev-junit', 'asbl/ci/dp-ci.sh junit')
+    ),
+    params: [
+      JUNIT_MODULE: [choices: ['', 'bkend/server', 'bkend/common', 'bkend/reporting'], text: 'WHICH MODULE: the Maven module whose tests run. Empty (the default) = all three modules; with JUNIT_TEST empty too, the full gate, about 24 min.\nUse it: nearly every time, the module of the code you changed.\nPair it with JUNIT_TEST below to run only the class you touched.'],
+      JUNIT_TEST  : [text: 'WHICH TESTS inside the module: a Maven Surefire -Dtest pattern. Empty (the default) = every test of the module (slow).\nUse it: nearly every time, to run only the class or method you touched. With JUNIT_MODULE empty, the pattern runs in all three modules.\nExamples:\n  ReportsServiceTest   -> one test class (bkend/server)\n  ReportsServiceTest#aFolderHoldingOnlyOneTemplateNeedsNoInference   -> one test method of it\n  Jasper*Test   -> every class that starts with Jasper and ends with Test\n  FooTest,BarTest   -> two classes'],
+    ],
+  ],
+  'dp-ci-dev-quality-report': [
+    about: describe(
+      WHAT: 'The quality tools (dp-ci.sh quality) on the CI host\'s checkout as it is: lint (ESLint), bug finder (SpotBugs with find-sec-bugs), format (Prettier, Spotless), complexity and duplicates (PMD, CPD, ESLint complexity) and the documentation sites (Javadoc, Compodoc). It compiles the Java modules without tests and installs the npm dependencies first. Each tool shows a report on the build page. Never gating: a tool that fails is recorded and the run goes on; nothing waits for this job and it never blocks anything.',
+      WHEN: 'any time, to look at the code\'s quality.',
+      ORDER: 'any time.',
+      NEEDS: needsDocker,
+      TIME: 'not measured yet: it has not run yet.',
+      EXAMPLES: ['the report of the checkout: nothing to set (it has no parameters)'],
+      LOG: 'what each tool reported: quality: ; the summary: QUALITY_RESULT tools=N ok=N failed=N <tool>=<ok|rcN> ...',
+      MORE: guide('dp-ci-dev-quality-report', 'asbl/ci/dp-ci.sh quality')
+    ),
     params: [:],
   ],
-  'dp-ci-junit': [
-    about: 'The JUnit gate (dp-ci.sh junit): one module and test pattern, or everything when both are empty. No package, no e2e.' +
-      '\n\nIts log: the total of each module, one line per module: TOTAL classes:; the test classes with failures or errors: Tests run:.*(Failures: [1-9]|Errors: [1-9]), with 5 lines of context.',
+  'dp-ci-dev-server': [
+    about: describe(
+      WHAT: 'Starts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing.',
+      WHEN: 'to look at a change in a browser. It is for looking, never a proof: only the e2e jobs prove (dp-ci-dev-e2e-one-spec, dp-ci-release-step1-e2e-prerelease), and no e2e runs against this server (an e2e cleans the testground it reads and starts its own).',
+      ORDER: 'any time; it refuses to start while a dp-ci run holds the server.',
+      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker).',
+      TIME: 'start: about 3.5 min until the site answers (measured 3.2 to 3.7 min; pinned: longer the first time for a commit, which it assembles first, not measured yet); already running: seconds; stop: seconds.',
+      EXAMPLES: [
+        'see a saved change: ACTION=start',
+        'a test session nothing can move: ACTION=start  DEV_MODE=pinned  PINNED_SHA=<a commit, e.g. c3d1c29c>',
+        'free the machine: ACTION=stop (with DEV_MODE=pinned for the pinned one)',
+      ],
+      LOG: 'ready: <URL> (the site answers), already running at, stopped:, FAIL.',
+      MORE: guide('dp-ci-dev-server', 'asbl/ci/dp-ci.sh dev --live, or dev --pinned <sha>')
+    ),
     params: [
-      JUNIT_MODULE: [choices: ['', 'bkend/server', 'bkend/common', 'bkend/reporting'], text: 'WHICH MODULE: the Maven module whose tests run. EMPTY (the default) = all three modules: the full gate, about 25 min.\nUse it: after you changed Java code, narrow the run to the module you changed.\nPair it with JUNIT_TEST below to run only the class you touched.'],
-      JUNIT_TEST  : [text: 'WHICH TESTS inside the module (a Maven Surefire -Dtest pattern). Empty = every test of the module (slow).\nUse it: nearly every time, to run only the class or method you touched.\nExamples:\n  ReportsServiceTest   -> one test class\n  ReportsServiceTest#method   -> one test method of it\n  Jasper*Test   -> every class that starts with Jasper and ends with Test\n  FooTest,BarTest   -> two classes'],
+      ACTION    : [choices: ['start', 'stop'], text: 'WHAT to do. start (default): bring the server up and print its URL; when it is already running, only print the URL.\nstop: stop it (nothing to do when it is not running).'],
+      DEV_MODE  : [choices: ['live', 'pinned'], text: 'WHICH dev site. live (default): the checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, an edited db-template file at once; a new sample or dataset needs dp-ci.sh dev --refresh-content, by hand).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload.\nUse pinned for a test session that must not move.'],
+      PINNED_SHA: [text: 'The commit to park the pinned site at (a sha, e.g. c3d1c29c). Empty by default; needed for DEV_MODE=pinned with ACTION=start, ignored otherwise.\nIt must be a commit this checkout has (made here, or pushed and pulled here). A pinned site that is already running stays at its commit: stop it first to pin another one.'],
     ],
   ],
-  'dp-ci-e2e-loop': [
-    about: 'The fix-and-retry loop (dp-ci.sh e2e-loop): ONE spec file, on the web or the electron-linux target. Speed: about 4 min fixed plus the spec. Never rebuilds the package: E2E_PACKAGE says what happens to it (as it is, a few changed files copied in, or the content packaged again). Not a release check: that is dp-ci-release-step1-e2e-prerelease.' + playwrightLog,
+  'dp-ci-release-step0-set-version': [
+    about: describe(
+      WHAT: 'Step 0 of a release: sets the new version (asbl/ci/jenkins/release-set-version.sh). RELEASE_VERSION bigger than the current release: in a throwaway git worktree of origin/main (never the shared checkout), asbl/ci/set-version.sh writes it into the 7 version files; the job checks that all 7 say it and that exactly those changed, commits "release <version>: the version in the 7 version files", pushes it to main and prints RELEASE_COMMIT=<sha>. The same or lower: nothing done, green. Not x.y.z: refused. origin/main already saying it: nothing committed.',
+      WHEN: 'a release starts here. First commit the release notes (at the latest before step 1): a "## <version> - <date>" heading in asbl/src/main/external-resources/db-template/CHANGELOG.md (the job warns, without failing, when there is none).',
+      ORDER: 'step 0; then dp-ci-release-step1-e2e-prerelease on the version commit or a later one, then dp-ci-release-step2-release-docker and dp-ci-release-step3-release-windows-vm, then dp-ci-release-step4-demo-public. Step 1 runs made before the version commit do not count for that release; any step 1 run on the commit being released does. Step 1 never needs this job: it is also the everyday e2e.',
+      NEEDS: 'nothing to provide: it reads the released versions from the public places (Docker Hub, the download site) and pushes with the CI host\'s git. main moved while it worked: the push is rejected, the job fails and says so; run it again.',
+      TIME: 'seconds.',
+      EXAMPLES: [
+        'see the current release: run it as it is (RELEASE_VERSION pre-filled with it: nothing done)',
+        'release 16.6.0, a look first: RELEASE_VERSION=16.6.0  DRY_RUN=yes (the 7 edits and the commit, nothing written)',
+        'release 16.6.0: RELEASE_VERSION=16.6.0',
+      ],
+      LOG: '^STEP 0|^RELEASED|NOTHING DONE|REFUSED|FAILED|WARN|^checked:|^pushed:|RELEASE_COMMIT=|^NEXT:|SET_VERSION_RESULT. The build list labels each build with what happened.',
+      MORE: guide('dp-ci-release-step0-set-version', 'asbl/ci/jenkins/release-set-version.sh')
+    ),
     params: [
-      E2E_SPEC  : [text: 'WHICH FILE to run. REQUIRED. A regex on the path of the spec file; end it with $ so that it matches one file only.\nUse it: every run (there is no default: it is a different file each time).\nExamples:\n  /areas/cube-stories\\.spec\\.ts$\n  /features/samples\\.spec\\.ts$\n  /areas/connections\\.spec\\.ts$\n  /features/explore-data-visualizations\\.spec\\.ts$\nSeveral files at once (slower, the exception): /features/explore-data-   -> every explore-data-*.spec.ts.\nThe files are under frend/reporting/e2e/specs/. Leave E2E_GREP empty to run the whole file (the normal case).'],
-      E2E_GREP  : [text: 'WHICH TESTS inside that file. Optional. A regex on the test titles. Empty = every test of the file (the normal case).\nUse it: to re-run only the test or tests that failed after a fix. Run the whole file again (empty) before you call the file green.\nExamples:\n  Show Me   -> the tests whose title contains Show Me\n  refus|SQL vendor   -> the tests whose title contains either text (| means or)\n  \\[duckdb\\] Database Schema   -> + ( ) [ ] . ? * and | have a meaning in a regex: put a backslash before them to match them as written. Same for palette \\+ default config\nTip: copy a piece of the title from the failure line of the run log or from the Playwright report.\nCareful: in a serial file (cube-stories, dashboard-demos, auth-authorization-server) a test depends on the ones before it, so a filtered run can fail for that reason alone.'],
-      E2E_TARGET: [choices: ['web', 'electron-linux'], text: 'WHAT the tests run against.\nweb (default, the everyday one): the server and the Angular UI built from this tree, in a browser.\nelectron-linux: the desktop application on Linux (for the specs that only run there, for example let-me-update-migrate-configuration).\ndocker-server and windows-vm-electron are release checks: use dp-ci-release-step1-e2e-prerelease for them.'],
-      E2E_PACKAGE: [choices: ['package-reuse-as-is', 'package-rsync-simple-file-changes', 'package-repackage'], text: 'WHAT HAPPENS TO THE PACKAGE before the run. The package holds the content the tests start from (sample apps, db-template, config, samples, scripts, sample databases). The jars and the Angular UI are always built from the tree, so a fix to Java, the UI, specs or helpers needs nothing more.\npackage-reuse-as-is (default): run on the package exactly as it stands. COST: instant. Use it for almost every run.\npackage-rsync-simple-file-changes: copy the plain db-template files changed since the package was built (commits, and new untracked files) into the package and the testground. COST: very fast, a few seconds. Use it after a small fix under db-template (for example a sample or the AI Hub app). If a changed file is not a plain copy in the package (generated, transformed or checked by the assembler), the run stops with: use package-repackage. With nothing changed it copies 0 files.\npackage-repackage: package the content again on the jars already built (AssemblerTest#refreshContentForE2E). COST: slow, about 3.5 min. Use it after a fix to config, samples or scripts that the rsync mode refuses. It is not a full rebuild: that is dp-ci.sh build (about 40 min).\nIf you forget the package after a content fix, the run tests the OLD content and its result is wrong. The log says which package ran: the line E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>.\nIf there is no package yet, one is built first (26 to 40 min).'],
-    ],
-  ],
-  'dp-ci-dev-live': [
-    about: 'Brings up the hot-reloading dev server and prints its URL, or stops it (dp-ci.sh dev). No e2e. live = this checkout, whatever is saved in it right now: a saved change shows in seconds (https://dp-dev-live.bkstg.flowkraft.com). pinned = a separate clone parked at one commit (https://dp-dev-pinned.bkstg.flowkraft.com). The server keeps running after the build ends, until ACTION=stop (a build, junit or e2e run stops the live one for its length and starts it again afterwards). A second start prints already running at <URL> and starts nothing; it refuses while a dp-ci run holds the server. A diagnosis tool, never a verification: only dp-ci-e2e-loop and dp-ci-release-step1-e2e-prerelease may tick a TODO. To run a spec use dp-ci-e2e-loop: an e2e cannot run against this server (it cleans the testground the server reads and starts its own).',
-    params: [
-      ACTION    : [choices: ['start', 'stop'], text: 'WHAT to do.\nstart (default): bring the server up and print its URL; when it is already running, only print the URL.\nstop: stop it (nothing to do when it is not running).'],
-      DEV_MODE  : [choices: ['live', 'pinned'], text: 'WHICH dev site.\nlive (default): this checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, content files mirrored).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload.'],
-      PINNED_SHA: [text: 'Only for DEV_MODE=pinned, and only for start: the commit to park the pinned site at (a sha, e.g. 6820786e). Ignored for live.\nA pinned site that is already running stays at its commit: stop it first to pin another one.'],
+      RELEASE_VERSION: [default: currentRelease, text: releaseVersionText],
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it: for a bigger version, the 7 edits committed and pushed to main.\nyes = write and push nothing: the current release, then for a bigger version the 7 edits (asbl/ci/set-version.sh --dry-run) and the commit it would make.\nUse yes first, to see the edits.'],
     ],
   ],
   'dp-ci-release-step1-e2e-prerelease': [
-    about: 'STEP 1 OF 4 OF A RELEASE (then dp-ci-release-step2-pack-and-uat-docker and dp-ci-release-step3-pack-and-uat-windows, in either order, then dp-ci-release-step4-publish; asbl/ci/jenkins/jenkins.md, "The release, in order"). A release needs four lanes green on one commit of origin/main (owner decision OD5): docker-server with E2E_SPEC empty (the full suite), docker-server with E2E_SPEC naming auth-authorization-server (the full run leaves it out), windows-vm-electron with E2E_SPEC empty, windows-vm-server with E2E_SPEC empty (its light set). Each build records its verdict in the release record (bash asbl/ci/release-state.sh show); a run with any other filter is recorded as targeted and never counts. The RELEASE_VERSION line at the start says what a release would do now (settings.xml against the released version); this job runs anyway, it is also the everyday e2e job. The real end-to-end tests (dp-ci.sh e2e), the prerelease check. Speed: the slowest, it rebuilds a stale package first (about 26 min before the tests). It has no package parameter on purpose: it always runs on a package built from this exact commit and rebuilds it first when it is stale; it is the release check, so the package shortcuts exist only on dp-ci-e2e-loop. Needed before a release. The docker-server, windows-vm-docker and windows-vm-server targets install what dp-ci.sh build makes: this job builds origin/main first when it is not built yet (dp-ci.sh build-if-needed, about 40 min, once per commit), then tests. Its parts are marked JOB STEP 1/2 and 2/2 in the log, each START and END with the time it took. One build at a time: a second one waits in the Jenkins queue until the first ends, so the Windows targets (they share the VM) can be started one after the other and run in turn. For the fix-and-retry loop use dp-ci-e2e-loop.' + playwrightLog +
-      '\nWhere the time goes: ^######## (every part of the job and of a Windows lane, START and END, took=<seconds>), ^(>>>|<<<) STEP (the steps of the Linux run).' +
-      '\nThe release record: RELEASE_VERSION|RELEASE_STATE (the version line first, the verdict recorded last).',
+    about: describe(
+      WHAT: 'The real end-to-end tests, on a package built from this exact commit of origin/main (rebuilt first when it is not): dp-ci.sh e2e on Linux (web, electron-linux, docker-server), dp-ci.sh win e2e|docker-e2e|server-e2e on the Windows VM. Two roles: a release\'s four lanes, and the everyday full e2e of the trunk. docker-server, windows-vm-docker and windows-vm-server install what dp-ci.sh build makes: the job builds origin/main first when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2; the tests are JOB STEP 2/2). Each build records its verdict in the release record (bash asbl/ci/release-state.sh show); a run with any filter (E2E_SPEC or E2E_GREP set, other than the auth lane below) is "targeted" and never counts for a release. Its first line, RELEASE_VERSION, says what a release would do now; it runs anyway.',
+      WHEN: [
+        'a release: the four lanes in EXAMPLES, each green on the commit being released, one build each (start them one after the other: a second build waits in the Jenkins queue);',
+        'any day: the whole trunk on Linux (web) or on Windows (windows-vm-electron), E2E_SPEC empty;',
+        'one spec file on a package built from this exact commit (E2E_SPEC), or a test on Windows or Docker by its title (E2E_GREP).',
+        'It tests origin/main (this checkout is fast-forwarded to it first; local changes to tracked files stop it): push the fix first.',
+        'For the quick fix-and-retry loop on Linux: dp-ci-dev-e2e-one-spec.',
+      ],
+      ORDER: 'step 1 of a release: after dp-ci-release-step0-set-version (its version commit or a later one), before dp-ci-release-step2-release-docker and dp-ci-release-step3-release-windows-vm, which refuse unless the four lanes are green on their commit. It never needs step 0 and never skips.',
+      NEEDS: [
+        'checked first, within seconds, before the build and the tests (MISSING <what>: <what to do>, then PREREQUISITES MISSING, nothing started):',
+        'web, electron-linux, docker-server: this host\'s Docker engine;',
+        'windows-vm-electron: the Windows VM over SSH, its Docker Desktop, Java 17 and Maven on its PATH;',
+        'windows-vm-docker: the VM, its Docker Desktop, this host\'s Docker engine, no other Windows run;',
+        'windows-vm-server: the VM, its Docker Desktop, its Java 17, no other Windows run.',
+      ],
+      TIME: [
+        'a full run: about 10.5 h on Linux (docker-server, measured; a web full run took 15.4 h), about 25 h on windows-vm-electron (measured 24.8 h);',
+        'the light set of windows-vm-docker and windows-vm-server: about an hour (not measured yet);',
+        'one file: minutes to 2 h (measured);',
+        'first, when needed: the package rebuilt (Linux about 30 min, the VM about 1.5 h), and for docker-server, windows-vm-docker and windows-vm-server the build of origin/main (about 40 min, once per commit).',
+      ],
+      EXAMPLES: [
+        'release lane 1, the Linux server: E2E_TARGET=docker-server  E2E_SPEC empty',
+        'release lane 2, the sign-in file the full run leaves out: E2E_TARGET=docker-server  E2E_SPEC=/features/auth-authorization-server\\.spec\\.ts$',
+        'release lane 3, the Windows desktop: E2E_TARGET=windows-vm-electron  E2E_SPEC empty',
+        'release lane 4, the Windows server: E2E_TARGET=windows-vm-server  E2E_SPEC empty (its light set)',
+        'the trunk on Linux: E2E_TARGET=web  E2E_SPEC empty',
+        'the trunk on Windows: E2E_TARGET=windows-vm-electron  E2E_SPEC empty',
+        'one Windows test by title: E2E_TARGET=windows-vm-electron  E2E_SPEC=[\\\\/]samples\\.spec\\.ts$  E2E_GREP=02_dashboard_demos',
+        'one file on a package of this commit: E2E_TARGET=web  E2E_SPEC=/features/samples\\.spec\\.ts$',
+      ],
+      LOG: playwrightLog +
+        '\n  Where the time goes: ^######## (every part of the job and of a Windows lane, START and END, took=<seconds>), ^(>>>|<<<) STEP (the steps of the Linux run).' +
+        '\n  The release record: RELEASE_VERSION|RELEASE_STATE (the version line first, the verdict recorded last).',
+      MORE: guide('dp-ci-release-step1-e2e-prerelease', 'asbl/ci/dp-ci.sh e2e, or dp-ci.sh win e2e|docker-e2e|server-e2e (through asbl/ci/jenkins/win-e2e.sh)')
+    ),
     params: [
-      E2E_SPEC  : [text: 'WHICH FILE(S) to run. WARNING: LEFT EMPTY THIS STARTS THE FULL SUITE, ABOUT 10 TO 11 HOURS, AND THE CI SERVER DOES NOTHING ELSE UNTIL IT ENDS. Type a file unless you mean the full suite.\nA regex on the path of the spec file; end it with $ for one file.\nUse it: with a file, to confirm that file on a package built from this exact commit; empty, before a release.\nExamples:\n  /areas/cube-stories\\.spec\\.ts$\n  /features/samples\\.spec\\.ts$\n  /features/   -> every spec file of the features folder\nThe full run leaves out auth-authorization-server and let-me-update-migrate-configuration (they run on their own); name them in the regex to run them. For a quick fix-and-retry loop use dp-ci-e2e-loop instead.\nOn windows-vm-docker and windows-vm-server, empty is NOT the full suite: it is the light set of five files of those targets, about an hour.'],
-      E2E_TARGET: [choices: ['web', 'electron-linux', 'docker-server', 'windows-vm-electron', 'windows-vm-docker', 'windows-vm-server'], text: 'WHAT the tests run against.\nweb (default, the everyday one): the server and the Angular UI built from this tree, in a browser.\nelectron-linux: the desktop application on Linux.\ndocker-server: the shipped server bundle and its Docker image (built first when origin/main is not built yet).\nwindows-vm-electron: the real Windows desktop of the VM (slow, for release checks).\nwindows-vm-docker: the docker-server bundle (datapallas-server-docker.zip) installed in Docker Desktop on the Windows VM the way the self-host page says, tested in a browser on the VM. Left empty, E2E_SPEC runs a light set of five files (quick-start, configuration, log-files-viewer-separate-tabs, cubes-definitions, apps-ai-hub): the code of the server is proven by docker-server, this checks where it meets Windows. Built first when origin/main (what the VM tests) is not built yet.\nwindows-vm-server: DataPallas Server without Docker (datapallas-server.zip) on the VM own Java 17, installed the way the installation page says (extract, startServer.bat, http://localhost:9090), and the same light set of five files. Built first when origin/main (what the VM tests) is not built yet.\nDay to day: web. The other five are for release checks.'],
-      E2E_ROTATION_DATE: [text: 'Optional, rarely needed. Some specs test a different app or database vendor depending on the day (the choice is seeded from the date, so two days in a row cover every combination). Empty = today, UTC.\nUse it only to repeat the variant of another day, for example the day a run failed.\nFormat YYYY-MM-DD. Example: 2026-09-22 (that day: sqlserver and duckdb).'],
-      E2E_RETRIES: [text: 'HOW MANY TIMES a failed test is run again. Optional. EMPTY (the default) = what dp-ci.sh does today: 2 for the full suite, 0 for a named file.\nUse it: 1 = a failed test is run once more; passing on the retry is reported as flaky, failing twice as failed. 0 shows each failure as it is.\nThe run goes on to the end whatever fails.'],
+      E2E_SPEC  : [text: 'WHICH FILE(S) to run: a regex on the spec file\'s path. EMPTY (THE DEFAULT), WITH E2E_GREP EMPTY TOO, IS THE FULL SUITE: ABOUT 10.5 HOURS ON LINUX, ABOUT 25 HOURS ON windows-vm-electron, AND THE CI SERVER DOES NOTHING ELSE UNTIL IT ENDS. On windows-vm-docker and windows-vm-server, empty is their light set of five files instead, about an hour.\nUse it: empty for a release lane or the trunk; a file to confirm it on a package built from this exact commit (end the regex with $ for one file).\nWhat a full run leaves out, to run on its own: auth-authorization-server on every target (it changes the accounts and roles that later specs sign in with), and on Linux also let-me-update-migrate-configuration (desktop only: run it on electron-linux); windows-vm-electron keeps let-me-update-migrate-configuration. Name a file in the regex to run it.\nOn the windows-vm targets the path has backslashes: write the separator as [\\\\/].\nExamples:\n  /areas/cube-stories\\.spec\\.ts$\n  /features/samples\\.spec\\.ts$\n  /features/   -> every spec file of the features folder (Linux)\n  [\\\\/]samples\\.spec\\.ts$   -> samples.spec.ts on any target, Windows too\nFor a quick fix-and-retry loop use dp-ci-dev-e2e-one-spec instead.'],
+      E2E_GREP  : [text: 'WHICH TESTS inside the chosen files: a regex on the test titles. Empty (the default) = every test of those files (the normal case).\nUse it: to run named tests on a package built from this exact commit, or on the Windows VM. Set, the run is recorded as targeted and never counts for a release.\nExamples:\n  Show Me   -> the tests whose title contains Show Me\n  refus|SQL vendor   -> the tests whose title contains either text (| means or)\n  \\[duckdb\\] Database Schema   -> + ( ) [ ] . ? * and | have a meaning in a regex: put a backslash before them to match them as written.\nTip: copy a piece of the title from the failure line of the run log or from the Playwright report.\nCareful: in a serial file (cube-stories, dashboard-demos, auth-authorization-server) a test depends on the ones before it, so a filtered run can fail for that reason alone.'],
+      E2E_TARGET: [choices: ['web', 'electron-linux', 'docker-server', 'windows-vm-electron', 'windows-vm-docker', 'windows-vm-server'], text: 'WHAT the tests run against. web (default, the everyday one): the server and the Angular UI built from this tree, in a browser.\nelectron-linux: the desktop application on Linux.\ndocker-server: the shipped server bundle and its Docker image (built first when origin/main is not built yet).\nwindows-vm-electron: the real Windows desktop of the VM (slow).\nwindows-vm-docker: the docker-server bundle (datapallas-server-docker.zip) installed in Docker Desktop on the Windows VM the way the self-host page says, tested in a browser on the VM. Empty E2E_SPEC = a light set of five files (quick-start, configuration, log-files-viewer-separate-tabs, cubes-definitions, apps-ai-hub): the server\'s code is proven by docker-server, this checks where it meets Windows. Built first when origin/main (what the VM tests) is not built yet.\nwindows-vm-server: DataPallas Server without Docker (datapallas-server.zip) on the VM\'s own Java 17, installed the way the installation page says (extract, startServer.bat, http://localhost:9090), and the same light set. Built first when origin/main is not built yet.\nDay to day: web. The others: a release, or a check on Windows or Docker.'],
+      E2E_ROTATION_DATE: [text: 'WHICH DAY\'s variant to run, YYYY-MM-DD. Empty (the default) = today, UTC. Some specs test a different app or database vendor depending on the day (the choice is seeded from the date, so two days in a row cover every combination).\nUse it only to repeat the variant of another day, for example the day a run failed.\nExample: 2026-09-22 (that day: sqlserver and duckdb).'],
+      E2E_RETRIES: [text: 'HOW MANY TIMES a failed test is run again. Empty (the default) = the lane\'s own: a full run 2 on Linux (web, electron-linux, docker-server) and 1 on windows-vm-electron; the light set of windows-vm-docker and windows-vm-server 1; any run with E2E_SPEC or E2E_GREP set 0.\nUse it: 0 to see each failure as it is; 1 or 2 to tell flaky tests from red ones (a pass on a retry is reported as flaky, failing every try as failed).\nThe run goes on to the end whatever fails.'],
     ],
   ],
-  'dp-ci-release-step2-pack-and-uat-docker': [
-    about: 'STEP 2 OF 4 OF A RELEASE, THE DOCKER FILES: run it only when dp-ci-release-step1-e2e-prerelease is green on the same commit (origin/main; every lane a release needs, see step 1; the job checks the release record and refuses otherwise). It may run before or after step 3 (dp-ci-release-step3-pack-and-uat-windows), never at the same time: both use the VM. asbl/ci/jenkins/release-docker.sh: first the version gate (settings.xml against the released version; nothing to release = green, nothing built). Then the build of origin/main, only when there is none yet (dp-ci.sh build-if-needed, about 40 min): Docker is built once, on Linux. It needs the publish credentials file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner). It publishes the image as :<version> on Docker Hub (never :latest) and stages datapallas-server-docker.zip in the release\'s candidate folder on Backblaze, both checked (asbl/ci/release-publish.sh stage-docker); then installs that very zip from its download link the way a user does it (datapallas.com/docs/server/self-host): on this host (the docker-server lane, the light set, then the one-command docker run) and in the Windows VM\'s Docker Desktop (the windows-vm-docker lane, the light set). No public link moves: step 4 (dp-ci-release-step4-publish) publishes. Green only when all of it is. One Windows run at a time: it waits for nothing, its Windows part refuses to start while another Windows run is going.' +
-      '\n\nIts log: the six parts (DOCKER RELEASE STEP 1/6 .. 6/6, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|BUILD:|BUILD_TAG=|RELEASE_STATE|RELEASE_STAGE|DOCKER_SERVER_IMAGE|DOCKER_ONE_COMMAND|E2E_RESULT|PIPELINE_RESULT|DOCKER_RELEASE_RESULT|DOCKER_RELEASE=.',
+  'dp-ci-release-step2-release-docker': [
+    about: describe(
+      WHAT: [
+        'The Docker release (asbl/ci/jenkins/release-docker.sh), in two modes.',
+        'MODE=rehearsal (the default): a real release into places users do not get. The build of origin/main, once, on Linux (only when there is none yet); the image pushed as :<version> on Docker Hub (never :latest) and datapallas-server-docker.zip staged in rehearsal/<version>-<commit>/ on Backblaze, both checked; then that very zip installed from its download link the way a user does it (https://datapallas.com/docs/server/self-host) and tested: on this host (the docker-server light set, then the one-command docker run) and in the Windows VM\'s Docker Desktop (the windows-vm-docker light set). Nothing users get changes. Green only when all of it is.',
+        'MODE=public (the owner only): the newest passed rehearsal of this version, from whichever commit (REHEARSED <commit> in the log), copied in minutes: the zip to newest/ (the links of the README, the Docker Hub page and the self-host page) and to <version>/, :latest pointed at the rehearsed :<version>, each checked, the Cloudflare cache purged, newest/docker-version.txt written, then the seed job queued. With no passed rehearsal of this version it says "rehearsing first", rehearses as above, and copies only when that is green.',
+        'MODE=public never copies anything that did not pass: a red rehearsal leaves the public files as they are.',
+        'Both modes start with the version gate: settings.xml the same as the released Docker version (the one :latest has) = NOTHING TO RELEASE, green, nothing done.',
+      ],
+      WHEN: 'to release the Docker channel, once step 1\'s four lanes are green on origin/main. The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
+      ORDER: 'step 2: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1); before or after dp-ci-release-step3-release-windows-vm, never at the same time (both use the VM). Run the two MODE=public runs one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones. After its MODE=public: dp-ci-release-step4-demo-public, and the Docker Hub page by hand (asbl/docker/push-dockerhub-readme.ps1, on Windows, with its own Docker Hub token; the job prints it as a MANUAL line).',
+      NEEDS: [
+        'checked right after the version gate, within seconds, before anything slow (asbl/ci/release-publish.sh preflight docker; MISSING <what>: <what to provide>, then PREREQUISITES MISSING, nothing built):',
+        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1);',
+        'the keys file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner): a Docker Hub token that may push and a Backblaze key that can write, both tried; for MODE=public also the Cloudflare purge token;',
+        'on this host: rclone, curl, sha256sum, the Docker engine and docker buildx;',
+        'for a rehearsal, the Windows VM: answering, its Docker Desktop running, no other Windows run.',
+        'The full list: asbl/ci/jenkins/jenkins.md, "Before the first release".',
+      ],
+      TIME: 'a rehearsal: the build of origin/main when there is none (about 40 min), then the stage and the two light sets (not measured yet); MODE=public with a passed rehearsal: minutes (not measured yet); MODE=public that rehearses first: a rehearsal plus the copy.',
+      EXAMPLES: [
+        'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
+        'go public after a green rehearsal: MODE=public',
+        'see what a run would do, nothing built or copied: DRY_RUN=yes (with either MODE)',
+      ],
+      LOG: 'the parts (DOCKER RELEASE STEP 1/6 .. 6/6, DOCKER PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|REHEARSED|rehearsing first|BUILD:|BUILD_TAG=|RELEASE_STATE|RELEASE_STAGE|DOCKER_SERVER_IMAGE|DOCKER_ONE_COMMAND|E2E_RESULT|PIPELINE_RESULT|RELEASE_PUBLIC|^MANUAL |DOCKER_RELEASE_RESULT|DOCKER_RELEASE=. The build list labels each build with what happened.',
+      MORE: guide('dp-ci-release-step2-release-docker', 'asbl/ci/jenkins/release-docker.sh')
+    ),
     params: [
-      DRY_RUN: [choices: ['no', 'yes'], text: 'yes = build, push and install nothing: the version gate, whether a build is needed, the guards, and what each part would do. no (default) = do it.'],
+      MODE: [choices: ['rehearsal', 'public'], text: 'WHICH release. rehearsal (default) = a real release into places users do not get: build, push :<version>, stage in rehearsal/, test the download on Linux and on Windows. Nothing users get changes.\npublic (the owner only) = copy the newest passed rehearsal of this version to newest/ and :latest, in minutes; with none, rehearse first and copy only when it is green.\nUse rehearsal, look at it, then public; once trusted, public directly.'],
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it.\nyes = build, push, install and copy nothing: the version gate, the prerequisites (the bucket listed, not written), the guards, which rehearsal it would copy or that it would rehearse first, and what each part would do.\nUse yes to see what a run would do.'],
     ],
   ],
-  'dp-ci-release-step3-pack-and-uat-windows': [
-    about: 'STEP 3 OF 4 OF A RELEASE, THE WINDOWS FILES: run it only when dp-ci-release-step1-e2e-prerelease is green on the same commit (origin/main, which the Windows VM tests; the job checks the release record and refuses otherwise). It may run before or after step 2 (dp-ci-release-step2-pack-and-uat-docker), never at the same time: both use the VM. dp-ci.sh win release: first the version gate (settings.xml against the released version; nothing to release = green, no pack); then, on the Windows VM, asbl/pack-datapallas.bat builds the Windows release files once, from clean (datapallas.zip with DataPallas.exe, datapallas-server.zip, datapallas-src.zip; its Docker zip and image are not shipped, step 2 builds Docker on Linux), and those very files are tested the way a user meets them by the Robot Framework UAT (asbl/src/uat/run-tests.bat: Java and Chocolatey removed and installed, the exe, the command line, the server and its Windows service). Only when the UAT is green, the three zips are staged: uploaded to the release\'s candidate folder on Backblaze and checked by download (asbl/ci/release-publish.sh stage-files). No public link moves: step 4 (dp-ci-release-step4-publish) publishes. Green only when all of it is. Slow: the pack alone takes hours on the VM. No parameters. One Windows run at a time: it waits for nothing, it refuses to start while another Windows run is going.' +
-      '\n\nIts log: the three parts (RELEASE STEP 1/3 .. 3/3, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|RELEASE_STATE|RELEASE_RESULT|ROBOT_RESULT|RELEASE_STAGE; the files: RELEASE_FILE|^STAGE .',
-    params: [:],
-  ],
-  'dp-ci-release-step4-publish': [
-    about: 'STEP 4 OF 4 OF A RELEASE, THE PUBLISH: THE OWNER ONLY. Run it only when step 2 (dp-ci-release-step2-pack-and-uat-docker) and step 3 (dp-ci-release-step3-pack-and-uat-windows) are both green on the same commit (origin/main, kept still since step 1); the job checks the release record and refuses otherwise. asbl/ci/release-publish.sh promote: first the version gate (settings.xml against the released version; nothing to release = green, nothing done), then the guards (steps 2 and 3 for this very version, staged in the same candidate folder, not published yet, the registry\'s :<version> still the staged image). Then: the staged files copied on Backblaze to newest/ (the links of the README, the Docker Hub page and the self-host page) and to <version>/ (the archive), each newest/ file checked by download; the Cloudflare cache of the four newest/ links purged; flowkraft/datapallas-server:latest pointed at the staged :<version> and checked; step4.publish recorded. It needs the publish credentials file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner). Not done by it, printed at the end: the Docker Hub page (asbl/docker/push-dockerhub-readme.ps1, its own token) and the demos (dp-ci-release-demos).' +
-      '\n\nIts log: the four parts (PUBLISH STEP 1/4 .. 4/4, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|RELEASE_STATE|^FAIL |^PUBLISH |^MANUAL |RELEASE_PUBLISH.',
+  'dp-ci-release-step3-release-windows-vm': [
+    about: describe(
+      WHAT: [
+        'The Windows release (dp-ci.sh win release), in two modes.',
+        'MODE=rehearsal (the default): a real release into places users do not get. On the Windows VM, asbl/pack-datapallas.bat builds the Windows release files once, from clean (datapallas.zip with DataPallas.exe, datapallas-server.zip, datapallas-src.zip; no Docker image: step 2 builds Docker on Linux), and the Robot Framework UAT (asbl/src/uat/run-tests.bat) tests those very files the way a user meets them (Java and Chocolatey removed and installed, the exe, the command line, the server and its Windows service). Only when the UAT is green, this host stages the three zips in rehearsal/<version>-<commit>/ on Backblaze, checked by download (the VM never holds a credential). Nothing users get changes.',
+        'MODE=public (the owner only): the newest passed rehearsal of this version, from whichever commit (REHEARSED <commit> in the log), copied in minutes, the VM untouched: the zips to newest/ and to <version>/, each checked by download, the Cloudflare cache purged, newest/windows-version.txt written, then the seed job queued. With no passed rehearsal of this version it says "rehearsing first", rehearses as above, and copies only when that is green.',
+        'MODE=public never copies anything that did not pass: a red rehearsal leaves the public files as they are.',
+        'Both modes start with the version gate: settings.xml the same as the released Windows version (newest/windows-version.txt) = NOTHING TO RELEASE, green, nothing done.',
+      ],
+      WHEN: 'to release the Windows channel, once step 1\'s four lanes are green on origin/main. The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
+      ORDER: 'step 3: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1); before or after dp-ci-release-step2-release-docker, never at the same time (both use the VM). Its MODE=public and step 2\'s one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones.',
+      NEEDS: [
+        'checked right after the version gate, within seconds, before the pack (asbl/ci/release-publish.sh preflight files, then dp-ci.sh prereq vm; MISSING <what>: <what to provide>, then PREREQUISITES MISSING, nothing packed):',
+        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1);',
+        'the keys file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner): a Backblaze key that can write, tried; for MODE=public also the Cloudflare purge token;',
+        'on this host: rclone, curl and sha256sum;',
+        'the Windows VM answering over SSH (not when it only copies), and no other Windows run (it refuses to start while one is going).',
+        'The full list: asbl/ci/jenkins/jenkins.md, "Before the first release".',
+      ],
+      TIME: 'a rehearsal: the pack (capped at 8 h, RELEASE_PACK_TIMEOUT) and the Robot UAT (capped at 6 h, RELEASE_ROBOT_TIMEOUT), not measured yet; MODE=public with a passed rehearsal: minutes (not measured yet); MODE=public that rehearses first: a rehearsal plus the copy.',
+      EXAMPLES: [
+        'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
+        'go public after a green rehearsal: MODE=public',
+        'see what a run would do, the VM untouched: DRY_RUN=yes (with either MODE)',
+      ],
+      LOG: 'the parts (RELEASE STEP 1/3 .. 3/3, WINDOWS PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|REHEARSED|rehearsing first|RELEASE_STATE|RELEASE_RESULT|ROBOT_RESULT|RELEASE_STAGE|RELEASE_PUBLIC; the files: RELEASE_FILE|^STAGE |^PUBLIC . The build list labels each build with what happened; the build page shows the Robot report.',
+      MORE: guide('dp-ci-release-step3-release-windows-vm', 'asbl/ci/dp-ci.sh win release (through asbl/ci/jenkins/win-e2e.sh release)')
+    ),
     params: [
-      DRY_RUN: [choices: ['no', 'yes'], text: 'yes = copy, purge and retag nothing: the version gate and the guards, then what each part would do. no (default) = publish.'],
+      MODE: [choices: ['rehearsal', 'public'], text: 'WHICH release. rehearsal (default) = a real release into places users do not get: pack on the VM, test with the Robot UAT, stage in rehearsal/. Nothing users get changes.\npublic (the owner only) = copy the newest passed rehearsal of this version to newest/, in minutes; with none, rehearse first and copy only when it is green.\nUse rehearsal, look at it, then public; once trusted, public directly.'],
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it.\nyes = pack, test, stage and copy nothing, the VM only asked whether it answers: the version gate, the prerequisites (the bucket listed, not written), the guard, which rehearsal it would copy or that it would rehearse first, and what each part would do.\nUse yes to see what a run would do.'],
     ],
   ],
-  'dp-ci-release-demos': [
-    about: 'THE DEMOS (asbl/ci/jenkins/release-demos.sh). dp-demo.bkstg (https://dp-demo.bkstg.flowkraft.com) shows origin/main, the preview before a release: its own build first, only when origin/main is not built yet (dp-ci.sh build-if-needed, about 40 min), then that very image published (dp-ci.sh publish-demo-bkstg); run it whenever it should show origin/main, best after dp-ci-release-step1-e2e-prerelease is green on it. demo.datapallas.com (the public demo that datapallas.com frames) is a plain install of the published release, nothing built: run it after step 4 (dp-ci-release-step4-publish). setup.sh and setup.sh --edge (its folders and its two vhosts), then asbl/ci/demo-public/install-release.sh: newest/datapallas-server-docker.zip unzipped into a folder of its own per version, with docker-compose.override.yml (no Docker socket, no host port, no MailHog), the data carried over from the running version, the previous folder started again when the new one does not answer; nothing to do when it already runs the released version; then setup.sh --check and the demo links. The output is masked (share-link tokens, passwords).' +
-      '\n\nIts log: the parts (DEMOS STEP n/N, each START and END with the time it took) and the verdict: ^######## |DEMOS_RESULT|PIPELINE_RESULT|BUILD:|BUILD_TAG=|DEMO_INSTALL result|DEMO_SETUP result.',
+  'dp-ci-release-step4-demo-public': [
+    about: describe(
+      WHAT: 'The public demo, https://demo.datapallas.com (the one datapallas.com frames), installs the published release the way a user does, building nothing (asbl/ci/jenkins/release-demos.sh with DEMO=demo.datapallas.com): setup.sh and setup.sh --edge (its folders and its two vhosts), then asbl/ci/demo-public/install-release.sh: newest/datapallas-server-docker.zip unzipped into a folder of its own per version, with docker-compose.override.yml (no Docker socket, no host port, no MailHog), the data carried over from the running version, the previous version started again when the new one does not answer; then setup.sh --check and the demo links. Nothing to do when it already runs the released version. The output is masked (share-link tokens, passwords).',
+      WHEN: 'after the Docker release went public (dp-ci-release-step2-release-docker, MODE=public). To show an image that is not a release on demo.datapallas.com: Rundeck, servers > ops/change/demo-publish (not a Jenkins job). The preview, dp-demo.bkstg, is dp-ci-dev-demo-preview-bkstg.',
+      ORDER: 'step 4, the last step of a release.',
+      NEEDS: 'the Docker release public: its released version (the one Docker Hub\'s :latest has) and newest/datapallas-server-docker.zip; the demo\'s two root-only settings files, written when it was set up (/var/kraft-internalsystems/config/datapallas-ci/demo-datapallas-com.env and demo-public-storefront.env, named in asbl/ci/demo-public/setup.sh). It builds nothing and has no prerequisite check of its own: a part that fails stops it with FAILED and why.',
+      TIME: 'minutes (not measured yet).',
+      EXAMPLES: [
+        'after step 2\'s MODE=public: nothing to change',
+        'the release changed the dashboards: RESET_DEMO_DATA=yes',
+        'see what it would do: DRY_RUN=yes',
+      ],
+      LOG: 'the parts (DEMOS STEP 1/3 the setup, 2/3 the install, 3/3 the check, each START and END with the time it took) and the verdict: ^######## |DEMO_INSTALL result|DEMO_SETUP result|^!!!|FAILED|DEMOS_RESULT.',
+      MORE: guide('dp-ci-release-step4-demo-public', 'asbl/ci/jenkins/release-demos.sh with DEMO=demo.datapallas.com')
+    ),
     params: [
-      DEMO: [choices: ['dp-demo.bkstg', 'demo.datapallas.com', 'both'], text: 'WHERE to publish.\ndp-demo.bkstg (default): https://dp-demo.bkstg.flowkraft.com.\ndemo.datapallas.com: the public demo that datapallas.com shows.\nboth: dp-demo.bkstg first, then demo.datapallas.com.'],
-      RESET_DEMO_DATA: [choices: ['no', 'yes'], text: 'demo.datapallas.com only, when it installs a new release. no (default) = the data of the running version is carried over. yes = the new version starts from the bundle\'s own data (what visitors created stays in the previous version\'s folder); use it when the release changed the dashboards.'],
-      DRY_RUN: [choices: ['no', 'yes'], text: 'yes = build, install and change nothing: say whether a build is needed and print what each part would do. no (default) = do it.'],
+      RESET_DEMO_DATA: [choices: ['no', 'yes'], text: 'WHOSE data the new version starts with. no (default) = the data of the running version, carried over.\nyes = the bundle\'s own data; what visitors created stays in the previous version\'s folder.\nUse yes when the release changed the dashboards. It matters only when a new version is installed.'],
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it.\nyes = install and change nothing: setup.sh --check, then what the install would do.\nUse yes to see what a run would do.'],
     ],
   ],
 ]

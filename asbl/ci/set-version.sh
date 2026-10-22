@@ -2,8 +2,8 @@
 # ---------------------------------------------------------------------------------------------
 # set-version.sh - change the DataPallas product version in every file that really declares it.
 #
-# ON DEMAND ONLY. Nothing calls this automatically, and dp-ci.sh never calls it:
-#   `dp-ci.sh release` reads whatever <revision> is already committed and never writes to the tree.
+# ON DEMAND ONLY: by hand, or by step 0 of a release (job dp-ci-release-step0-set-version,
+#   asbl/ci/jenkins/release-set-version.sh, in a throwaway worktree of origin/main). dp-ci.sh never calls it.
 #
 # Usage
 #   bash asbl/ci/set-version.sh --show              what is the version now, and in which files
@@ -12,8 +12,8 @@
 #   bash asbl/ci/set-version.sh --dry-run 16.6.0    show every edit it would make, change nothing
 #   bash asbl/ci/set-version.sh 16.6.0              make the edits, then YOU review and commit
 #
-# It never commits, never tags, never pushes - a release is built from a commit, so making that
-# commit stays a human act.
+# It never commits, never tags, never pushes. Step 0 commits and pushes its edits, after checking
+# them, when the owner starts that job with a bigger version.
 #
 # Why a script and not a find/replace: the version string also appears in files where it means
 # something else entirely, and changing those breaks the build. See DO-NOT-TOUCH below.
@@ -40,12 +40,18 @@ asbl/src/main/external-resources/db-template/_apps/flowkraft/_ai-hub/ui-startpag
 bkend/server/src/main/java/com/flowkraft/iam/Role.java
 asbl/docker/README-dockerhub.md
 asbl/src/main/external-resources/db-template/CHANGELOG.md
+asbl/ci/set-version.sh
+asbl/ci/release-state.sh
+asbl/ci/jenkins/jenkins.md
 '
 # ui-startpage/package.json : "overrides": { "eslint-config-next": { "globals": "16.5.0" } }
 #                             -> the npm package `globals`, nothing to do with us. That app is 0.1.0.
 # Role.java                 : a comment about installs upgraded "from 16.5.0-or-earlier". History.
 # README-dockerhub.md       : an example docker tag in prose.
 # CHANGELOG.md              : past release headings. A new release ADDS a heading by hand.
+# set-version.sh            : this file; its comments hold versions as examples.
+# release-state.sh          : WINDOWS_RELEASED_BY_HAND, the last release both channels made by hand. History.
+# jenkins.md                : versions in the release documentation's examples and history.
 
 MODE=apply
 case "${1:-}" in
@@ -176,7 +182,7 @@ echo "post-check: tracked files still containing $OLD"
 UNEXPECTED=0
 while read -r f; do
   case "$f" in *node_modules*) continue;; esac
-  grep -lq "$OLD" "$f" 2>/dev/null || continue
+  grep -lqF "$OLD" "$f" 2>/dev/null || continue   # -F: the dots are dots (as a regex 16.5.0 also matched digits in SVG paths)
   if echo "$KEEP" | grep -qx "[[:space:]]*$f"; then
     printf '  ok (known, left alone)  %s\n' "$f"
   else
@@ -194,5 +200,8 @@ NEXT, BY HAND:
   2. review the edits:    git diff --stat        (use --stat, not a full diff: frend/reporting/package.json
                                                   holds a test licence key that should not be echoed)
   3. commit them yourself. This script never commits, tags or pushes.
-  4. then prove the tree:  bash asbl/ci/dp-ci.sh release
+  4. then push, and prove that commit: step 1 of a release, Jenkins job dp-ci-release-step1-e2e-prerelease
+     (its four lanes; asbl/ci/jenkins/jenkins.md, "The release, in order"). The Jenkins job
+     dp-ci-release-step0-set-version runs this script, checks the edits, commits and pushes them for you;
+     the changelog (1) stays yours.
 EOF

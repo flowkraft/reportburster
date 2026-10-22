@@ -5,7 +5,8 @@
 #
 #   bash asbl/ci/demo-public/install-release.sh          DRY_RUN=yes: only says what it would do
 #
-#   1. the version: the released one, Docker Hub's :latest (release-state.sh version-check --print). Nothing to do when the demo
+#   1. the version: the Docker channel's released version, the x.y.z tag that Docker Hub's :latest has (release-state.sh
+#      version-check --print, released=). Nothing to do when the demo
 #      already runs <repo>:<that version>.
 #   2. newest/datapallas-server-docker.zip downloaded and unzipped into a folder of its own, <dir>/<version>/DataPallas (a folder
 #      of that name left by an earlier try is moved aside, never deleted); its docker-compose.yml must name <repo>:<version>.

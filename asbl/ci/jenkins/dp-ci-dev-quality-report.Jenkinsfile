@@ -1,9 +1,11 @@
-// Job datapallas/dp-ci-quality. The quality tools (lint, bug finder, format check, documentation): dp-ci.sh quality.
-// No package and no tests: it compiles the Java modules, installs the npm dependencies and runs each tool. Never gating:
-// every tool shows a report, none fails the build. The reports are pulled into the workspace by the Reports stage.
-// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
-// only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
-// the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
+// Job datapallas/dp-ci-dev-quality-report: the quality tools (lint, bug finder, format, complexity, documentation), dp-ci.sh quality.
+// No package and no tests: it compiles the Java modules, installs the npm dependencies and runs each tool. Never gating: every tool
+// shows a report, none fails the build. The reports are pulled into the workspace by the Reports stage.
+// The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file only starts it and
+// shows its log. The run is a detached container owned by the Docker daemon, so closing the browser or restarting Jenkins never
+// stops it.
+// Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
+// the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-dev-quality-report.
 pipeline {
   agent any
 
@@ -69,7 +71,6 @@ exit 0
         // ESLint complexity rules (own result, not mixed with the lint problems): same checkstyle XML as the other ESLint tables.
         recordIssues(tool: esLint(pattern: 'reports/complexity-angular/eslint.xml', id: 'complexity-angular', name: 'Complexity Angular'), enabledForFailure: true, skipBlames: true)
         recordIssues(tool: esLint(pattern: 'reports/complexity-aihub/eslint.xml', id: 'complexity-aihub', name: 'Complexity AI Hub'), enabledForFailure: true, skipBlames: true)
-        // The publisher steps of the other tools ( Compodoc, ESLint, Prettier, SpotBugs, Spotless) are added below by the quality plan, one tool at a time.
       }
     }
   }

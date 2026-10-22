@@ -1571,7 +1571,8 @@ export class ConnectionsTestHelper {
   /**
    * Clicks `#btnRunCustomSeed`, confirms the dialog, and waits for the run to
    * finish via the button's disabled → enabled transition (driven by
-   * `isCustomSeedRunning` and `executionStatsService.jobStats.numberOfActiveJobs`).
+   * `isCustomSeedRunning` and `executionStatsService.jobStats.numberOfActiveJobs`), failing fast
+   * when info.log shows the run ended but the button stays disabled.
    *
    * `label` is purely for log output to disambiguate seed/wipe phases.
    */
@@ -1586,7 +1587,7 @@ export class ConnectionsTestHelper {
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
       .consoleLog(`[SeedWipe] Running '${label}'...`)
-      .waitOnElementToBecomeEnabled('#btnRunCustomSeed', fullTimeout)
+      .waitOnJobButtonToBecomeEnabled('#btnRunCustomSeed', fullTimeout)
       .consoleLog(`[SeedWipe] '${label}' completed`);
   }
 

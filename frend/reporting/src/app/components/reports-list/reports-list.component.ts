@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, input, DestroyRef, inject } from '@angular/core';
+﻿import { Component, DoCheck, OnInit, input, DestroyRef, inject } from '@angular/core';
 import { SHARED_IMPORTS } from '../../shared/shared-imports';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -266,7 +266,7 @@ import { PAGE_WINDOW_MAX, buildPageWindow } from '../../helpers/pagination';
     standalone: true,
     imports: [...SHARED_IMPORTS],
 })
-export class ReportsListComponent implements OnInit {
+export class ReportsListComponent implements OnInit, DoCheck {
   embeddedMode = input<boolean>(false);
 
   isModalConfigurationTemplateVisible = false;
@@ -307,6 +307,9 @@ export class ReportsListComponent implements OnInit {
 
   filteredConfigurationFiles: CfgTmplFileInfo[] = [];
   pagedConfigurationFiles: CfgTmplFileInfo[] = [];
+
+  /** The service's array the rows were last built from (applyFilters); see ngDoCheck. */
+  private rowsBuiltFrom: CfgTmplFileInfo[] | null = null;
 
   loadInviteRow: CfgTmplFileInfo | null = null;
   loadConfirmRow: CfgTmplFileInfo | null = null;
@@ -372,6 +375,26 @@ export class ReportsListComponent implements OnInit {
     this.applyFilters();
   }
 
+  /**
+   * The Burst screen reloads the reports on every visit, and the service then REPLACES its array.
+   * When that lands after this list opened, the rows show objects of the old array while a click
+   * marks the new one: the row is never highlighted and Edit/Duplicate/Delete stay disabled until
+   * the user navigates away and back (run-all D, reporting-jasper-legacy on the Windows VM, where
+   * the reload is slower). So when the array behind the rows is replaced, the rows are rebuilt
+   * from the new one, keeping the selected report by its filePath. When nothing changed this costs
+   * one identity comparison per check; removing or adding a report changes the array in place.
+   */
+  ngDoCheck() {
+    const files = this.settingsService.configurationFiles;
+    if (!files || files === this.rowsBuiltFrom) return;
+    const selectedPath = this.rowsBuiltFrom?.find((c) => c.activeClicked)?.filePath;
+    this.applyFilters();
+    if (selectedPath) {
+      const selected = files.find((c) => c.filePath === selectedPath);
+      if (selected) selected.activeClicked = true;
+    }
+  }
+
   // === Search + Pagination ===
 
   onSearchChange(term: string) {
@@ -379,6 +402,7 @@ export class ReportsListComponent implements OnInit {
   }
 
   applyFilters() {
+    this.rowsBuiltFrom = this.settingsService.configurationFiles;
     const all = this.settingsService.getConfigurations() || [];
     const term = (this.searchTerm || '').trim().toLowerCase();
 
