@@ -91,9 +91,9 @@
 #                                   nothing in it ever needs escaping. Use `ps` for anything real.
 #   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e | win server-e2e
 #                                   The three Windows e2e targets (Jenkins dp-ci-e2e-release, launched by jenkins/win-e2e.sh):
-#                                   electron-windows-vm = the desktop app on the VM; docker-windows-vm = DataPallas Server in the
+#                                   windows-vm-electron = the desktop app on the VM; windows-vm-docker = DataPallas Server in the
 #                                   VM's Docker Desktop, from datapallas-server-docker.zip as the self-host page installs it, with
-#                                   the image `build` made from the VM's commit; server-windows-vm = DataPallas Server on the VM's
+#                                   the image `build` made from the VM's commit; windows-vm-server = DataPallas Server on the VM's
 #                                   own Java 17, from datapallas-server.zip as the installation page installs it (startServer.bat).
 #                                   Both server targets run the same light set of five spec files by default.
 #
@@ -938,8 +938,8 @@ win_e2e() {
 # The two Windows lanes of DataPallas Server. Each tests a package exactly as `dp-ci.sh build` (job dp-ci-package) made it
 # from the commit the VM tests, installed the way its download page tells a user to, with the tests in a browser on the
 # VM's desktop at http://localhost:9090:
-#   docker-windows-vm  datapallas-server-docker.zip (DockerAssembler) in Docker Desktop   https://datapallas.com/docs/server/self-host
-#   server-windows-vm  datapallas-server.zip (DataPallasServerSpringBootAssembler) on the  https://datapallas.com/docs/server/installation
+#   windows-vm-docker  datapallas-server-docker.zip (DockerAssembler) in Docker Desktop   https://datapallas.com/docs/server/self-host
+#   windows-vm-server  datapallas-server.zip (DataPallasServerSpringBootAssembler) on the  https://datapallas.com/docs/server/installation
 #                      machine's own Java 17
 # Both are light on purpose (owner, 2026-10-22: as light as it can be while still proving it; no duplication of what the
 # other lanes prove): each runs only what its package adds. E2E_SPEC / E2E_GREP replace the default set (retries 0 then).
@@ -1070,7 +1070,7 @@ win_web_result() {
   [ "$code" = "0" ]
 }
 
-# Target docker-windows-vm: datapallas-server-docker.zip as the self-host page installs it - extracted, `cd DataPallas`,
+# Target windows-vm-docker: datapallas-server-docker.zip as the self-host page installs it - extracted, `cd DataPallas`,
 # `docker compose up -d` under the VM's Docker Desktop - then http://localhost:9090, signed in as burst.
 # The one step that cannot be the user's: their compose pulls the released image from Docker Hub, and an unreleased build
 # is not there. So the image the build made is copied to the VM (docker save / load) and given the version tag the
@@ -1157,13 +1157,13 @@ PS
     { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$inst"; return 1; }
   echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
 
-  win_web_e2e docker-windows-vm "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
+  win_web_e2e windows-vm-docker "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
     { win_docker_down "$inst"; return 1; }
   # the server's whole log of the run: clean state empties the bundle's logs between tests
   win_ssh "docker logs datapallas-server" > "${WIN_WEB_OUT%.log}-datapallas-server.log" 2>&1 &&
     echo "DOCKER_SERVER_LOG=${WIN_WEB_OUT%.log}-datapallas-server.log"
   win_docker_down "$inst"
-  win_web_result docker-windows-vm "$mode" "$spec" "$gexp"
+  win_web_result windows-vm-docker "$mode" "$spec" "$gexp"
 }
 
 # Stops the bundle (the page's "docker compose down") and what its server started; keeps the folder, which is the
@@ -1178,9 +1178,9 @@ PS
   win_stacks_down server
 }
 
-# Target server-windows-vm: datapallas-server.zip (DataPallasServerSpringBootAssembler) as the installation page installs
+# Target windows-vm-server: datapallas-server.zip (DataPallasServerSpringBootAssembler) as the installation page installs
 # it - Java 17 on the machine, the zip extracted, startServer.bat, http://localhost:9090 - then the same light set as
-# docker-windows-vm, a plain web run against it (no E2E_DOCKER_SERVER: the installation is the extracted folder itself).
+# windows-vm-docker, a plain web run against it (no E2E_DOCKER_SERVER: the installation is the extracted folder itself).
 # Java is the machine's: the CI's JDK 17 comes first on the machine PATH, as a user's installed Java would, and
 # startServer.bat's refreshenv reads that PATH. The server runs in the foreground on the desktop, as when a user
 # double-clicks startServer.bat, and is stopped with shutServer.bat at the end.
@@ -1223,13 +1223,13 @@ PS
     win_run_poll dp-server 0 2>&1 | tr -d '\r' | grep -v '^@@' | tail -40
     win_server_down "$inst"; return 1; }
 
-  win_web_e2e server-windows-vm "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" ||
+  win_web_e2e windows-vm-server "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" ||
     { win_server_down "$inst"; return 1; }
   win_pull "$(printf '%s' "$inst\\logs\\rbsj-server.log" | tr '\\' '/')" "${WIN_WEB_OUT%.log}-rbsj-server.log" 2>/dev/null &&
     echo "WIN_SERVER_LOG=${WIN_WEB_OUT%.log}-rbsj-server.log"
   win_server_down "$inst"
   win_stacks_down
-  win_web_result server-windows-vm "$mode" "$spec" "$gexp"
+  win_web_result windows-vm-server "$mode" "$spec" "$gexp"
 }
 
 # shutServer.bat, then the task that ran startServer.bat ended in any case; keeps the folder (config, logs, output) as

@@ -8,8 +8,8 @@
 # closing Jenkins, the browser or the SSH session leaves it running. A reboot of this host kills the
 # driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` (or `docker-e2e`, `server-e2e`) shows what the VM did.
 #
-#   bash win-e2e.sh [e2e|docker-e2e|server-e2e]   which lane: e2e (default) = electron-windows-vm, docker-e2e = docker-windows-vm,
-#                                                 server-e2e = server-windows-vm
+#   bash win-e2e.sh [e2e|docker-e2e|server-e2e]   which lane: e2e (default) = windows-vm-electron, docker-e2e = windows-vm-docker,
+#                                                 server-e2e = windows-vm-server
 #   E2E_SPEC / E2E_GREP / E2E_ROTATION_DATE  passed on to dp-ci.sh win <lane> (both filters empty = its default set)
 set -uo pipefail
 
