@@ -140,7 +140,7 @@ def jobs = [
       MORE: guide('dp-ci-dev-demo-preview-bkstg', 'asbl/ci/jenkins/release-demos.sh with DEMO=dp-demo.bkstg')
     ),
     params: [
-      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it: build origin/main when it is not built yet, then publish it.\nyes = build and publish nothing: the prerequisites, whether a build is needed, and what each part would do.\nUse yes to see what a run would do.'],
+      DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it: build origin/main when it is not built yet, then publish it.\nyes = build and publish nothing: the prerequisites, whether a build is needed, and what each part would do. While origin/main is not built yet, the dry publish checks the newest earlier build\'s image instead, and fails when that image is gone.\nUse yes to see what a run would do.'],
     ],
   ],
   'dp-ci-dev-e2e-one-spec': [
@@ -205,7 +205,7 @@ def jobs = [
       WHAT: 'Starts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing.',
       WHEN: 'to look at a change in a browser. It is for looking, never a proof: only the e2e jobs prove (dp-ci-dev-e2e-one-spec, dp-ci-release-step1-e2e-prerelease), and no e2e runs against this server (an e2e cleans the testground it reads and starts its own).',
       ORDER: 'any time; it refuses to start while a dp-ci run holds the server.',
-      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker).',
+      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker). live also needs this checkout\'s Linux package (asbl/target/package/verified-db-noexe, which an e2e run builds when there is none): it is not checked, and without it the start fails after the backend build (cp ... ENOENT, server exited).',
       TIME: 'start: about 3.5 min until the site answers (measured 3.2 to 3.7 min; pinned: longer the first time for a commit, which it assembles first, not measured yet); already running: seconds; stop: seconds.',
       EXAMPLES: [
         'see a saved change: ACTION=start',
@@ -263,7 +263,7 @@ def jobs = [
         'a full run: about 10.5 h on Linux (docker-server, measured; a web full run took 15.4 h), about 25 h on windows-vm-electron (measured 24.8 h);',
         'the light set of windows-vm-docker and windows-vm-server: about an hour (not measured yet);',
         'one file: minutes to 2 h (measured);',
-        'first, when needed: the package rebuilt (Linux about 30 min, the VM about 1.5 h), and for docker-server, windows-vm-docker and windows-vm-server the build of origin/main (about 40 min, once per commit).',
+        'first, when needed: the package rebuilt (Linux about 30 min, the VM about 1 to 1.5 h, measured 62 min on 2026-10-22), and for docker-server, windows-vm-docker and windows-vm-server the build of origin/main (about 40 min, once per commit).',
       ],
       EXAMPLES: [
         'release lane 1, the Linux server: E2E_TARGET=docker-server  E2E_SPEC empty',
@@ -340,7 +340,7 @@ def jobs = [
         'the Windows VM answering over SSH (not when it only copies), and no other Windows run (it refuses to start while one is going).',
         'The full list: asbl/ci/jenkins/jenkins.md, "Before the first release".',
       ],
-      TIME: 'a rehearsal: the pack (capped at 8 h, RELEASE_PACK_TIMEOUT) and the Robot UAT (capped at 6 h, RELEASE_ROBOT_TIMEOUT), not measured yet; MODE=public with a passed rehearsal: minutes (not measured yet); MODE=public that rehearses first: a rehearsal plus the copy.',
+      TIME: 'a rehearsal: the pack (capped at 8 h, RELEASE_PACK_TIMEOUT) and the Robot UAT (capped at 6 h, RELEASE_ROBOT_TIMEOUT), not measured yet; MODE=public with a passed rehearsal: minutes: its own work took 8 s against local stand-ins (2026-10-22); a real copy also downloads the three zips (about 1.7 GB) twice to check them and copies them on the bucket, so the download speed decides; MODE=public that rehearses first: a rehearsal plus the copy.',
       EXAMPLES: [
         'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
         'go public after a green rehearsal: MODE=public',

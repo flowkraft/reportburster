@@ -43,7 +43,7 @@ case "${1:-}" in
 esac
 
 [ -n "${log:-}" ] && [ -f "$log" ] || { echo "follow-ci: no log to follow (${log:-none})" >&2; exit 2; }
-echo "follow-ci: following $log (container $CONTAINER)"
+echo "follow-ci: following $log ($([ -n "$PIDFILE" ] && echo "process in $PIDFILE" || echo "container $CONTAINER"))"
 
 tail -n +1 -F "$log" 2>/dev/null &
 TAIL=$!
