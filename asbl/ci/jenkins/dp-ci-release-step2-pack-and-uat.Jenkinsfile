@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-release-step3-pack-and-uat. Step 3 of 3 of a release, the last (after dp-ci-release-step1-package and a green dp-ci-release-step2-e2e-prerelease on the same commit): dp-ci.sh win release. On the Windows VM, asbl\pack-datapallas.bat builds the release files once, from clean; then the Robot Framework UAT (asbl\src\uat\run-tests.bat) and the Docker light set on Windows and on Linux test those very files the way a user meets them. Green only when all pass; the sha256 of the files that may be published are in the log and in the release-files report. Nothing is published.
+// Job datapallas/dp-ci-release-step2-pack-and-uat. Step 2 of 2 of a release, the last (after dp-ci-release-step1-e2e-prerelease is green on every target, on the same commit): dp-ci.sh win release. On the Windows VM, asbl\pack-datapallas.bat builds the release files once, from clean; then the Robot Framework UAT (asbl\src\uat\run-tests.bat) and the Docker light set on Windows and on Linux test those very files the way a user meets them. Green only when all pass; the sha256 of the files that may be published are in the log and in the release-files report. Nothing is published.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The driver is a detached host process and the VM steps are scheduled tasks,
 // so closing the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -26,8 +26,9 @@ pipeline {
         sh '''#!/bin/bash
 set -o pipefail
 q() { printf '%q' "$1"; }
-# the Windows lanes' launcher and its pid file: never two Windows runs at once
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release"
+# the Windows lanes' launcher and its pid file: never two Windows runs at once. The job is one step; its four parts are
+# marked RELEASE STEP 1/4 .. 4/4 inside, each START/END with the time it took (asbl/ci/marks.sh): grep '^######## ' in the console.
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && bash asbl/ci/jenkins/job-step.sh 'JOB STEP 1/1' 'the release: dp-ci.sh win release' env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release"
 '''
         }
       }

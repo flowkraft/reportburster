@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-release-step2-e2e-prerelease. Step 2 of 3 of a release (after dp-ci-release-step1-package, before dp-ci-release-step3-pack-and-uat). The REAL end-to-end tests, the prerelease check: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fix-and-retry loop use dp-ci-e2e-loop.
+// Job datapallas/dp-ci-release-step1-e2e-prerelease. Step 1 of 2 of a release (then, when every target is green, dp-ci-release-step2-pack-and-uat). The REAL end-to-end tests, the prerelease check: dp-ci.sh e2e, on a package built from this exact commit (rebuilt first when it is not). docker-server, windows-vm-docker and windows-vm-server first build origin/main when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2). Slow. E2E_SPEC narrows it to one file (a regex on the path); empty = the full suite. No title filter: it runs a file start to end. For the fix-and-retry loop use dp-ci-e2e-loop.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
 // the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -29,22 +29,31 @@ q() { printf '%q' "$1"; }
 case "$E2E_TARGET" in
   windows-vm-electron)
     # the Windows VM lane: dp-ci.sh win e2e, started by win-e2e.sh and followed by its pid
-    RUN="FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh" ;;
+    RUN="env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh" ;;
   windows-vm-docker)
     # DataPallas Server in the VM's Docker Desktop: dp-ci.sh win docker-e2e, same launcher, same pid file
-    RUN="FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh docker-e2e" ;;
+    RUN="env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh docker-e2e" ;;
   windows-vm-server)
     # DataPallas Server on the VM's own Java 17: dp-ci.sh win server-e2e, same launcher, same pid file
-    RUN="FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh server-e2e" ;;
+    RUN="env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh server-e2e" ;;
   electron-windows-vm|docker-windows-vm|server-windows-vm)
     # the names before 2026-10-22, still in the parameters of older builds: refused here, not sent to the Linux e2e below
     echo "FAIL  E2E_TARGET $E2E_TARGET was renamed: windows-vm-electron, windows-vm-docker, windows-vm-server"; exit 2 ;;
   electron-linux)
-    RUN="E2E_TARGET=electron bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e" ;;
+    RUN="env E2E_TARGET=electron bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e" ;;
   *)
-    RUN="E2E_TARGET=$(q "$E2E_TARGET") bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e" ;;
+    RUN="env E2E_TARGET=$(q "$E2E_TARGET") bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e" ;;
 esac
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && E2E_SPEC=$(q "$E2E_SPEC") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES") $RUN"
+# Each part of the job is marked START/END with the time it took (asbl/ci/marks.sh): grep '^######## ' in the console.
+# The three targets that install what `dp-ci.sh build` makes build origin/main first, only when it is not built yet.
+JS="bash asbl/ci/jenkins/job-step.sh"
+case "$E2E_TARGET" in
+  docker-server|windows-vm-docker|windows-vm-server)
+    STEPS="$JS 'JOB STEP 1/2' 'the build of origin/main, only when there is none yet (dp-ci.sh build-if-needed)' bash asbl/ci/dp-ci.sh build-if-needed && $JS 'JOB STEP 2/2' 'e2e $E2E_TARGET' $RUN" ;;
+  *)
+    STEPS="$JS 'JOB STEP 1/1' 'e2e $E2E_TARGET' $RUN" ;;
+esac
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && export E2E_SPEC=$(q "$E2E_SPEC") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES") && $STEPS"
 '''
         }
       }
@@ -59,12 +68,16 @@ q() { printf '%q' "$1"; }
 # the Windows lanes have their own newest-log link, and their step log (dp-ci.sh win e2e / docker-e2e) names the files <log>-step-playwright...
 LOGDIR=/var/kraft-internalsystems/logs/datapallas-ci; LOGLINK=$LOGDIR/latest.log; RP="$REPORT_PATHS"
 if [ "$E2E_TARGET" = windows-vm-electron ] || [ "$E2E_TARGET" = windows-vm-docker ] || [ "$E2E_TARGET" = windows-vm-server ]; then LOGLINK=$LOGDIR/win-e2e-latest.log; RP="@run/-step-playwright.xml @run/-step-playwright-html @run/-step-robot"; fi
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && set -f && CI_LOG_LINK=$(q "$LOGLINK") bash asbl/ci/jenkins/pull-reports.sh $RP" | tar xzf - -C reports || echo "Reports: nothing pulled"
+# the targets that may have built first: the image scan of the build (dp-ci.sh build writes it next to its own log)
+TRIVY=""
+case "$E2E_TARGET" in docker-server|windows-vm-docker|windows-vm-server) TRIVY='$(ls -1dt '"$LOGDIR"'/*-build-*-trivy 2>/dev/null | head -1)' ;; esac
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && T=$TRIVY && set -f && CI_LOG_LINK=$(q "$LOGLINK") bash asbl/ci/jenkins/pull-reports.sh $RP \\$T" | tar xzf - -C reports || echo "Reports: nothing pulled"
 # the run's files are named after its log (<ts>-e2e-<sha>-playwright...): give them the fixed names the publishers need
 for f in reports/*-playwright.xml; do [ -e "$f" ] && mv "$f" reports/playwright.xml; done
 for d in reports/*-playwright-html; do [ -e "$d" ] && rm -rf reports/playwright-html && mv "$d" reports/playwright-html; done
 for d in reports/*-openapi; do [ -e "$d" ] && rm -rf reports/openapi && mv "$d" reports/openapi; done
 for d in reports/*-robot; do [ -e "$d" ] && rm -rf reports/robot && mv "$d" reports/robot; done
+for d in reports/*-trivy; do [ -e "$d" ] && rm -rf reports/trivy && mv "$d" reports/trivy; done
 exit 0
 '''
         // Playwright (J1): the JUnit XML = test counts and trend; the HTML report = every test with its steps, screenshots and trace.
@@ -82,6 +95,9 @@ exit 0
         // reads the openapi.json next to it. Nothing is shown while no run has produced it. Needs the CSP relaxation of jenkins.md (it runs a script).
         publishHTML(target: [reportName: 'Swagger UI (OpenAPI)', reportDir: 'reports/openapi', reportFiles: 'index.html', keepAll: false, allowMissing: true, alwaysLinkToLastBuild: true])
         archiveArtifacts artifacts: 'reports/openapi/openapi.json', allowEmptyArchive: true
+        // Trivy (J15), when this job built first: the HIGH and CRITICAL CVEs of the image, as a Warnings Next Generation table.
+        recordIssues(tool: trivy(pattern: 'reports/trivy/trivy.json', id: 'trivy', name: 'Trivy'), enabledForFailure: true, skipBlames: true)
+        archiveArtifacts artifacts: 'reports/trivy/trivy.json', allowEmptyArchive: true
         publishHTML(target: [reportName: 'Playwright report', reportDir: 'reports/playwright-html', reportFiles: 'index.html', keepAll: false, allowMissing: true, alwaysLinkToLastBuild: true])
       }
     }
