@@ -6,17 +6,18 @@
 # What survives what: the tests run on the VM as a scheduled task, so they outlive anything on this side.
 # The driver started here (a setsid process, not tied to the SSH session) is what collects the verdict;
 # closing Jenkins, the browser or the SSH session leaves it running. A reboot of this host kills the
-# driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` (or `docker-e2e`) shows what the VM did.
+# driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` (or `docker-e2e`, `server-e2e`) shows what the VM did.
 #
-#   bash win-e2e.sh [e2e|docker-e2e]         which lane: e2e (default) = electron-windows-vm, docker-e2e = docker-windows-vm
+#   bash win-e2e.sh [e2e|docker-e2e|server-e2e]   which lane: e2e (default) = electron-windows-vm, docker-e2e = docker-windows-vm,
+#                                                 server-e2e = server-windows-vm
 #   E2E_SPEC / E2E_GREP / E2E_ROTATION_DATE  passed on to dp-ci.sh win <lane> (both filters empty = its default set)
 set -uo pipefail
 
 LANE="${1:-e2e}"
-case "$LANE" in e2e|docker-e2e) ;; *) echo "FAIL  lane must be e2e or docker-e2e (got '$LANE')"; exit 2 ;; esac
+case "$LANE" in e2e|docker-e2e|server-e2e) ;; *) echo "FAIL  lane must be e2e, docker-e2e or server-e2e (got '$LANE')"; exit 2 ;; esac
 
 LOG_DIR="${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}"
-# one pid file for both lanes: they share the VM's desktop, its port 9090 and its Docker Desktop
+# one pid file for the three lanes: they share the VM's desktop, its port 9090 and its Docker Desktop
 PIDFILE="$LOG_DIR/win-e2e.pid"
 mkdir -p "$LOG_DIR"
 

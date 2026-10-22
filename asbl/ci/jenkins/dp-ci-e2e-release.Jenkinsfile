@@ -33,6 +33,9 @@ case "$E2E_TARGET" in
   docker-windows-vm)
     # DataPallas Server in the VM's Docker Desktop: dp-ci.sh win docker-e2e, same launcher, same pid file
     RUN="FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh docker-e2e" ;;
+  server-windows-vm)
+    # DataPallas Server on the VM's own Java 17: dp-ci.sh win server-e2e, same launcher, same pid file
+    RUN="FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh server-e2e" ;;
   electron-linux)
     RUN="E2E_TARGET=electron bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e" ;;
   *)
@@ -52,7 +55,7 @@ rm -rf reports; mkdir -p reports
 q() { printf '%q' "$1"; }
 # the Windows lanes have their own newest-log link, and their step log (dp-ci.sh win e2e / docker-e2e) names the files <log>-step-playwright...
 LOGDIR=/var/kraft-internalsystems/logs/datapallas-ci; LOGLINK=$LOGDIR/latest.log; RP="$REPORT_PATHS"
-if [ "$E2E_TARGET" = electron-windows-vm ] || [ "$E2E_TARGET" = docker-windows-vm ]; then LOGLINK=$LOGDIR/win-e2e-latest.log; RP="@run/-step-playwright.xml @run/-step-playwright-html @run/-step-robot"; fi
+if [ "$E2E_TARGET" = electron-windows-vm ] || [ "$E2E_TARGET" = docker-windows-vm ] || [ "$E2E_TARGET" = server-windows-vm ]; then LOGLINK=$LOGDIR/win-e2e-latest.log; RP="@run/-step-playwright.xml @run/-step-playwright-html @run/-step-robot"; fi
 ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && set -f && CI_LOG_LINK=$(q "$LOGLINK") bash asbl/ci/jenkins/pull-reports.sh $RP" | tar xzf - -C reports || echo "Reports: nothing pulled"
 # the run's files are named after its log (<ts>-e2e-<sha>-playwright...): give them the fixed names the publishers need
 for f in reports/*-playwright.xml; do [ -e "$f" ] && mv "$f" reports/playwright.xml; done

@@ -89,11 +89,13 @@
 #                                   intact. `ssh` goes through cmd.exe (quote-free commands only);
 #                                   `ps` ships a PowerShell script from stdin as -EncodedCommand, so
 #                                   nothing in it ever needs escaping. Use `ps` for anything real.
-#   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e
-#                                   The two Windows e2e targets (Jenkins dp-ci-e2e-release, launched by jenkins/win-e2e.sh):
+#   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e | win server-e2e
+#                                   The three Windows e2e targets (Jenkins dp-ci-e2e-release, launched by jenkins/win-e2e.sh):
 #                                   electron-windows-vm = the desktop app on the VM; docker-windows-vm = DataPallas Server in the
 #                                   VM's Docker Desktop, from datapallas-server-docker.zip as the self-host page installs it, with
-#                                   the image `build` made from the VM's commit; by default a light set of five spec files.
+#                                   the image `build` made from the VM's commit; server-windows-vm = DataPallas Server on the VM's
+#                                   own Java 17, from datapallas-server.zip as the installation page installs it (startServer.bat).
+#                                   Both server targets run the same light set of five spec files by default.
 #
 # The launcher returns within seconds. The work runs in a detached container named dp-ci, owned by
 # the Docker daemon, so closing SSH / Code Server / the browser has no effect on it. It builds IN
@@ -933,61 +935,175 @@ win_e2e() {
   [ "$code" = "0" ]
 }
 
-# Target docker-windows-vm: DataPallas Server in Docker on Windows, installed the way a Windows user installs it
-# (https://datapallas.com/docs/server/self-host, "Install"): datapallas-server-docker.zip - DockerAssembler's
-# output, as `dp-ci.sh build` left it in asbl/dist - extracted, `cd DataPallas`, `docker compose up -d` under the
-# VM's Docker Desktop, then http://localhost:9090 in a browser on the VM's desktop, signed in as burst.
-# The one step that cannot be the user's: their compose pulls the released image from Docker Hub, and an unreleased
-# build is not there. So the image `dp-ci.sh build` made from the commit under test is copied to the VM (docker save
-# / load) and given the version tag the bundle's compose names; the compose file is not touched, and the run aborts
-# unless the container runs exactly that image (the same rule as the Linux docker-server lane).
-#
-# What the container runs is the Linux image the docker-server lane already tests on Linux, every spec. What only
-# this lane tests is where it meets Windows: the bundle's folders bind-mounted from NTFS, the server starting apps
-# through Docker Desktop's docker.sock with Windows host paths, the published port. So by default it runs a light set
-# chosen for that, which the owner agreed to on 2026-10-22:
+# The two Windows lanes of DataPallas Server. Each tests a package exactly as `dp-ci.sh build` (job dp-ci-package) made it
+# from the commit the VM tests, installed the way its download page tells a user to, with the tests in a browser on the
+# VM's desktop at http://localhost:9090:
+#   docker-windows-vm  datapallas-server-docker.zip (DockerAssembler) in Docker Desktop   https://datapallas.com/docs/server/self-host
+#   server-windows-vm  datapallas-server.zip (DataPallasServerSpringBootAssembler) on the  https://datapallas.com/docs/server/installation
+#                      machine's own Java 17
+# Both are light on purpose (owner, 2026-10-22: as light as it can be while still proving it; no duplication of what the
+# other lanes prove): each runs only what its package adds. E2E_SPEC / E2E_GREP replace the default set (retries 0 then).
+
+# The newest successful build on this host, which must be of the commit the VM tests; prints its IMAGE_TAG
+# (<version>-<commit>). Its asbl/dist zips and its image are what the two lanes install.
+win_vm_build_tag() {
+  local vm f tag= tagsha
+  vm=$(win_ssh "git -C $WIN_REPO rev-parse --short HEAD" 2>/dev/null | tr -d '\r' | tail -1)
+  [ -n "$vm" ] || { echo "FAIL  could not read the VM's commit" >&2; return 2; }
+  for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
+    grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
+    tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
+    [ -n "$tag" ] && { echo "WIN_BUILD=$(basename "$f") -> $tag" >&2; break; }
+  done
+  [ -n "$tag" ] || { echo "FAIL  no successful build log with an IMAGE_TAG line - run job dp-ci-package first" >&2; return 2; }
+  tagsha="${tag#*-}"
+  # two git versions may abbreviate the same commit to different lengths
+  [ "${vm#"$tagsha"}" != "$vm" ] || [ "${tagsha#"$vm"}" != "$tagsha" ] ||
+    { echo "FAIL  the build is of '$tagsha', the VM tests '$vm' - run job dp-ci-package on that commit first" >&2; return 2; }
+  echo "$tag"
+}
+
+# win_bundle_extract <local zip> <VM folder> <file DataPallas\ must hold>: the zip copied to the VM and extracted into an
+# empty folder, nothing changed in it - what a user's unzip gives.
+win_bundle_extract() {
+  local name; name=$(basename "$1")
+  win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
+  win_scp "$1" "C:/dp-ci/tmp/$name" || { echo "FAIL  could not copy $name to the VM" >&2; return 1; }
+  win_ps 2>&1 <<PS | tr -d '\r'
+\$ErrorActionPreference = "Continue"
+\$root = '$2'; \$zip = 'C:\\dp-ci\\tmp\\$name'
+if (Test-Path \$root) { Remove-Item -Recurse -Force \$root }
+if (Test-Path \$root) { "FAIL  could not remove the previous installation (a file in it is still open)"; exit 1 }
+New-Item -ItemType Directory -Force \$root | Out-Null
+& tar.exe -xf \$zip -C \$root
+\$rc = \$LASTEXITCODE
+Remove-Item \$zip -ErrorAction SilentlyContinue
+if (\$rc -ne 0 -or -not (Test-Path "\$root\\DataPallas\\$3")) { "FAIL  could not extract $name"; exit 1 }
+"WIN_BUNDLE=$name extracted"
+PS
+}
+
+# http://localhost:9090 on the VM, the address the page sends the user to. GET / is public: the web UI has to load before
+# anyone can sign in. 10 minutes, twice Linux's: Docker Desktop runs nested and the VM is slow.
+win_wait_9090() {
+  win_ps 2>&1 <<'PS' | tr -d '\r'
+for ($i = 0; $i -lt 120; $i++) {
+  try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 'http://localhost:9090' | Out-Null; "WIN_SERVER_URL=http://localhost:9090 answering"; exit 0 } catch { Start-Sleep 5 }
+}
+"FAIL  http://localhost:9090 did not answer within 10 minutes"; exit 1
+PS
+}
+
+# win_web_e2e <target> <step> <installation> <mode> <spec> <grep> <retries> [NAME=VALUE...]
+# The tests in a browser on the VM's desktop against http://localhost:9090, the way the Linux docker-server lane runs them:
+# no gulp, Playwright straight away, PORTABLE_EXECUTABLE_DIR = the installation the tests read and write. The licence key is
+# the one the dev chain's npm script passes, read from package.json like the Linux lane does. Sets WIN_WEB_OUT (its log).
+win_web_e2e() {
+  local target="$1" step="$2" inst="$3" mode="$4" spec="$5" gexp="$6" retries="$7" key
+  shift 7
+  WIN_WEB_OUT="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-$step-$(date -u +%Y%m%dT%H%M%SZ).log}"
+  mkdir -p "$(dirname "$WIN_WEB_OUT")" 2>/dev/null
+  : > "$WIN_WEB_OUT"
+  # the reports of an earlier run must not be pulled as this one's
+  win_ps >/dev/null 2>&1 <<PS
+Remove-Item -Recurse -Force '$WIN_RUNS\\$step\\playwright.json', '$WIN_RUNS\\$step\\playwright.xml', '$WIN_RUNS\\$step\\playwright-html' -ErrorAction SilentlyContinue
+PS
+  key=$(grep -aoE 'TEST_LICENSE_KEY=[0-9a-f]+' "$REPO/frend/reporting/package.json" | head -1 | cut -d= -f2)
+  [ -n "$key" ] || { echo "FAIL  TEST_LICENSE_KEY not found in frend/reporting/package.json" >&2; return 1; }
+  WIN_RUN_ENV=$(printf '%s\n' \
+    "TEST_ENV=web" \
+    "RUNNING_IN_E2E=true" \
+    "TEST_LICENSE_KEY=$key" \
+    "E2E_BASE_URL=http://localhost:9090" \
+    "PORTABLE_EXECUTABLE_DIR=$inst" \
+    "E2E_SPEC=$spec" \
+    "E2E_GREP=$gexp" \
+    "E2E_RETRIES=$retries" \
+    "E2E_REPEAT_EACH=${E2E_REPEAT_EACH:-1}" \
+    "E2E_SLOW_MO=${E2E_SLOW_MO:-0}" \
+    "E2E_MAX_WAIT_MS=${E2E_MAX_WAIT_MS:-2400000}" \
+    "E2E_MAX_TEST_MS=${E2E_MAX_TEST_MS:-5400000}" \
+    "E2E_ACTION_TIMEOUT_MS=${E2E_ACTION_TIMEOUT_MS:-300000}" \
+    "E2E_CLEAN_STATE_ATTEMPTS=${E2E_CLEAN_STATE_ATTEMPTS:-60}" \
+    "E2E_FAILFAST=${E2E_FAILFAST:-1}" \
+    "E2E_START_EVIDENCE_MS=${E2E_START_EVIDENCE_MS:-300000}" \
+    "E2E_STALL_MS=${E2E_STALL_MS:-600000}" \
+    "E2E_ROTATION_DATE=${E2E_ROTATION_DATE:-$(date -u +%F)}" \
+    "E2E_LICENSE_INSTANCE_ID=${E2E_LICENSE_INSTANCE_ID:-dp-ci-win-e2e}" \
+    "E2E_JSON_REPORT=$WIN_RUNS\\$step\\playwright.json" \
+    "$@")
+  export WIN_RUN_ENV
+
+  echo "WIN_E2E_MODE=$mode  target=$target  spec='$spec'  grep='$gexp'  retries=$retries"
+  echo "WIN_E2E_LOG=$WIN_WEB_OUT"
+  WIN_RUN_WATCH="${WIN_RUN_WATCH:-$inst\\logs\\info.log}"
+  WIN_RUN_TIMEOUT="${WIN_RUN_TIMEOUT:-10800}"
+  WIN_RUN_STALL="${WIN_RUN_STALL:-4800}"
+  export WIN_RUN_WATCH WIN_RUN_TIMEOUT WIN_RUN_STALL
+
+  # Playwright runs in the foreground of the step, so the step prints its exit code in the line the Linux lanes parse
+  # (`call echo %%ERRORLEVEL%%` reads it after npx has finished, not when the line is read).
+  win_run "$step" "$WIN_REPO\\frend\\reporting" \
+    'npx playwright test -c e2e/playwright.config.ts e2e/ & call echo Main Playwright process exited with code %%ERRORLEVEL%%' 2>&1 | tee "$WIN_WEB_OUT"
+  WIN_RUN_ENV=""
+
+  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.json" | tr '\\' '/')" "${WIN_WEB_OUT%.log}-playwright.json" \
+    2>/dev/null && echo "WIN_E2E_REPORT=${WIN_WEB_OUT%.log}-playwright.json"
+  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.xml" | tr '\\' '/')" "${WIN_WEB_OUT%.log}-playwright.xml" 2>/dev/null
+  WIN_SCP_EXTRA=-r win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright-html" | tr '\\' '/')" "${WIN_WEB_OUT%.log}-playwright-html" 2>/dev/null
+  return 0
+}
+
+# win_web_result <target> <mode> <spec> <grep> [extra words]: the verdict line, as the other lanes print it
+win_web_result() {
+  local out="$WIN_WEB_OUT" code
+  code=$(grep -aoE "Main Playwright process exited with code [0-9]+" "$out" | tail -1 | grep -oE "[0-9]+$")
+  echo "--- Playwright result ---"
+  grep -aoE "[0-9]+ (passed|failed|flaky|skipped|did not run|interrupted)( \([^)]*\))?" "$out" | tail -6
+  echo "WIN_E2E_RESULT mode=$2 target=$1 spec='$3' grep='$4'" \
+    "passed=$(e2e_count passed "$out") failed=$(e2e_count failed "$out") flaky=$(e2e_count flaky "$out")" \
+    "skipped=$(e2e_count skipped "$out") didnotrun=$(e2e_count "did not run" "$out") exit=${code:-none}${5:+ $5}"
+  [ "$code" = "0" ]
+}
+
+# Target docker-windows-vm: datapallas-server-docker.zip as the self-host page installs it - extracted, `cd DataPallas`,
+# `docker compose up -d` under the VM's Docker Desktop - then http://localhost:9090, signed in as burst.
+# The one step that cannot be the user's: their compose pulls the released image from Docker Hub, and an unreleased build
+# is not there. So the image the build made is copied to the VM (docker save / load) and given the version tag the
+# bundle's compose names; the compose file is not touched, and the run aborts unless the container runs exactly that image
+# (the same rule as the Linux docker-server lane).
+# What the container runs is the Linux image the docker-server lane already tests on Linux, every spec. What only this
+# lane tests is where it meets Windows: the bundle's folders bind-mounted from NTFS, the server starting apps through
+# Docker Desktop's docker.sock with Windows host paths, the published port. Hence its light set, which the owner agreed
+# to on 2026-10-22:
 #   quick-start                      samples/ in, output/ and logs/ out: the core burst
 #   configuration                    settings saved into config/
 #   log-files-viewer-separate-tabs   logs/ read back in the UI
 #   cubes-definitions                the sample databases in db/
 #   apps-ai-hub                      an app the server starts through docker.sock
-# E2E_SPEC / E2E_GREP replace the set (retries 0 then, like every targeted run).
-# Unlike Linux, the images compose builds for the apps are kept between runs: the AI Hub's take hours to build on
-# the VM, and what is in them is the Linux docker-server lane's to prove; starting them from Windows is this one's.
+# Unlike Linux, the images compose builds for the apps are kept between runs: the AI Hub's take hours to build on the VM,
+# and what is in them is the Linux docker-server lane's to prove; starting them from Windows is this one's.
 # The specs run from the VM's checkout and the node_modules already in it, as the Electron lane's do.
-WIN_DOCKER_LIGHT_SPEC='[\\/](features[\\/]quick-start|areas[\\/]configuration|components[\\/]log-files-viewer-separate-tabs|areas[\\/]cubes-definitions|features[\\/]apps-ai-hub)\.spec\.ts$'
+WIN_LIGHT_SPEC='[\\/](features[\\/]quick-start|areas[\\/]configuration|components[\\/]log-files-viewer-separate-tabs|areas[\\/]cubes-definitions|features[\\/]apps-ai-hub)\.spec\.ts$'
 
 win_docker_e2e() {
-  local mode=targeted out code retries spec gexp vm f tag tagsha version image_id vm_id running_id tmp key
+  local mode=targeted retries spec gexp tag version image_id vm_id running_id tmp
   local zip="$REPO/asbl/dist/datapallas-server-docker.zip" step=docker-e2e
   local root="$WIN_REPO\\frend\\reporting\\testground\\docker-server"
-  local bundle="$root\\DataPallas"
+  local inst="$root\\DataPallas"
   [ -n "${WIN_REPO:-}" ] || {
     echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
     return 2
   }
   win_sync_repo || return $?
-  vm=$(win_ssh "git -C $WIN_REPO rev-parse --short HEAD" 2>/dev/null | tr -d '\r' | tail -1)
-  [ -n "$vm" ] || { echo "FAIL  could not read the VM's commit" >&2; return 2; }
-
-  # The image and the bundle of the newest successful build, which must be the VM's commit (the tag is <version>-<commit>).
-  for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
-    grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
-    tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
-    [ -n "$tag" ] && { echo "docker-windows-vm: image of the newest successful build $(basename "$f") -> $tag"; break; }
-  done
-  [ -n "${tag:-}" ] || { echo "FAIL  no successful build log with an IMAGE_TAG line - run job dp-ci-package first" >&2; return 2; }
-  tagsha="${tag#*-}"
-  # two git versions may abbreviate the same commit to different lengths
-  [ "${vm#"$tagsha"}" != "$vm" ] || [ "${tagsha#"$vm"}" != "$tagsha" ] ||
-    { echo "FAIL  the image was built from '$tagsha', the VM tests '$vm' - run job dp-ci-package on that commit first" >&2; return 2; }
+  tag=$(win_vm_build_tag) || return $?
   image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
     { echo "FAIL  image $SERVER_IMAGE_REPO:$tag is not on this host - run job dp-ci-package first" >&2; return 2; }
   [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-package first" >&2; return 2; }
   version=$(printf '%s' "$tag" | cut -d- -f1)
 
   spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
-  if [ -z "$spec" ] && [ -z "$gexp" ]; then mode=light; spec="$WIN_DOCKER_LIGHT_SPEC"; fi
+  if [ -z "$spec" ] && [ -z "$gexp" ]; then mode=light; spec="$WIN_LIGHT_SPEC"; fi
   if [ "$mode" = light ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
 
   win_docker_ok || return 2
@@ -1011,13 +1127,9 @@ win_docker_e2e() {
       vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
       case "$vm_id" in sha256:*) ;; *) echo "FAIL  the image did not load on the VM" >&2; return 1 ;; esac ;;
   esac
-
-  # The bundle, as the user gets it: the zip extracted, nothing changed in it.
-  win_scp "$zip" C:/dp-ci/tmp/datapallas-server-docker.zip || { echo "FAIL  could not copy the bundle to the VM" >&2; return 1; }
   win_ps 2>&1 <<PS | tr -d '\r' || return 1
 \$ErrorActionPreference = "Continue"
 \$repo = '$SERVER_IMAGE_REPO'; \$tag = '$tag'; \$version = '$version'
-\$root = '$root'
 # older builds' images: 2 GB each, on a disk that has run out before
 foreach (\$t in (& docker images \$repo --format '{{.Tag}}')) {
   if (\$t -ne \$tag -and \$t -ne \$version) { & docker rmi "\${repo}:\$t" 2>&1 | Out-Null; "removed the old image \${repo}:\$t" }
@@ -1025,98 +1137,29 @@ foreach (\$t in (& docker images \$repo --format '{{.Tag}}')) {
 # the name the bundle's compose pins
 & docker tag "\${repo}:\$tag" "\${repo}:\$version"
 if (\$LASTEXITCODE -ne 0) { "FAIL  docker tag failed"; exit 1 }
-if (Test-Path \$root) { Remove-Item -Recurse -Force \$root }
-if (Test-Path \$root) { "FAIL  could not remove the previous bundle (a file in it is still open)"; exit 1 }
-New-Item -ItemType Directory -Force \$root | Out-Null
-& tar.exe -xf 'C:\\dp-ci\\tmp\\datapallas-server-docker.zip' -C \$root
-\$rc = \$LASTEXITCODE
-Remove-Item 'C:\\dp-ci\\tmp\\datapallas-server-docker.zip' -ErrorAction SilentlyContinue
-if (\$rc -ne 0 -or -not (Test-Path "\$root\\DataPallas\\docker-compose.yml")) { "FAIL  could not extract the bundle"; exit 1 }
-"WIN_DOCKER_BUNDLE=extracted"
 PS
 
-  # "cd DataPallas" and "docker compose up -d", as the page says; then the page's http://localhost:9090.
-  win_ps 2>&1 <<PS | tr -d '\r' || { win_docker_down "$bundle"; return 1; }
+  win_bundle_extract "$zip" "$root" docker-compose.yml || return 1
+  # "cd DataPallas" and "docker compose up -d", as the page says
+  win_ps 2>&1 <<PS | tr -d '\r' || { win_docker_down "$inst"; return 1; }
 \$ErrorActionPreference = "Continue"
-Set-Location '$bundle'
+Set-Location '$inst'
 & docker compose up -d 2>&1 | ForEach-Object { "compose: \$_" }
 if (\$LASTEXITCODE -ne 0) { "FAIL  docker compose up -d failed"; exit 1 }
-# 10 minutes, twice Linux's: the VM runs Docker Desktop nested
-for (\$i = 0; \$i -lt 120; \$i++) {
-  try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 'http://localhost:9090' | Out-Null; "WIN_DOCKER_SERVER=answering"; exit 0 } catch { Start-Sleep 5 }
-}
-"FAIL  http://localhost:9090 did not answer within 10 minutes"; exit 1
 PS
-
+  win_wait_9090 || { win_docker_down "$inst"; return 1; }
   running_id=$(win_ssh "docker inspect datapallas-server --format {{.Image}}" 2>/dev/null | tr -d '\r' | tail -1)
   [ "$running_id" = "$vm_id" ] ||
-    { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$bundle"; return 1; }
+    { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$inst"; return 1; }
   echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
 
-  out="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-docker-e2e-$(date -u +%Y%m%dT%H%M%SZ).log}"
-  mkdir -p "$(dirname "$out")" 2>/dev/null
-  # the reports of an earlier run must not be pulled as this one's
-  win_ps >/dev/null 2>&1 <<PS
-Remove-Item -Recurse -Force '$WIN_RUNS\\$step\\playwright.json', '$WIN_RUNS\\$step\\playwright.xml', '$WIN_RUNS\\$step\\playwright-html' -ErrorAction SilentlyContinue
-PS
-
-  # The Linux docker-server lane's environment (no gulp: the server under test is the container, and the tests read
-  # and write the bundle folder it bind-mounts), with the Windows lane's caps. The licence key is the one the dev
-  # chain's npm script passes, read from package.json like the Linux lane does.
-  key=$(grep -aoE 'TEST_LICENSE_KEY=[0-9a-f]+' "$REPO/frend/reporting/package.json" | head -1 | cut -d= -f2)
-  [ -n "$key" ] || { echo "FAIL  TEST_LICENSE_KEY not found in frend/reporting/package.json" >&2; win_docker_down "$bundle"; return 1; }
-  WIN_RUN_ENV=$(printf '%s\n' \
-    "TEST_ENV=web" \
-    "RUNNING_IN_E2E=true" \
-    "TEST_LICENSE_KEY=$key" \
-    "E2E_BASE_URL=http://localhost:9090" \
-    "PORTABLE_EXECUTABLE_DIR=$bundle" \
-    "E2E_DOCKER_SERVER=datapallas-server" \
-    "E2E_SPEC=$spec" \
-    "E2E_GREP=$gexp" \
-    "E2E_RETRIES=$retries" \
-    "E2E_REPEAT_EACH=${E2E_REPEAT_EACH:-1}" \
-    "E2E_SLOW_MO=${E2E_SLOW_MO:-0}" \
-    "E2E_MAX_WAIT_MS=${E2E_MAX_WAIT_MS:-2400000}" \
-    "E2E_MAX_TEST_MS=${E2E_MAX_TEST_MS:-5400000}" \
-    "E2E_ACTION_TIMEOUT_MS=${E2E_ACTION_TIMEOUT_MS:-300000}" \
-    "E2E_CLEAN_STATE_ATTEMPTS=${E2E_CLEAN_STATE_ATTEMPTS:-60}" \
-    "E2E_FAILFAST=${E2E_FAILFAST:-1}" \
-    "E2E_START_EVIDENCE_MS=${E2E_START_EVIDENCE_MS:-300000}" \
-    "E2E_STALL_MS=${E2E_STALL_MS:-600000}" \
-    "E2E_ROTATION_DATE=${E2E_ROTATION_DATE:-$(date -u +%F)}" \
-    "E2E_LICENSE_INSTANCE_ID=${E2E_LICENSE_INSTANCE_ID:-dp-ci-win-e2e}" \
-    "E2E_JSON_REPORT=$WIN_RUNS\\$step\\playwright.json")
-  export WIN_RUN_ENV
-
-  echo "WIN_E2E_MODE=$mode  target=docker-windows-vm  spec='$spec'  grep='$gexp'  retries=$retries"
-  echo "WIN_E2E_LOG=$out"
-  WIN_RUN_WATCH="${WIN_RUN_WATCH:-$bundle\\logs\\info.log}"
-  WIN_RUN_TIMEOUT="${WIN_RUN_TIMEOUT:-10800}"
-  WIN_RUN_STALL="${WIN_RUN_STALL:-4800}"
-  export WIN_RUN_WATCH WIN_RUN_TIMEOUT WIN_RUN_STALL
-
-  # Playwright runs in the foreground of the step, so the step prints its exit code in the line the Linux lanes parse
-  # (`call echo %%ERRORLEVEL%%` reads it after npx has finished, not when the line is read).
-  win_run "$step" "$WIN_REPO\\frend\\reporting" \
-    'npx playwright test -c e2e/playwright.config.ts e2e/ & call echo Main Playwright process exited with code %%ERRORLEVEL%%' 2>&1 | tee "$out"
-
-  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.json" | tr '\\' '/')" "${out%.log}-playwright.json" \
-    2>/dev/null && echo "WIN_E2E_REPORT=${out%.log}-playwright.json"
-  win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright.xml" | tr '\\' '/')" "${out%.log}-playwright.xml" 2>/dev/null
-  WIN_SCP_EXTRA=-r win_pull "$(printf '%s' "$WIN_RUNS\\$step\\playwright-html" | tr '\\' '/')" "${out%.log}-playwright-html" 2>/dev/null
+  win_web_e2e docker-windows-vm "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
+    { win_docker_down "$inst"; return 1; }
   # the server's whole log of the run: clean state empties the bundle's logs between tests
-  win_ssh "docker logs datapallas-server" > "${out%.log}-datapallas-server.log" 2>&1 &&
-    echo "DOCKER_SERVER_LOG=${out%.log}-datapallas-server.log"
-  win_docker_down "$bundle"
-
-  code=$(grep -aoE "Main Playwright process exited with code [0-9]+" "$out" | tail -1 | grep -oE "[0-9]+$")
-  echo "--- Playwright result ---"
-  grep -aoE "[0-9]+ (passed|failed|flaky|skipped|did not run|interrupted)( \([^)]*\))?" "$out" | tail -6
-  echo "WIN_E2E_RESULT mode=$mode target=docker-windows-vm spec='$spec' grep='$gexp'" \
-    "passed=$(e2e_count passed "$out") failed=$(e2e_count failed "$out") flaky=$(e2e_count flaky "$out")" \
-    "skipped=$(e2e_count skipped "$out") didnotrun=$(e2e_count "did not run" "$out") exit=${code:-none}"
-  [ "$code" = "0" ]
+  win_ssh "docker logs datapallas-server" > "${WIN_WEB_OUT%.log}-datapallas-server.log" 2>&1 &&
+    echo "DOCKER_SERVER_LOG=${WIN_WEB_OUT%.log}-datapallas-server.log"
+  win_docker_down "$inst"
+  win_web_result docker-windows-vm "$mode" "$spec" "$gexp"
 }
 
 # Stops the bundle (the page's "docker compose down") and what its server started; keeps the folder, which is the
@@ -1129,6 +1172,76 @@ Set-Location '$1' -ErrorAction SilentlyContinue
 if (\$?) { & docker compose down 2>&1 | Out-Null; "WIN_DOCKER_SERVER=stopped" }
 PS
   win_stacks_down server
+}
+
+# Target server-windows-vm: datapallas-server.zip (DataPallasServerSpringBootAssembler) as the installation page installs
+# it - Java 17 on the machine, the zip extracted, startServer.bat, http://localhost:9090 - then the same light set as
+# docker-windows-vm, a plain web run against it (no E2E_DOCKER_SERVER: the installation is the extracted folder itself).
+# Java is the machine's: the CI's JDK 17 comes first on the machine PATH, as a user's installed Java would, and
+# startServer.bat's refreshenv reads that PATH. The server runs in the foreground on the desktop, as when a user
+# double-clicks startServer.bat, and is stopped with shutServer.bat at the end.
+# Owner, 2026-10-22: this lane runs the light set and nothing else; the Robot UAT suites
+# (asbl/src/uat/tests/DataPallas-Server*.robot: auth, poll folder, Windows service) get lanes of their own.
+win_server_e2e() {
+  local mode=targeted retries spec gexp tag step=server-e2e
+  local zip="$REPO/asbl/dist/datapallas-server.zip"
+  local root="$WIN_REPO\\frend\\reporting\\testground\\server"
+  local inst="$root\\DataPallas"
+  [ -n "${WIN_REPO:-}" ] || {
+    echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
+    return 2
+  }
+  win_sync_repo || return $?
+  tag=$(win_vm_build_tag) || return $?
+  [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-package first" >&2; return 2; }
+  echo "WIN_SERVER_PACKAGE=datapallas-server.zip of build $tag"
+
+  spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
+  if [ -z "$spec" ] && [ -z "$gexp" ]; then mode=light; spec="$WIN_LIGHT_SPEC"; fi
+  if [ "$mode" = light ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
+
+  # apps-ai-hub starts apps through Docker Desktop, as it does for a user
+  win_docker_ok || return 2
+  win_server_down "$inst"   # a server left by a killed run, before its folder is replaced
+  win_stacks_down
+  win_temp_clean
+  # startRbsjServer.bat quietly moves to 9091 when 9090 is taken, and the tests would then talk to whatever holds 9090
+  win_ps 2>&1 <<'PS' | tr -d '\r' || return 1
+$l = Get-NetTCPConnection -LocalPort 9090 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($l) { "FAIL  port 9090 is taken by " + (Get-Process -Id $l.OwningProcess -ErrorAction SilentlyContinue).ProcessName; exit 1 }
+PS
+  win_bundle_extract "$zip" "$root" startServer.bat || return 1
+
+  # "Start the server by running startServer.bat"
+  WIN_RUN_ENV="" win_run_start dp-server "$inst" startServer.bat || return 1
+  win_wait_9090 || {
+    echo "--- startServer.bat output ---"
+    win_run_poll dp-server 0 2>&1 | tr -d '\r' | grep -v '^@@' | tail -40
+    win_server_down "$inst"; return 1; }
+
+  win_web_e2e server-windows-vm "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" ||
+    { win_server_down "$inst"; return 1; }
+  win_pull "$(printf '%s' "$inst\\logs\\rbsj-server.log" | tr '\\' '/')" "${WIN_WEB_OUT%.log}-rbsj-server.log" 2>/dev/null &&
+    echo "WIN_SERVER_LOG=${WIN_WEB_OUT%.log}-rbsj-server.log"
+  win_server_down "$inst"
+  win_stacks_down
+  win_web_result server-windows-vm "$mode" "$spec" "$gexp"
+}
+
+# shutServer.bat, then the task that ran startServer.bat ended in any case; keeps the folder (config, logs, output) as
+# the evidence of the run until the next run replaces it.
+win_server_down() {
+  win_ps 2>&1 <<PS | tr -d '\r'
+if (-not (Test-Path '$1\\shutServer.bat')) { exit 0 }
+Set-Location '$1'
+& cmd.exe /c shutServer.bat 2>&1 | Out-Null
+for (\$i = 0; \$i -lt 30; \$i++) {
+  if (-not (Get-NetTCPConnection -LocalPort 9090 -State Listen -ErrorAction SilentlyContinue)) { "WIN_SERVER=stopped by shutServer.bat"; exit 0 }
+  Start-Sleep 2
+}
+"WARN  something still listens on 9090 a minute after shutServer.bat"
+PS
+  win_run_stop dp-server >/dev/null 2>&1
 }
 
 # W1 "done when": the VM answers, and no firewall window was needed to make it answer.
@@ -2287,7 +2400,7 @@ fi
 case "$TASK" in
   build|e2e|junit|quality|dev|win|publish-demo-bkstg|publish-demo-datapallas.com) ;;
   # release: reserved for the real software release (plan §3 O7)
-  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
+  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
 esac
 
 # The Windows lane runs here on the host, before any container exists: it only talks to the VM over
@@ -2303,6 +2416,7 @@ if [ "$TASK" = "win" ]; then
     stop)  shift 2; win_run_stop "$@"; exit $? ;;
     e2e)   shift 2; win_e2e "$@"; exit $? ;;
     docker-e2e) win_docker_e2e; exit $? ;;
+    server-e2e) win_server_e2e; exit $? ;;
     sync)  win_sync_repo; exit $? ;;
     prepare) win_sync_repo && win_prepare_package; exit $? ;;
     *)     echo "usage: $0 win check | $0 win ssh <words...> | $0 win ps < script.ps1"
@@ -2311,7 +2425,8 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win sync         (fast-forward the VM's checkout to origin/main; win e2e does this first)"
            echo "       $0 win prepare      (sync, then rebuild the VM's package when it is not from the VM's commit; win e2e does this too)"
            echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
-           echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"; exit 2 ;;
+           echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"
+           echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"; exit 2 ;;
   esac
 fi
 PUBLISH_FLAGS=""
