@@ -8,16 +8,16 @@
 # closing Jenkins, the browser or the SSH session leaves it running. A reboot of this host kills the
 # driver, not the VM task: then `bash asbl/ci/dp-ci.sh win poll e2e` (or `docker-e2e`, `server-e2e`) shows what the VM did.
 #
-#   bash win-e2e.sh [e2e|docker-e2e|server-e2e]   which lane: e2e (default) = windows-vm-electron, docker-e2e = windows-vm-docker,
-#                                                 server-e2e = windows-vm-server
+#   bash win-e2e.sh [e2e|docker-e2e|server-e2e|release]   which lane: e2e (default) = windows-vm-electron, docker-e2e = windows-vm-docker,
+#                                                         server-e2e = windows-vm-server, release = job dp-ci-release-step3-pack-and-uat
 #   E2E_SPEC / E2E_GREP / E2E_ROTATION_DATE  passed on to dp-ci.sh win <lane> (both filters empty = its default set)
 set -uo pipefail
 
 LANE="${1:-e2e}"
-case "$LANE" in e2e|docker-e2e|server-e2e) ;; *) echo "FAIL  lane must be e2e, docker-e2e or server-e2e (got '$LANE')"; exit 2 ;; esac
+case "$LANE" in e2e|docker-e2e|server-e2e|release) ;; *) echo "FAIL  lane must be e2e, docker-e2e, server-e2e or release (got '$LANE')"; exit 2 ;; esac
 
 LOG_DIR="${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}"
-# one pid file for the three lanes: they share the VM's desktop, its port 9090 and its Docker Desktop
+# one pid file for every Windows lane: they share the VM's desktop, its port 9090 and its Docker Desktop
 PIDFILE="$LOG_DIR/win-e2e.pid"
 mkdir -p "$LOG_DIR"
 

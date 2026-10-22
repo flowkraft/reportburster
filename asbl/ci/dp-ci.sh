@@ -2,7 +2,7 @@
 # =============================================================================
 # DataPallas Linux CI — run on internalsystems, from anywhere:
 #
-#   bash asbl/ci/dp-ci.sh build     compile (no unit tests) + packages + Docker image + Trivy scan, from the working tree as it is (Jenkins job dp-ci-package)
+#   bash asbl/ci/dp-ci.sh build     compile (no unit tests) + packages + Docker image + Trivy scan, from the working tree as it is (Jenkins job dp-ci-release-step1-package)
 #   E2E_SPEC=<regex> E2E_GREP=<regex> bash asbl/ci/dp-ci.sh e2e
 #                                   e2e via the SAME gulp flow as `npm run custom:start-server-and-e2e-web`
 #                                   (targeted when E2E_SPEC/E2E_GREP are set; both empty = the full suite without
@@ -21,7 +21,7 @@
 #                                   E2E_MAX_TEST_MS (60 min per test), E2E_ACTION_TIMEOUT_MS (5 min per click),
 #                                   E2E_CLEAN_STATE_ATTEMPTS (60), E2E_FAILFAST (1), E2E_START_EVIDENCE_MS (5 min),
 #                                   E2E_STALL_MS (10 min), E2E_REPEAT_EACH (1), E2E_SLOW_MO (0 ms, the config default everywhere; 750 = watch in slow motion). 0 switches one off.
-#                                   `e2e` is the REAL e2e, the release check (Jenkins job dp-ci-e2e-release): the package is rebuilt whenever its stamp is not this
+#                                   `e2e` is the REAL e2e, the release check (Jenkins job dp-ci-release-step2-e2e-prerelease): the package is rebuilt whenever its stamp is not this
 #                                   clean commit (26-40 min); E2E_PACKAGE does not apply to it.
 #                                   E2E_DD_SCREENSHOTS=1 (off by default): the dashboard-demo specs also take the "How it was built" pictures. They are
 #                                   written into the docs site's public/images/docs (DOCS_SITE, default <all-repos>/src/company-biz/flowkraft/www/
@@ -35,7 +35,7 @@
 #                                                                        package and the testground; stops with "use package-repackage" when one of them is not a verbatim
 #                                                                        copy (generated, transformed or named by the assembler). Seconds.
 #                                     package-repackage                  package the content again on the jars already built (AssemblerTest#refreshContentForE2E), about 3.5 min.
-#                                                                        Not a full rebuild: that is dp-ci-package (about 26 min).
+#                                                                        Not a full rebuild: that is dp-ci-release-step1-package (about 26 min).
 #                                   The loop lane also serves the AI Hub start page from the `ui-startpage` sources (`next dev`, the Dockerfile's
 #                                   devserver stage, image ai-hub-ai-hub-frend:dev): a Canvas change needs no image build and no run can test a stale
 #                                   image. The release lane keeps the production image. Line: AI_HUB_FROM_SOURCES=<path>.
@@ -89,13 +89,16 @@
 #                                   intact. `ssh` goes through cmd.exe (quote-free commands only);
 #                                   `ps` ships a PowerShell script from stdin as -EncodedCommand, so
 #                                   nothing in it ever needs escaping. Use `ps` for anything real.
-#   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e | win server-e2e
-#                                   The three Windows e2e targets (Jenkins dp-ci-e2e-release, launched by jenkins/win-e2e.sh):
+#   bash asbl/ci/dp-ci.sh win e2e | win docker-e2e | win server-e2e | win release
+#                                   The three Windows e2e targets (Jenkins dp-ci-release-step2-e2e-prerelease, launched by jenkins/win-e2e.sh):
 #                                   windows-vm-electron = the desktop app on the VM; windows-vm-docker = DataPallas Server in the
 #                                   VM's Docker Desktop, from datapallas-server-docker.zip as the self-host page installs it, with
 #                                   the image `build` made from the VM's commit; windows-vm-server = DataPallas Server on the VM's
 #                                   own Java 17, from datapallas-server.zip as the installation page installs it (startServer.bat).
 #                                   Both server targets run the same light set of five spec files by default.
+#                                   `win release` is the release itself (job dp-ci-release-step3-pack-and-uat, run last):
+#                                   pack-datapallas.bat once, then the Robot UAT and Docker on Windows and Linux, all on
+#                                   the very files that pack made - see win_release.
 #
 # The launcher returns within seconds. The work runs in a detached container named dp-ci, owned by
 # the Docker daemon, so closing SSH / Code Server / the browser has no effect on it. It builds IN
@@ -506,9 +509,18 @@ win_run_start() {
     echo '@echo off'
     # The private toolchain, same as the Linux image: JDK 17 + Maven 3.9.9 + Node 20. JAVAC_COMPILER_PATH
     # is what keeps asbl/Utils.java off the broken Temurin that is still installed machine-wide (F-6.8).
-    echo 'set "JAVA_HOME=C:\ci\tools\jdk-17"'
-    echo 'set "JAVAC_COMPILER_PATH=C:\ci\tools\jdk-17\bin\javac.exe"'
-    echo 'set "PATH=C:\ci\tools\jdk-17\bin;C:\ci\tools\maven\bin;C:\ci\tools\node;%PATH%"'
+    if [ "${WIN_RUN_BARE:-}" = 1 ]; then
+      # WIN_RUN_BARE=1: a step that must meet the machine as a user's does - the Java installed on it, never the
+      # CI's (the server installed as its page says, the Robot UAT). No toolchain, and the environment read
+      # again from the registry (Chocolatey's refreshenv), so not even the session's copy of it is left.
+      echo 'set "JAVA_HOME="'
+      echo 'set "PATH=%PATH:C:\ci\tools\jdk-17\bin;=%"'
+      echo 'where /q refreshenv && call refreshenv >nul'
+    else
+      echo 'set "JAVA_HOME=C:\ci\tools\jdk-17"'
+      echo 'set "JAVAC_COMPILER_PATH=C:\ci\tools\jdk-17\bin\javac.exe"'
+      echo 'set "PATH=C:\ci\tools\jdk-17\bin;C:\ci\tools\maven\bin;C:\ci\tools\node;%PATH%"'
+    fi
     # Anything else the step needs, one NAME=VALUE per line. It has to be written INTO the file:
     # environment variables do not survive the SSH boundary, and the scheduled task does not inherit
     # our environment either - it inherits the console session's. Quoted the `set "N=V"` way, so a
@@ -935,7 +947,7 @@ win_e2e() {
   [ "$code" = "0" ]
 }
 
-# The two Windows lanes of DataPallas Server. Each tests a package exactly as `dp-ci.sh build` (job dp-ci-package) made it
+# The two Windows lanes of DataPallas Server. Each tests a package exactly as `dp-ci.sh build` (job dp-ci-release-step1-package) made it
 # from the commit the VM tests, installed the way its download page tells a user to, with the tests in a browser on the
 # VM's desktop at http://localhost:9090:
 #   windows-vm-docker  datapallas-server-docker.zip (DockerAssembler) in Docker Desktop   https://datapallas.com/docs/server/self-host
@@ -943,9 +955,9 @@ win_e2e() {
 #                      machine's own Java 17
 # Both are light on purpose (owner, 2026-10-22: as light as it can be while still proving it; no duplication of what the
 # other lanes prove): each runs only what its package adds. E2E_SPEC / E2E_GREP replace the default set (retries 0 then).
-# Order: push, run dp-ci-package on the server checkout at origin/main (what the VM tests), then the lanes, one at a time:
+# Order: push, run dp-ci-release-step1-package on the server checkout at origin/main (what the VM tests), then the lanes, one at a time:
 # they share the VM's desktop, port 9090 and Docker Desktop, so jenkins/win-e2e.sh keeps one pid file for all three
-# Windows lanes and refuses a second driver, and dp-ci-e2e-release queues a second build. Not dp-ci-package during a
+# Windows lanes and refuses a second driver, and dp-ci-release-step2-e2e-prerelease queues a second build. Not dp-ci-release-step1-package during a
 # run: it replaces the zips the lanes install.
 
 # The newest successful build on this host, which must be of the commit the VM tests; prints its IMAGE_TAG
@@ -959,29 +971,35 @@ win_vm_build_tag() {
     tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
     [ -n "$tag" ] && { echo "WIN_BUILD=$(basename "$f") -> $tag" >&2; break; }
   done
-  [ -n "$tag" ] || { echo "FAIL  no successful build log with an IMAGE_TAG line - run job dp-ci-package first" >&2; return 2; }
+  [ -n "$tag" ] || { echo "FAIL  no successful build log with an IMAGE_TAG line - run job dp-ci-release-step1-package first" >&2; return 2; }
   tagsha="${tag#*-}"
   # two git versions may abbreviate the same commit to different lengths
   [ "${vm#"$tagsha"}" != "$vm" ] || [ "${tagsha#"$vm"}" != "$tagsha" ] ||
-    { echo "FAIL  the build is of '$tagsha', the VM tests '$vm' - run job dp-ci-package on that commit first" >&2; return 2; }
+    { echo "FAIL  the build is of '$tagsha', the VM tests '$vm' - run job dp-ci-release-step1-package on that commit first" >&2; return 2; }
   echo "$tag"
 }
 
 # win_bundle_extract <local zip> <VM folder> <file DataPallas\ must hold>: the zip copied to the VM and extracted into an
 # empty folder, nothing changed in it - what a user's unzip gives.
 win_bundle_extract() {
-  local name; name=$(basename "$1")
-  win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
-  win_scp "$1" "C:/dp-ci/tmp/$name" || { echo "FAIL  could not copy $name to the VM" >&2; return 1; }
+  local name zip keep=0
+  if [ -f "$1" ]; then
+    name=$(basename "$1"); zip="C:\\dp-ci\\tmp\\$name"
+    win_ssh "if not exist C:\\dp-ci\\tmp md C:\\dp-ci\\tmp" >/dev/null 2>&1
+    win_scp "$1" "C:/dp-ci/tmp/$name" || { echo "FAIL  could not copy $name to the VM" >&2; return 1; }
+  else
+    # a path on the VM: the release extracts the very file the pack made, and leaves it where it is
+    name="${1##*\\}"; zip="$1"; keep=1
+  fi
   win_ps 2>&1 <<PS | tr -d '\r'
 \$ErrorActionPreference = "Continue"
-\$root = '$2'; \$zip = 'C:\\dp-ci\\tmp\\$name'
+\$root = '$2'; \$zip = '$zip'
 if (Test-Path \$root) { Remove-Item -Recurse -Force \$root }
 if (Test-Path \$root) { "FAIL  could not remove the previous installation (a file in it is still open)"; exit 1 }
 New-Item -ItemType Directory -Force \$root | Out-Null
 & tar.exe -xf \$zip -C \$root
 \$rc = \$LASTEXITCODE
-Remove-Item \$zip -ErrorAction SilentlyContinue
+if ($keep -eq 0) { Remove-Item \$zip -ErrorAction SilentlyContinue }
 if (\$rc -ne 0 -or -not (Test-Path "\$root\\DataPallas\\$3")) { "FAIL  could not extract $name"; exit 1 }
 "WIN_BUNDLE=$name extracted"
 PS
@@ -1091,7 +1109,7 @@ win_web_result() {
 WIN_LIGHT_SPEC='[\\/](features[\\/]quick-start|areas[\\/]configuration|components[\\/]log-files-viewer-separate-tabs|areas[\\/]cubes-definitions|features[\\/]apps-ai-hub)\.spec\.ts$'
 
 win_docker_e2e() {
-  local mode=targeted retries spec gexp tag version image_id vm_id running_id tmp
+  local from="${1:-build}" target=windows-vm-docker mode=targeted retries spec gexp tag version image_id vm_id running_id tmp
   local zip="$REPO/asbl/dist/datapallas-server-docker.zip" step=docker-e2e
   local root="$WIN_REPO\\frend\\reporting\\testground\\docker-server"
   local inst="$root\\DataPallas"
@@ -1099,12 +1117,20 @@ win_docker_e2e() {
     echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
     return 2
   }
-  win_sync_repo || return $?
-  tag=$(win_vm_build_tag) || return $?
-  image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
-    { echo "FAIL  image $SERVER_IMAGE_REPO:$tag is not on this host - run job dp-ci-package first" >&2; return 2; }
-  [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-package first" >&2; return 2; }
-  version=$(printf '%s' "$tag" | cut -d- -f1)
+  if [ "$from" = release ]; then
+    # `win docker-e2e release`, step 3 of `win release`: the zip and the image pack-datapallas.bat has just made on the
+    # VM, as they are - nothing copied, nothing tagged (the pack tags the image with the version the bundle pins).
+    target=release-docker-windows
+    tag="${RELEASE_VERSION:?}"; version="$RELEASE_VERSION"; image_id="${RELEASE_IMAGE_ID:?}"; vm_id="$RELEASE_IMAGE_ID"
+    zip="$WIN_REPO\\asbl\\dist\\datapallas-server-docker.zip"
+  else
+    win_sync_repo || return $?
+    tag=$(win_vm_build_tag) || return $?
+    image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
+      { echo "FAIL  image $SERVER_IMAGE_REPO:$tag is not on this host - run job dp-ci-release-step1-package first" >&2; return 2; }
+    [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-release-step1-package first" >&2; return 2; }
+    version=$(printf '%s' "$tag" | cut -d- -f1)
+  fi
 
   spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
   if [ -z "$spec" ] && [ -z "$gexp" ]; then mode=light; spec="$WIN_LIGHT_SPEC"; fi
@@ -1116,6 +1142,7 @@ win_docker_e2e() {
   win_temp_clean
 
   # The image, once per commit: about 2 GB, so it is copied only when the VM does not have this tag yet.
+  [ "$from" = release ] || {
   vm_id=$(win_ssh "docker image inspect $SERVER_IMAGE_REPO:$tag --format {{.Id}}" 2>/dev/null | tr -d '\r' | tail -1)
   case "$vm_id" in
     sha256:*) echo "WIN_DOCKER_IMAGE=$SERVER_IMAGE_REPO:$tag already on the VM" ;;
@@ -1142,6 +1169,7 @@ foreach (\$t in (& docker images \$repo --format '{{.Tag}}')) {
 & docker tag "\${repo}:\$tag" "\${repo}:\$version"
 if (\$LASTEXITCODE -ne 0) { "FAIL  docker tag failed"; exit 1 }
 PS
+  }
 
   win_bundle_extract "$zip" "$root" docker-compose.yml || return 1
   # "cd DataPallas" and "docker compose up -d", as the page says
@@ -1157,13 +1185,13 @@ PS
     { echo "FAIL  the container runs image '$running_id', the build made $vm_id - aborting" >&2; win_docker_down "$inst"; return 1; }
   echo "DOCKER_SERVER_IMAGE=$SERVER_IMAGE_REPO:$tag $image_id (on the VM: $vm_id)"
 
-  win_web_e2e windows-vm-docker "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
+  win_web_e2e "$target" "$step" "$inst" "$mode" "$spec" "$gexp" "$retries" "E2E_DOCKER_SERVER=datapallas-server" ||
     { win_docker_down "$inst"; return 1; }
   # the server's whole log of the run: clean state empties the bundle's logs between tests
   win_ssh "docker logs datapallas-server" > "${WIN_WEB_OUT%.log}-datapallas-server.log" 2>&1 &&
     echo "DOCKER_SERVER_LOG=${WIN_WEB_OUT%.log}-datapallas-server.log"
   win_docker_down "$inst"
-  win_web_result windows-vm-docker "$mode" "$spec" "$gexp"
+  win_web_result "$target" "$mode" "$spec" "$gexp"
 }
 
 # Stops the bundle (the page's "docker compose down") and what its server started; keeps the folder, which is the
@@ -1181,11 +1209,11 @@ PS
 # Target windows-vm-server: datapallas-server.zip (DataPallasServerSpringBootAssembler) as the installation page installs
 # it - Java 17 on the machine, the zip extracted, startServer.bat, http://localhost:9090 - then the same light set as
 # windows-vm-docker, a plain web run against it (no E2E_DOCKER_SERVER: the installation is the extracted folder itself).
-# Java is the machine's: the CI's JDK 17 comes first on the machine PATH, as a user's installed Java would, and
-# startServer.bat's refreshenv reads that PATH. The server runs in the foreground on the desktop, as when a user
-# double-clicks startServer.bat, and is stopped with shutServer.bat at the end.
+# Java is the machine's, the Java 17 installed on it (Temurin, through Chocolatey) - a bare step, so never the CI's
+# private JDK, which is on no machine-wide setting (since 2026-10-22). The server runs in the foreground on the
+# desktop, as when a user double-clicks startServer.bat, and is stopped with shutServer.bat at the end.
 # Owner, 2026-10-22: this lane runs the light set and nothing else; the Robot UAT suites
-# (asbl/src/uat/tests/DataPallas-Server*.robot: auth, poll folder, Windows service) get lanes of their own.
+# (asbl/src/uat/tests/DataPallas-Server*.robot: auth, poll folder, Windows service) run in `win release`.
 win_server_e2e() {
   local mode=targeted retries spec gexp tag step=server-e2e
   local zip="$REPO/asbl/dist/datapallas-server.zip"
@@ -1197,7 +1225,7 @@ win_server_e2e() {
   }
   win_sync_repo || return $?
   tag=$(win_vm_build_tag) || return $?
-  [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-package first" >&2; return 2; }
+  [ -s "$zip" ] || { echo "FAIL  $zip is missing - run job dp-ci-release-step1-package first" >&2; return 2; }
   echo "WIN_SERVER_PACKAGE=datapallas-server.zip of build $tag"
 
   spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
@@ -1217,7 +1245,7 @@ PS
   win_bundle_extract "$zip" "$root" startServer.bat || return 1
 
   # "Start the server by running startServer.bat"
-  WIN_RUN_ENV="" win_run_start dp-server "$inst" startServer.bat || return 1
+  WIN_RUN_ENV="" WIN_RUN_BARE=1 win_run_start dp-server "$inst" startServer.bat || return 1
   win_wait_9090 || {
     echo "--- startServer.bat output ---"
     win_run_poll dp-server 0 2>&1 | tr -d '\r' | grep -v '^@@' | tail -40
@@ -1246,6 +1274,152 @@ for (\$i = 0; \$i -lt 30; \$i++) {
 "WARN  something still listens on 9090 a minute after shutServer.bat"
 PS
   win_run_stop dp-server >/dev/null 2>&1
+}
+
+# Job dp-ci-release-step3-pack-and-uat (`dp-ci.sh win release`): the release files, built once and accepted the way a
+# user meets them. Step 3 of 3, run last: after step 2 (every dp-ci-release-step2-e2e-prerelease target) is green on the
+# same commit. One run makes one pack, so every check below is of the very files that may be published; their sha256
+# are printed and kept in <log>-step-release-files.txt (owner, 2026-10-22):
+#   1. pack            asbl\pack-datapallas.bat on the VM, unchanged: empties dist, target and the project's Maven cache,
+#                      builds everything again (DataPallas.exe included), and leaves datapallas.zip, datapallas-server.zip,
+#                      datapallas-server-docker.zip and datapallas-src.zip in asbl\dist, and the flowkraft/datapallas-server
+#                      image in Docker Desktop. Its upload and push lines are comments: nothing is published.
+#   2. Robot UAT       asbl\src\uat\run-tests.bat, unchanged: extracts datapallas.zip and datapallas-server.zip and runs every
+#                      .robot file as a user meets the product - Java and Chocolatey removed and installed, the exe, the
+#                      command line, the server and its Windows service. A bare step: the machine's Java, never the CI's.
+#   3. docker Windows  that datapallas-server-docker.zip and that image in the VM's Docker Desktop, the light set
+#   4. docker Linux    the same zip and image copied to this host, the docker-server target, the light set
+# Green only when all four are. A red one means a new commit and steps 2 and 3 again, never a patched zip. Uploading the
+# zips and pushing the image stay the owner's, by hand, of the files in the list.
+win_release() {
+  local base vmc hostc files ok=1 rc res_robot=FAIL res_dw=FAIL res_dl=FAIL
+  local uat rdir rtag created_host counts pass fail skip
+  [ -n "${WIN_REPO:-}" ] || {
+    echo "FAIL  WIN_REPO is not set: add it to $WIN_CI_CONF (the VM's checkout, e.g. C:\\...\\rb)." >&2
+    return 2
+  }
+  uat="$WIN_REPO\\asbl\\src\\uat"
+  base="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-release-$(date -u +%Y%m%dT%H%M%SZ)-step.log}"
+  base="${base%.log}"
+  mkdir -p "$(dirname "$base")" 2>/dev/null
+  win_sync_repo || return $?
+  vmc=$(win_ssh "git -C $WIN_REPO rev-parse --short HEAD" 2>/dev/null | tr -d '\r' | tail -1)
+  [ -n "$vmc" ] || { echo "FAIL  could not read the VM's commit" >&2; return 2; }
+  echo "RELEASE_COMMIT=$vmc"
+  # the pack builds the image in Docker Desktop, and steps 3 and 4 run it
+  win_docker_ok || return 2
+  win_server_down "$WIN_REPO\\frend\\reporting\\testground\\server\\DataPallas" >/dev/null
+  win_stacks_down server
+  win_temp_clean
+
+  echo "===== RELEASE 1/4 pack: asbl\\pack-datapallas.bat  $(date -u +%FT%TZ)"
+  WIN_RUN_ENV="" WIN_RUN_WATCH="$WIN_REPO\\asbl\\pack-datapallas.log" WIN_RUN_TIMEOUT="${RELEASE_PACK_TIMEOUT:-28800}" WIN_RUN_STALL=7200 \
+    win_run release-pack "$WIN_REPO\\asbl" pack-datapallas.bat
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "--- asbl\\pack-datapallas.log (last 60 lines) ---"
+    win_ps 2>&1 <<PS | tr -d '\r'
+Get-Content '$WIN_REPO\\asbl\\pack-datapallas.log' -Tail 60 -ErrorAction SilentlyContinue
+PS
+    echo "RELEASE_RESULT commit=$vmc pack=FAIL(exit $rc) robot=NOT_RUN docker-windows=NOT_RUN docker-linux=NOT_RUN"
+    return 1
+  fi
+  # what the pack made: the four zips with their sha256, and the image (its version label names the tag the bundle pins;
+  # PowerShell 5.1 strips the quotes of {{index .Config.Labels "version"}}, so the labels are read as JSON)
+  files=$(win_ps 2>&1 <<PS | tr -d '\r'
+\$ok = \$true
+foreach (\$n in 'datapallas.zip', 'datapallas-server.zip', 'datapallas-server-docker.zip', 'datapallas-src.zip') {
+  \$f = Join-Path '$WIN_REPO\\asbl\\dist' \$n
+  if (Test-Path \$f) { "RELEASE_FILE " + (Get-FileHash -Algorithm SHA256 \$f).Hash.ToLower() + "  " + (Get-Item \$f).Length + "  " + \$n }
+  else { "FAIL  \$n is not in asbl\\dist"; \$ok = \$false }
+}
+\$labels = (& docker image inspect '$SERVER_IMAGE_REPO:latest' --format '{{json .Config.Labels}}' 2>\$null) | ConvertFrom-Json
+\$v = \$labels.version
+\$id = (& docker image inspect "$SERVER_IMAGE_REPO:\$v" --format '{{.Id}}' 2>\$null)
+\$created = (& docker image inspect "$SERVER_IMAGE_REPO:\$v" --format '{{.Created}}' 2>\$null)
+if (\$v -and \$id) { "RELEASE_IMAGE $SERVER_IMAGE_REPO:\$v \$id \$created" } else { "FAIL  the image the pack builds is not in Docker Desktop"; \$ok = \$false }
+if (\$ok) { exit 0 } else { exit 1 }
+PS
+)
+  rc=$?
+  printf '%s\n' "$files"
+  [ "$rc" -eq 0 ] || { echo "RELEASE_RESULT commit=$vmc pack=FAIL(output) robot=NOT_RUN docker-windows=NOT_RUN docker-linux=NOT_RUN"; return 1; }
+  read -r _ RELEASE_IMAGE RELEASE_IMAGE_ID RELEASE_IMAGE_CREATED <<< "$(printf '%s\n' "$files" | grep '^RELEASE_IMAGE ')"
+  RELEASE_VERSION="${RELEASE_IMAGE##*:}"
+  export RELEASE_VERSION RELEASE_IMAGE_ID
+  { echo "commit   $vmc"
+    echo "image    $RELEASE_IMAGE  $RELEASE_IMAGE_ID  created $RELEASE_IMAGE_CREATED"
+    printf '%s\n' "$files" | sed -n 's/^RELEASE_FILE /sha256   /p'
+  } > "$base-release-files.txt"
+  echo "RELEASE_FILES=$base-release-files.txt"
+
+  echo "===== RELEASE 2/4 Robot Framework UAT: asbl\\src\\uat\\run-tests.bat  $(date -u +%FT%TZ)"
+  # the suite's own set-up, once: its venv
+  win_ps 2>&1 <<PS | tr -d '\r'
+if (-not (Test-Path '$uat\\.venv\\Scripts\\activate.bat')) {
+  Set-Location '$uat'
+  & powershell -NoProfile -ExecutionPolicy Bypass -File requirements-install.ps1 2>&1 | Select-Object -Last 5
+}
+PS
+  WIN_RUN_ENV="" WIN_RUN_BARE=1 WIN_RUN_WATCH="" WIN_RUN_TIMEOUT="${RELEASE_ROBOT_TIMEOUT:-21600}" WIN_RUN_STALL=5400 \
+    win_run release-robot "$uat" run-tests.bat
+  # run-tests.bat does not pass Robot's exit code on: the verdict is the suite's own output.xml
+  rm -rf "$base-robot"
+  WIN_SCP_EXTRA=-r win_pull "$(printf '%s' "$uat\\results" | tr '\\' '/')" "$base-robot" 2>/dev/null
+  counts=$(python3 - "$base-robot/output.xml" <<'PY' 2>/dev/null
+import sys, xml.etree.ElementTree as ET
+s = ET.parse(sys.argv[1]).getroot().find('statistics/total/stat')
+print(s.get('pass', 0), s.get('fail', 0), s.get('skip', 0))
+PY
+)
+  if [ -n "$counts" ]; then
+    read -r pass fail skip <<< "$counts"
+    echo "ROBOT_RESULT passed=$pass failed=$fail skipped=$skip report=$base-robot/report.html"
+    [ "$fail" = 0 ] && [ "$pass" -gt 0 ] && res_robot=PASS
+  else
+    echo "ROBOT_RESULT no output.xml - the suite did not finish (see the step output above)"
+  fi
+  [ "$res_robot" = PASS ] || ok=0
+
+  echo "===== RELEASE 3/4 docker on Windows: the pack's datapallas-server-docker.zip and image  $(date -u +%FT%TZ)"
+  if E2E_SPEC="" E2E_GREP="" E2E_RETRIES="" WIN_E2E_LOG="$base.log" win_docker_e2e release; then res_dw=PASS; else ok=0; fi
+
+  echo "===== RELEASE 4/4 docker on Linux: the same zip and image, on this host  $(date -u +%FT%TZ)"
+  hostc=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)
+  rdir="$REPO/asbl/dist/release"; rtag="$RELEASE_VERSION-$vmc-release"
+  if [ "${hostc#"$vmc"}" = "$hostc" ] && [ "${vmc#"$hostc"}" = "$vmc" ]; then
+    echo "FAIL  this host's checkout is at '$hostc', the release is of '$vmc' - bring it to origin/main and run step 3 again"
+    ok=0
+  else
+    rm -rf "$rdir" && mkdir -p "$rdir"
+    win_pull "$(printf '%s' "$WIN_REPO\\asbl\\dist\\datapallas-server-docker.zip" | tr '\\' '/')" "$rdir/datapallas-server-docker.zip" 2>/dev/null
+    win_ssh "docker tag $SERVER_IMAGE_REPO:$RELEASE_VERSION $SERVER_IMAGE_REPO:$rtag && docker save -o C:\\dp-ci\\tmp\\release-image.tar $SERVER_IMAGE_REPO:$rtag" 2>&1 | tr -d '\r'
+    win_pull C:/dp-ci/tmp/release-image.tar "$rdir/image.tar" 2>/dev/null
+    win_ssh "del /q C:\\dp-ci\\tmp\\release-image.tar & docker rmi $SERVER_IMAGE_REPO:$rtag" >/dev/null 2>&1
+    # the release tags of earlier runs on this host: 2 GB each
+    docker images "$SERVER_IMAGE_REPO" --format '{{.Tag}}' | grep -- '-release$' | grep -vx -- "$rtag" |
+      while read -r t; do docker rmi "$SERVER_IMAGE_REPO:$t" >/dev/null 2>&1; done
+    docker load -q -i "$rdir/image.tar" 2>&1; rm -f "$rdir/image.tar"
+    # the same image: Docker Desktop and this host may number it differently (image stores), its build time is its own
+    created_host=$(docker image inspect "$SERVER_IMAGE_REPO:$rtag" --format '{{.Created}}' 2>/dev/null)
+    if [ -z "$created_host" ] || [ "$created_host" != "$RELEASE_IMAGE_CREATED" ]; then
+      echo "FAIL  the image on this host ('${created_host:-none}') is not the pack's (created $RELEASE_IMAGE_CREATED)"; ok=0
+    elif [ "$(sha256sum "$rdir/datapallas-server-docker.zip" 2>/dev/null | cut -d' ' -f1)" != \
+           "$(sed -n 's/^sha256   \([0-9a-f]*\) .*datapallas-server-docker.zip$/\1/p' "$base-release-files.txt")" ]; then
+      echo "FAIL  the zip copied to this host is not the pack's (sha256 differs)"; ok=0
+    elif (cd "$REPO" && E2E_TARGET=docker-server E2E_SPEC="$WIN_LIGHT_SPEC" E2E_GREP="" E2E_RETRIES=1 \
+          E2E_DOCKER_RELEASE_TAG="$rtag" E2E_DOCKER_RELEASE_ZIP="$rdir/datapallas-server-docker.zip" \
+          bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/dp-ci.sh e2e); then
+      res_dl=PASS
+    else
+      ok=0
+    fi
+  fi
+
+  echo "===== RELEASE  $(date -u +%FT%TZ)"
+  cat "$base-release-files.txt"
+  echo "RELEASE_RESULT commit=$vmc version=$RELEASE_VERSION pack=PASS robot=$res_robot docker-windows=$res_dw docker-linux=$res_dl"
+  [ "$ok" = 1 ]
 }
 
 # W1 "done when": the VM answers, and no firewall window was needed to make it answer.
@@ -1835,7 +2009,7 @@ AIHUBPY
   }
 
   # springdoc OpenAPI + Swagger UI (J11): while the shipped server is still up at the end of a docker-server run, save its /v3/api-docs as
-  # openapi.json and build a static Swagger UI page next to it (swagger-ui-dist from npm, fetched here), in <log>-openapi, which the dp-ci-e2e-release
+  # openapi.json and build a static Swagger UI page next to it (swagger-ui-dist from npm, fetched here), in <log>-openapi, which the dp-ci-release-step2-e2e-prerelease
   # job pulls and publishes next to the Playwright report. Never fails the run: a missing document or an npm problem is printed and the run goes on.
   e2e_openapi() {
     local out tmp code files="swagger-ui.css swagger-ui-bundle.js swagger-ui-standalone-preset.js favicon-32x32.png"
@@ -1874,16 +2048,23 @@ HTML
     local zip="$REPO/asbl/dist/datapallas-server-docker.zip" root="$REPO/frend/reporting/testground/docker-server"
     local f tag image_id running_id i
 
-    for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
-      grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
-      tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
-      [ -n "$tag" ] && { echo "docker-server: image of the newest successful build $(basename "$f") -> $tag"; break; }
-    done
-    [ -n "${tag:-}" ] || { echo "!!! docker-server: no successful build log with an IMAGE_TAG line — run 'dp-ci.sh build' first"; return 1; }
-    # The image must come from the commit under test: the tag is <version>-<commit>. An image from an older
-    # build would test old code under this commit's name (nothing is built here, so the only safe answer is no).
-    [ "${tag#*-}" = "$SHA" ] ||
-      { echo "!!! docker-server: the image was built from '${tag#*-}', the commit under test is '$SHA' — run 'dp-ci.sh build' (job dp-ci-package) first"; return 1; }
+    if [ -n "${E2E_DOCKER_RELEASE_TAG:-}" ]; then
+      # `dp-ci.sh win release` (job dp-ci-release-step3-pack-and-uat): the zip and the image the release pack made on
+      # the Windows VM, copied here as they are. The release has checked they are of this commit.
+      tag="$E2E_DOCKER_RELEASE_TAG"; zip="${E2E_DOCKER_RELEASE_ZIP:-}"
+      echo "docker-server: the release files -> $SERVER_IMAGE_REPO:$tag, $zip"
+    else
+      for f in $(ls -1 "$LOG_DIR"/*-build-*.log 2>/dev/null | sort -r); do
+        grep -aq '^PIPELINE_RESULT=SUCCESS' "$f" || continue
+        tag=$(grep -aoP '^IMAGE_TAG=\K\S+' "$f" | tail -1)
+        [ -n "$tag" ] && { echo "docker-server: image of the newest successful build $(basename "$f") -> $tag"; break; }
+      done
+      [ -n "${tag:-}" ] || { echo "!!! docker-server: no successful build log with an IMAGE_TAG line — run 'dp-ci.sh build' first"; return 1; }
+      # The image must come from the commit under test: the tag is <version>-<commit>. An image from an older
+      # build would test old code under this commit's name (nothing is built here, so the only safe answer is no).
+      [ "${tag#*-}" = "$SHA" ] ||
+        { echo "!!! docker-server: the image was built from '${tag#*-}', the commit under test is '$SHA' — run 'dp-ci.sh build' (job dp-ci-release-step1-package) first"; return 1; }
+    fi
     image_id=$(docker image inspect "$SERVER_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) ||
       { echo "!!! docker-server: image $SERVER_IMAGE_REPO:$tag is not on this host — run 'dp-ci.sh build' first"; return 1; }
     [ -s "$zip" ] || { echo "!!! docker-server: $zip is missing — run 'dp-ci.sh build' first"; return 1; }
@@ -2042,7 +2223,7 @@ HTML
     echo "IMAGE_TAG=$VERSION-$SHA"
   }
 
-  # Trivy (J15): scans the image tag_image has just tagged. Report only: JSON for Jenkins (<log>-trivy/trivy.json, pulled by the dp-ci-package job)
+  # Trivy (J15): scans the image tag_image has just tagged. Report only: JSON for Jenkins (<log>-trivy/trivy.json, pulled by the dp-ci-release-step1-package job)
   # plus the HIGH/CRITICAL table in this log. Never fails the build (a scan or database-download problem is printed and the run goes on).
   trivy_scan() {
     local out img="$SERVER_IMAGE_REPO:$VERSION-$SHA"
@@ -2382,7 +2563,7 @@ fi
 # -----------------------------------------------------------------------------
 TASK="${1:-}"
 # e2e-loop = the fix-and-retry loop: the same run as e2e, targeted, web or electron-linux, never a package rebuild (job dp-ci-e2e-loop).
-# e2e = the real e2e, the release check (job dp-ci-e2e-release): E2E_PACKAGE does not apply to it, so a stray value in the environment
+# e2e = the real e2e, the release check (job dp-ci-release-step2-e2e-prerelease): E2E_PACKAGE does not apply to it, so a stray value in the environment
 # cannot skip the package rule.
 [ "$TASK" = e2e-dev ] && { echo "FAIL  e2e-dev is now e2e-loop (Jenkins job dp-ci-e2e-loop)"; exit 2; }
 if [ "$TASK" = e2e-loop ]; then
@@ -2404,7 +2585,7 @@ fi
 case "$TASK" in
   build|e2e|junit|quality|dev|win|publish-demo-bkstg|publish-demo-datapallas.com) ;;
   # release: reserved for the real software release (plan §3 O7)
-  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
+  *) echo "usage: $0 build|e2e|e2e-loop|junit|quality|dev|win <check|ssh|ps|run|poll|stop|e2e|docker-e2e|server-e2e|release>|publish-demo-bkstg [TAG]|publish-demo-datapallas.com [TAG] [--reset]"; exit 2 ;;
 esac
 
 # The Windows lane runs here on the host, before any container exists: it only talks to the VM over
@@ -2421,6 +2602,7 @@ if [ "$TASK" = "win" ]; then
     e2e)   shift 2; win_e2e "$@"; exit $? ;;
     docker-e2e) win_docker_e2e; exit $? ;;
     server-e2e) win_server_e2e; exit $? ;;
+    release) win_release; exit $? ;;
     sync)  win_sync_repo; exit $? ;;
     prepare) win_sync_repo && win_prepare_package; exit $? ;;
     *)     echo "usage: $0 win check | $0 win ssh <words...> | $0 win ps < script.ps1"
@@ -2430,7 +2612,8 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win prepare      (sync, then rebuild the VM's package when it is not from the VM's commit; win e2e does this too)"
            echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
            echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"
-           echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"; exit 2 ;;
+           echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"
+           echo "       $0 win release      (the release: pack-datapallas.bat, then Robot UAT and Docker on Windows and Linux on its very files)"; exit 2 ;;
   esac
 fi
 PUBLISH_FLAGS=""
@@ -2583,6 +2766,7 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --u
   -e JUNIT_MODULE="${JUNIT_MODULE:-}" -e JUNIT_TEST="${JUNIT_TEST:-}" \
   -e E2E_SPEC="${E2E_SPEC:-}" -e E2E_GREP="${E2E_GREP:-}" -e E2E_TIMEOUT_SECS="${E2E_TIMEOUT_SECS:-}" -e E2E_RETRIES="${E2E_RETRIES:-}" \
   -e E2E_TARGET="${E2E_TARGET:-web}" \
+  -e E2E_DOCKER_RELEASE_TAG="${E2E_DOCKER_RELEASE_TAG:-}" -e E2E_DOCKER_RELEASE_ZIP="${E2E_DOCKER_RELEASE_ZIP:-}" \
   -e E2E_MAX_WAIT_MS="${E2E_MAX_WAIT_MS:-}" -e E2E_MAX_TEST_MS="${E2E_MAX_TEST_MS:-}" -e E2E_ACTION_TIMEOUT_MS="${E2E_ACTION_TIMEOUT_MS:-}" \
   -e E2E_CLEAN_STATE_ATTEMPTS="${E2E_CLEAN_STATE_ATTEMPTS:-}" -e E2E_FAILFAST="${E2E_FAILFAST:-}" \
   -e E2E_START_EVIDENCE_MS="${E2E_START_EVIDENCE_MS:-}" -e E2E_STALL_MS="${E2E_STALL_MS:-}" -e E2E_REPEAT_EACH="${E2E_REPEAT_EACH:-}" \

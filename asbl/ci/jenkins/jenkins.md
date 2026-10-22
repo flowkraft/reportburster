@@ -48,17 +48,20 @@ away is the live view of that build, and `follow-ci.sh attach` (on the host) bri
 
 All live in the folder `datapallas`, and are created by `seed.groovy`.
 
+A release runs three jobs in order, and their names say it: `dp-ci-release-step1-package`, `dp-ci-release-step2-e2e-prerelease` (every target), `dp-ci-release-step3-pack-and-uat`. The other jobs have no place in that order.
+
 | Job | Runs | Parameters |
 |---|---|---|
-| `dp-ci-package` | `dp-ci.sh build`: compile (no unit tests), the distribution packages, the Docker image, the Trivy scan; about 40 min. Needed before the `docker-server`, `windows-vm-docker` and `windows-vm-server` runs of `dp-ci-e2e-release`, which install what it built and refuse a build of another commit; the Windows VM always tests `origin/main`, so push first and build the server checkout at `origin/main`. Not while one of those runs is going: it replaces the packages they install. Also needed before publishing a demo | none |
+| `dp-ci-release-step1-package` | `dp-ci.sh build`: compile (no unit tests), the distribution packages, the Docker image, the Trivy scan; about 40 min. Needed before the `docker-server`, `windows-vm-docker` and `windows-vm-server` runs of `dp-ci-release-step2-e2e-prerelease`, which install what it built and refuse a build of another commit; the Windows VM always tests `origin/main`, so push first and build the server checkout at `origin/main`. Not while one of those runs is going: it replaces the packages they install. Also needed before publishing a demo | none |
 | `dp-ci-junit` | `dp-ci.sh junit`: the JUnit gate; no package, no e2e | `JUNIT_MODULE`, `JUNIT_TEST` |
 | `dp-ci-quality` | `dp-ci.sh quality`: compiles the Java modules, installs the npm dependencies, runs the quality tools; no package, no tests, never gating | none |
-| `dp-ci-e2e-loop` | `dp-ci.sh e2e-loop`: the fix-and-retry **loop**. One spec file, never rebuilds the package; not a release check. Speed: about 4 min fixed plus the spec | `E2E_SPEC` (required), `E2E_GREP`, `E2E_TARGET` (`web` or `electron-linux`), `E2E_PACKAGE`: `package-reuse-as-is` (default; run on the package exactly as it stands, for a fix to specs, helpers, Java or the Angular UI; instant), `package-rsync-simple-file-changes` (copy the plain db-template files changed since the package was built (commits, and new untracked files) into the package and the testground; stops with `use package-repackage` when a changed file is not a verbatim copy; seconds), `package-repackage` (package the content again on the built jars, `AssemblerTest#refreshContentForE2E`; about 3.5 min; not a full rebuild, that is `dp-ci-package`). `reuse` and `content` are refused, naming the new value. The log has the line `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` |
+| `dp-ci-e2e-loop` | `dp-ci.sh e2e-loop`: the fix-and-retry **loop**. One spec file, never rebuilds the package; not a release check. Speed: about 4 min fixed plus the spec | `E2E_SPEC` (required), `E2E_GREP`, `E2E_TARGET` (`web` or `electron-linux`), `E2E_PACKAGE`: `package-reuse-as-is` (default; run on the package exactly as it stands, for a fix to specs, helpers, Java or the Angular UI; instant), `package-rsync-simple-file-changes` (copy the plain db-template files changed since the package was built (commits, and new untracked files) into the package and the testground; stops with `use package-repackage` when a changed file is not a verbatim copy; seconds), `package-repackage` (package the content again on the built jars, `AssemblerTest#refreshContentForE2E`; about 3.5 min; not a full rebuild, that is `dp-ci-release-step1-package`). `reuse` and `content` are refused, naming the new value. The log has the line `E2E_PACKAGE mode=... built_from=... commit_under_test=... files_copied=<n>` |
 | `dp-ci-dev-live` | `dp-ci.sh dev --live` or `--pinned <sha>`: brings up the hot-reloading dev server and prints its URL (`dp-dev-live` / `dp-dev-pinned`), or stops it. No e2e: a diagnosis tool, never a verification. The server is a detached container, it keeps running after the build until `ACTION=stop`; a second start prints `already running at <URL>`; it refuses while a `dp-ci` run holds the server. A spec cannot run against it (an e2e cleans the testground the live server reads and starts its own server): use `dp-ci-e2e-loop` | `ACTION` (`start`, `stop`), `DEV_MODE` (`live`, `pinned`), `PINNED_SHA` (pinned only) |
-| `dp-ci-e2e-release` | `dp-ci.sh e2e`, or `dp-ci.sh win e2e` for `windows-vm-electron`, `dp-ci.sh win docker-e2e` for `windows-vm-docker` and `dp-ci.sh win server-e2e` for `windows-vm-server`: the **real** e2e, the release check. Speed: the slowest, it rebuilds a stale package first (about 26 min before the tests). It has no package parameter on purpose: it always runs on a package built from this exact commit and rebuilds it first when it is stale; it is the release check, so the package shortcuts exist only on `dp-ci-e2e-loop`. Needed before a release. One build at a time: a second one waits in the Jenkins queue, so the Windows targets (they share the VM; `win-e2e.sh` refuses a second driver too) can be started one after the other and run in turn | `E2E_SPEC` (one file, empty = the full suite), `E2E_TARGET` (`web`, `electron-linux`, `docker-server`, `windows-vm-electron`, `windows-vm-docker`: DataPallas Server in Docker Desktop on the VM, installed from `datapallas-server-docker.zip` as the self-host page says; empty `E2E_SPEC` there = a light set of five files, not the suite; run `dp-ci-package` on the same commit first; `windows-vm-server`: DataPallas Server on the VM's own Java 17, installed from `datapallas-server.zip` as the installation page says, with the same light set by default; `dp-ci-package` first too), `E2E_ROTATION_DATE` (empty = today; the day's database rotation, e.g. 2026-09-22 = sqlserver) |
+| `dp-ci-release-step2-e2e-prerelease` | `dp-ci.sh e2e`, or `dp-ci.sh win e2e` for `windows-vm-electron`, `dp-ci.sh win docker-e2e` for `windows-vm-docker` and `dp-ci.sh win server-e2e` for `windows-vm-server`: **step 2 of 3 of a release**, the **real** e2e, the prerelease check. Speed: the slowest, it rebuilds a stale package first (about 26 min before the tests). It has no package parameter on purpose: it always runs on a package built from this exact commit and rebuilds it first when it is stale; it is the release check, so the package shortcuts exist only on `dp-ci-e2e-loop`. Needed before a release. One build at a time: a second one waits in the Jenkins queue, so the Windows targets (they share the VM; `win-e2e.sh` refuses a second driver too) can be started one after the other and run in turn | `E2E_SPEC` (one file, empty = the full suite), `E2E_TARGET` (`web`, `electron-linux`, `docker-server`, `windows-vm-electron`, `windows-vm-docker`: DataPallas Server in Docker Desktop on the VM, installed from `datapallas-server-docker.zip` as the self-host page says; empty `E2E_SPEC` there = a light set of five files, not the suite; run `dp-ci-release-step1-package` on the same commit first; `windows-vm-server`: DataPallas Server on the VM's own Java 17, installed from `datapallas-server.zip` as the installation page says, with the same light set by default; `dp-ci-release-step1-package` first too), `E2E_ROTATION_DATE` (empty = today; the day's database rotation, e.g. 2026-09-22 = sqlserver) |
+| `dp-ci-release-step3-pack-and-uat` | `dp-ci.sh win release`, **step 3 of 3 of a release, the last**: only when every target of step 2 is green on the same commit. On the Windows VM, `asbl/pack-datapallas.bat` builds every release file once, from clean (`datapallas.zip` with DataPallas.exe, `datapallas-server.zip`, `datapallas-server-docker.zip`, `datapallas-src.zip`, the Docker image), and those very files are then tested as a user meets them: the Robot Framework UAT (`asbl/src/uat/run-tests.bat`, a bare step: the machine's own Java), the Docker light set in Docker Desktop on the VM, and the same zip and image copied to this host with the `docker-server` target and the light set. Green only when all are; `RELEASE_RESULT` is the verdict, `RELEASE_FILE` the sha256 of the files that may be published (also `<log>-step-release-files.txt`). Publishes nothing. Slow: the pack alone takes hours | none |
 
 To add a step: make it a script in `asbl/ci/` that launches a detached run and prints a `log:` line, add a
-`<name>.Jenkinsfile` here (copy `dp-ci-package.Jenkinsfile`), add an entry to `seed.groovy`, push, run `seed`.
+`<name>.Jenkinsfile` here (copy `dp-ci-release-step1-package.Jenkinsfile`), add an entry to `seed.groovy`, push, run `seed`.
 
 ## The seed job (hidden from the dashboard)
 
@@ -99,7 +102,7 @@ dashboard, a *List View* that includes all jobs, or `seed` appears again in any 
 | `jenkins.md` | this document |
 | `seed.groovy` | Job DSL: creates the folder and every job. The source of truth for the jobs |
 | `<job>.Jenkinsfile` | one per job: starts its script on the host over SSH |
-| `win-e2e.sh` | launcher for the Windows VM e2e: starts `dp-ci.sh win e2e` (or `win docker-e2e` / `win server-e2e` with the argument `docker-e2e` / `server-e2e`) as a detached host process (pid in `win-e2e.pid`, shared by the three lanes), log `<ts>-win-e2e-<sha>.log` (`-win-docker-e2e-`, `-win-server-e2e-`), ends with `PIPELINE_RESULT=`. The tests themselves run on the VM as a scheduled task; a reboot of the host kills only the driver (then `dp-ci.sh win poll e2e`). Before every run the VM's checkout is fast-forwarded to `origin/main` (`dp-ci.sh win sync`; stops on local changes), the commit tested is printed as `WIN_E2E_COMMIT`, and the VM's package is rebuilt with `asbl/pack-prepare-for-e2e.bat` unless it was built from that commit (`WIN_E2E_PACKAGE=`; `dp-ci.sh win prepare` does both without the tests) |
+| `win-e2e.sh` | launcher for the Windows VM e2e: starts `dp-ci.sh win e2e` (or `win docker-e2e` / `win server-e2e` / `win release` with the argument `docker-e2e` / `server-e2e` / `release`) as a detached host process (pid in `win-e2e.pid`, shared by every Windows lane), log `<ts>-win-e2e-<sha>.log` (`-win-docker-e2e-`, `-win-server-e2e-`, `-win-release-`), ends with `PIPELINE_RESULT=`. The tests themselves run on the VM as a scheduled task; a reboot of the host kills only the driver (then `dp-ci.sh win poll e2e`). Before every run the VM's checkout is fast-forwarded to `origin/main` (`dp-ci.sh win sync`; stops on local changes), the commit tested is printed as `WIN_E2E_COMMIT`, and the VM's package is rebuilt with `asbl/pack-prepare-for-e2e.bat` unless it was built from that commit (`WIN_E2E_PACKAGE=`; `dp-ci.sh win prepare` does both without the tests) |
 | `follow-ci.sh` | on the host: runs a launcher and follows its log until the run ends (`run`), or follows the current one (`attach`) |
 | `plugins.txt` | the plugins needed beyond a standard install: `job-dsl`, and the report publishers of the quality plan (`htmlpublisher`, `coverage`, `warnings-ng`, `robot`) |
 | `pull-reports.sh` | on the host: streams the report files of a run as a tar.gz, which the `Reports` stage of a Jenkinsfile unpacks into the build's workspace (see "Reports") |
@@ -124,9 +127,10 @@ The plugins are listed in `plugins.txt`. `pull-reports.sh` is read from the host
 
 ### Robot UAT reports (Windows lane)
 
-The Robot UAT (`asbl/src/uat/run-tests.bat`, results in `asbl/src/uat/results/`: `output.xml`, `log.html`, `report.html`) is not run by `dp-ci.sh win` yet (the lane's header lists it as W9).
-The Jenkins side is ready: when a UAT step of the lane copies `results/` to the host as `<step log of the run, without .log>-robot` (like `-playwright-html` next to it),
-`dp-ci-e2e-release` with `E2E_TARGET=windows-vm-electron` pulls it and shows it with the Robot Framework plugin. Until then nothing is shown and nothing fails.
+The Robot UAT (`asbl/src/uat/run-tests.bat`, results in `asbl/src/uat/results/`: `output.xml`, `log.html`, `report.html`) runs in `dp-ci.sh win release`,
+job `dp-ci-release-step3-pack-and-uat`, on the files the release pack has just made. The run copies `results/` to the host as
+`<step log of the run, without .log>-robot`, and the job shows it with the Robot Framework plugin; the verdict is the run's own
+`ROBOT_RESULT` line (from `output.xml`: `run-tests.bat` does not pass Robot's exit code on).
 
 ## Quality reports (one place to look)
 
@@ -138,10 +142,10 @@ the first-run checklist is at the end. Jenkins folder `datapallas`, each job's b
 | JUnit (Surefire XML of every Java module) | `dp-ci-junit` | "Test Result" (counts, failed tests, trend) |
 | JaCoCo coverage | `dp-ci-junit` | "Coverage" (percentages, trend); "JaCoCo common / reporting / server" (HTML with the source of each class) |
 | Error Prone + NullAway (javac warnings) | `dp-ci-junit` | "Error Prone" warnings table |
-| Playwright | `dp-ci-e2e-release` | "Test Result" (JUnit XML) and "Playwright report" (HTML: steps, screenshots, trace) |
-| Robot Framework UAT (Windows lane) | `dp-ci-e2e-release` with `E2E_TARGET=windows-vm-electron` | "Robot Results" (nothing until a UAT step of the lane produces it) |
-| springdoc OpenAPI + Swagger UI | `dp-ci-e2e-release` with `E2E_TARGET=docker-server` | "Swagger UI (OpenAPI)" and the archived `openapi.json` |
-| Trivy (image CVEs, HIGH and CRITICAL)  | `dp-ci-package` | "Trivy" warnings table; the same table is in the console log |
+| Playwright | `dp-ci-release-step2-e2e-prerelease` | "Test Result" (JUnit XML) and "Playwright report" (HTML: steps, screenshots, trace) |
+| Robot Framework UAT | `dp-ci-release-step3-pack-and-uat` | "Robot Results"; the sha256 of the accepted files are the archived `release-files.txt` |
+| springdoc OpenAPI + Swagger UI | `dp-ci-release-step2-e2e-prerelease` with `E2E_TARGET=docker-server` | "Swagger UI (OpenAPI)" and the archived `openapi.json` |
+| Trivy (image CVEs, HIGH and CRITICAL)  | `dp-ci-release-step1-package` | "Trivy" warnings table; the same table is in the console log |
 | Javadoc | `dp-ci-quality` | "Javadoc" |
 | Compodoc | `dp-ci-quality` | "Compodoc" |
 | ESLint (Angular, AI Hub) | `dp-ci-quality` | "ESLint Angular", "ESLint AI Hub" |
@@ -158,7 +162,7 @@ the first-run checklist is at the end. Jenkins folder `datapallas`, each job's b
 
 1. The one-time Jenkins steps below, in order: install the plugins, relax the CSP, restart Jenkins, run `seed` (and approve the new `seed.groovy`).
 2. Run **`dp-ci-junit`** first: JaCoCo and Error Prone change the Java compile, so this is where a mistake shows first. If the compile breaks, remove the block marked "Error Prone + NullAway" in the poms.
-3. Run **`dp-ci-quality`**, then **`dp-ci-package`** (Trivy), then **`dp-ci-e2e-release`** (Playwright; for the OpenAPI page use `E2E_TARGET=docker-server`, after a build of the same commit).
+3. Run **`dp-ci-quality`**, then **`dp-ci-release-step1-package`** (Trivy), then **`dp-ci-release-step2-e2e-prerelease`** (Playwright; for the OpenAPI page use `E2E_TARGET=docker-server`, after a build of the same commit).
 4. Open each table above once. An empty table next to a fine console log means the parser does not fit that tool's output: the raw output is archived or in the console, tell an agent which.
 
 ### The least certain changes (never run)
@@ -242,6 +246,10 @@ fails and runs it again. The owner reads the same console in Jenkins.
 ## Job renames and removals (2026-10-08)
 
 `dp-ci-build` is now `dp-ci-package`; `dp-ci-attach` is gone; `dp-ci-e2e-dev` is new. The seed job creates and updates jobs but never deletes one (`removedJobAction` IGNORE), so the old jobs `datapallas/dp-ci-build` and `datapallas/dp-ci-attach` stay in Jenkins until someone deletes them there; neither had a build history worth keeping.
+
+## Job renames (2026-10-22)
+
+The jobs a release runs in order carry their step in their name: `dp-ci-package` is now `dp-ci-release-step1-package`, `dp-ci-e2e-release` is now `dp-ci-release-step2-e2e-prerelease` (the release check is now step 3), and `dp-ci-release-step3-pack-and-uat` is new. The seed job leaves the two old jobs in Jenkins with their build history (`removedJobAction` IGNORE) until they are deleted there by hand.
 
 ## Job renames (2026-10-11)
 

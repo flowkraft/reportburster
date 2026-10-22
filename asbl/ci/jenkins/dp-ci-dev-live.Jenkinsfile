@@ -1,6 +1,6 @@
 // Job datapallas/dp-ci-dev-live. Brings up the hot-reloading dev server (dp-ci.sh dev --live, or --pinned <sha>) and prints its URL,
 // or stops it. No e2e. The server is a detached container owned by the Docker daemon, so it keeps running after this build ends,
-// until ACTION=stop. A diagnosis tool, never a verification: only dp-ci-e2e-loop and dp-ci-e2e-release may tick a TODO.
+// until ACTION=stop. A diagnosis tool, never a verification: only dp-ci-e2e-loop and dp-ci-release-step2-e2e-prerelease may tick a TODO.
 // The work is the plain script named below (dp-ci.sh dev), run on the host over SSH exactly as it is run by hand; this file only
 // adds what a button needs: "already running" instead of a second start, a stop, and the wait until the site answers.
 pipeline {

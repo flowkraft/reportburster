@@ -1,4 +1,4 @@
-// Job datapallas/dp-ci-package. The shipped package: compile (no unit tests), the distributions, the Docker image and its Trivy scan: dp-ci.sh build.
+// Job datapallas/dp-ci-release-step1-package. Step 1 of 3 of a release (then dp-ci-release-step2-e2e-prerelease, then dp-ci-release-step3-pack-and-uat). The shipped package: compile (no unit tests), the distributions, the Docker image and its Trivy scan: dp-ci.sh build.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The run is a detached container owned by the Docker daemon, so closing
 // the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
