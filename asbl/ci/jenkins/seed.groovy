@@ -21,7 +21,7 @@ folder('datapallas') {
     '\n  dp-ci-dev-e2e-one-spec: after a fix: one spec file, or some of its tests, on web or electron-linux' +
     '\n  dp-ci-dev-junit: after a Java change: one test class or method, or all' +
     '\n  dp-ci-dev-quality-report: any time: lint, bug finder, format, complexity; never blocks anything' +
-    '\n  dp-ci-dev-server: to look at a change in a browser: start, restart or stop a dev server, live, pinned or kate' +
+    '\n  dp-ci-dev-server: to look at a change in a browser: start, restart or stop a dev server: dp-dev (live or pinned) or dp-kate' +
     '\n  dp-ci-release-step0-set-version: a release starts here: the new version committed (left as it is: nothing done)' +
     '\n  dp-ci-release-step1-e2e-prerelease: the full e2e: a release\'s four lanes, and the everyday check of the trunk' +
     '\n  dp-ci-release-step2-release-docker: the Docker release: MODE=rehearsal, then MODE=public (or public directly)' +
@@ -186,24 +186,25 @@ def jobs = [
   ],
   'dp-ci-dev-server': [
     about: describe(
-      WHAT: 'Starts, restarts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. kate: Kate\'s own clone (agents-headquarter/office-kate/projects/src/products/reportburster) as it is saved, hot-reloading, https://dp-kate.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing; restart starts it again (dp-ci.sh dev replaces the running container).',
+      WHAT: 'Starts, restarts or stops a dev web server (dp-ci.sh dev) and prints its URL. live: the CI host\'s checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once), https://dp-dev-live.bkstg.flowkraft.com (https://dp-dev.bkstg.flowkraft.com is the same site). pinned: a separate clone parked at one commit (PINNED_SHA), no hot reload, https://dp-dev-pinned.bkstg.flowkraft.com. TARGET=dp-kate.bkstg.flowkraft.com: the same for Kate\'s own clone (agents-headquarter/office-kate/projects/src/products/reportburster), live only, https://dp-kate.bkstg.flowkraft.com. It keeps running after the build ends, until ACTION=stop; a build, JUnit or e2e run stops the live one for its length and starts it again afterwards. A second start prints "already running at <URL>" and starts nothing; restart starts it again (dp-ci.sh dev replaces the running container).',
       WHEN: 'to look at a change in a browser. It is for looking, never a proof: only the e2e jobs prove (dp-ci-dev-e2e-one-spec, dp-ci-release-step1-e2e-prerelease), and no e2e runs against this server (an e2e cleans the testground it reads and starts its own).',
       ORDER: 'any time; it refuses to start while a dp-ci run holds the server.',
-      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker). live and kate also need their checkout\'s Linux package (asbl/target/package/verified-db-noexe, which an e2e run builds when there is none): it is not checked, and without it the start fails after the backend build (cp ... ENOENT, server exited).',
+      NEEDS: 'checked first, within seconds, at a start: this host\'s Docker engine (dp-ci.sh prereq docker). live (either TARGET) also needs its checkout\'s Linux package (asbl/target/package/verified-db-noexe, which an e2e run builds when there is none): it is not checked, and without it the start fails after the backend build (cp ... ENOENT, server exited).',
       TIME: 'start or restart: about 3.5 min until the site answers (measured 3.2 to 3.7 min; pinned: longer the first time for a commit, which it assembles first, not measured yet); already running: seconds; stop: seconds.',
       EXAMPLES: [
         'see a saved change: ACTION=start',
         'a test session nothing can move: ACTION=start  DEV_MODE=pinned  PINNED_SHA=<a commit, e.g. c3d1c29c>',
         'start a running site again (a change it does not hot-reload): ACTION=restart',
-        'Kate\'s site: DEV_MODE=kate (with ACTION=start, restart or stop)',
-        'free the machine: ACTION=stop (with DEV_MODE=pinned or kate for those)',
+        'Kate\'s site: TARGET=dp-kate.bkstg.flowkraft.com (with ACTION=start, restart or stop)',
+        'free the machine: ACTION=stop (with DEV_MODE=pinned, or TARGET=dp-kate.bkstg.flowkraft.com, for those)',
       ],
       LOG: 'ready: <URL> (the site answers), already running at, restart:, stopped:, FAIL.',
       MORE: guide('dp-ci-dev-server', 'asbl/ci/dp-ci.sh dev --live, dev --pinned <sha>, or dev in Kate\'s clone')
     ),
     params: [
+      TARGET    : [choices: ['dp-dev.bkstg.flowkraft.com', 'dp-kate.bkstg.flowkraft.com'], text: 'WHOSE dev site. dp-dev.bkstg.flowkraft.com (default): the CI host\'s main checkout (/var/kraft-internalsystems/projects/all-repos/src/products/reportburster), live or pinned (DEV_MODE).\ndp-kate.bkstg.flowkraft.com: the same for Kate\'s own clone (/var/kraft-internalsystems/projects/all-repos/coordination-project-files/agents-headquarter/office-kate/projects/src/products/reportburster), container datapallas-dev-kate; live only.'],
       ACTION    : [choices: ['start', 'restart', 'stop'], text: 'WHAT to do. start (default): bring the server up and print its URL; when it is already running, only print the URL.\nrestart: start it again, also when it runs (dp-ci.sh dev removes the running container first).\nstop: stop it (nothing to do when it is not running).'],
-      DEV_MODE  : [choices: ['live', 'pinned', 'kate'], text: 'WHICH dev site. live (default): the checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, an edited db-template file at once; a new sample or dataset needs dp-ci.sh dev --refresh-content, by hand).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload.\nkate: Kate\'s own clone (agents-headquarter/office-kate/projects/src/products/reportburster) as it is saved, hot-reloading, https://dp-kate.bkstg.flowkraft.com (container datapallas-dev-kate).\nUse pinned for a test session that must not move.'],
+      DEV_MODE  : [choices: ['live', 'pinned'], text: 'WHICH dev site. live (default): the checkout as it is saved right now, hot-reloading (Java in about 10 s, the UI at once, an edited db-template file at once; a new sample or dataset needs dp-ci.sh dev --refresh-content, by hand).\npinned: a separate clone parked at the commit in PINNED_SHA, so nothing committed meanwhile changes it; it does not hot-reload; TARGET=dp-dev.bkstg.flowkraft.com only.\nUse pinned for a test session that must not move.'],
       PINNED_SHA: [text: 'The commit to park the pinned site at (a sha, e.g. c3d1c29c). Empty by default; needed for DEV_MODE=pinned with ACTION=start or restart, ignored otherwise.\nIt must be a commit this checkout has (made here, or pushed and pulled here). A pinned site that is already running stays at its commit on a start: restart it to pin another one.'],
     ],
   ],

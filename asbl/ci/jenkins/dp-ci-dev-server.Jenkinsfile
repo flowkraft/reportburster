@@ -1,5 +1,5 @@
-// Job datapallas/dp-ci-dev-server: starts, restarts or stops a dev web server (dp-ci.sh dev --live, --pinned <sha>, or dev in
-// Kate's clone) and prints its URL.
+// Job datapallas/dp-ci-dev-server: starts, restarts or stops a dev web server (dp-ci.sh dev --live or --pinned <sha>) and prints
+// its URL: TARGET dp-dev.bkstg.flowkraft.com (the default) runs it from the main checkout, dp-kate.bkstg.flowkraft.com from Kate's clone.
 // The server is a detached container owned by the Docker daemon, so it keeps running after this build ends, until ACTION=stop.
 // For looking, never a proof: only the e2e jobs prove. The work is the plain script named below (dp-ci.sh dev), run on the host
 // over SSH exactly as it is run by hand; this file only adds what a button needs: "already running" instead of a second start,
@@ -28,19 +28,24 @@ pipeline {
 set -o pipefail
 q() { printf '%q' "$1"; }
 # ssh joins its arguments into one command line: each is quoted, so an empty PINNED_SHA stays an argument
-ssh -o BatchMode=yes "$DP_HOST" "bash -s -- $(q "$ACTION") $(q "$DEV_MODE") $(q "$PINNED_SHA") $(q "$DP_REPO") $(q "$DP_KATE_REPO")" <<'HOST'
+ssh -o BatchMode=yes "$DP_HOST" "bash -s -- $(q "$TARGET") $(q "$ACTION") $(q "$DEV_MODE") $(q "$PINNED_SHA") $(q "$DP_REPO") $(q "$DP_KATE_REPO")" <<'HOST'
 set -u
-action=$1 mode=$2 sha=$3 repo=$4 kate_repo=$5
+target=$1 action=$2 mode=$3 sha=$4 repo=$5 kate_repo=$6
 envs=()
 case "$mode" in
   live)   c=datapallas-dev;    url=https://dp-dev-live.bkstg.flowkraft.com;   start=(dev --live) ;;
   pinned) c=datapallas-pinned; url=https://dp-dev-pinned.bkstg.flowkraft.com; start=(dev --pinned "$sha") ;;
-  kate)   c=datapallas-dev-kate; url=https://dp-kate.bkstg.flowkraft.com;     start=(dev)
-          # Kate's own clone, with Kate's own container, URL and Maven cache (dp-ci.sh's header names them). The clone belongs
-          # to Kate's own user: git (in dp-ci.sh, as root) is told it is safe, for this command only
-          repo=$kate_repo
-          envs=(DP_DEV_CONTAINER="$c" DP_DEV_URL="$url" DP_DEV_M2=dp-kate-m2 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$repo") ;;
-  *) echo "FAIL  DEV_MODE must be live, pinned or kate (got '$mode')"; exit 2 ;;
+  *) echo "FAIL  DEV_MODE must be live or pinned (got '$mode')"; exit 2 ;;
+esac
+case "$target" in
+  dp-dev.bkstg.flowkraft.com) ;;
+  dp-kate.bkstg.flowkraft.com)
+    # the same for Kate's own clone, live only, with Kate's own container, URL and Maven cache (dp-ci.sh's header names
+    # them). The clone belongs to Kate's own user: git (in dp-ci.sh, as root) is told it is safe, for this command only
+    [ "$mode" = live ] || { echo "FAIL  dp-kate.bkstg.flowkraft.com has a live site only: DEV_MODE=live"; exit 2; }
+    c=datapallas-dev-kate; url=https://dp-kate.bkstg.flowkraft.com; start=(dev); repo=$kate_repo
+    envs=(DP_DEV_CONTAINER="$c" DP_DEV_URL="$url" DP_DEV_M2=dp-kate-m2 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$repo") ;;
+  *) echo "FAIL  TARGET must be dp-dev.bkstg.flowkraft.com or dp-kate.bkstg.flowkraft.com (got '$target')"; exit 2 ;;
 esac
 running() { [ -n "$(docker ps -q --filter "name=^${c}$")" ]; }
 case "$action" in
@@ -52,7 +57,7 @@ case "$action" in
 esac
 if [ "$action" = start ] && running; then
   at=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$c" | sed -n 's/^SHA=//p')
-  echo "already running at $url ($mode, ${at:-commit unknown}); nothing started. To start it again: ACTION=restart."
+  echo "already running at $url ($target, $mode, ${at:-commit unknown}); nothing started. To start it again: ACTION=restart."
   exit 0
 fi
 [ "$mode" != pinned ] || [ -n "$sha" ] || { echo "FAIL  DEV_MODE=pinned needs PINNED_SHA"; exit 2; }
