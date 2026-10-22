@@ -943,6 +943,10 @@ win_e2e() {
 #                      machine's own Java 17
 # Both are light on purpose (owner, 2026-10-22: as light as it can be while still proving it; no duplication of what the
 # other lanes prove): each runs only what its package adds. E2E_SPEC / E2E_GREP replace the default set (retries 0 then).
+# Order: push, run dp-ci-package on the server checkout at origin/main (what the VM tests), then the lanes, one at a time:
+# they share the VM's desktop, port 9090 and Docker Desktop, so jenkins/win-e2e.sh keeps one pid file for all three
+# Windows lanes and refuses a second driver, and dp-ci-e2e-release queues a second build. Not dp-ci-package during a
+# run: it replaces the zips the lanes install.
 
 # The newest successful build on this host, which must be of the commit the VM tests; prints its IMAGE_TAG
 # (<version>-<commit>). Its asbl/dist zips and its image are what the two lanes install.
