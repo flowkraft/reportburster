@@ -11,7 +11,8 @@
 #   bash asbl/ci/release-state.sh require <name|step1>...                        exit 1 unless every one is PASS
 #   bash asbl/ci/release-state.sh step1-guard                                    the release jobs' guard: exit 1 with one line, "REFUSED:
 #                                                                                step 1 is not green on <commit>: <lanes>. Run ...", unless
-#                                                                                the four lanes a release needs are PASS
+#                                                                                the four lanes a release needs are PASS (or E2E_APPROVAL,
+#                                                                                below)
 #   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
 #   bash asbl/ci/release-state.sh show [<commit>]                                the table of one commit
 #   bash asbl/ci/release-state.sh rehearsed docker|windows <version>             the newest PASSED rehearsal of that version on that
@@ -46,6 +47,13 @@
 # Until 2026-10-22 they were step2.docker-stage, step2.docker, step3.windows and step4.publish (none was ever recorded for real).
 # `require step1` = the step-1 lanes a release needs (owner decision OD5, 2026-10-22): the list below.
 # A `targeted` run (own E2E_SPEC/E2E_GREP) is recorded for the table but never counts for a release.
+# E2E_APPROVAL (the parameter of the release jobs of steps 2 and 3, 2026-10-23): free text, empty by default. Empty =
+# step1-guard and `require step1...` check the lanes as always. With the two words "owner approved" in it (any case)
+# they do not check them: the run goes on whatever the record says, and the decision is printed (the lines starting
+# E2E_APPROVAL: who (E2E_APPROVAL_USER, the Jenkins user), when, the text verbatim, each lane as the record holds it, on
+# this commit or else the newest on another one) and recorded on the commit as approval.step1 (DRY_RUN=yes|1: printed
+# only). Any other text = refused, the text shown, even when the lanes are green: a mistyped approval is never silent.
+# An approval is never a lane: a later check without one reads the lanes only.
 #
 # version-check <channel> (owner, 2026-10-22: the release takes its version from settings.xml; the same as the released
 # version = do nothing, greater = release). Each release job runs it for its own channel before any work:
@@ -86,6 +94,48 @@ commit_of() {  # the full hash of RELEASE_COMMIT or HEAD; the given text itself 
 tree_version() { grep -m1 -oP '(?<=<version>)[^<]+' "$SETTINGS_XML" 2>/dev/null; }
 valid_name() { printf '%s' "$1" | grep -qE '^(step1|rehearsal|public)\.[a-z0-9-]+$'; }
 field() { sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1; }  # field <file> <key>
+
+approval_phrase() { printf '%s' "${E2E_APPROVAL:-}" | grep -qiE 'owner[[:space:]]+approved'; }
+lane_state() {  # lane_state <verdict name>: what the record holds for it on this commit, else its newest verdict on another one
+  local f="$dir/$1" o t best="" best_t=""
+  [ -f "$f" ] && { echo "$(field "$f" result) on ${commit:0:8} ($(field "$f" time))"; return 0; }
+  for o in "$RELEASE_STATE_DIR"/*/"$1"; do
+    [ -f "$o" ] || continue
+    t=$(field "$o" time); [[ "$t" > "$best_t" ]] && { best_t="$t"; best="$o"; }
+  done
+  if [ -n "$best" ]; then echo "missing on ${commit:0:8}; newest on another commit: $(field "$best" result) on $(basename "$(dirname "$best")" | cut -c1-8) ($best_t)"
+  else echo "missing on ${commit:0:8} and on every other commit"; fi
+}
+approval_accept() {  # approval_accept <the check> <lane>...: the phrase is there: print the decision, record approval.step1; rc 2 = not recorded
+  local check="$1" user now n lanes="" tmp
+  shift
+  user="${E2E_APPROVAL_USER:-}"; [ -n "$user" ] || user="(no Jenkins user: run by hand as $(id -un))"
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  for n in $REQUIRED_STEP1 "$@"; do case " $lanes " in *" $n "*) ;; *) lanes="$lanes $n" ;; esac; done
+  echo "E2E_APPROVAL ACCEPTED on ${commit:0:8} by $user at $now ($check): the step-1 check is not made, the run goes on whatever the record says"
+  printf '%s\n' "$E2E_APPROVAL" | sed 's/^/E2E_APPROVAL text: /'
+  for n in $lanes; do printf 'E2E_APPROVAL   %-26s %s\n' "${n#step1.}" "$(lane_state "$n")"; done
+  case "${DRY_RUN:-no}" in yes|1) echo "E2E_APPROVAL dry run: approval.step1 not recorded"; return 0 ;; esac
+  mkdir -p "$dir" || return 2
+  tmp=$(mktemp "$dir/.approval.step1.XXXXXX") || return 2
+  {
+    echo "result=APPROVED"
+    echo "commit=$commit"
+    echo "version=$(tree_version)"
+    echo "time=$now"
+    echo "user=$user"
+    echo "text=$(printf '%s' "$E2E_APPROVAL" | tr '\r\n' '  ')"
+    echo "check=$check"
+    [ -n "${RELEASE_LOG:-}" ] && echo "log=$RELEASE_LOG"
+    for n in $lanes; do echo "$n=$(lane_state "$n")"; done
+  } > "$tmp" && mv -f "$tmp" "$dir/approval.step1" || { rm -f "$tmp"; echo "FAIL  could not record approval.step1 in $dir"; return 2; }
+  echo "E2E_APPROVAL recorded approval.step1 on ${commit:0:8} (never a lane: a check without an approval reads the lanes only)"
+}
+approval_refused() {  # a text that is not the phrase: shown, and the check refuses; rc 1 = no text at all
+  [ -n "${E2E_APPROVAL:-}" ] || return 1
+  echo "E2E_APPROVAL NOT ACCEPTED: the text does not say 'owner approved', so it is no approval and the run is refused. The text:"
+  printf '%s\n' "$E2E_APPROVAL" | sed 's/^/E2E_APPROVAL text: /'
+}
 
 hub_get() {  # hub_get <path under tags/> -> its JSON; rc 0 found, 1 no such tag (404), 2 Docker Hub not answering
   local out code
@@ -245,6 +295,8 @@ case "$cmd" in
     ;;
   require)
     [ "$#" -gt 0 ] || { echo "usage: $0 require <name|step1>..."; exit 2; }
+    lanes1=1; for n in "$@"; do case "$n" in step1|step1.*) ;; *) lanes1=0 ;; esac; done  # E2E_APPROVAL: step-1 lanes only
+    if [ "$lanes1" = 1 ] && approval_phrase; then approval_accept "require $*" $(printf '%s\n' "$@" | grep -v '^step1$'); exit $?; fi
     names=""
     for n in "$@"; do [ "$n" = step1 ] && names="$names $REQUIRED_STEP1" || names="$names $n"; done
     bad=0
@@ -256,17 +308,20 @@ case "$cmd" in
         *)    echo "  MISSING  $n  (never run on this commit)"; bad=1 ;;
       esac
     done
-    if [ "$bad" = 0 ]; then echo "RELEASE_STATE require OK commit=${commit:0:8}"; exit 0; fi
+    if [ "$bad" = 0 ]; then echo "RELEASE_STATE require OK commit=${commit:0:8}"; [ "$lanes1" = 1 ] && approval_refused && exit 1; exit 0; fi
     echo "RELEASE_STATE require FAILED commit=${commit:0:8}: run the steps above on this commit first"
+    [ "$lanes1" = 1 ] && approval_refused
     exit 1
     ;;
   step1-guard)
+    approval_phrase && { approval_accept step1-guard; exit $?; }
     bad=""
     for n in $REQUIRED_STEP1; do
       case "$(field "$dir/$n" result)" in PASS) ;; FAIL) bad="$bad, ${n#step1.} red" ;; *) bad="$bad, ${n#step1.} missing" ;; esac
     done
-    if [ -z "$bad" ]; then echo "ok: step 1 is green on ${commit:0:8} (${REQUIRED_STEP1//step1./})"; exit 0; fi
+    if [ -z "$bad" ]; then echo "ok: step 1 is green on ${commit:0:8} (${REQUIRED_STEP1//step1./})"; approval_refused && exit 1; exit 0; fi
     echo "REFUSED: step 1 is not green on ${commit:0:8}: ${bad#, }. Run dp-ci-release-step1-e2e-prerelease first."
+    approval_refused
     exit 1
     ;;
   rehearsed)
@@ -308,7 +363,7 @@ case "$cmd" in
     echo "release record of commit ${commit:0:8} ($dir)"
     printf '%-34s %-6s %-10s %-21s %s\n' VERDICT RESULT VERSION TIME MORE
     found=0
-    for f in "$dir"/step1.* "$dir"/rehearsal.* "$dir"/public.*; do
+    for f in "$dir"/step1.* "$dir"/approval.* "$dir"/rehearsal.* "$dir"/public.*; do
       [ -f "$f" ] || continue; found=1
       printf '%-34s %-6s %-10s %-21s %s\n' "$(basename "$f")" "$(field "$f" result)" "$(field "$f" version)" "$(field "$f" time)" \
         "$(grep -vE '^(result|commit|version|time)=' "$f" | tr '\n' ' ' | cut -c1-120)"
@@ -348,5 +403,5 @@ case "$cmd" in
     version_check "$ch"
     ;;
   *)
-    sed -n '2,65p' "$0"; exit 2 ;;
+    sed -n '2,73p' "$0"; exit 2 ;;
 esac
