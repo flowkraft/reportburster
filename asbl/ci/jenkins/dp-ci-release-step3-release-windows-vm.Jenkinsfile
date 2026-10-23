@@ -3,6 +3,8 @@
 // copied to the public places in minutes, or a rehearsal first when there is none.
 // Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
 // the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-release-step3-release-windows-vm.
+// E2E_APPROVAL (the owner's written decision to go on without step 1's four lanes; seed.groovy's parameter text says what it
+// does) and the user who started the build (E2E_APPROVAL_USER) reach asbl/ci/release-state.sh through the environment.
 // The work is the plain script named below, run on the host over SSH exactly as it is run by hand; this file
 // only starts it and shows its log. The driver is a detached host process and the VM steps are scheduled tasks,
 // so closing the browser or restarting Jenkins never stops it (see asbl/ci/jenkins/jenkins.md).
@@ -25,6 +27,16 @@ pipeline {
   stages {
     stage('Run on the host') {
       steps {
+        script {
+          // who started this build, for an E2E_APPROVAL (asbl/ci/release-state.sh writes it into the log and the release
+          // record): read from the build's cause, no plugin needed. Never stops the build
+          try {
+            def u = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')
+            env.E2E_APPROVAL_USER = u ? u[0].userId : currentBuild.getBuildCauses()[0].shortDescription
+          } catch (err) {
+            env.E2E_APPROVAL_USER = "(not read: ${err})"
+          }
+        }
         // a red run is recorded here, not thrown, so that the Reports stage below still runs and shows its reports
         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
         sh '''#!/bin/bash
@@ -32,9 +44,10 @@ set -o pipefail
 q() { printf '%q' "$1"; }
 # the Windows lanes' launcher and its pid file: never two Windows runs at once. The job is one step; its parts are marked
 # RELEASE STEP 1/3 .. 3/3 and WINDOWS PUBLIC inside, each START/END with the time it took (asbl/ci/marks.sh): grep '^######## '
-# in the console. MODE and DRY_RUN reach dp-ci.sh win release through the environment. The output is kept in release-run.out
-# for the stage that queues the seed job and for the build's label (post, below).
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && MODE=$(q "$MODE") DRY_RUN=$(q "$DRY_RUN") bash asbl/ci/jenkins/job-step.sh 'JOB STEP 1/1' 'the Windows release: dp-ci.sh win release' env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release" | tee release-run.out
+# in the console. MODE, DRY_RUN, E2E_APPROVAL and E2E_APPROVAL_USER reach dp-ci.sh win release (and the release-state.sh it
+# calls) through the environment. The output is kept in release-run.out for the stage that queues the seed job and for the
+# build's label (post, below).
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && MODE=$(q "$MODE") DRY_RUN=$(q "$DRY_RUN") E2E_APPROVAL=$(q "$E2E_APPROVAL") E2E_APPROVAL_USER=$(q "$E2E_APPROVAL_USER") bash asbl/ci/jenkins/job-step.sh 'JOB STEP 1/1' 'the Windows release: dp-ci.sh win release' env FOLLOW_PIDFILE=/var/kraft-internalsystems/logs/datapallas-ci/win-e2e.pid bash asbl/ci/jenkins/follow-ci.sh run bash asbl/ci/jenkins/win-e2e.sh release" | tee release-run.out
 '''
         }
       }

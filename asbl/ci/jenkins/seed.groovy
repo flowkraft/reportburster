@@ -27,7 +27,7 @@ folder('datapallas') {
     '\n  dp-ci-release-step2-release-docker: the Docker release: MODE=rehearsal, then MODE=public (or public directly)' +
     '\n  dp-ci-release-step3-release-windows-vm: the Windows release: the same two modes' +
     '\n  dp-ci-release-step4-demo-public: after step 2\'s MODE=public: demo.datapallas.com installs the release' +
-    '\n\nA release = step 0, then step 1\'s four lanes, then steps 2 and 3 (each MODE=rehearsal, a look, then MODE=public, the two public runs one after the other; once trusted, MODE=public directly), then step 4.')
+    '\n\nA release = step 0, then step 1\'s four lanes (without them, steps 2 and 3 go on only on the owner\'s written decision: E2E_APPROVAL), then steps 2 and 3 (each MODE=rehearsal, a look, then MODE=public, the two public runs one after the other; once trusted, MODE=public directly), then step 4.')
 }
 
 // A job's description: the same blocks for every job, so a reader finds each fact in the same place. A block given as a
@@ -52,6 +52,10 @@ def playwrightLog = 'Playwright. Search the whole log with a regular expression,
   '\n  Which failed, and the retries: (✘|x) +[0-9]+ specs[/\\\\] and retry #[0-9]+ (a pass on a retry = flaky, a fail on a retry = really red). One test: its file and line, for example reporting\\.spec\\.ts:390, with 20 lines of context. Waiting for a database: attempting JDBC.' +
   '\n  The official end result, once the run has finished: E2E_RESULT|\\] (stdout: +)?[0-9]+ (passed|failed|flaky|skipped|did not run).' +
   '\n  Counts during the run are attempts, not tests, and provisional: a test that failed and then passed on its retry shows once in each count. The official totals are Playwright\'s summary line (361 passed, 16 failed, 1 flaky), the E2E_RESULT line and the JSON report, written when the run ends.'
+
+// E2E_APPROVAL, the same parameter on both release jobs (steps 2 and 3). asbl/ci/release-state.sh reads it, with the user who
+// started the build (the Jenkinsfiles pass both): keep this in step with that script's header.
+def e2eApproval = 'THE OWNER\'S WRITTEN DECISION to release without step 1\'s four lanes green on the commit being released (the owner only). Empty (the default) = the normal check: the four lanes green on that commit, else REFUSED within seconds, naming the lanes.\nWith the words owner approved in the text (any case) = that check is not made: the run goes on whatever the release record holds. Nothing else changes: the version gate, the prerequisites, the pushed digest and sha256 checks, and never copying what did not pass a rehearsal stay as they are. It covers every step-1 check of this build.\nWritten down, never silent: lines starting E2E_APPROVAL in the log (ACCEPTED, the Jenkins user who started this build, the UTC time, the whole text, and each of the four lanes: PASS or FAIL on this commit, else the newest result on another commit, else missing), and the entry approval.step1 on the commit in the release record (bash asbl/ci/release-state.sh show). DRY_RUN=yes prints it and records nothing. It counts for this build only and never turns a lane green: the next build without it is refused again.\nAny other text = refused as when empty, and the log shows the text (E2E_APPROVAL NOT ACCEPTED), so a mistyped approval is seen.\nUse it: only when the owner decides to release on other evidence than the four lanes; write what the decision rests on.\nExample:\n  owner approved: 16.6.0 on the Linux full run of 1a2b3c4d and the Windows run whose three failures passed when re-run'
 
 // RELEASE_VERSION's pre-filled value (job dp-ci-release-step0-set-version): the current release, the higher of the two
 // channels' released versions, read now, while seed generates the jobs, from the public places the version gate reads
@@ -238,7 +242,7 @@ def jobs = [
         'It tests origin/main (this checkout is fast-forwarded to it first; local changes to tracked files stop it): push the fix first.',
         'For the quick fix-and-retry loop on Linux: dp-ci-dev-e2e-one-spec.',
       ],
-      ORDER: 'step 1 of a release: after dp-ci-release-step0-set-version (its version commit or a later one), before dp-ci-release-step2-release-docker and dp-ci-release-step3-release-windows-vm, which refuse unless the four lanes are green on their commit. It never needs step 0 and never skips.',
+      ORDER: 'step 1 of a release: after dp-ci-release-step0-set-version (its version commit or a later one), before dp-ci-release-step2-release-docker and dp-ci-release-step3-release-windows-vm, which refuse unless the four lanes are green on their commit (or their E2E_APPROVAL says owner approved: the owner\'s written decision to go on without them). It never needs step 0 and never skips.',
       NEEDS: [
         'checked first, within seconds, before the build and the tests (MISSING <what>: <what to do>, then PREREQUISITES MISSING, nothing started):',
         'web, electron-linux, docker-server: this host\'s Docker engine;',
@@ -284,11 +288,11 @@ def jobs = [
         'MODE=public never copies anything that did not pass: a red rehearsal leaves the public files as they are.',
         'Both modes start with the version gate: settings.xml the same as the released Docker version (the one :latest has) = NOTHING TO RELEASE, green, nothing done.',
       ],
-      WHEN: 'to release the Docker channel, once step 1\'s four lanes are green on origin/main. The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
-      ORDER: 'step 2: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1); before or after dp-ci-release-step3-release-windows-vm, never at the same time (both use the VM). Run the two MODE=public runs one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones. After its MODE=public: dp-ci-release-step4-demo-public, and the Docker Hub page by hand (asbl/docker/push-dockerhub-readme.ps1, on Windows, with its own Docker Hub token; the job prints it as a MANUAL line).',
+      WHEN: 'to release the Docker channel, once step 1\'s four lanes are green on origin/main (or, on the owner\'s decision, without them: E2E_APPROVAL). The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
+      ORDER: 'step 2: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1, unless E2E_APPROVAL says owner approved); before or after dp-ci-release-step3-release-windows-vm, never at the same time (both use the VM). Run the two MODE=public runs one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones. After its MODE=public: dp-ci-release-step4-demo-public, and the Docker Hub page by hand (asbl/docker/push-dockerhub-readme.ps1, on Windows, with its own Docker Hub token; the job prints it as a MANUAL line).',
       NEEDS: [
         'checked right after the version gate, within seconds, before anything slow (asbl/ci/release-publish.sh preflight docker; MISSING <what>: <what to provide>, then PREREQUISITES MISSING, nothing built):',
-        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1);',
+        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1), or the owner\'s written decision to go on without them: E2E_APPROVAL with the words owner approved (the parameter\'s own text says what it does and what it writes down);',
         'the keys file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner): a Docker Hub token that may push and a Backblaze key that can write, both tried; for MODE=public also the Cloudflare purge token;',
         'on this host: rclone, curl, sha256sum, the Docker engine and docker buildx;',
         'for a rehearsal, the Windows VM: answering, its Docker Desktop running, no other Windows run.',
@@ -299,13 +303,15 @@ def jobs = [
         'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
         'go public after a green rehearsal: MODE=public',
         'see what a run would do, nothing built or copied: DRY_RUN=yes (with either MODE)',
+        'release without step 1\'s four lanes, on the owner\'s decision: E2E_APPROVAL=owner approved: 16.6.0 on the Linux full run of 1a2b3c4d and the Windows run whose three failures passed when re-run',
       ],
-      LOG: 'the parts (DOCKER RELEASE STEP 1/6 .. 6/6, DOCKER PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|REHEARSED|rehearsing first|BUILD:|BUILD_TAG=|RELEASE_STATE|RELEASE_STAGE|DOCKER_SERVER_IMAGE|DOCKER_ONE_COMMAND|E2E_RESULT|PIPELINE_RESULT|RELEASE_PUBLIC|^MANUAL |DOCKER_RELEASE_RESULT|DOCKER_RELEASE=. The build list labels each build with what happened.',
+      LOG: 'the parts (DOCKER RELEASE STEP 1/6 .. 6/6, DOCKER PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|^E2E_APPROVAL|REHEARSED|rehearsing first|BUILD:|BUILD_TAG=|RELEASE_STATE|RELEASE_STAGE|DOCKER_SERVER_IMAGE|DOCKER_ONE_COMMAND|E2E_RESULT|PIPELINE_RESULT|RELEASE_PUBLIC|^MANUAL |DOCKER_RELEASE_RESULT|DOCKER_RELEASE=. An E2E_APPROVAL: ^E2E_APPROVAL (ACCEPTED or NOT ACCEPTED, who, when, the text, the four lanes). The build list labels each build with what happened.',
       MORE: guide('dp-ci-release-step2-release-docker', 'asbl/ci/jenkins/release-docker.sh')
     ),
     params: [
       MODE: [choices: ['rehearsal', 'public'], text: 'WHICH release. rehearsal (default) = a real release into places users do not get: build, push :<version>, stage in rehearsal/, test the download on Linux and on Windows. Nothing users get changes.\npublic (the owner only) = copy the newest passed rehearsal of this version to newest/ and :latest, in minutes; with none, rehearse first and copy only when it is green.\nUse rehearsal, look at it, then public; once trusted, public directly.'],
       DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it.\nyes = build, push, install and copy nothing: the version gate, the prerequisites (the bucket listed, not written), the guards, which rehearsal it would copy or that it would rehearse first, and what each part would do.\nUse yes to see what a run would do.'],
+      E2E_APPROVAL: [text: e2eApproval],
     ],
   ],
   'dp-ci-release-step3-release-windows-vm': [
@@ -317,11 +323,11 @@ def jobs = [
         'MODE=public never copies anything that did not pass: a red rehearsal leaves the public files as they are.',
         'Both modes start with the version gate: settings.xml the same as the released Windows version (newest/windows-version.txt) = NOTHING TO RELEASE, green, nothing done.',
       ],
-      WHEN: 'to release the Windows channel, once step 1\'s four lanes are green on origin/main. The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
-      ORDER: 'step 3: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1); before or after dp-ci-release-step2-release-docker, never at the same time (both use the VM). Its MODE=public and step 2\'s one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones.',
+      WHEN: 'to release the Windows channel, once step 1\'s four lanes are green on origin/main (or, on the owner\'s decision, without them: E2E_APPROVAL). The owner\'s way: MODE=rehearsal, a look at it, then MODE=public; once trusted, MODE=public directly.',
+      ORDER: 'step 3: after dp-ci-release-step1-e2e-prerelease (else REFUSED within seconds, naming step 1, unless E2E_APPROVAL says owner approved); before or after dp-ci-release-step2-release-docker, never at the same time (both use the VM). Its MODE=public and step 2\'s one after the other: between them, newest/ holds one channel\'s new files next to the other\'s old ones.',
       NEEDS: [
         'checked right after the version gate, within seconds, before the pack (asbl/ci/release-publish.sh preflight files, then dp-ci.sh prereq vm; MISSING <what>: <what to provide>, then PREREQUISITES MISSING, nothing packed):',
-        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1);',
+        'step 1\'s four lanes green on the commit (else REFUSED, naming step 1), or the owner\'s written decision to go on without them: E2E_APPROVAL with the words owner approved (the parameter\'s own text says what it does and what it writes down);',
         'the keys file /var/kraft-internalsystems/config/datapallas-ci/release-publish.env (root only, mode 600, written by the owner): a Backblaze key that can write, tried; for MODE=public also the Cloudflare purge token;',
         'on this host: rclone, curl and sha256sum;',
         'the Windows VM answering over SSH (not when it only copies), and no other Windows run (it refuses to start while one is going).',
@@ -332,13 +338,15 @@ def jobs = [
         'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
         'go public after a green rehearsal: MODE=public',
         'see what a run would do, the VM untouched: DRY_RUN=yes (with either MODE)',
+        'release without step 1\'s four lanes, on the owner\'s decision: E2E_APPROVAL=owner approved: 16.6.0 on the Linux full run of 1a2b3c4d and the Windows run whose three failures passed when re-run',
       ],
-      LOG: 'the parts (RELEASE STEP 1/3 .. 3/3, WINDOWS PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|REHEARSED|rehearsing first|RELEASE_STATE|RELEASE_RESULT|ROBOT_RESULT|RELEASE_STAGE|RELEASE_PUBLIC; the files: RELEASE_FILE|^STAGE |^PUBLIC . The build list labels each build with what happened; the build page shows the Robot report.',
+      LOG: 'the parts (RELEASE STEP 1/3 .. 3/3, WINDOWS PUBLIC with its PUBLIC STEP n/N, each START and END with the time it took) and the verdict: ^######## |RELEASE_VERSION=|NOTHING TO RELEASE|PREREQUISITES|^MISSING |REFUSED|^E2E_APPROVAL|REHEARSED|rehearsing first|RELEASE_STATE|RELEASE_RESULT|ROBOT_RESULT|RELEASE_STAGE|RELEASE_PUBLIC; the files: RELEASE_FILE|^STAGE |^PUBLIC . An E2E_APPROVAL: ^E2E_APPROVAL (ACCEPTED or NOT ACCEPTED, who, when, the text, the four lanes). The build list labels each build with what happened; the build page shows the Robot report.',
       MORE: guide('dp-ci-release-step3-release-windows-vm', 'asbl/ci/dp-ci.sh win release (through asbl/ci/jenkins/win-e2e.sh release)')
     ),
     params: [
       MODE: [choices: ['rehearsal', 'public'], text: 'WHICH release. rehearsal (default) = a real release into places users do not get: pack on the VM, test with the Robot UAT, stage in rehearsal/. Nothing users get changes.\npublic (the owner only) = copy the newest passed rehearsal of this version to newest/, in minutes; with none, rehearse first and copy only when it is green.\nUse rehearsal, look at it, then public; once trusted, public directly.'],
       DRY_RUN: [choices: ['no', 'yes'], text: 'no (default) = do it.\nyes = pack, test, stage and copy nothing, the VM only asked whether it answers: the version gate, the prerequisites (the bucket listed, not written), the guard, which rehearsal it would copy or that it would rehearse first, and what each part would do.\nUse yes to see what a run would do.'],
+      E2E_APPROVAL: [text: e2eApproval],
     ],
   ],
   'dp-ci-release-step4-demo-public': [
