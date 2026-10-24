@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## 16.6.0 - 2026-10-24
+
+### Added
+
+- **25 ready-made dashboards to learn from and start from** — The new **Dashboard Demos** sample puts 25 working dashboards on one page, grouped by area — the company at a glance, sales, customers, digital, finance, people, operations and the analyst's toolkit — each running on demo data that comes with DataPallas and each saying who it is for and which decision it helps with. Press **Show Me** and a dashboard sets its own filters to answer the question it was made for. When one is close to what you need, **New from a demo** in Explore Data gives you your own copy to change.
+
+- **Cubes the readers of your dashboard can explore themselves** — In Explore Data, tick **Show In Dashboard** on a cube and the published dashboard carries the live cube instead of a fixed table: whoever reads it picks the fields they want, filters on any value straight from the list of fields, clicks a number to see the rows behind it, and presses **Reset view** to start again, without ever seeing SQL. Two new samples show it at work, **Country Sales Dashboard** and **Cube Stories**, and new sample cubes cover sales, finance, customer support, logistics, online retail and education.
+
+- **Dashboards that respond to a click** — Add a **Slicer** to an Explore Data canvas and what you pick in it filters every widget built on the same table; tick **Clicks filter the dashboard** on a chart, table or map and a click on a bar, a row or a region does the same, while on a grouped chart or table a click can instead open the rows behind it. The filter bar gains a date range with ready presets (the last 7, 30 or 90 days, this month, the year so far, last year), lists that follow one another so that picking one value narrows the next list, a **Reset** button and search in long lists. On a published dashboard every tile has a **⋯** menu to **Download CSV**, **Save as PNG**, **Maximise** or **Refresh** it; **Dashboard settings** can refresh the data by itself every few minutes, the page prints cleanly, and on a phone the tiles line up in a single column.
+
+- **Much more you can build without writing SQL** — The Visual tab of Explore Data has learned the everyday calculations: **Count where** and **Sum where**, a formula column, the median, a moving average, a rank, the change from one period to the one before, and a pivot shown as a heatmap with row and column totals. Charts can show their values as labels, stack to 100%, keep the top few bars or slices and gather the rest as **Other**, and format their numbers the way you want them; number tiles can show compact figures such as 1.2K, and tables get a totals row, a search box and highlights.
+
+- **Groups, a role for dashboard readers, and links that show only what they should** — The **Users** screen has a new **Groups** tab, where you decide for each group which connections its members may use, whether they may write scripts, and which reports and dashboards they can see. A new **DASHBOARD_VIEWER** role is for people who only read: they sign in and see the dashboards given to their groups, and nothing else. When you **Share** a dashboard you can now lock its parameters, so that a link made for one customer only ever shows that customer's data, and the same dialog gives you the code to embed the dashboard in your own web page.
+
+- **Your classic JasperReports templates run again** — DataPallas runs JasperReports 7, which cannot open templates made with JasperReports 6.21 or earlier. Those classic templates now run alongside the new ones: keep them in their own folder and DataPallas renders them with a JasperReports 6 engine that runs in Docker, and they appear under **JasperReports (legacy)** when you choose a report to run. Before you move anything, the **jr analyze** command that comes with it tells you which engine each of your templates needs and what else it relies on, and it needs no Docker to do so.
+
+- **Jupyter notebooks on the Apps screen** — **Jupyter (Notebooks for Python)** is now one of the apps you can start from the **Apps** screen: JupyterLab with pandas, numpy, matplotlib and scipy already installed, for exploring a dataset one cell at a time.
+
+### Changed
+
+- **The AI features are for administrators** — Chat2DB and the AI agents are now available to administrators only, and Chat2DB only ever reads from your databases; it never changes anything in them.
+
+### Fixed
+
+- **Activating a licence key works** — On the licence screen, the key you typed was never actually saved, so **Activate** failed with "License key is not defined". The key is now saved, and activation goes through.
+
+- **The command line tells you when a job failed** — **datapallas.bat** and **datapallas.sh** now finish with an error code when a job fails, and a different one when the command itself is wrong, so Task Scheduler, cron and your own scripts can tell a failed run from a good one. Their **connection list** command now shows your email connections too.
+
+- **A disabled account stays disabled with single sign-on** — When people sign in with your organisation's directory or sign-on service, someone you have disabled on the **Users** screen can no longer get in that way.
+
 ## 16.5.0 - 2026-08-17
 
 ### Added
