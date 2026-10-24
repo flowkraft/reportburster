@@ -1,8 +1,9 @@
 #!/bin/bash
 # The release's uploads, on Backblaze (downloads.datapallas.com) and Docker Hub: what a rehearsal stages where users do not
 # get it, and what MODE=public then copies to the public places. Run on the host, by the release jobs
-# (asbl/ci/jenkins/release-docker.sh, and asbl/ci/dp-ci.sh win release); the Windows VM never holds a credential. Each
-# upload is checked by downloading it back the way a user gets it, and each verdict goes to the release record
+# (asbl/ci/jenkins/release-docker.sh, and asbl/ci/dp-ci.sh win release). The Windows zips are uploaded by the VM itself
+# (stage-files, below), the Backblaze key only in the environment of that one rclone process, never on the VM's disk or
+# in a log; everything else runs here, with this host's credentials. Each upload is checked by downloading it back the way a user gets it, and each verdict goes to the release record
 # (asbl/ci/release-state.sh):
 #
 # UPLOAD=no|yes (the release jobs' parameter, the same name on both; no when not set): every command below that writes to
@@ -12,13 +13,16 @@
 # publish refuses (DRY_RUN=yes aside: it writes nothing anyway); preflight leaves out the upload checks (no credential is
 # needed). UPLOAD=yes: the commands run, as below.
 #
-#   bash asbl/ci/release-publish.sh stage-files <version> <list> <dir>
+#   bash asbl/ci/release-publish.sh stage-files <version> <list>
 #       The Windows rehearsal's files (job dp-ci-release-step3-release-windows-vm): those of <list> (the pack's sha256 list,
 #       <log>-step-release-files.txt: 'commit', 'version' and 'sha256' lines; a line with a note after the name is not
-#       staged), taken from <dir>: each checked against its sha256, uploaded to backblaze:datapallas/rehearsal/<version>-<commit>/,
-#       downloaded back from downloads.datapallas.com and checked again. Records rehearsal.windows (PASS with rehearsal= and
-#       sha256=, or FAIL with reason=). Nothing outside rehearsal/ is written. Before it uploads, the Windows files an earlier
-#       rehearsal left anywhere under rehearsal/ are deleted (the cleanup, below).
+#       staged), uploaded by the Windows VM itself from its asbl\dist (dp-ci.sh win stage-upload: each first checked there
+#       against its sha256, then its own rclone; the Backblaze key goes from this host's rclone config through the SSH
+#       session's stdin into that rclone process's environment only, never onto the VM's disk or into a log) to
+#       backblaze:datapallas/rehearsal/<version>-<commit>/, then downloaded here from downloads.datapallas.com and checked
+#       against the list. Records rehearsal.windows (PASS with rehearsal= and sha256=, or FAIL with reason=). Nothing outside
+#       rehearsal/ is written. Before the upload, this host deletes the Windows files an earlier rehearsal left anywhere
+#       under rehearsal/ (the cleanup, below), with its own credentials.
 #
 #   bash asbl/ci/release-publish.sh stage-docker
 #       The Docker rehearsal's upload (job dp-ci-release-step2-release-docker), built once on this host: this checkout on
@@ -495,7 +499,7 @@ case "$cmd" in
     preflight "$@"; exit $?
     ;;
   stage-files)
-    v="${1:-}"; list=$(abs "${2:-}"); sdir=$(abs "${3:-}"); c="${RELEASE_COMMIT:-}"
+    v="${1:-}"; list=$(abs "${2:-}"); c="${RELEASE_COMMIT:-}"
     fail() {
       echo "FAIL  $1"
       [ -n "$c" ] && RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" record rehearsal.windows FAIL "version=${v:-?}" "reason=$1"
@@ -503,38 +507,43 @@ case "$cmd" in
     }
     printf '%s' "$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "stage-files: '$v' is not a version (x.y.z)"
     printf '%s' "$c" | grep -qE '^[0-9a-f]{40}$' || fail "stage-files: RELEASE_COMMIT must be a full commit hash (got '$c')"
-    [ -s "$list" ] && [ -d "$sdir" ] || fail "usage: $0 stage-files <version> <list> <dir> (list or dir missing)"
+    [ -s "$list" ] || fail "usage: $0 stage-files <version> <list> (the list is missing)"
     [ "$(sed -n 's/^commit   //p' "$list")" = "$c" ] || fail "the list $list is not of commit ${c:0:8}"
     [ "$(sed -n 's/^version  //p' "$list")" = "$v" ] || fail "the list $list is not of version $v"
     # a staged file = a 'sha256   <hash>  <length>  <name>' line with nothing after the name
     names=$(sed -n 's/^sha256   [0-9a-f]\{64\}  [0-9]*  \([A-Za-z0-9._-]*\)$/\1/p' "$list")
     [ -n "$names" ] || fail "the list $list names no file to stage"
     folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
+    files=""   # <name>:<sha256> of each, as the VM checks them before it uploads
+    for n in $names; do files="$files $n:$(sed -n "s/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  $n\$/\1/p" "$list")"; done
     if [ "$UPLOAD" != yes ]; then
-      # before the files' own checks: with the switch off they are not copied to <dir> at all
       would "rclone lsf -R $RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/, then rclone deletefile --b2-hard-delete each $(channel_files windows) an earlier rehearsal left there  -> those files gone from the bucket"
-      for n in $names; do
-        would "rclone copyto $sdir/$n $RELEASE_RCLONE_REMOTE/$folder/$n  -> $RELEASE_DOWNLOAD_BASE/$folder/$n, then checked by download (sha256 $(sed -n "s/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  $n\$/\1/p" "$list" | cut -c1-16)...)"
-      done
+      bash "$HERE/dp-ci.sh" win stage-upload --print "${RELEASE_RCLONE_REMOTE#*:}/$folder" $files
+      for n in $names; do would "curl $RELEASE_DOWNLOAD_BASE/$folder/$n | sha256sum  -> checked against the list"; done
       echo "RELEASE_STAGE SKIPPED UPLOAD=no: nothing deleted or uploaded, no credential read, rehearsal.windows not recorded"
       exit 0
     fi
-    for n in $names; do
-      want=$(sed -n "s/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  $n\$/\1/p" "$list")
-      [ -s "$sdir/$n" ] || fail "$n is not in $sdir"
-      [ "$(sha_of "$sdir/$n")" = "$want" ] || fail "$n in $sdir is not the pack's (sha256 differs from the list)"
-      echo "STAGE  $n  sha256 ${want:0:16}... as the list says"
-    done
     creds || fail "no publish credentials (above)"
+    # the VM's rclone gets the remote's own fields: a b2 remote, then (a plain alias or crypt remote has no key of its own)
+    rclone config dump 2>/dev/null | R="${RELEASE_RCLONE_REMOTE%%:*}" python3 -c '
+import json, os, sys
+sys.exit(0 if (json.load(sys.stdin).get(os.environ["R"]) or {}).get("type") == "b2" else 1)' 2>/dev/null ||
+      fail "the rclone remote '${RELEASE_RCLONE_REMOTE%%:*}' of RCLONE_CONFIG is not a b2 remote (rclone config dump): nothing deleted or uploaded"
     clean_rehearsals windows
+    # the remote's fields go from rclone's own dump through python to the VM's rclone (stdin all the way): never into a
+    # variable, an argument, a file or this log
+    rclone config dump 2>/dev/null | R="${RELEASE_RCLONE_REMOTE%%:*}" python3 -c '
+import json, os, sys
+for k, v in (json.load(sys.stdin).get(os.environ["R"]) or {}).items():
+    if k.replace("_", "").isalnum() and "\n" not in str(v): print("%s=%s" % (k.upper(), v))' 2>/dev/null |
+      bash "$HERE/dp-ci.sh" win stage-upload "${RELEASE_RCLONE_REMOTE#*:}/$folder" $files ||
+      fail "the Windows VM did not upload every file to $folder/ (above)"
     sums=""
-    for n in $names; do
-      out=$(rclone copyto -q "$sdir/$n" "$RELEASE_RCLONE_REMOTE/$folder/$n" 2>&1) || {
-        printf '%s\n' "$out" | tail -5; fail "rclone could not upload $n to $folder/"; }
-      want=$(sha_of "$sdir/$n")
+    for p in $files; do
+      n=${p%%:*}; want=${p#*:}
       got=$(sha_by_download "$RELEASE_DOWNLOAD_BASE/$folder/$n")
       [ "$got" = "$want" ] || fail "$n downloaded back from $RELEASE_DOWNLOAD_BASE/$folder/ is not the pack's (sha256 ${got:0:16}...)"
-      echo "STAGE  $n  uploaded to $folder/, downloaded back: the same sha256"
+      echo "STAGE  $n  uploaded to $folder/ by the VM, downloaded back here: the pack's sha256"
       sums="$sums $n:$want"
     done
     RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" record rehearsal.windows PASS "version=$v" "rehearsal=$folder/" "sha256=${sums# }" ||

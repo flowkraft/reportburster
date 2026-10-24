@@ -1555,6 +1555,119 @@ PS
   win_run_stop dp-server >/dev/null 2>&1
 }
 
+# The Windows release's upload (UPLOAD=yes): the VM itself copies the three zips to the bucket, with its own rclone,
+# WIN_RCLONE_VERSION from rclone's download site, checked against WIN_RCLONE_SHA256 and kept in WIN_RCLONE_DIR (the one
+# thing this release installs on the VM). The Backblaze key never reaches the VM's disk or a log: release-publish.sh
+# pipes the remote's fields from this host's rclone config into the ssh session's stdin, never into a variable, an
+# argument or a file; the PowerShell of win_stage_upload goes inline as -EncodedCommand (never as a script file, as a
+# long win_ps would) and holds no value itself; it reads the fields from stdin into memory and hands them to that one
+# rclone process only, as its environment (RCLONE_CONFIG_DPRELEASE_*, with --config NUL: no config file read or
+# written). It prints counts and destinations, never rclone's own output. The cleanup of earlier rehearsals, the check
+# by download and the public copy stay on this host, with its credentials (release-publish.sh).
+WIN_RCLONE_VERSION=1.68.2
+WIN_RCLONE_SHA256=812bf76cc02c04cf6327f3683f3d5a88e47d36c39db84c1a745777496be7d993   # rclone-v1.68.2-windows-amd64.zip
+WIN_RCLONE_DIR='C:\dp-ci\tools\rclone'
+
+# win_rclone_ensure [check|print]: WIN_RCLONE_VERSION in WIN_RCLONE_DIR on the VM, installed when it is not there (a
+# minute; nothing done when it is). check = only say whether it is there (a dry run); print = the VM untouched, only what
+# it would do (UPLOAD=no).
+win_rclone_ensure() {
+  local url="https://downloads.rclone.org/v$WIN_RCLONE_VERSION/rclone-v$WIN_RCLONE_VERSION-windows-amd64.zip"
+  if [ "${1:-}" = print ]; then
+    echo "UPLOAD=no  would run: on the VM, when $WIN_RCLONE_DIR\\rclone.exe is not rclone v$WIN_RCLONE_VERSION: $url downloaded, its sha256 checked ($WIN_RCLONE_SHA256), rclone.exe put in $WIN_RCLONE_DIR"
+    return 0
+  fi
+  win_ps 2>&1 <<PS | tr -d '\r'
+\$ErrorActionPreference = 'Stop'
+\$dir = '$WIN_RCLONE_DIR'; \$exe = Join-Path \$dir 'rclone.exe'; \$want = 'rclone v$WIN_RCLONE_VERSION'
+\$have = ''
+if (Test-Path \$exe) { try { \$have = (& \$exe version 2>\$null | Select-Object -First 1) } catch { \$have = '' } }
+if (\$have -eq \$want) { "OK rclone on the Windows VM: \$want in \$dir (already there)"; exit 0 }
+if ('${1:-}' -eq 'check') { "NOTE rclone on the Windows VM: \$want not in \$dir yet (\$(if (\$have) { \$have } else { 'none' })): a run with UPLOAD=yes installs it"; exit 0 }
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+\$tmp = Join-Path \$env:TEMP ('rclone-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path \$tmp | Out-Null
+try {
+  Invoke-WebRequest -UseBasicParsing -Uri '$url' -OutFile (Join-Path \$tmp 'r.zip')
+  \$sha = (Get-FileHash -Algorithm SHA256 (Join-Path \$tmp 'r.zip')).Hash.ToLower()
+  if (\$sha -ne '$WIN_RCLONE_SHA256') { "MISSING rclone on the Windows VM: the download of $url is not the expected file (sha256 \$sha): nothing installed"; exit 1 }
+  Expand-Archive -Path (Join-Path \$tmp 'r.zip') -DestinationPath \$tmp -Force
+  New-Item -ItemType Directory -Force -Path \$dir | Out-Null
+  Copy-Item -Force (Join-Path \$tmp 'rclone-v$WIN_RCLONE_VERSION-windows-amd64\rclone.exe') \$exe
+} catch { "MISSING rclone on the Windows VM: the install from $url failed: \$(\$_.Exception.Message)"; exit 1 }
+finally { Remove-Item -Recurse -Force \$tmp -ErrorAction SilentlyContinue }
+\$have = (& \$exe version 2>\$null | Select-Object -First 1)
+if (\$have -ne \$want) { "MISSING rclone on the Windows VM: \$exe says '\$have', not \$want"; exit 1 }
+"OK rclone on the Windows VM: \$want installed in \$dir"
+PS
+  return "${PIPESTATUS[0]}"
+}
+
+# the PowerShell of win_stage_upload, the same every time: what it uploads, where and with which key all come on stdin
+win_stage_upload_ps() {
+  cat <<'PS'
+$ProgressPreference = 'SilentlyContinue'
+$files = @(); $vals = @{}
+while ($null -ne ($l = [Console]::In.ReadLine())) {
+  if ($l -eq 'end') { break }
+  $k, $v = $l -split ' ', 2
+  switch ($k) {
+    'exe'  { $exe = $v }
+    'dir'  { $dir = $v }
+    'dest' { $dest = $v }
+    'file' { $files += $v }
+    'env'  { $n, $x = $v -split '=', 2; $vals[$n] = $x }
+  }
+}
+$ok = 0
+foreach ($f in $files) {
+  $name, $want = $f -split ':', 2
+  $src = Join-Path $dir $name
+  if (-not (Test-Path $src)) { "VM_UPLOAD $name -> $dest/$name FAILED: not in $dir"; continue }
+  if ((Get-FileHash -Algorithm SHA256 $src).Hash.ToLower() -ne $want) { "VM_UPLOAD $name -> $dest/$name FAILED: not the pack's (sha256 differs), not uploaded"; continue }
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $exe
+  $psi.Arguments = 'copyto --config NUL -q "' + $src + '" "' + $dest + '/' + $name + '"'
+  $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
+  $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+  foreach ($n in $vals.Keys) { $psi.EnvironmentVariables[$n] = $vals[$n] }
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $e = $p.StandardError.ReadToEndAsync(); $null = $p.StandardOutput.ReadToEnd(); $p.WaitForExit(); $null = $e.Result
+  if ($p.ExitCode -eq 0) { $ok++; "VM_UPLOAD $name -> $dest/$name uploaded" } else { "VM_UPLOAD $name -> $dest/$name FAILED (rclone exit $($p.ExitCode); its output is not shown, it could hold the key)" }
+}
+$vals.Clear()
+"VM_UPLOAD $ok of $($files.Count) uploaded to $dest/"
+if ($ok -ne $files.Count) { exit 1 }
+PS
+}
+
+# win_stage_upload [--print] <bucket path of the folder> <name>:<sha256>...: the VM uploads those files of its asbl\dist
+# (each first checked against its sha256: the pack's) to <bucket path>/<name> with WIN_RCLONE_DIR's rclone. stdin: the
+# rclone remote's fields, one <FIELD>=<value> line each (TYPE=b2, ACCOUNT=..., KEY=...): they go straight on to the VM
+# (sed, ssh), never into a variable, an argument, a file or the log. --print: nothing done, only the command per file.
+win_stage_upload() {
+  local print=0 folder f b64
+  [ "${1:-}" = --print ] && { print=1; shift; }
+  folder="$1"; shift
+  if [ "$print" = 1 ]; then
+    for f in "$@"; do
+      echo "UPLOAD=no  would run: on the VM, over SSH: $WIN_RCLONE_DIR\\rclone.exe copyto --config NUL -q ${WIN_REPO:-<the VM checkout>}\\asbl\\dist\\${f%%:*} dprelease:$folder/${f%%:*}  (its sha256 checked first; the Backblaze key only in that process's environment, RCLONE_CONFIG_DPRELEASE_*)"
+    done
+    return 0
+  fi
+  win_conf_ok || return 1
+  # one constant script, no value in it: everything it needs comes on stdin, after the values of the arguments above
+  b64=$(win_stage_upload_ps | iconv -f UTF-8 -t UTF-16LE | base64 -w0)
+  { printf 'exe %s\n' "$WIN_RCLONE_DIR\\rclone.exe"
+    printf 'dir %s\n' "$WIN_REPO\\asbl\\dist"
+    printf 'dest %s\n' "dprelease:$folder"
+    for f in "$@"; do printf 'file %s\n' "$f"; done
+    sed -n 's/^\([A-Z0-9_]\{1,64\}\)=/env RCLONE_CONFIG_DPRELEASE_\1=/p'
+    echo end
+  } | win_ssh powershell -NoProfile -NonInteractive -EncodedCommand "$b64" 2>&1 | tr -d '\r'
+  return "${PIPESTATUS[1]}"
+}
+
 # Job dp-ci-release-step3-release-windows-vm (`dp-ci.sh win release`): the Windows release, MODE=rehearsal (the default)
 # or MODE=public, UPLOAD=no (the default) or yes, DRY_RUN=no|yes. Pack, prove, upload, in that order: nothing is uploaded
 # before the Robot UAT passed on the very files, and nothing at all unless UPLOAD=yes. Never at the same time as the
@@ -1576,11 +1689,14 @@ PS
 #                      .robot file as a user meets the product - Java and Chocolatey removed and installed, the exe, the
 #                      command line, the server and its Windows service. A bare step: the machine's Java, never the CI's.
 #   3. upload          still origin/main and step 1 still green, then (asbl/ci/release-publish.sh stage-files):
-#                      UPLOAD=yes: datapallas.zip, datapallas-server.zip and datapallas-src.zip copied to this host,
-#                      checked against the pack's sha256, uploaded to rehearsal/<version>-<commit>/ and checked again by
-#                      download, recorded as rehearsal.windows (MODE=public copies it). No public link moves.
-#                      UPLOAD=no: the exact commands it would run, nothing copied or uploaded, no credential read;
-#                      recorded as rehearsal.windows PASS upload=no, which MODE=public never copies.
+#                      UPLOAD=yes: this host deletes the Windows files of earlier rehearsals (its own credentials), the VM
+#                      itself uploads datapallas.zip, datapallas-server.zip and datapallas-src.zip from its asbl\dist to
+#                      rehearsal/<version>-<commit>/ (each checked against the pack's sha256 first; its own rclone, put in
+#                      place before the pack by win_rclone_ensure; the Backblaze key only in that rclone's environment,
+#                      through the SSH session's stdin: win_stage_upload), this host checks each by download, recorded as
+#                      rehearsal.windows (MODE=public copies it). No public link moves.
+#                      UPLOAD=no: the exact commands it would run, nothing uploaded, no credential read, rclone not
+#                      installed; recorded as rehearsal.windows PASS upload=no, which MODE=public never copies.
 #   Green only when all three are (or when there is nothing to release). A red one means a new commit and the steps
 #   again, never a patched zip.
 # MODE=public: the public release, the deliberate act: refused at once unless UPLOAD=yes. It never replaces public files
@@ -1596,7 +1712,7 @@ PS
 # (the bucket listed, not written), the guard, which rehearsal it would copy or that it would rehearse first, and what each part would do (DRY_RUN=1 counts as yes).
 win_release() {
   local base vmc hostc files ok=1 rc gate res_robot=FAIL res_stage=NOT_RUN mode dry reh
-  local uat rdir n counts pass fail skip
+  local uat n counts pass fail skip
   mode="${MODE:-rehearsal}"
   case "$mode" in rehearsal|public) ;; *) echo "FAIL  MODE must be rehearsal or public (got '$mode')" >&2; return 2 ;; esac
   case "${DRY_RUN:-no}" in no|0) dry=no ;; yes|1) dry=yes ;; *) echo "FAIL  DRY_RUN must be no or yes (got '$DRY_RUN')" >&2; return 2 ;; esac
@@ -1638,12 +1754,18 @@ win_release() {
   # the VM, in seconds, before the step 1 guard and the pack (a copy above needs none); it only reads, so a dry run checks it too
   prereq vm || { echo "FAILED: prerequisites missing (above): nothing packed, staged or copied"; return 1; }
   RELEASE_COMMIT="$hostc" bash "$REPO/asbl/ci/release-state.sh" step1-guard || return 1
+  # the VM's rclone for the upload at the end: in place before the pack, so a failed install shows in a minute, not hours
+  # later (a dry run only says whether it is there; UPLOAD=no only what it would do)
+  if [ "$UPLOAD" != yes ]; then win_rclone_ensure print
+  elif [ "$dry" = yes ]; then win_rclone_ensure check
+  else win_rclone_ensure || { echo "FAILED: no rclone on the Windows VM for the upload (above): nothing packed, staged or copied"; return 1; }
+  fi
   if [ "$dry" = yes ]; then
     echo "dry run: would put the VM on ${hostc:0:8}, run asbl\\pack-datapallas.bat there and print the zips' sha256"
     mark_next "RELEASE STEP 2/3" "Robot Framework UAT (dry run)"
     echo "dry run: would run asbl\\src\\uat\\run-tests.bat on the pack's zips"
     mark_next "RELEASE STEP 3/3" "the upload (dry run, UPLOAD=$UPLOAD)"
-    if [ "$UPLOAD" = yes ]; then echo "dry run: would stage datapallas.zip, datapallas-server.zip and datapallas-src.zip in rehearsal/$RELEASE_VERSION-${hostc:0:8}/, check them by download and record rehearsal.windows"
+    if [ "$UPLOAD" = yes ]; then echo "dry run: would delete earlier Windows rehearsals here, have the VM upload datapallas.zip, datapallas-server.zip and datapallas-src.zip to rehearsal/$RELEASE_VERSION-${hostc:0:8}/ with its rclone, check them here by download and record rehearsal.windows"
     else echo "dry run: UPLOAD=no: would print the uploads it skips, write nothing, and record rehearsal.windows upload=no"; fi
     mark_end 0
     [ "$mode" = public ] && echo "dry run: then would copy that rehearsal to the public places (release-publish.sh publish windows $RELEASE_VERSION ${hostc:0:8})"
@@ -1736,33 +1858,21 @@ PY
        ! RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-state.sh" require step1; then
     echo "not uploaded: origin/main moved since the start (or could not be read), or step 1 is no longer green on ${vmc:0:8}"
     res_stage=FAIL; ok=0
-  elif [ "$UPLOAD" != yes ]; then
-    rdir="$REPO/asbl/dist/release-windows"; mkdir -p "$rdir"   # where the zips would be copied (nothing is)
-    for n in datapallas.zip datapallas-server.zip datapallas-src.zip; do
-      echo "UPLOAD=no  would run: scp <the VM>:<its checkout>\\asbl\\dist\\$n $rdir/$n  -> this host, for the upload below"
-    done
-    if RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-publish.sh" stage-files "$RELEASE_VERSION" "$base-release-files.txt" "$rdir"; then
-      RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record rehearsal.windows PASS \
-        "version=$RELEASE_VERSION" "pack=PASS" "robot=PASS" "upload=no" \
-        "sha256=$(sed -n 's/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  \([A-Za-z0-9._-]*\)$/\2:\1/p' "$base-release-files.txt" | tr '\n' ' ' | sed 's/ $//')"
-      res_stage=SKIPPED
-    else
-      res_stage=FAIL; ok=0
-    fi
   else
-    # copied here first: the upload and its check run on this host, where the credentials are (never on the VM)
-    rdir="$REPO/asbl/dist/release-windows"
-    rm -rf "$rdir" && mkdir -p "$rdir"
-    for n in datapallas.zip datapallas-server.zip datapallas-src.zip; do
-      win_pull "$(printf '%s' "$WIN_REPO\\asbl\\dist\\$n" | tr '\\' '/')" "$rdir/$n" 2>/dev/null || echo "FAIL  could not copy $n from the VM"
-    done
+    # the VM uploads the three zips itself, from its asbl\dist (release-publish.sh stage-files -> win stage-upload); this
+    # host cleans earlier rehearsals first and checks each upload by download. UPLOAD=no: the commands, nothing written.
     if RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" \
-       bash "$REPO/asbl/ci/release-publish.sh" stage-files "$RELEASE_VERSION" "$base-release-files.txt" "$rdir"; then
+       bash "$REPO/asbl/ci/release-publish.sh" stage-files "$RELEASE_VERSION" "$base-release-files.txt"; then
       res_stage=PASS
+      if [ "$UPLOAD" != yes ]; then
+        RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record rehearsal.windows PASS \
+          "version=$RELEASE_VERSION" "pack=PASS" "robot=PASS" "upload=no" \
+          "sha256=$(sed -n 's/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  \([A-Za-z0-9._-]*\)$/\2:\1/p' "$base-release-files.txt" | tr '\n' ' ' | sed 's/ $//')"
+        res_stage=SKIPPED
+      fi
     else
       res_stage=FAIL; ok=0
     fi
-    rm -rf "$rdir"
   fi
 
   mark_end "$(case "$res_stage" in PASS|SKIPPED) echo 0 ;; *) echo 1 ;; esac)"
@@ -3027,6 +3137,7 @@ if [ "$TASK" = "win" ]; then
     docker-e2e) mark_run win_docker_e2e; exit $? ;;
     server-e2e) mark_run win_server_e2e; exit $? ;;
     release) mark_run win_release; exit $? ;;
+    stage-upload) shift 2; win_stage_upload "$@"; exit $? ;;   # release-publish.sh stage-files: the VM's upload (stdin: the remote's fields)
     sync)  win_sync_repo; exit $? ;;
     prepare) win_sync_repo && win_prepare_package; exit $? ;;
     prereq) shift 2; win_prereq "$@"; exit $? ;;
@@ -3039,7 +3150,8 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
            echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"
            echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"
-           echo "       $0 win release      (the Windows release: pack-datapallas.bat, Robot UAT on its very files, then staged)"; exit 2 ;;
+           echo "       $0 win release      (the Windows release: pack-datapallas.bat, Robot UAT on its very files, then staged)"
+           echo "       $0 win stage-upload [--print] <bucket path> <name>:<sha256>...   (the VM uploads asbl\\dist files; stdin: the rclone remote's FIELD=value lines; release-publish.sh stage-files runs it)"; exit 2 ;;
   esac
 fi
 # Every Linux task needs this host's Docker engine. Without it the "one run at a time" check below passes silently and the
