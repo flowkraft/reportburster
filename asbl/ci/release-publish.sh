@@ -36,7 +36,22 @@
 #       pushes, the docker zips an earlier rehearsal left anywhere under rehearsal/ are deleted (the cleanup, below).
 #       RELEASE_COMMIT, RELEASE_PROVEN_IMAGE_ID and RELEASE_PROVEN_ZIP_SHA256 (set by release-docker.sh after its proofs):
 #       the build must be of that commit, the image that id and the zip that sha256, else nothing is pushed: what goes out
-#       is what was proven.
+#       is what was proven. RELEASE_KEPT_DIR (set by upload-kept): no build; the image's build tag and the zip are the ones
+#       that folder's manifest keeps. With UPLOAD=no, step 1 not complete is said (the upload would be refused), not a failure:
+#       nothing is uploaded, and every upload checks it (step 3 records windows-vm-electron-light itself, after step 2).
+#
+#   UPLOAD=no|yes DRY_RUN=no|yes  bash asbl/ci/release-publish.sh upload-kept [docker|windows]
+#       Release day (plan-pre-release-artifacts-ready): the files the day-before run kept, uploaded as they are, no rebuild:
+#       both channels, or one. The folder is <RELEASE_ARTIFACTS_DIR>/<version>-<commit> of this checkout (RELEASE_KEPT_DIR
+#       another), asbl/ci/release-keep.sh's. Refused, naming what, before anything is written: no folder; its manifest of
+#       another version or commit; origin/main moved past it; a channel's kept run not green; a file whose sha256 or the
+#       image whose id differs from the manifest (release-keep.sh check); files that are not the ones the passed
+#       rehearsal.<channel> of that commit proved; the version gate; step 1 not green (all four lanes, or E2E_APPROVAL). Then
+#       docker: stage-docker from the folder (:<version> pushed from the kept image, the kept zip staged), rehearsal.docker
+#       PASS upload=yes recorded; windows: the kept zips put back in the VM's asbl\dist when a later run replaced them
+#       (dp-ci.sh win put-dist), then stage-files (the VM uploads them). MODE=public then copies them as always. UPLOAD=no or
+#       DRY_RUN=yes: every check, then the commands it would run (the stages with the switch off), nothing written, nothing
+#       copied to the VM. Steps 2 and 3 run it as MODE=upload.
 #
 #   DRY_RUN=no|yes  bash asbl/ci/release-publish.sh publish docker|windows <version> <commit>
 #       MODE=public's copy, minutes, parts marked PUBLIC STEP n/N: the version gate of the channel (nothing to release:
@@ -94,6 +109,7 @@ RELEASE_RCLONE_REMOTE="${RELEASE_RCLONE_REMOTE:-backblaze:datapallas}"
 RELEASE_DOWNLOAD_BASE="${RELEASE_DOWNLOAD_BASE:-https://downloads.datapallas.com/file/datapallas}"
 RELEASE_IMAGE_REPO="${RELEASE_IMAGE_REPO:-flowkraft/datapallas-server}"
 RELEASE_CLOUDFLARE_API="${RELEASE_CLOUDFLARE_API:-https://api.cloudflare.com/client/v4}"
+RELEASE_ARTIFACTS_DIR="${RELEASE_ARTIFACTS_DIR:-/var/kraft-internalsystems/logs/datapallas-ci/release-artifacts}"   # release-keep.sh's
 REHEARSAL_FOLDER=rehearsal   # where a rehearsal stages, <version>-<commit>/ inside; users never get it (before 2026-10-22: candidate)
 UPLOAD="${UPLOAD:-no}"        # the switch every upload reads (top of this file)
 case "$UPLOAD" in no|yes) ;; *) echo "FAIL  UPLOAD must be no or yes (got '$UPLOAD')"; exit 2 ;; esac
@@ -337,6 +353,85 @@ publish() {
   echo "RELEASE_PUBLIC PASS $ch $v: newest/ and $v/ = $folder (the rehearsal of $c8)$([ "$ch" = docker ] && echo ", $RELEASE_IMAGE_REPO:latest = $digest")"
 }
 
+# upload_kept [docker|windows]: release day's upload of the files a rehearsal kept (the top of this file)
+upload_kept() {
+  local chs="${1:-docker windows}" ch dry=0 c v f bad=0 out rc list n size sha name want got tmp
+  case "${DRY_RUN:-no}" in no) ;; yes|1) dry=1 ;; *) echo "FAIL  DRY_RUN must be no or yes (got '$DRY_RUN')"; return 2 ;; esac
+  case "$chs" in docker|windows|"docker windows") ;; *) echo "usage: $0 upload-kept [docker|windows]"; return 2 ;; esac
+  refuse() { echo "REFUSED  $1"; echo "UPLOAD_KEPT REFUSED: nothing pushed, uploaded or recorded"; }
+  c=$(git rev-parse HEAD)
+  v=$(grep -m1 -oP '(?<=<version>)[^<]+' bkend/reporting/src/main/external-resources/template/config/burst/settings.xml 2>/dev/null)
+  f="${RELEASE_KEPT_DIR:-$RELEASE_ARTIFACTS_DIR/$v-${c:0:8}}"
+  echo "UPLOAD_KEPT $chs of $v on ${c:0:8} from $f, UPLOAD=$UPLOAD$([ "$dry" = 1 ] && echo ", dry run")"
+  [ -f "$f/MANIFEST.txt" ] || { refuse "no kept release in $f (the day-before run of $v on ${c:0:8}, MODE=rehearsal UPLOAD=no, keeps its files there)"; return 1; }
+  [ "$(sed -n 's/^version=//p' "$f/MANIFEST.txt")" = "$v" ] && [ "$(sed -n 's/^commit=//p' "$f/MANIFEST.txt")" = "$c" ] ||
+    { refuse "$f/MANIFEST.txt is not of $v on ${c:0:8} (this checkout)"; return 1; }
+  if ! git fetch -q origin || [ "$(git rev-parse origin/main)" != "$c" ]; then
+    refuse "origin/main is not ${c:0:8} any more (or could not be read): the kept files are of a commit main moved past; rehearse again"; return 1
+  fi
+  for ch in $chs; do
+    [ "$(sed -n "s/^$ch\.result=//p" "$f/MANIFEST.txt")" = PASS ] ||
+      { refuse "the kept $ch run of $v is not green (MANIFEST.txt: $ch.result=$(sed -n "s/^$ch\.result=//p" "$f/MANIFEST.txt" | grep . || echo 'none, the run did not finish')): read $f/failure-report-$ch.md"; return 1; }
+    out=$(bash "$HERE/release-keep.sh" check "$f" "$ch"); rc=$?
+    printf '%s\n' "$out"
+    [ "$rc" = 0 ] || { refuse "a kept $ch file or the image is not what the manifest says: $(printf '%s\n' "$out" | grep -E '^(CHANGED|MISSING)' | head -3 | tr '\n' ' ')"; return 1; }
+    # the record of the rehearsal that proved them: passed, this version, these very files
+    rec() { RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" get "$@" 2>/dev/null; }
+    [ "$(rec "rehearsal.$ch" result)" = PASS ] && [ "$(rec "rehearsal.$ch" version)" = "$v" ] ||
+      { refuse "the release record has no passed rehearsal.$ch of $v on ${c:0:8}: bash asbl/ci/release-state.sh show ${c:0:8}"; return 1; }
+    want=$(sed -n "s/^$ch\.file=\([^ ]*\) size=[0-9]* sha256=\([0-9a-f]*\)$/\1:\2/p" "$f/MANIFEST.txt" | sort | tr '\n' ' ')
+    if [ "$ch" = docker ]; then
+      got="datapallas-server-docker.zip:$(rec rehearsal.docker zip_sha256) "
+      [ "$got" = "$want" ] || got="$(rec rehearsal.docker-stage sha256) "
+    else
+      got=$(rec rehearsal.windows sha256 | tr ' ' '\n' | grep . | sort | tr '\n' ' ')
+    fi
+    [ "$got" = "$want" ] || { refuse "the kept $ch files are not the ones the rehearsal on ${c:0:8} proved (record: ${got:-none}; manifest: $want)"; return 1; }
+    echo "ok: the kept $ch files are the ones rehearsal.$ch proved on ${c:0:8}"
+    out=$(bash "$HERE/release-state.sh" version-check "$ch"); rc=$?
+    printf '%s\n' "$out"
+    case "$rc" in
+      0) [ "$(printf '%s\n' "$out" | sed -n 's/^RELEASE_VERSION=\([^ ]*\) .*/\1/p')" = "$v" ] || { refuse "the version gate's version is not $v"; return 1; } ;;
+      3) echo "UPLOAD_KEPT NOTHING TO RELEASE on the $ch channel: nothing uploaded"; return 0 ;;
+      *) refuse "the version gate of the $ch channel (above)"; return 1 ;;
+    esac
+  done
+  RELEASE_COMMIT="$c" DRY_RUN=$([ "$dry" = 1 ] && echo yes || echo no) bash "$HERE/release-state.sh" require step1 ||
+    { refuse "step 1 is not green on ${c:0:8} (above)"; return 1; }
+  # a dry run uploads nothing: the stages run with the switch off, printing what they would do
+  [ "$dry" = 1 ] && UPLOAD=no
+  for ch in $chs; do
+    if [ "$ch" = docker ]; then
+      RELEASE_KEPT_DIR="$f" RELEASE_COMMIT="$c" \
+        RELEASE_PROVEN_IMAGE_ID=$(sed -n 's/^docker\.image=[^ ]* id=\([^ ]*\) .*/\1/p' "$f/MANIFEST.txt") \
+        RELEASE_PROVEN_ZIP_SHA256=$(sed -n 's/^docker\.file=datapallas-server-docker\.zip size=[0-9]* sha256=//p' "$f/MANIFEST.txt") \
+        UPLOAD=$UPLOAD bash "$0" stage-docker || { echo "UPLOAD_KEPT FAIL docker (above)"; return 1; }
+      if [ "$UPLOAD" = yes ]; then
+        out=$(rec rehearsal.docker-stage rehearsal)
+        RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" record rehearsal.docker PASS "version=$v" "linux=$(rec rehearsal.docker linux)" \
+          "windows=$(rec rehearsal.docker windows)" "upload=yes" "zip=$RELEASE_DOWNLOAD_BASE/${out%/}/datapallas-server-docker.zip" "kept=$f"
+      fi
+    else
+      list=$(mktemp) || return 2
+      { echo "commit   $c"; echo "version  $v"
+        sed -n 's/^windows\.file=\([^ ]*\) size=\([0-9]*\) sha256=\([0-9a-f]*\)$/sha256   \3  \2  \1/p' "$f/MANIFEST.txt"; } > "$list"
+      # the VM uploads from its asbl\dist with its own rclone (a day-before run with UPLOAD=no did not install it): the
+      # kept files put back there when a later run replaced them
+      if [ "$UPLOAD" = yes ]; then bash "$HERE/dp-ci.sh" win rclone-ensure || { rm -f "$list"; echo "UPLOAD_KEPT FAIL windows: no rclone on the Windows VM (above)"; return 1; }
+      else bash "$HERE/dp-ci.sh" win rclone-ensure "$([ "$dry" = 1 ] && echo check || echo print)"; fi
+      bash "$HERE/dp-ci.sh" win put-dist $([ "$UPLOAD" = yes ] || echo --check) "$f" $(sed -n 's/^windows\.file=\([^ ]*\) size=[0-9]* sha256=\([0-9a-f]*\)$/\1:\2/p' "$f/MANIFEST.txt") ||
+        { rm -f "$list"; echo "UPLOAD_KEPT FAIL windows: the VM's asbl\\dist does not hold the kept files (above)"; return 1; }
+      RELEASE_COMMIT="$c" UPLOAD=$UPLOAD bash "$0" stage-files "$v" "$list" || { rm -f "$list"; echo "UPLOAD_KEPT FAIL windows (above)"; return 1; }
+      rm -f "$list"
+    fi
+  done
+  if [ "$UPLOAD" = yes ]; then
+    echo "UPLOAD_KEPT PASS $chs of $v on ${c:0:8}: uploaded where users do not get them yet; next, MODE=public UPLOAD=yes on step 2 and step 3 copies them"
+  else
+    echo "UPLOAD_KEPT CHECKED $chs of $v on ${c:0:8}: every check passed, nothing uploaded ($([ "$dry" = 1 ] && echo "dry run" || echo "UPLOAD=no")): run it with UPLOAD=yes to upload"
+  fi
+}
+
 # preflight docker|files [public] [copy]: see the top of this file
 preflight() {
   local what="${1:-}" public=0 copy=0 dry=0 miss=0 a t f="$RELEASE_PUBLISH_ENV" have=0 names="" n remote out code tmp name got reg
@@ -559,12 +654,20 @@ for k, v in (json.load(sys.stdin).get(os.environ["R"]) or {}).items():
         ${digest:+"digest=$digest"} "reason=$1"
       echo "RELEASE_STAGE FAIL"; exit 1
     }
+    if [ -n "${RELEASE_KEPT_DIR:-}" ]; then
+      # upload-kept: the files a rehearsal kept, no build: the image's build tag and the zip from the folder's manifest
+      tag=$(sed -n 's/^docker\.image=[^ ]* id=[^ ]* built_as=[^:]*:\([^ ]*\)$/\1/p' "$RELEASE_KEPT_DIR/MANIFEST.txt" | tail -1)
+      c=$(git rev-parse HEAD); v="${tag%%-*}"
+      [ -n "$tag" ] || fail "$RELEASE_KEPT_DIR/MANIFEST.txt names no kept image"
+      [ "$(sed -n 's/^commit=//p' "$RELEASE_KEPT_DIR/MANIFEST.txt")" = "$c" ] || fail "the kept files are not of this checkout (${c:0:8})"
+    else
     out=$(mktemp) || exit 2
     bash asbl/ci/dp-ci.sh build-if-needed 2>&1 | tee "$out"; rc=${PIPESTATUS[0]}
     tag=$(sed -n 's/^BUILD_TAG=//p' "$out" | tail -1); rm -f "$out"
     [ "$rc" = 0 ] && [ -n "$tag" ] || fail "dp-ci.sh build-if-needed did not end with a build (exit $rc, above)"
     c=$(git rev-parse HEAD); v="${tag%%-*}"
     [ "${tag#*-}" = "$(git rev-parse --short HEAD)" ] || fail "the build $tag is not of this checkout (${c:0:8}, uncommitted changes?)"
+    fi
     gate=$(bash "$HERE/release-state.sh" version-check docker); rc=$?
     printf '%s\n' "$gate"
     case "$rc" in
@@ -573,9 +676,13 @@ for k, v in (json.load(sys.stdin).get(os.environ["R"]) or {}).items():
       3) echo "RELEASE_STAGE NOTHING TO RELEASE: nothing pushed, nothing staged"; exit 3 ;;
       *) fail "refused by the version gate (above)" ;;
     esac
-    RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" require step1 ||
-      fail "step 1 is not green on ${c:0:8}"
-    zip=asbl/dist/datapallas-server-docker.zip
+    if [ "$UPLOAD" = yes ]; then
+      RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" require step1 || fail "step 1 is not green on ${c:0:8}"
+    elif ! RELEASE_COMMIT="$c" DRY_RUN=yes bash "$HERE/release-state.sh" require step1; then
+      # nothing is uploaded: the day-before run goes on, and says so (step 3 records windows-vm-electron-light itself)
+      echo "UPLOAD=no  the upload would be refused now: step 1 is not complete on ${c:0:8} (above); release day's upload checks it again"
+    fi
+    zip="${RELEASE_KEPT_DIR:+$RELEASE_KEPT_DIR/datapallas-server-docker.zip}"; zip="${zip:-asbl/dist/datapallas-server-docker.zip}"
     [ -s "$zip" ] || fail "$zip is missing (the build's)"
     id=$(docker image inspect "$RELEASE_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) || fail "the build's image $RELEASE_IMAGE_REPO:$tag is not on this host"
     # what goes out is what release-docker.sh proved (when it says what that was)
@@ -617,10 +724,13 @@ for k, v in (json.load(sys.stdin).get(os.environ["R"]) or {}).items():
       fail "could not record rehearsal.docker-stage"
     echo "RELEASE_STAGE PASS $RELEASE_IMAGE_REPO:$v $digest, $folder/"
     ;;
+  upload-kept)
+    upload_kept "$@"; exit $?
+    ;;
   publish)
     . "$HERE/marks.sh"
     mark_run publish "$@"
     ;;
   *)
-    sed -n '2,82p' "$0"; exit 2 ;;
+    sed -n '2,101p' "$0"; exit 2 ;;
 esac
