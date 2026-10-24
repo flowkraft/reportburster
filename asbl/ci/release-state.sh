@@ -16,8 +16,10 @@
 #   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
 #   bash asbl/ci/release-state.sh show [<commit>]                                the table of one commit
 #   bash asbl/ci/release-state.sh rehearsed docker|windows <version>             the newest PASSED rehearsal of that version on that
-#                                                                                channel, on whichever commit, whose files were not
-#                                                                                deleted: "REHEARSED <commit> <time>"; exit 1
+#                                                                                channel, on whichever commit, that uploaded its
+#                                                                                files (not upload=no: UPLOAD=no proves only) and
+#                                                                                whose files were not deleted: "REHEARSED <commit>
+#                                                                                <time>"; exit 1
 #                                                                                ("NOT REHEARSED ...") when there is none
 #   bash asbl/ci/release-state.sh removed docker|windows <folder>                the files of the rehearsal in <folder>
 #                                                                                (rehearsal/<version>-<commit>/) were deleted
@@ -40,8 +42,10 @@
 # Verdict names (the jobs, in order):
 #   step1.<target>-<mode>    dp-ci-release-step1-e2e-prerelease, one per target and mode (full | auth | light | targeted)
 #   rehearsal.docker-stage   dp-ci-release-step2-release-docker: the image pushed as :<version> (digest=), the zip staged in rehearsal/
-#   rehearsal.docker         dp-ci-release-step2-release-docker: the whole rehearsal (MODE=rehearsal, or the one MODE=public runs first)
-#   rehearsal.windows        dp-ci-release-step3-release-windows-vm: the pack, the Robot UAT, the three zips staged in rehearsal/
+#   rehearsal.docker         dp-ci-release-step2-release-docker: the whole rehearsal (MODE=rehearsal, or the one MODE=public runs first):
+#                            the two proofs and the upload; upload=no = proven with UPLOAD=no, nothing staged
+#   rehearsal.windows        dp-ci-release-step3-release-windows-vm: the pack, the Robot UAT, the three zips staged in rehearsal/;
+#                            upload=no = proven with UPLOAD=no, nothing staged
 #   public.docker            dp-ci-release-step2-release-docker, MODE=public: the rehearsed zip in newest/ and <version>/, :latest
 #   public.windows           dp-ci-release-step3-release-windows-vm, MODE=public: the rehearsed zips in newest/ and <version>/
 # Until 2026-10-22 they were step2.docker-stage, step2.docker, step3.windows and step4.publish (none was ever recorded for real).
@@ -330,6 +334,7 @@ case "$cmd" in
     best=""; best_time=""; red=0
     for f in "$RELEASE_STATE_DIR"/*/rehearsal."$ch"; do
       [ -f "$f" ] && [ "$(field "$f" version)" = "$v" ] && [ -z "$(field "$f" removed)" ] || continue
+      [ "$(field "$f" upload)" != no ] || continue   # proven with UPLOAD=no: nothing was uploaded, nothing to copy
       if [ "$(field "$f" result)" = PASS ]; then
         t=$(field "$f" time)
         [[ "$t" > "$best_time" ]] && { best_time="$t"; best=$(field "$f" commit); }
@@ -403,5 +408,5 @@ case "$cmd" in
     version_check "$ch"
     ;;
   *)
-    sed -n '2,73p' "$0"; exit 2 ;;
+    sed -n '2,77p' "$0"; exit 2 ;;
 esac

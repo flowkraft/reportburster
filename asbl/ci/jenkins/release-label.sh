@@ -12,6 +12,8 @@
 #     nothing to release  -> "nothing to release: <v> is the released version"
 #     public=PASS         -> "<v> public (rehearsal of <commit>)", or "<v> public: rehearsed first, then copied"
 #     public=DRY_RUN      -> "<v> dry run: would copy the rehearsal of <commit>"
+#     MODE=public, UPLOAD=no -> "REFUSED: MODE=public needs UPLOAD=yes"
+#     proven, UPLOAD=no   -> "<v> proven, nothing uploaded (UPLOAD=no)" (rehearsal=PASS ... upload=no, or stage=SKIPPED)
 #     rehearsal passed    -> "<v> rehearsal passed" (rehearsal=PASS, or pack, robot and stage PASS)
 #     refused by the gate -> "REFUSED by the version gate: see the log"
 #     anything else       -> "<v> FAILED: see the log"
@@ -56,6 +58,8 @@ case "$line" in
     else echo "$v public (rehearsal of $c)"; fi ;;
   *' refused by the version gate'*) echo "REFUSED by the version gate: see the log" ;;
   *' public=DRY_RUN'*) echo "$v dry run: would copy the rehearsal of $c" ;;
+  *' refused: MODE=public needs UPLOAD=yes'*) echo "REFUSED: MODE=public needs UPLOAD=yes" ;;
+  *' rehearsal=PASS '*' upload=no'*|*' stage=SKIPPED '*) echo "$v proven, nothing uploaded (UPLOAD=no)" ;;
   *' dry run:'*) dry ;;
   *' rehearsal=PASS '*|*' pack=PASS robot=PASS stage=PASS'*) echo "$v rehearsal passed" ;;
   *) echo "${vp}FAILED: see the log" ;;

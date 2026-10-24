@@ -34,16 +34,20 @@
 #   0 dp-ci-release-step0-set-version           asbl/ci/jenkins/release-set-version.sh: a bigger version written into the version
 #                                               files (asbl/ci/set-version.sh), one commit pushed to main; left as it is, nothing
 #   1 dp-ci-release-step1-e2e-prerelease        `e2e` / `win ...` per target; four lanes green on one commit, recorded
-#   2 dp-ci-release-step2-release-docker        asbl/ci/jenkins/release-docker.sh. MODE=rehearsal: built once here, :<version> and
-#                                               the zip staged in rehearsal/, the light set from the download on Linux and on
-#                                               Windows. MODE=public: a passed rehearsal copied to newest/ and :latest (owner only)
-#   3 dp-ci-release-step3-release-windows-vm    `win release`, the same two modes for the Windows files (2 and 3 in either
-#                                               order, never at once: one VM; the two public runs one after the other)
+#   2 dp-ci-release-step2-release-docker        asbl/ci/jenkins/release-docker.sh. MODE=rehearsal: build once here, prove (the
+#                                               light set on the build's zip and image on Linux and in the VM's Docker
+#                                               Desktop, no registry), then upload (UPLOAD=yes: :<version> and the zip staged in
+#                                               rehearsal/). MODE=public (UPLOAD=yes): a passed rehearsal copied to newest/ and
+#                                               :latest (owner only)
+#   3 dp-ci-release-step3-release-windows-vm    `win release`, the same two modes and UPLOAD for the Windows files: pack,
+#                                               prove (the Robot UAT), upload (2 and 3 in either order, never at once: one VM;
+#                                               the two public runs one after the other)
 #   4 dp-ci-release-step4-demo-public           asbl/ci/jenkins/release-demos.sh: demo.datapallas.com installs the release
 # Steps 2 and 3 start with their channel's version gate (asbl/ci/release-state.sh version-check docker|windows: settings.xml
 # against that channel's released version; the same = nothing to release, green, naming step 0) and refuse unless step 1
 # is green on the commit they rehearse (REFUSED, naming step 1). Each channel is released on its own. MODE=public never
-# copies anything that did not pass: with no passed rehearsal of the version it rehearses first.
+# copies anything that did not pass: with no passed rehearsal of the version it rehearses first. UPLOAD=no (the default
+# of both) builds and proves and uploads nothing, printing each command it skips; MODE=public refuses it.
 #
 # THE DETAILS. Variables come from the environment; [x] is the default.
 #
@@ -71,9 +75,12 @@
 #                  datapallas-server-docker.zip ships: the bundle unpacked fresh into frend/reporting/testground/docker-server
 #                  and started with the image of the last successful `build`; it never builds or pulls, and aborts unless the
 #                  running container uses exactly that image (DOCKER_SERVER_IMAGE=<tag> <id> in the log).
-#       E2E_DOCKER_FROM_URL=<zip url>  (the Docker release's rehearsal): that bundle downloaded instead, its image pulled,
+#       E2E_DOCKER_FROM_URL=<zip url>  (a staged Docker release, by hand): that bundle downloaded instead, its image pulled,
 #                  the running digest = the one the rehearsal pushed (release record), then the self-host page's
-#                  one-command `docker run`.
+#                  one-command `docker run`. By hand only since the Docker release proves before it uploads (it uses
+#                  the build's own zip and image, below): it checks a staged download as a user gets it.
+#       E2E_DOCKER_ONE_COMMAND=yes [no]  (docker-server, the Docker release's Linux proof): after the tests, the self-host
+#                  page's one-command `docker run` of the image the bundle ran, as E2E_DOCKER_FROM_URL does.
 #       E2E_RETRIES how often a failed test runs again: [empty = 2 for the full suite, 0 for a targeted run]. The Windows
 #                  lanes have their own: windows-vm-electron full 1, the light set of windows-vm-docker and windows-vm-server
 #                  1, targeted 0.
@@ -180,16 +187,18 @@
 #                               auth-authorization-server. Caps: WIN_RUN_TIMEOUT [full 64 h, targeted 3 h; win-ci.env sets
 #                               6 h for targeted runs], WIN_RUN_STALL [full 105 min, targeted 80 min].
 #       docker-e2e              windows-vm-docker: DataPallas Server in the VM's Docker Desktop, from datapallas-server-docker.zip
-#                               as the self-host page installs it, with the image `build` made from the VM's commit (or, with
-#                               E2E_DOCKER_FROM_URL, the Docker release's own download, as in `e2e`).
+#                               as the self-host page installs it, with the image `build` made from the VM's commit copied
+#                               over and loaded, no registry (also the Docker release's Windows proof); with
+#                               E2E_DOCKER_FROM_URL, a staged download instead, by hand, as in `e2e`.
 #       server-e2e              windows-vm-server: DataPallas Server on the VM's own Java 17, from datapallas-server.zip as the
 #                               installation page installs it (startServer.bat).
 #                               Both server lanes run a light set of five spec files when E2E_SPEC and E2E_GREP are empty.
 #                               Caps: WIN_RUN_TIMEOUT [3 h], WIN_RUN_STALL [80 min].
-#       release                 the Windows release's files (MODE=rehearsal|public, DRY_RUN=no|yes): pack-datapallas.bat once
+#       release                 the Windows release's files (MODE=rehearsal|public, UPLOAD=no|yes, DRY_RUN=no|yes): pack-datapallas.bat once
 #                               (RELEASE_PACK_TIMEOUT [28800 = 8 h]), the Robot UAT on its very files (RELEASE_ROBOT_TIMEOUT
-#                               [21600 = 6 h]), then datapallas.zip, datapallas-server.zip and datapallas-src.zip staged in
-#                               rehearsal/<version>-<commit>/; MODE=public copies a passed rehearsal to newest/ - see win_release.
+#                               [21600 = 6 h]), then, UPLOAD=yes, datapallas.zip, datapallas-server.zip and datapallas-src.zip
+#                               staged in rehearsal/<version>-<commit>/; MODE=public copies a passed rehearsal to newest/ - see
+#                               win_release.
 #       prereq e2e|docker-e2e|server-e2e|release
 #                               that lane's checks (prereq above): e2e = vm vm-docker vm-java vm-mvn vm-free; docker-e2e = vm
 #                               vm-docker docker vm-free; server-e2e = vm vm-docker vm-java vm-free; release = vm vm-free.
@@ -1365,7 +1374,7 @@ win_docker_e2e() {
   # tested, this host's Docker engine (the image is copied from it)
   prereq vm vm-docker $([ -z "${E2E_DOCKER_FROM_URL:-}" ] && echo docker) || return 2
   if [ -n "${E2E_DOCKER_FROM_URL:-}" ]; then
-    # The Docker release (step 2): the self-host install from the download, as on Linux (docker_server_up): the zip
+    # A staged Docker release (by hand): the self-host install from the download, as on Linux (docker_server_up): the zip
     # from E2E_DOCKER_FROM_URL, the image its compose names pulled from the registry, and the running image must be
     # the one the release pushed. Docker Desktop numbers images its own way: the check is on RepoDigests, not the id.
     mark_start "$target STEP 1/3" "the release: the VM on origin/main, the digest step 2 pushed"
@@ -1547,7 +1556,9 @@ PS
 }
 
 # Job dp-ci-release-step3-release-windows-vm (`dp-ci.sh win release`): the Windows release, MODE=rehearsal (the default)
-# or MODE=public, DRY_RUN=no|yes. Never at the same time as the Docker job's Windows part (one VM). One rehearsal makes
+# or MODE=public, UPLOAD=no (the default) or yes, DRY_RUN=no|yes. Pack, prove, upload, in that order: nothing is uploaded
+# before the Robot UAT passed on the very files, and nothing at all unless UPLOAD=yes. Never at the same time as the
+# Docker job's Windows part (one VM). One rehearsal makes
 # one pack, so every check below is of the very files that are staged; their sha256 are printed and kept in
 # <log>-step-release-files.txt (owner, 2026-10-22).
 # MODE=rehearsal: a real release into places users do not get; nothing users get changes.
@@ -1564,13 +1575,16 @@ PS
 #   2. Robot UAT       asbl\src\uat\run-tests.bat, unchanged: extracts datapallas.zip and datapallas-server.zip and runs every
 #                      .robot file as a user meets the product - Java and Chocolatey removed and installed, the exe, the
 #                      command line, the server and its Windows service. A bare step: the machine's Java, never the CI's.
-#   3. stage           still origin/main and step 1 still green, then datapallas.zip, datapallas-server.zip and
-#                      datapallas-src.zip copied to this host, checked against the pack's sha256, uploaded to
-#                      rehearsal/<version>-<commit>/ and checked again by download (asbl/ci/release-publish.sh stage-files,
-#                      which records rehearsal.windows). No public link moves.
+#   3. upload          still origin/main and step 1 still green, then (asbl/ci/release-publish.sh stage-files):
+#                      UPLOAD=yes: datapallas.zip, datapallas-server.zip and datapallas-src.zip copied to this host,
+#                      checked against the pack's sha256, uploaded to rehearsal/<version>-<commit>/ and checked again by
+#                      download, recorded as rehearsal.windows (MODE=public copies it). No public link moves.
+#                      UPLOAD=no: the exact commands it would run, nothing copied or uploaded, no credential read;
+#                      recorded as rehearsal.windows PASS upload=no, which MODE=public never copies.
 #   Green only when all three are (or when there is nothing to release). A red one means a new commit and the steps
 #   again, never a patched zip.
-# MODE=public: the public release. It never replaces public files with files that did not pass a rehearsal. First the
+# MODE=public: the public release, the deliberate act: refused at once unless UPLOAD=yes. It never replaces public files
+# with files that did not pass a rehearsal that uploaded them. First the
 # version gate, as above (this version already public on Windows = nothing to release, green), the prerequisites (preflight
 # files public: the Cloudflare token too), then the newest PASSED rehearsal of this version (release-state.sh rehearsed
 # windows <version>, on whichever commit):
@@ -1586,7 +1600,14 @@ win_release() {
   mode="${MODE:-rehearsal}"
   case "$mode" in rehearsal|public) ;; *) echo "FAIL  MODE must be rehearsal or public (got '$mode')" >&2; return 2 ;; esac
   case "${DRY_RUN:-no}" in no|0) dry=no ;; yes|1) dry=yes ;; *) echo "FAIL  DRY_RUN must be no or yes (got '$DRY_RUN')" >&2; return 2 ;; esac
-  echo "WINDOWS RELEASE: mode=$mode dry_run=$dry"
+  UPLOAD="${UPLOAD:-no}"
+  case "$UPLOAD" in no|yes) export UPLOAD ;; *) echo "FAIL  UPLOAD must be no or yes (got '$UPLOAD')" >&2; return 2 ;; esac
+  echo "WINDOWS RELEASE: mode=$mode upload=$UPLOAD dry_run=$dry"
+  if [ "$mode" = public ] && [ "$UPLOAD" != yes ]; then
+    echo "REFUSED: MODE=public publishes, the deliberate act: run it with UPLOAD=yes. Nothing was packed, tested, staged or copied."
+    echo "RELEASE_RESULT refused: MODE=public needs UPLOAD=yes"
+    return 1
+  fi
   uat="$WIN_REPO\\asbl\\src\\uat"
   base="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-release-$(date -u +%Y%m%dT%H%M%SZ)-step.log}"
   base="${base%.log}"
@@ -1621,8 +1642,9 @@ win_release() {
     echo "dry run: would put the VM on ${hostc:0:8}, run asbl\\pack-datapallas.bat there and print the zips' sha256"
     mark_next "RELEASE STEP 2/3" "Robot Framework UAT (dry run)"
     echo "dry run: would run asbl\\src\\uat\\run-tests.bat on the pack's zips"
-    mark_next "RELEASE STEP 3/3" "stage (dry run)"
-    echo "dry run: would stage datapallas.zip, datapallas-server.zip and datapallas-src.zip in rehearsal/$RELEASE_VERSION-${hostc:0:8}/, check them by download and record rehearsal.windows"
+    mark_next "RELEASE STEP 3/3" "the upload (dry run, UPLOAD=$UPLOAD)"
+    if [ "$UPLOAD" = yes ]; then echo "dry run: would stage datapallas.zip, datapallas-server.zip and datapallas-src.zip in rehearsal/$RELEASE_VERSION-${hostc:0:8}/, check them by download and record rehearsal.windows"
+    else echo "dry run: UPLOAD=no: would print the uploads it skips, write nothing, and record rehearsal.windows upload=no"; fi
     mark_end 0
     [ "$mode" = public ] && echo "dry run: then would copy that rehearsal to the public places (release-publish.sh publish windows $RELEASE_VERSION ${hostc:0:8})"
     echo "RELEASE_RESULT dry run: nothing packed, tested, staged or copied"
@@ -1704,16 +1726,29 @@ PY
   [ "$res_robot" = PASS ] || ok=0
 
   mark_end "$([ "$res_robot" = PASS ] && echo 0 || echo 1)"
-  mark_start "RELEASE STEP 3/3" "stage: datapallas.zip, datapallas-server.zip, datapallas-src.zip to rehearsal/$RELEASE_VERSION-${vmc:0:8}/, checked by download"
+  mark_start "RELEASE STEP 3/3" "the upload, UPLOAD=$UPLOAD: datapallas.zip, datapallas-server.zip, datapallas-src.zip to rehearsal/$RELEASE_VERSION-${vmc:0:8}/, checked by download"
   if [ "$res_robot" != PASS ]; then
-    echo "not staged: the Robot UAT is not green"
+    echo "not uploaded: the Robot UAT is not green"
     RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record rehearsal.windows FAIL \
       "version=$RELEASE_VERSION" "pack=PASS" "robot=$res_robot"
   # hours after the start: still origin/main, and step 1 still green on it (a later step-1 run may have recorded red)
   elif ! git -C "$REPO" fetch -q origin || [ "$(git -C "$REPO" rev-parse origin/main)" != "$vmc" ] ||
        ! RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-state.sh" require step1; then
-    echo "not staged: origin/main moved since the start (or could not be read), or step 1 is no longer green on ${vmc:0:8}"
+    echo "not uploaded: origin/main moved since the start (or could not be read), or step 1 is no longer green on ${vmc:0:8}"
     res_stage=FAIL; ok=0
+  elif [ "$UPLOAD" != yes ]; then
+    rdir="$REPO/asbl/dist/release-windows"; mkdir -p "$rdir"   # where the zips would be copied (nothing is)
+    for n in datapallas.zip datapallas-server.zip datapallas-src.zip; do
+      echo "UPLOAD=no  would run: scp <the VM>:<its checkout>\\asbl\\dist\\$n $rdir/$n  -> this host, for the upload below"
+    done
+    if RELEASE_COMMIT="$vmc" bash "$REPO/asbl/ci/release-publish.sh" stage-files "$RELEASE_VERSION" "$base-release-files.txt" "$rdir"; then
+      RELEASE_COMMIT="$vmc" RELEASE_LOG="${base%-step}.log" bash "$REPO/asbl/ci/release-state.sh" record rehearsal.windows PASS \
+        "version=$RELEASE_VERSION" "pack=PASS" "robot=PASS" "upload=no" \
+        "sha256=$(sed -n 's/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  \([A-Za-z0-9._-]*\)$/\2:\1/p' "$base-release-files.txt" | tr '\n' ' ' | sed 's/ $//')"
+      res_stage=SKIPPED
+    else
+      res_stage=FAIL; ok=0
+    fi
   else
     # copied here first: the upload and its check run on this host, where the credentials are (never on the VM)
     rdir="$REPO/asbl/dist/release-windows"
@@ -1730,10 +1765,10 @@ PY
     rm -rf "$rdir"
   fi
 
-  mark_end "$([ "$res_stage" = PASS ] && echo 0 || echo 1)"
+  mark_end "$(case "$res_stage" in PASS|SKIPPED) echo 0 ;; *) echo 1 ;; esac)"
   echo ""
   cat "$base-release-files.txt"
-  echo "RELEASE_RESULT commit=${vmc:0:8} version=$RELEASE_VERSION pack=PASS robot=$res_robot stage=$res_stage"
+  echo "RELEASE_RESULT commit=${vmc:0:8} version=$RELEASE_VERSION pack=PASS robot=$res_robot stage=$res_stage upload=$UPLOAD$([ "$res_stage" = SKIPPED ] && echo " (proven; nothing uploaded, nothing for MODE=public to copy: run it again with UPLOAD=yes)")"
   if [ "$ok" != 1 ]; then
     [ "$mode" = public ] && echo "MODE=public: the rehearsal is red, nothing copied: the public files are as they were"
     return 1
@@ -2327,7 +2362,7 @@ AIHUBPY
       echo "Main Playwright process exited with code ${PIPESTATUS[0]}" >> "$out"
       e2e_openapi
       docker_server_down
-      [ -z "${E2E_DOCKER_FROM_URL:-}" ] || docker_one_command || one_command=FAIL
+      if [ -n "${E2E_DOCKER_FROM_URL:-}" ] || [ "${E2E_DOCKER_ONE_COMMAND:-}" = yes ]; then docker_one_command || one_command=FAIL; fi
     else
       (cd frend/reporting && timeout --kill-after=60 "${E2E_TIMEOUT_SECS:-72000}" \
         xvfb-run -a --server-args="-screen 0 1920x1080x24" npx gulp "utils:start-server-and-e2e-$target") 2>&1 | tee "$out"
@@ -2376,7 +2411,7 @@ HTML
   # unpacked datapallas-server-docker.zip plus the flowkraft/datapallas-server image built by the last
   # successful `dp-ci.sh build` on this host. Nothing is built or pulled here: a missing image or zip is a
   # failure, and so is a container running any other image.
-  # E2E_DOCKER_FROM_URL=<zip url> (the Docker release, step 2): the self-host install from the download instead, as a
+  # E2E_DOCKER_FROM_URL=<zip url> (a staged Docker release, by hand): the self-host install from the download instead, as a
   # user does it (datapallas.com/docs/server/self-host): that zip, the image its compose names pulled from the registry
   # (the local tag of that name removed first; the build's <version>-<commit> tag keeps the layers), and the running
   # image must be the one the release pushed (the digest rehearsal.docker-stage recorded for this commit). After the
@@ -3176,7 +3211,7 @@ docker run -d --rm --name "$CONTAINER" $E2E_FLAGS $PUBLISH_FLAGS $DOCS_FLAGS --u
   -e DEBUG="${DEBUG:-}" \
   -e E2E_CHROMIUM_EXECUTABLE="${E2E_CHROMIUM_EXECUTABLE:-}" \
   -e E2E_SLOW_MO="${E2E_SLOW_MO:-}" -e E2E_DD_SCREENSHOTS="${E2E_DD_SCREENSHOTS:-}" \
-  -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" -e E2E_DOCKER_FROM_URL="${E2E_DOCKER_FROM_URL:-}" \
+  -e E2E_ROTATION_DATE="${E2E_ROTATION_DATE:-}" -e E2E_PACKAGE="${E2E_PACKAGE:-}" -e E2E_DOCKER_FROM_URL="${E2E_DOCKER_FROM_URL:-}" -e E2E_DOCKER_ONE_COMMAND="${E2E_DOCKER_ONE_COMMAND:-}" \
   -e PUBLISH_TAG="$PUBLISH_TAG" -e PUBLISH_RESET="$PUBLISH_RESET" -e PUBLISH_SETTINGS_FILE="$PUBLISH_SETTINGS_FILE" -e DRY_RUN="${DRY_RUN:-0}" -e FORCE="${FORCE:-0}" -e SMOKE_TIMEOUT_SECS="${SMOKE_TIMEOUT_SECS:-300}" \
   -e TARGET_HOST="${TARGET_HOST:-}" -e TARGET_COMPOSE_DIR="${TARGET_COMPOSE_DIR:-}" -e TARGET_DATA_DIR="${TARGET_DATA_DIR:-}" \
   -e TARGET_APP="${TARGET_APP:-}" -e TARGET_URL="${TARGET_URL:-}" \

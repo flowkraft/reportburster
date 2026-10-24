@@ -5,6 +5,13 @@
 # upload is checked by downloading it back the way a user gets it, and each verdict goes to the release record
 # (asbl/ci/release-state.sh):
 #
+# UPLOAD=no|yes (the release jobs' parameter, the same name on both; no when not set): every command below that writes to
+# Docker Hub or the bucket reads it, so nothing uploads while it is off. UPLOAD=no: stage-files and stage-docker make
+# every check that needs no credential, then print, for each upload, deletion and push they skip, the exact command and
+# where its output would go ("UPLOAD=no  would run: ..."), read no credential and write nothing (RELEASE_STAGE SKIPPED);
+# publish refuses (DRY_RUN=yes aside: it writes nothing anyway); preflight leaves out the upload checks (no credential is
+# needed). UPLOAD=yes: the commands run, as below.
+#
 #   bash asbl/ci/release-publish.sh stage-files <version> <list> <dir>
 #       The Windows rehearsal's files (job dp-ci-release-step3-release-windows-vm): those of <list> (the pack's sha256 list,
 #       <log>-step-release-files.txt: 'commit', 'version' and 'sha256' lines; a line with a note after the name is not
@@ -23,6 +30,9 @@
 #       rehearsal/<version>-<commit>/ and checked by download. Records rehearsal.docker-stage (digest=, which version-check
 #       accepts as staged by a rehearsal, rehearsal=, sha256=). Exit 3 = nothing to release (nothing pushed). Before it
 #       pushes, the docker zips an earlier rehearsal left anywhere under rehearsal/ are deleted (the cleanup, below).
+#       RELEASE_COMMIT, RELEASE_PROVEN_IMAGE_ID and RELEASE_PROVEN_ZIP_SHA256 (set by release-docker.sh after its proofs):
+#       the build must be of that commit, the image that id and the zip that sha256, else nothing is pushed: what goes out
+#       is what was proven.
 #
 #   DRY_RUN=no|yes  bash asbl/ci/release-publish.sh publish docker|windows <version> <commit>
 #       MODE=public's copy, minutes, parts marked PUBLIC STEP n/N: the version gate of the channel (nothing to release:
@@ -50,9 +60,11 @@
 #       rehearsal/_preflight/, downloaded back and deleted; DRY_RUN=yes: a listing of rehearsal/ only); the download
 #       site answers. docker: the Docker engine and buildx; DOCKERHUB_USER and DOCKERHUB_TOKEN accepted by docker login
 #       (a throwaway DOCKER_CONFIG); the token may push RELEASE_IMAGE_REPO (Docker Hub's token service, nothing pushed;
-#       skipped for another registry); the Windows VM of the rehearsal's part 6 (dp-ci.sh win prereq docker-e2e).
+#       skipped for another registry); the Windows VM of the rehearsal's part 4, its Windows proof (dp-ci.sh win prereq docker-e2e).
 #       public: also CLOUDFLARE_ZONE_ID and the purge token (Cloudflare's read-only token check, nothing purged).
 #       copy: a MODE=public run that only copies a passed rehearsal: the VM is not needed, not checked.
+#       UPLOAD=no: only what the run itself needs (docker: the Docker engine and the Windows VM): the tools, the credentials
+#       file, its keys, the bucket, the download site, buildx and Docker Hub are NOT CHECKED, since nothing is uploaded.
 #
 #   The cleanup (owner 2026-10-22: no old rehearsal stays in the bucket): moment 1, publish deletes the rehearsal it copied
 #   (its channel's files) once the public files are checked and recorded; moment 2, a new rehearsal (stage-files,
@@ -79,6 +91,9 @@ RELEASE_DOWNLOAD_BASE="${RELEASE_DOWNLOAD_BASE:-https://downloads.datapallas.com
 RELEASE_IMAGE_REPO="${RELEASE_IMAGE_REPO:-flowkraft/datapallas-server}"
 RELEASE_CLOUDFLARE_API="${RELEASE_CLOUDFLARE_API:-https://api.cloudflare.com/client/v4}"
 REHEARSAL_FOLDER=rehearsal   # where a rehearsal stages, <version>-<commit>/ inside; users never get it (before 2026-10-22: candidate)
+UPLOAD="${UPLOAD:-no}"        # the switch every upload reads (top of this file)
+case "$UPLOAD" in no|yes) ;; *) echo "FAIL  UPLOAD must be no or yes (got '$UPLOAD')"; exit 2 ;; esac
+would() { echo "UPLOAD=no  would run: $*"; }   # an upload skipped: the command it would have run, and where it goes
 
 creds() {  # the OD3 file: present, mode 600, then sourced with no output at all
   [ -f "$RELEASE_PUBLISH_ENV" ] || {
@@ -184,6 +199,9 @@ publish() {
   rec() { RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" get "$@" 2>/dev/null; }
   # before anything public changes nothing is recorded: the same run can simply be started again
   refuse() { echo "FAIL  $1"; echo "RELEASE_PUBLIC FAIL $ch $v (nothing recorded, the public files as they were: run it again once fixed)"; }
+  # publishing is the deliberate act: never with the switch off (a dry run writes nothing either way)
+  [ "$UPLOAD" = yes ] || [ "$dry" = 1 ] ||
+    { refuse "UPLOAD=$UPLOAD: publishing writes the public places and Docker Hub's :latest; run it with UPLOAD=yes"; return 1; }
 
   mark_start "PUBLIC STEP 1/$n_parts" "the rehearsal of $v on $c8 ($ch): its record, the version gate, its files still the ones tested"
   out=$(bash "$HERE/release-state.sh" version-check "$ch"); rc=$?
@@ -324,7 +342,22 @@ preflight() {
   case "${DRY_RUN:-no}" in no) ;; yes) dry=1 ;; *) echo "FAIL  DRY_RUN must be no or yes (got '$DRY_RUN')"; return 2 ;; esac
   ok() { echo "OK $1"; }
   missing() { echo "MISSING $1"; miss=$((miss + 1)); }
-  echo "PREREQUISITES of the $([ "$what" = docker ] && echo "Docker release" || echo "Windows release files"), $([ "$public" = 1 ] && echo "MODE=public" || echo "MODE=rehearsal")$([ "$copy" = 1 ] && echo ", the copy of a passed rehearsal only"):"
+  echo "PREREQUISITES of the $([ "$what" = docker ] && echo "Docker release" || echo "Windows release files"), $([ "$public" = 1 ] && echo "MODE=public" || echo "MODE=rehearsal")$([ "$copy" = 1 ] && echo ", the copy of a passed rehearsal only"), UPLOAD=$UPLOAD:"
+
+  if [ "$UPLOAD" = no ]; then
+    # nothing is uploaded: only what the run itself uses (the Docker release builds and proves here and on the VM)
+    echo "NOT CHECKED the uploads' tools, the publish credentials file and its keys, the bucket, the download site$([ "$what" = docker ] && echo ", docker buildx and Docker Hub"): UPLOAD=no, nothing is uploaded and no credential is read (UPLOAD=yes checks them)"
+    if [ "$what" = docker ]; then
+      docker info >/dev/null 2>&1 && ok "the Docker engine on this host" ||
+        missing "a running Docker engine on this host: start it (systemctl start docker), then run the job again"
+      out=$(bash asbl/ci/dp-ci.sh win prereq docker-e2e 2>&1 | grep -v -e '^PREREQUISITES' -e ' Docker engine on this host')
+      printf '%s\n' "$out"
+      miss=$((miss + $(printf '%s\n' "$out" | grep -c '^MISSING')))
+    fi
+    if [ "$miss" = 0 ]; then echo "PREREQUISITES OK"; return 0; fi
+    echo "PREREQUISITES MISSING ($miss): nothing was built or uploaded. Provide what is listed above, then run the job again."
+    return 1
+  fi
 
   for t in rclone curl sha256sum; do
     command -v "$t" >/dev/null 2>&1 && ok "$t on this host" || missing "$t on this host: install it (the uploads and their checks use it)"
@@ -430,7 +463,7 @@ sys.exit(0 if any(a.get("name") == os.environ["R"] and "push" in a.get("actions"
     if [ "$copy" = 1 ]; then
       echo "NOTE the Windows VM is not checked: the copy does not use it"
     else
-      # the rehearsal's part 6 (windows-vm-docker): the same checks the lane makes, from dp-ci.sh; its line on this host's
+      # the rehearsal's part 4, its Windows proof (windows-vm-docker): the same checks the lane makes, from dp-ci.sh; its line on this host's
       # Docker engine is left out, checked above already
       out=$(bash asbl/ci/dp-ci.sh win prereq docker-e2e 2>&1 | grep -v -e '^PREREQUISITES' -e ' Docker engine on this host')
       printf '%s\n' "$out"
@@ -476,6 +509,16 @@ case "$cmd" in
     # a staged file = a 'sha256   <hash>  <length>  <name>' line with nothing after the name
     names=$(sed -n 's/^sha256   [0-9a-f]\{64\}  [0-9]*  \([A-Za-z0-9._-]*\)$/\1/p' "$list")
     [ -n "$names" ] || fail "the list $list names no file to stage"
+    folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
+    if [ "$UPLOAD" != yes ]; then
+      # before the files' own checks: with the switch off they are not copied to <dir> at all
+      would "rclone lsf -R $RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/, then rclone deletefile --b2-hard-delete each $(channel_files windows) an earlier rehearsal left there  -> those files gone from the bucket"
+      for n in $names; do
+        would "rclone copyto $sdir/$n $RELEASE_RCLONE_REMOTE/$folder/$n  -> $RELEASE_DOWNLOAD_BASE/$folder/$n, then checked by download (sha256 $(sed -n "s/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  $n\$/\1/p" "$list" | cut -c1-16)...)"
+      done
+      echo "RELEASE_STAGE SKIPPED UPLOAD=no: nothing deleted or uploaded, no credential read, rehearsal.windows not recorded"
+      exit 0
+    fi
     for n in $names; do
       want=$(sed -n "s/^sha256   \([0-9a-f]\{64\}\)  [0-9]*  $n\$/\1/p" "$list")
       [ -s "$sdir/$n" ] || fail "$n is not in $sdir"
@@ -484,7 +527,6 @@ case "$cmd" in
     done
     creds || fail "no publish credentials (above)"
     clean_rehearsals windows
-    folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
     sums=""
     for n in $names; do
       out=$(rclone copyto -q "$sdir/$n" "$RELEASE_RCLONE_REMOTE/$folder/$n" 2>&1) || {
@@ -526,7 +568,22 @@ case "$cmd" in
       fail "step 1's Docker lanes are not green on ${c:0:8}"
     zip=asbl/dist/datapallas-server-docker.zip
     [ -s "$zip" ] || fail "$zip is missing (the build's)"
-    docker image inspect "$RELEASE_IMAGE_REPO:$tag" >/dev/null 2>&1 || fail "the build's image $RELEASE_IMAGE_REPO:$tag is not on this host"
+    id=$(docker image inspect "$RELEASE_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) || fail "the build's image $RELEASE_IMAGE_REPO:$tag is not on this host"
+    # what goes out is what release-docker.sh proved (when it says what that was)
+    [ -z "${RELEASE_COMMIT:-}" ] || [ "$(git rev-parse "$RELEASE_COMMIT" 2>/dev/null)" = "$c" ] ||
+      fail "the build is of ${c:0:8}, the proofs were of ${RELEASE_COMMIT:0:8}: origin/main moved, nothing pushed"
+    [ -z "${RELEASE_PROVEN_IMAGE_ID:-}" ] || [ "$id" = "$RELEASE_PROVEN_IMAGE_ID" ] ||
+      fail "$RELEASE_IMAGE_REPO:$tag is $id now, the proofs ran $RELEASE_PROVEN_IMAGE_ID: nothing pushed"
+    [ -z "${RELEASE_PROVEN_ZIP_SHA256:-}" ] || [ "$(sha_of "$zip")" = "$RELEASE_PROVEN_ZIP_SHA256" ] ||
+      fail "$zip is not the zip the proofs installed (sha256 $(sha_of "$zip" | cut -c1-16)..., proven ${RELEASE_PROVEN_ZIP_SHA256:0:16}...): nothing pushed"
+    folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
+    if [ "$UPLOAD" != yes ]; then
+      would "rclone lsf -R $RELEASE_RCLONE_REMOTE/$REHEARSAL_FOLDER/, then rclone deletefile --b2-hard-delete each $(channel_files docker) an earlier rehearsal left there  -> those files gone from the bucket"
+      would "docker tag $RELEASE_IMAGE_REPO:$tag $RELEASE_IMAGE_REPO:$v && docker push $RELEASE_IMAGE_REPO:$v  -> Docker Hub ($RELEASE_IMAGE_REPO:$v, never :latest), its digest read back"
+      would "rclone copyto $zip $RELEASE_RCLONE_REMOTE/$folder/datapallas-server-docker.zip  -> $RELEASE_DOWNLOAD_BASE/$folder/datapallas-server-docker.zip, then checked by download"
+      echo "RELEASE_STAGE SKIPPED UPLOAD=no: nothing pushed, deleted or uploaded, no credential read, rehearsal.docker-stage not recorded"
+      exit 0
+    fi
     creds || fail "no publish credentials (above)"
     clean_rehearsals docker
     docker tag "$RELEASE_IMAGE_REPO:$tag" "$RELEASE_IMAGE_REPO:$v" || fail "docker tag $RELEASE_IMAGE_REPO:$v failed"
@@ -545,7 +602,6 @@ case "$cmd" in
     docker logout ${reg:+"$reg"} >/dev/null 2>&1; rm -rf "$DOCKER_CONFIG"
     [ "$got" = "$pushed" ] || fail "the registry's $RELEASE_IMAGE_REPO:$v is ${got:-unreadable}, not the pushed $pushed"
     echo "STAGE  $RELEASE_IMAGE_REPO:$v  pushed, the registry has it: $digest"
-    folder="$REHEARSAL_FOLDER/$v-${c:0:8}"
     upload_checked "$zip" "$folder" || fail "the docker zip was not staged in $folder/ (above)"
     RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" record rehearsal.docker-stage PASS "version=$v" \
       "image=$RELEASE_IMAGE_REPO:$v" "digest=$digest" "rehearsal=$folder/" "sha256=datapallas-server-docker.zip:$(sha_of "$zip")" ||
@@ -557,5 +613,5 @@ case "$cmd" in
     mark_run publish "$@"
     ;;
   *)
-    sed -n '2,70p' "$0"; exit 2 ;;
+    sed -n '2,82p' "$0"; exit 2 ;;
 esac
