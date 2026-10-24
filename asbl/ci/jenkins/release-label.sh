@@ -13,8 +13,11 @@
 #     public=PASS         -> "<v> public (rehearsal of <commit>)", or "<v> public: rehearsed first, then copied"
 #     public=DRY_RUN      -> "<v> dry run: would copy the rehearsal of <commit>"
 #     MODE=public, UPLOAD=no -> "REFUSED: MODE=public needs UPLOAD=yes"
-#     proven, UPLOAD=no   -> "<v> proven, nothing uploaded (UPLOAD=no)" (rehearsal=PASS ... upload=no, or stage=SKIPPED)
-#     rehearsal passed    -> "<v> rehearsal passed" (rehearsal=PASS, or pack, robot and stage PASS)
+#     proven, UPLOAD=no   -> "<v> proven and kept, nothing uploaded (UPLOAD=no)" (rehearsal=PASS ... upload=no, or stage=SKIPPED)
+#     rehearsal passed    -> "<v> rehearsal passed" (rehearsal=PASS, or pack, keep, light, robot and stage PASS)
+#   MODE=upload (release-publish.sh upload-kept)  UPLOAD_KEPT PASS|CHECKED|REFUSED|FAIL ...
+#     PASS -> "<v> kept files uploaded", CHECKED -> "<v> kept files checked, nothing uploaded", REFUSED -> "upload REFUSED:
+#     see the log", FAIL -> "upload FAILED: see the log"
 #     refused by the gate -> "REFUSED by the version gate: see the log"
 #     anything else       -> "<v> FAILED: see the log"
 #   no result line: "<v> prerequisites missing: see the log" after the prerequisites (release-publish.sh preflight),
@@ -36,6 +39,18 @@ dry() {  # the label of a dry run that ended well
 
 line=$(last '^SET_VERSION_RESULT ')
 if [ -n "$line" ]; then echo "${line#SET_VERSION_RESULT }"; exit 0; fi
+
+line=$(last '^UPLOAD_KEPT (PASS|CHECKED|REFUSED|FAIL)')
+if [ -n "$line" ]; then
+  v=$(last '^UPLOAD_KEPT [a-z ]* of [0-9]' | sed 's/.* of \([0-9][^ ]*\) on .*/\1/'); vp="${v:+$v }"
+  case "$line" in
+    'UPLOAD_KEPT PASS'*) echo "${vp}kept files uploaded" ;;
+    'UPLOAD_KEPT CHECKED'*) echo "${vp}kept files checked, nothing uploaded" ;;
+    'UPLOAD_KEPT REFUSED'*) echo "${vp}upload REFUSED: see the log" ;;
+    *) echo "${vp}upload FAILED: see the log" ;;
+  esac
+  exit 0
+fi
 
 line=$(last '^(DOCKER_)?RELEASE_RESULT ')
 c=$(printf '%s' "$line" | sed -n 's/.* commit=\([^ ]*\).*/\1/p')
@@ -59,8 +74,8 @@ case "$line" in
   *' refused by the version gate'*) echo "REFUSED by the version gate: see the log" ;;
   *' public=DRY_RUN'*) echo "$v dry run: would copy the rehearsal of $c" ;;
   *' refused: MODE=public needs UPLOAD=yes'*) echo "REFUSED: MODE=public needs UPLOAD=yes" ;;
-  *' rehearsal=PASS '*' upload=no'*|*' stage=SKIPPED '*) echo "$v proven, nothing uploaded (UPLOAD=no)" ;;
+  *' rehearsal=PASS '*' upload=no'*|*' stage=SKIPPED '*) echo "$v proven and kept, nothing uploaded (UPLOAD=no)" ;;
   *' dry run:'*) dry ;;
-  *' rehearsal=PASS '*|*' pack=PASS robot=PASS stage=PASS'*) echo "$v rehearsal passed" ;;
+  *' rehearsal=PASS '*|*' pack=PASS keep=PASS light=PASS robot=PASS stage=PASS'*) echo "$v rehearsal passed" ;;
   *) echo "${vp}FAILED: see the log" ;;
 esac

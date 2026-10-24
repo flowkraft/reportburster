@@ -1,7 +1,8 @@
 // Job datapallas/dp-ci-release-step2-release-docker: the Docker release (asbl/ci/jenkins/release-docker.sh). MODE=rehearsal (the
-// default): built once on Linux, that build proven on Linux and Windows without a registry, then staged where users do not get
-// it (UPLOAD=yes). MODE=public: a passed, uploaded rehearsal of this version copied to the public places in minutes, or a
-// rehearsal first when there is none.
+// default): built once on Linux, that build proven on Linux and Windows without a registry, kept (the docker zip and the image,
+// in the artifacts folder with its manifest and failure report), then staged where users do not get it (UPLOAD=yes); the day
+// before a release it runs with UPLOAD=no. MODE=upload: release day, the kept files uploaded, no rebuild. MODE=public: a passed,
+// uploaded rehearsal of this version copied to the public places in minutes, or a rehearsal first when there is none.
 // Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
 // the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-release-step2-release-docker.
 // E2E_APPROVAL (the owner's written decision to go on without step 1's four lanes; seed.groovy's parameter text says what it
@@ -44,7 +45,7 @@ pipeline {
         sh '''#!/bin/bash
 set -o pipefail
 q() { printf '%q' "$1"; }
-# its parts are marked DOCKER RELEASE STEP 1/6 .. 6/6 and DOCKER PUBLIC, each START/END with the time it took (asbl/ci/marks.sh):
+# its parts are marked DOCKER RELEASE STEP 1/6 .. 6/6 (5/6 = the keeping), DOCKER UPLOAD and DOCKER PUBLIC, each START/END with the time it took (asbl/ci/marks.sh):
 # grep '^######## ' in the console. The output is kept in release-run.out for the stage that queues the seed job and for the build's label (post, below).
 ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") && MODE=$(q "$MODE") UPLOAD=$(q "$UPLOAD") DRY_RUN=$(q "$DRY_RUN") E2E_APPROVAL=$(q "$E2E_APPROVAL") E2E_APPROVAL_USER=$(q "$E2E_APPROVAL_USER") bash asbl/ci/jenkins/release-docker.sh" | tee release-run.out
 '''

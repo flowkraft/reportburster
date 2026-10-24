@@ -12,7 +12,12 @@
 #   bash asbl/ci/release-state.sh step1-guard                                    the release jobs' guard: exit 1 with one line, "REFUSED:
 #                                                                                step 1 is not green on <commit>: <lanes>. Run ...", unless
 #                                                                                the four lanes a release needs are PASS (or E2E_APPROVAL,
-#                                                                                below)
+#                                                                                below). STEP1_PROVEN_LATER=windows-vm-electron-light
+#                                                                                (the release jobs' start, plan-pre-release-artifacts-
+#                                                                                ready): that lane is the one step 3 runs itself, after
+#                                                                                its pack; it is shown as "proven later", not checked.
+#                                                                                Only that lane, only here: `require step1`, which
+#                                                                                every upload makes, always reads all four
 #   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
 #   bash asbl/ci/release-state.sh full-lane                                      the last two releases' full-lane choices: version,
 #                                                                                lane, why (alternated|random), when, the full run's
@@ -468,8 +473,16 @@ case "$cmd" in
           echo "FULL_LANE approval written on the record of $v ($FULL_DIR/$v)" ;; esac
       exit "$rc"
     fi
+    case "${STEP1_PROVEN_LATER:-}" in
+      ""|windows-vm-electron-light) ;;
+      *) echo "FAIL  step1-guard: STEP1_PROVEN_LATER may only name windows-vm-electron-light, the lane step 3 runs itself (got '$STEP1_PROVEN_LATER')"; exit 2 ;;
+    esac
     bad=""
     for n in $REQUIRED_STEP1; do
+      if [ -n "${STEP1_PROVEN_LATER:-}" ] && [ "$n" = "step1.$STEP1_PROVEN_LATER" ] && [ "$(field "$dir/$n" result)" != PASS ]; then
+        echo "note: ${n#step1.} is proven later, by step 3 itself (its RELEASE STEP 2/4, recorded as $n): not checked now; every upload requires it"
+        continue
+      fi
       case "$(field "$dir/$n" result)" in PASS) ;; FAIL) bad="$bad, ${n#step1.} red" ;; *) bad="$bad, ${n#step1.} missing" ;; esac
     done
     if [ -z "$bad" ]; then echo "ok: step 1 is green on ${commit:0:8} (${REQUIRED_STEP1//step1./})"; approval_refused && exit 1; exit 0; fi
@@ -561,5 +574,5 @@ case "$cmd" in
     version_check "$ch"
     ;;
   *)
-    sed -n '2,86p' "$0"; exit 2 ;;
+    sed -n '2,91p' "$0"; exit 2 ;;
 esac
