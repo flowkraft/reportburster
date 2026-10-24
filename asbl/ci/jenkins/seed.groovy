@@ -23,11 +23,12 @@ folder('datapallas') {
     '\n  dp-ci-dev-quality-report: any time: lint, bug finder, format, complexity; never blocks anything' +
     '\n  dp-ci-dev-server: to look at a change in a browser: start, restart or stop a dev server: dp-dev (live or pinned) or dp-kate' +
     '\n  dp-ci-release-step0-set-version: a release starts here: the new version committed (left as it is: nothing done)' +
-    '\n  dp-ci-release-step1-e2e-prerelease: the full e2e: a release\'s four lanes, and the everyday check of the trunk' +
+    '\n  dp-ci-release-step1-e2e-prerelease: the e2e: a release\'s four lanes (the full set on one side, web or docker-server, alternating per release), and the everyday check of the trunk' +
     '\n  dp-ci-release-step2-release-docker: the Docker release: MODE=rehearsal, then MODE=public (or public directly)' +
     '\n  dp-ci-release-step3-release-windows-vm: the Windows release: the same two modes' +
     '\n  dp-ci-release-step4-demo-public: after step 2\'s MODE=public: demo.datapallas.com installs the release' +
-    '\n\nA release = step 0, then step 1\'s four lanes (without them, steps 2 and 3 go on only on the owner\'s written decision: E2E_APPROVAL), then steps 2 and 3 (each MODE=rehearsal, a look, then MODE=public, the two public runs one after the other; once trusted, MODE=public directly), then step 4.')
+    '\n\nA release = step 0, then step 1\'s four lanes (without them, steps 2 and 3 go on only on the owner\'s written decision: E2E_APPROVAL), then steps 2 and 3 (each MODE=rehearsal, a look, then MODE=public, the two public runs one after the other; once trusted, MODE=public directly), then step 4.' +
+    '\n\nWhich proof covers which file a user gets: the Docker image and datapallas-server-docker.zip are built once on Linux by step 2 and proven by step 2 itself (the light set on Linux, and on the Windows VM in Docker Desktop, on that very build) before step 2 uploads them; datapallas.zip and datapallas-server.zip are packed on the Windows VM by step 3, proven there by the Robot UAT, and uploaded by the VM. Step 1 proves the code: the full set on its side, the sign-in file, the light sets of windows-vm-electron (the app built from the repository, never the packed exe) and windows-vm-server.')
 }
 
 // A job's description: the same blocks for every job, so a reader finds each fact in the same place. A block given as a
@@ -238,7 +239,7 @@ def jobs = [
   ],
   'dp-ci-release-step1-e2e-prerelease': [
     about: describe(
-      WHAT: 'The real end-to-end tests, on a package built from this exact commit of origin/main (rebuilt first when it is not): dp-ci.sh e2e on Linux (web, electron-linux, docker-server), dp-ci.sh win e2e|docker-e2e|server-e2e on the Windows VM. Two roles: a release\'s four lanes, and the everyday full e2e of the trunk. docker-server, windows-vm-docker and windows-vm-server install what dp-ci.sh build makes: the job builds origin/main first when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2; the tests are JOB STEP 2/2). Each build records its verdict in the release record (bash asbl/ci/release-state.sh show); a run with any filter (E2E_SPEC or E2E_GREP set, other than the auth lane below) is "targeted" and never counts for a release. Its first line, RELEASE_VERSION, says what a release would do now; it runs anyway.',
+      WHAT: 'The real end-to-end tests, on a package built from this exact commit of origin/main (rebuilt first when it is not): dp-ci.sh e2e on Linux (web, electron-linux, docker-server), dp-ci.sh win e2e|docker-e2e|server-e2e on the Windows VM. Two roles: a release\'s four lanes, and the everyday full e2e of the trunk. docker-server, windows-vm-docker and windows-vm-server install what dp-ci.sh build makes: the job builds origin/main first when it is not built yet (dp-ci.sh build-if-needed, JOB STEP 1/2; the tests are JOB STEP 2/2). Each build records its verdict in the release record (bash asbl/ci/release-state.sh show); a run with any filter (E2E_SPEC or E2E_GREP set, other than the auth lane below and E2E_SPEC=light on windows-vm-electron) is "targeted" and never counts for a release. Its first line, RELEASE_VERSION, says what a release would do now; it runs anyway. Then FULL_LANE: the side, web or docker-server, that runs this release\'s full set (it alternates, one side per release; bash asbl/ci/release-state.sh full-lane shows the last two and why).',
       WHEN: [
         'a release: the four lanes in EXAMPLES, each green on the commit being released, one build each (start them one after the other: a second build waits in the Jenkins queue);',
         'any day: the whole trunk on Linux (web) or on Windows (windows-vm-electron), E2E_SPEC empty;',
@@ -302,10 +303,10 @@ def jobs = [
         'for a rehearsal, the Windows VM: answering, its Docker Desktop running, no other Windows run.',
         'The full list: asbl/ci/jenkins/jenkins.md, "Before the first release".',
       ],
-      TIME: 'a rehearsal: the build of origin/main when there is none (about 40 min), then the stage and the two light sets (not measured yet); MODE=public with a passed rehearsal: minutes (not measured yet); MODE=public that rehearses first: a rehearsal plus the copy.',
+      TIME: 'a rehearsal: the build of origin/main when there is none (about 40 min), then the two light sets and, with UPLOAD=yes, the push and the upload (not measured yet); MODE=public with a passed rehearsal: minutes (not measured yet); MODE=public that rehearses first: a rehearsal plus the copy.',
       EXAMPLES: [
-        'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
-        'go public after a green rehearsal: MODE=public',
+        'rehearse 16.6.0 (after steps 0 and 1), proven, nothing uploaded: MODE=rehearsal',
+        'go public after a green rehearsal that uploaded (UPLOAD=yes): MODE=public  UPLOAD=yes',
         'see what a run would do, nothing built or copied: DRY_RUN=yes (with either MODE)',
         'the whole rehearsal, nothing written to Docker Hub or the bucket: MODE=rehearsal  UPLOAD=no (the default)',
         'rehearse and upload, on the owner\'s approval: MODE=rehearsal  UPLOAD=yes; then go public: MODE=public  UPLOAD=yes',
@@ -341,8 +342,8 @@ def jobs = [
       ],
       TIME: 'a rehearsal: the pack (capped at 8 h, RELEASE_PACK_TIMEOUT) and the Robot UAT (capped at 6 h, RELEASE_ROBOT_TIMEOUT), not measured yet; MODE=public with a passed rehearsal: minutes: its own work took 8 s against local stand-ins (2026-10-22); a real copy also downloads the three zips (about 1.7 GB) twice to check them and copies them on the bucket, so the download speed decides; MODE=public that rehearses first: a rehearsal plus the copy.',
       EXAMPLES: [
-        'rehearse 16.6.0 (after steps 0 and 1): MODE=rehearsal',
-        'go public after a green rehearsal: MODE=public',
+        'rehearse 16.6.0 (after steps 0 and 1), proven, nothing uploaded: MODE=rehearsal',
+        'go public after a green rehearsal that uploaded (UPLOAD=yes): MODE=public  UPLOAD=yes',
         'see what a run would do, the VM untouched: DRY_RUN=yes (with either MODE)',
         'the whole rehearsal, nothing written to the bucket: MODE=rehearsal  UPLOAD=no (the default)',
         'rehearse and upload, on the owner\'s approval: MODE=rehearsal  UPLOAD=yes; then go public: MODE=public  UPLOAD=yes',
