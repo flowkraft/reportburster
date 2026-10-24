@@ -70,7 +70,7 @@ main() {
     return 1
   fi
 
-  mark_start "DOCKER RELEASE STEP 1/6" "the version gate and the prerequisites: settings.xml of origin/main against the released Docker version"
+  mark_start "DOCKER RELEASE STEP 1/6" "the version gate, the prerequisites and the step 1 guard (this release's full lane): settings.xml of origin/main against the released Docker version"
   # this checkout on origin/main first, so the gate reads the version that would be released (DRY_RUN=1: no build)
   out=$(DRY_RUN=1 bash asbl/ci/dp-ci.sh build-if-needed 2>&1) ||
     { printf '%s\n' "$out"; echo "FAILED: could not put this checkout on origin/main (dp-ci.sh build-if-needed, above)"; return 1; }

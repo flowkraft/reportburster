@@ -408,13 +408,17 @@ case "$cmd" in
                 echo "step 1 of $(tree_version) needs: ${REQUIRED_STEP1//step1./}" ;;
       --step1)  # the step-1 job, at its start: the choice made only when this version is still to be released on a channel
                 # (the job is also the everyday e2e: a released version, or one the gate refuses, draws nothing)
-                go=0; for ch in docker windows; do version_check "$ch" >/dev/null 2>&1 && go=1; done
+                go=0; why=""
+                for ch in docker windows; do
+                  version_check "$ch" >/dev/null 2>&1; rc=$?
+                  case "$rc" in 0) go=1 ;; 3) why="$why $ch: already released;" ;; *) why="$why $ch: refused or could not check (rc $rc);" ;; esac
+                done
                 if [ "$go" = 1 ]; then
                   required_step1 choose "step 1 job (${E2E_TARGET:-?})" || exit 2
                   echo "step 1 of $(tree_version) needs: ${REQUIRED_STEP1//step1./}"
                 else
                   required_step1
-                  echo "FULL_LANE $(tree_version): not a version to release now on either channel (version-check): no lane chosen"
+                  echo "FULL_LANE $(tree_version): no lane chosen:$why the release jobs' step 1 guard chooses it"
                 fi ;;
       "")       # the last two releases' choices
                 printf '%-10s %-14s %-11s %-21s %-7s %-9s %-21s %s\n' VERSION LANE WHY CHOSEN RESULT ON RAN MORE

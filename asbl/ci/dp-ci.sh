@@ -1736,7 +1736,7 @@ win_release() {
   base="${WIN_E2E_LOG:-${LOG_DIR:-/var/kraft-internalsystems/logs/datapallas-ci}/win-release-$(date -u +%Y%m%dT%H%M%SZ)-step.log}"
   base="${base%.log}"
   mkdir -p "$(dirname "$base")" 2>/dev/null
-  mark_start "RELEASE STEP 1/3" "the version gate and the prerequisites; then a copy of a passed rehearsal (MODE=public), or the step 1 guard and the pack: the VM on origin/main, asbl\\pack-datapallas.bat, the files' sha256"
+  mark_start "RELEASE STEP 1/3" "the version gate and the prerequisites; then a copy of a passed rehearsal (MODE=public), or the step 1 guard, the VM's rclone (UPLOAD=yes) and the pack: the VM on origin/main, asbl\\pack-datapallas.bat, the files' sha256"
   (cd "$REPO" && sync_host_repo) || return 2
   gate=$(bash "$REPO/asbl/ci/release-state.sh" version-check windows); rc=$?
   printf '%s\n' "$gate"
