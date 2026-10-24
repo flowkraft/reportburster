@@ -573,8 +573,8 @@ for k, v in (json.load(sys.stdin).get(os.environ["R"]) or {}).items():
       3) echo "RELEASE_STAGE NOTHING TO RELEASE: nothing pushed, nothing staged"; exit 3 ;;
       *) fail "refused by the version gate (above)" ;;
     esac
-    RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" require step1.docker-server-full step1.docker-server-auth ||
-      fail "step 1's Docker lanes are not green on ${c:0:8}"
+    RELEASE_COMMIT="$c" bash "$HERE/release-state.sh" require step1 ||
+      fail "step 1 is not green on ${c:0:8}"
     zip=asbl/dist/datapallas-server-docker.zip
     [ -s "$zip" ] || fail "$zip is missing (the build's)"
     id=$(docker image inspect "$RELEASE_IMAGE_REPO:$tag" --format '{{.Id}}' 2>/dev/null) || fail "the build's image $RELEASE_IMAGE_REPO:$tag is not on this host"

@@ -1,5 +1,7 @@
 // Job datapallas/dp-ci-release-step1-e2e-prerelease: the real e2e on a package built from this exact commit (dp-ci.sh e2e, or
-// dp-ci.sh win e2e|docker-e2e|server-e2e for the Windows targets): step 1 of a release (four lanes green on one commit), and the
+// dp-ci.sh win e2e|docker-e2e|server-e2e for the Windows targets): step 1 of a release (four lanes green on one commit: the full
+// set on this release's full lane, web or docker-server, alternated; E2E_SPEC=light on windows-vm-electron = its light set,
+// e.g. E2E_TARGET=windows-vm-electron E2E_SPEC=light), and the
 // everyday full e2e of the trunk. Each build records its verdict (asbl/ci/release-state.sh). The quick loop is dp-ci-dev-e2e-one-spec.
 // Its full description (what, when, order, needs, time, examples, log) is in asbl/ci/jenkins/seed.groovy, which makes the job;
 // the guide is asbl/ci/jenkins/jenkins.md, section dp-ci-release-step1-e2e-prerelease.
@@ -64,9 +66,11 @@ case "$E2E_TARGET" in
     STEPS="$JS 'JOB STEP 1/1' 'e2e $E2E_TARGET' $RUN" ;;
 esac
 # Around the steps, the release record (asbl/ci/release-state.sh): first the version line (what a release would do now:
-# settings.xml against Docker Hub's :latest; this job runs anyway, it is also the everyday e2e job), last the lane's
-# verdict, step1.<target>-<full|auth|light|targeted>, which steps 2 and 3 of a release require on their commit.
-ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") || exit 2; export E2E_SPEC=$(q "$E2E_SPEC") E2E_GREP=$(q "$E2E_GREP") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES"); bash asbl/ci/release-state.sh version-check --print; t0=\\$(date +%s); $STEPS; rc=\\$?; RELEASE_STEP_START=\\$t0 bash asbl/ci/release-state.sh record-step1 $(q "$E2E_TARGET") \\$rc; exit \\$rc"
+# settings.xml against Docker Hub's :latest; this job runs anyway, it is also the everyday e2e job), then this release's
+# full lane (full-lane --step1: web or docker-server, alternated, or drawn at random and said so; chosen once per version,
+# only while the version is still to be released) and the lanes step 1 needs, last the lane's verdict,
+# step1.<target>-<full|auth|light|targeted>, which steps 2 and 3 of a release require on their commit.
+ssh -o BatchMode=yes "$DP_HOST" "cd $(q "$DP_REPO") || exit 2; export E2E_SPEC=$(q "$E2E_SPEC") E2E_GREP=$(q "$E2E_GREP") E2E_ROTATION_DATE=$(q "$E2E_ROTATION_DATE") E2E_RETRIES=$(q "$E2E_RETRIES"); bash asbl/ci/release-state.sh version-check --print; E2E_TARGET=$(q "$E2E_TARGET") bash asbl/ci/release-state.sh full-lane --step1; t0=\\$(date +%s); $STEPS; rc=\\$?; RELEASE_STEP_START=\\$t0 bash asbl/ci/release-state.sh record-step1 $(q "$E2E_TARGET") \\$rc; exit \\$rc"
 '''
         }
       }

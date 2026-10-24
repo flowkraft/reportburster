@@ -33,7 +33,9 @@
 # THE RELEASE, in order (asbl/ci/jenkins/jenkins.md, "The release, in order"): Jenkins jobs, on origin/main.
 #   0 dp-ci-release-step0-set-version           asbl/ci/jenkins/release-set-version.sh: a bigger version written into the version
 #                                               files (asbl/ci/set-version.sh), one commit pushed to main; left as it is, nothing
-#   1 dp-ci-release-step1-e2e-prerelease        `e2e` / `win ...` per target; four lanes green on one commit, recorded
+#   1 dp-ci-release-step1-e2e-prerelease        `e2e` / `win ...` per target; four lanes green on one commit, recorded (the
+#                                               full set on the release's full lane, web or docker-server, alternated:
+#                                               asbl/ci/release-state.sh full-lane)
 #   2 dp-ci-release-step2-release-docker        asbl/ci/jenkins/release-docker.sh. MODE=rehearsal: build once here, prove (the
 #                                               light set on the build's zip and image on Linux and in the VM's Docker
 #                                               Desktop, no registry), then upload (UPLOAD=yes: :<version> and the zip staged in
@@ -82,8 +84,8 @@
 #       E2E_DOCKER_ONE_COMMAND=yes [no]  (docker-server, the Docker release's Linux proof): after the tests, the self-host
 #                  page's one-command `docker run` of the image the bundle ran, as E2E_DOCKER_FROM_URL does.
 #       E2E_RETRIES how often a failed test runs again: [empty = 2 for the full suite, 0 for a targeted run]. The Windows
-#                  lanes have their own: windows-vm-electron full 1, the light set of windows-vm-docker and windows-vm-server
-#                  1, targeted 0.
+#                  lanes have their own: windows-vm-electron full 1, the light set of windows-vm-electron (E2E_SPEC=light),
+#                  windows-vm-docker and windows-vm-server 1, targeted 0.
 #       E2E_TIMEOUT_SECS the whole run's limit: [259200 = 72 h for the full suite, 72000 = 20 h for a targeted run].
 #       Stuck tests cost minutes, not hours (0 switches one off): E2E_MAX_WAIT_MS [40 min per wait], E2E_MAX_TEST_MS
 #                  [90 min per test], E2E_ACTION_TIMEOUT_MS [5 min per click], E2E_CLEAN_STATE_ATTEMPTS [60],
@@ -184,7 +186,8 @@
 #                               package rebuilt with asbl/pack-prepare-for-e2e.bat unless it was built from that commit.
 #       e2e                     windows-vm-electron: the desktop app on the VM, E2E_SPEC/E2E_GREP as in `e2e` (on Windows the
 #                               path has backslashes: write the separator as [\\/]); both empty = the full suite without
-#                               auth-authorization-server. Caps: WIN_RUN_TIMEOUT [full 64 h, targeted 3 h; win-ci.env sets
+#                               auth-authorization-server; E2E_SPEC=light = the light set (WIN_LIGHT_SPEC), what a release
+#                               needs of this lane. Caps: WIN_RUN_TIMEOUT [full 64 h, targeted 3 h; win-ci.env sets
 #                               6 h for targeted runs], WIN_RUN_STALL [full 105 min, targeted 80 min].
 #       docker-e2e              windows-vm-docker: DataPallas Server in the VM's Docker Desktop, from datapallas-server-docker.zip
 #                               as the self-host page installs it, with the image `build` made from the VM's commit copied
@@ -1089,10 +1092,15 @@ win_e2e() {
   if [ -z "$spec" ] && [ -z "$gexp" ]; then
     mode=full
     spec='^(?!.*auth-authorization-server).*\.spec\.ts$'
+  elif [ "$spec" = light ] && [ -z "$gexp" ]; then
+    # E2E_SPEC=light: the light set the other Windows lanes run (WIN_LIGHT_SPEC), what a release needs of this lane
+    # since the full set alternates between web and docker-server (asbl/ci/release-state.sh full-lane)
+    mode=light
+    spec="$WIN_LIGHT_SPEC"
   fi
-  # A targeted run shows each failure as it is; a full run retries a failed test once, so one run
-  # still collects every failure instead of stopping at the first flake (plan W7).
-  if [ "$mode" = full ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
+  # A targeted run shows each failure as it is; a full run, and the light set as on the other Windows lanes, retry a
+  # failed test once, so one run still collects every failure instead of stopping at the first flake (plan W7).
+  if [ "$mode" = full ] || [ "$mode" = light ]; then retries="${E2E_RETRIES:-1}"; else retries="${E2E_RETRIES:-0}"; fi
 
   win_stacks_down
   win_temp_clean
@@ -3147,7 +3155,7 @@ if [ "$TASK" = "win" ]; then
            echo "       $0 win sync         (fast-forward the VM's checkout to origin/main; win e2e does this first)"
            echo "       $0 win prepare      (sync, then rebuild the VM's package when it is not from the VM's commit; win e2e does this too)"
            echo "       $0 win prereq e2e|docker-e2e|server-e2e|release   (what that lane needs, checked in seconds: the VM over SSH, its Docker Desktop, Java and Maven, no other Windows run)"
-           echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC/E2E_GREP = targeted)"
+           echo "       $0 win e2e          (Electron e2e on the desktop; E2E_SPEC=light = the light set; other E2E_SPEC/E2E_GREP = targeted)"
            echo "       $0 win docker-e2e   (DataPallas Server in Docker Desktop, installed as the self-host page says; a light set by default)"
            echo "       $0 win server-e2e   (DataPallas Server on the VM's Java 17, installed as the installation page says; the same light set)"
            echo "       $0 win release      (the Windows release: pack-datapallas.bat, Robot UAT on its very files, then staged)"

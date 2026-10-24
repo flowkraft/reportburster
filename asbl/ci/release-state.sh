@@ -14,6 +14,13 @@
 #                                                                                the four lanes a release needs are PASS (or E2E_APPROVAL,
 #                                                                                below)
 #   bash asbl/ci/release-state.sh get <name> <key>                               print one recorded value
+#   bash asbl/ci/release-state.sh full-lane                                      the last two releases' full-lane choices: version,
+#                                                                                lane, why (alternated|random), when, the full run's
+#                                                                                result, commit and time, an approval
+#   bash asbl/ci/release-state.sh full-lane <version>                            that release's record (exit 1 when there is none)
+#   bash asbl/ci/release-state.sh full-lane --choose                             this checkout's version: its full lane, chosen and
+#                                                                                recorded now when it has none, and the lanes step 1
+#                                                                                needs (DRY_RUN=yes: nothing recorded)
 #   bash asbl/ci/release-state.sh show [<commit>]                                the table of one commit
 #   bash asbl/ci/release-state.sh rehearsed docker|windows <version>             the newest PASSED rehearsal of that version on that
 #                                                                                channel, on whichever commit, that uploaded its
@@ -49,7 +56,9 @@
 #   public.docker            dp-ci-release-step2-release-docker, MODE=public: the rehearsed zip in newest/ and <version>/, :latest
 #   public.windows           dp-ci-release-step3-release-windows-vm, MODE=public: the rehearsed zips in newest/ and <version>/
 # Until 2026-10-22 they were step2.docker-stage, step2.docker, step3.windows and step4.publish (none was ever recorded for real).
-# `require step1` = the step-1 lanes a release needs (owner decision OD5, 2026-10-22): the list below.
+# `require step1` = the step-1 lanes a release needs (owner decision OD5, 2026-10-22; since 2026-10-24 the full set
+# alternates, plan-release-build-prove-upload): step1.<this release's full lane>-full (web or docker-server, the full-lane
+# record below), step1.docker-server-auth, step1.windows-vm-electron-light (E2E_SPEC=light) and step1.windows-vm-server-light.
 # A `targeted` run (own E2E_SPEC/E2E_GREP) is recorded for the table but never counts for a release.
 # E2E_APPROVAL (the parameter of the release jobs of steps 2 and 3, 2026-10-23): free text, empty by default. Empty =
 # step1-guard and `require step1...` check the lanes as always. With the two words "owner approved" in it (any case)
@@ -80,7 +89,7 @@ SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$(dirname "$0")/../.." || exit 2
 
 RELEASE_STATE_DIR="${RELEASE_STATE_DIR:-/var/kraft-internalsystems/logs/datapallas-ci/release-state}"
-REQUIRED_STEP1="step1.docker-server-full step1.docker-server-auth step1.windows-vm-electron-full step1.windows-vm-server-light"
+REQUIRED_STEP1=""   # the lanes a release needs: required_step1 sets it, from this release's full lane (below)
 SETTINGS_XML=bkend/reporting/src/main/external-resources/template/config/burst/settings.xml
 DOCKERHUB_API="${DOCKERHUB_API:-https://hub.docker.com/v2/repositories}"
 RELEASE_IMAGE_REPO="${RELEASE_IMAGE_REPO:-flowkraft/datapallas-server}"
@@ -98,6 +107,88 @@ commit_of() {  # the full hash of RELEASE_COMMIT or HEAD; the given text itself 
 tree_version() { grep -m1 -oP '(?<=<version>)[^<]+' "$SETTINGS_XML" 2>/dev/null; }
 valid_name() { printf '%s' "$1" | grep -qE '^(step1|rehearsal|public)\.[a-z0-9-]+$'; }
 field() { sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1; }  # field <file> <key>
+
+# The full e2e set alternates (owner, plan-release-build-prove-upload): each release runs the whole suite on one side only,
+# FULL_SIDES, web one release and docker-server the next, and step 1's other lanes are the light ones and the sign-in file.
+# One record per release (per version: a release may span several commits), $FULL_DIR/<version>, key=value lines as the
+# verdicts: lane, why (alternated: the other side of the newest earlier release's record; random: drawn 50/50 because no
+# earlier record could be read), previous, chosen, chosen_commit, chosen_by; then the full run of that lane on that
+# version (result, ran_commit, ran, log: the last run counts) and an E2E_APPROVAL that lifted it (approved). The first
+# choice is kept: a repeated or cancelled run never draws again (an unreadable record of the version itself is kept aside
+# as <version>.unreadable-<time> and drawn again, as random).
+FULL_DIR="$RELEASE_STATE_DIR/full-e2e"
+FULL_SIDES="web docker-server"
+full_valid() {  # full_valid <file> <version>: a readable record of that version
+  local l; l=$(field "$1" lane)
+  [ -f "$1" ] && [ "$(field "$1" version)" = "$2" ] && case " $FULL_SIDES " in *" $l "*) [ -n "$l" ] ;; *) false ;; esac
+}
+full_other() { case "$1" in web) echo docker-server ;; *) echo web ;; esac; }
+full_describe() {  # full_describe <file>: one line, for the logs
+  echo "$(field "$1" lane) ($(field "$1" why)$(p=$(field "$1" previous); [ -n "$p" ] && echo ": previous $p"); chosen $(field "$1" chosen) by $(field "$1" chosen_by))"
+}
+full_set() {  # full_set <file> key=value...: replace those keys, keep the rest
+  local f="$1" tmp kv; shift
+  tmp=$(mktemp "$FULL_DIR/.set.XXXXXX") || return 2
+  cp "$f" "$tmp" || { rm -f "$tmp"; return 2; }
+  for kv in "$@"; do
+    grep -v "^${kv%%=*}=" "$tmp" > "$tmp.n"; printf '%s\n' "$kv" >> "$tmp.n"; mv -f "$tmp.n" "$tmp"
+  done
+  mv -f "$tmp" "$f"
+}
+# full_lane <version> <by>: prints FULL_LANE=<lane> ...; the recorded choice of that version, else one made now and recorded
+# (DRY_RUN=yes|1: made, printed, not recorded)
+full_lane() {
+  local v="$1" by="$2" f="$FULL_DIR/$1" o pv="" best="" lane why prev now tmp b
+  if full_valid "$f" "$v"; then
+    echo "FULL_LANE=$(field "$f" lane) version=$v: the full set of this release runs on $(full_describe "$f"); kept: a repeated run never draws again"
+    return 0
+  fi
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  for o in "$FULL_DIR"/*; do   # the newest earlier release with a record
+    [ -f "$o" ] || continue
+    pv=$(basename "$o"); printf '%s' "$pv" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || continue
+    [ "$pv" != "$v" ] && [ "$(printf '%s\n%s\n' "$pv" "$v" | sort -V | head -1)" = "$pv" ] || continue
+    [ -z "$best" ] || [ "$(printf '%s\n%s\n' "$best" "$pv" | sort -V | tail -1)" = "$pv" ] && best="$pv"
+  done
+  if [ -n "$best" ] && full_valid "$FULL_DIR/$best" "$best"; then
+    lane=$(full_other "$(field "$FULL_DIR/$best" lane)"); why=alternated; prev="$best $(field "$FULL_DIR/$best" lane)"
+  else
+    b=$(od -An -N1 -tu1 /dev/urandom | tr -d ' '); set -- $FULL_SIDES; [ $((b % 2)) = 0 ] && lane=$1 || lane=$2
+    why=random
+    if [ -n "$best" ]; then prev="$best: unreadable record"; else prev="none: no earlier release recorded"; fi
+    [ -f "$f" ] && prev="$prev; this release's own record was unreadable"
+  fi
+  case "${DRY_RUN:-no}" in
+    yes|1) echo "FULL_LANE=$lane version=$v: dry run: would choose $lane ($why: previous $prev) and record it$([ "$why" = random ] && echo "; a real run draws again")"; return 0 ;;
+  esac
+  mkdir -p "$FULL_DIR" || return 2
+  [ -f "$f" ] && { mv -f "$f" "$f.unreadable-$now"; echo "WARN  the record $f could not be read: kept as $f.unreadable-$now, a new lane drawn"; }
+  tmp=$(mktemp "$FULL_DIR/.$v.XXXXXX") || return 2
+  printf '%s\n' "version=$v" "lane=$lane" "why=$why" "previous=$prev" "chosen=$now" "chosen_commit=$(git rev-parse HEAD 2>/dev/null)" "chosen_by=$by" > "$tmp"
+  # created only when nobody else did meanwhile (ln fails on an existing file): the first choice stays
+  if ln "$tmp" "$f" 2>/dev/null; then rm -f "$tmp"
+  else rm -f "$tmp"; full_valid "$f" "$v" || { echo "FAIL  could not record $f"; return 2; }; fi
+  if [ "$(field "$f" why)" = random ]; then
+    echo "FULL_LANE=$(field "$f" lane) version=$v: DRAWN AT RANDOM (50/50), not alternated: $(field "$f" previous). The full set of this release runs on $(field "$f" lane); recorded in $f"
+  else
+    echo "FULL_LANE=$(field "$f" lane) version=$v: the full set of this release runs on $(full_describe "$f"); recorded in $f"
+  fi
+}
+# required_step1 [choose <by>]: REQUIRED_STEP1 for this checkout's version: the full set on its lane, the sign-in file on
+# docker-server, the light sets of windows-vm-electron and windows-vm-server. choose = make the choice when there is none
+# (printing it); without it, a version with no choice yet needs both full runs (nothing is drawn by a mere look).
+required_step1() {
+  local v line lane
+  v=$(tree_version)
+  if [ "${1:-}" = choose ]; then
+    line=$(full_lane "$v" "$2") || { printf '%s\n' "$line"; return 2; }
+    printf '%s\n' "$line"
+    lane=$(printf '%s\n' "$line" | sed -n 's/^FULL_LANE=\([a-z-]*\) .*/\1/p')
+  elif full_valid "$FULL_DIR/$v" "$v"; then
+    lane=$(field "$FULL_DIR/$v" lane)
+  fi
+  REQUIRED_STEP1="$(for s in ${lane:-$FULL_SIDES}; do printf 'step1.%s-full ' "$s"; done)step1.docker-server-auth step1.windows-vm-electron-light step1.windows-vm-server-light"
+}
 
 approval_phrase() { printf '%s' "${E2E_APPROVAL:-}" | grep -qiE 'owner[[:space:]]+approved'; }
 lane_state() {  # lane_state <verdict name>: what the record holds for it on this commit, else its newest verdict on another one
@@ -280,6 +371,8 @@ case "$cmd" in
     spec="${E2E_SPEC:-}"; gexp="${E2E_GREP:-}"
     if [ -z "$spec" ] && [ -z "$gexp" ]; then
       case "$target" in windows-vm-docker|windows-vm-server) mode=light ;; *) mode=full ;; esac
+    elif [ "$target" = windows-vm-electron ] && [ "$spec" = light ] && [ -z "$gexp" ]; then
+      mode=light   # E2E_SPEC=light: WIN_LIGHT_SPEC of dp-ci.sh, the electron lane's light set
     elif [ -z "$gexp" ] && case "$spec" in *'|'*|*'(?'*) false ;; *auth-authorization-server*) true ;; *) false ;; esac; then
       mode=auth
     else
@@ -296,10 +389,54 @@ case "$cmd" in
     git rev-parse --verify -q "$c^{commit}" >/dev/null 2>&1 || git fetch -q origin 2>/dev/null
     [ "$rc" = 0 ] && res=PASS || res=FAIL
     RELEASE_COMMIT="$c" RELEASE_LOG="$log" bash "$SELF" record "step1.$target-$mode" "$res" "rc=$rc"
+    # a full run on one of the two sides: this release's full-lane record says whether it is its lane
+    if [ "$mode" = full ] && case " $FULL_SIDES " in *" $target "*) true ;; *) false ;; esac; then
+      v=$(tree_version)
+      if ! full_valid "$FULL_DIR/$v" "$v"; then
+        echo "note: no full lane chosen for $v yet: this full run is recorded as step1.$target-full only (bash $0 full-lane --choose)"
+      elif [ "$(field "$FULL_DIR/$v" lane)" = "$target" ]; then
+        full_set "$FULL_DIR/$v" "result=$res" "ran_commit=$c" "ran=$(date -u +%Y-%m-%dT%H:%M:%SZ)" "log=$log" &&
+          echo "FULL_LANE $v: the full set ran on $target, $res, on ${c:0:8} (recorded in $FULL_DIR/$v)"
+      else
+        echo "note: $v's full set runs on $(full_describe "$FULL_DIR/$v"), not on $target: this run does not count for the release"
+      fi
+    fi
+    ;;
+  full-lane)
+    case "${1:-}" in
+      --choose) required_step1 choose "full-lane --choose" || exit 2
+                echo "step 1 of $(tree_version) needs: ${REQUIRED_STEP1//step1./}" ;;
+      --step1)  # the step-1 job, at its start: the choice made only when this version is still to be released on a channel
+                # (the job is also the everyday e2e: a released version, or one the gate refuses, draws nothing)
+                go=0; for ch in docker windows; do version_check "$ch" >/dev/null 2>&1 && go=1; done
+                if [ "$go" = 1 ]; then
+                  required_step1 choose "step 1 job (${E2E_TARGET:-?})" || exit 2
+                  echo "step 1 of $(tree_version) needs: ${REQUIRED_STEP1//step1./}"
+                else
+                  required_step1
+                  echo "FULL_LANE $(tree_version): not a version to release now on either channel (version-check): no lane chosen"
+                fi ;;
+      "")       # the last two releases' choices
+                printf '%-10s %-14s %-11s %-21s %-7s %-9s %-21s %s\n' VERSION LANE WHY CHOSEN RESULT ON RAN MORE
+                for v in $(ls -1 "$FULL_DIR" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -2); do
+                  f="$FULL_DIR/$v"
+                  if full_valid "$f" "$v"; then
+                    printf '%-10s %-14s %-11s %-21s %-7s %-9s %-21s %s\n' "$v" "$(field "$f" lane)" "$(field "$f" why)" "$(field "$f" chosen)" \
+                      "$(field "$f" result)" "$(field "$f" ran_commit | cut -c1-8)" "$(field "$f" ran)" \
+                      "previous $(field "$f" previous)$(a=$(field "$f" approved); [ -n "$a" ] && echo "; approved $a")"
+                  else printf '%-10s %s\n' "$v" "UNREADABLE record ($f): the next release draws at random"; fi
+                done
+                [ -n "$(ls -1 "$FULL_DIR" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$')" ] || echo "(no release recorded yet: the next one draws at random)" ;;
+      *)        f="$FULL_DIR/$1"
+                if full_valid "$f" "$1"; then sed 's/^/  /' "$f"; echo "FULL_LANE $1: $(full_describe "$f")$(r=$(field "$f" result); [ -n "$r" ] && echo ", ran $r on $(field "$f" ran_commit | cut -c1-8) at $(field "$f" ran)")"
+                elif [ -f "$f" ]; then echo "FULL_LANE $1: UNREADABLE record $f"; exit 1
+                else echo "FULL_LANE $1: no record (no lane chosen for $1)"; exit 1; fi ;;
+    esac
     ;;
   require)
     [ "$#" -gt 0 ] || { echo "usage: $0 require <name|step1>..."; exit 2; }
     lanes1=1; for n in "$@"; do case "$n" in step1|step1.*) ;; *) lanes1=0 ;; esac; done  # E2E_APPROVAL: step-1 lanes only
+    case " $* " in *" step1 "*) required_step1 choose "require step1" || exit 2 ;; *) required_step1 ;; esac
     if [ "$lanes1" = 1 ] && approval_phrase; then approval_accept "require $*" $(printf '%s\n' "$@" | grep -v '^step1$'); exit $?; fi
     names=""
     for n in "$@"; do [ "$n" = step1 ] && names="$names $REQUIRED_STEP1" || names="$names $n"; done
@@ -318,7 +455,15 @@ case "$cmd" in
     exit 1
     ;;
   step1-guard)
-    approval_phrase && { approval_accept step1-guard; exit $?; }
+    required_step1 choose step1-guard || exit 2
+    if approval_phrase; then
+      approval_accept step1-guard; rc=$?
+      # the full set lifted by the owner's approval: written on this release's full-lane record too
+      case "$rc:${DRY_RUN:-no}" in 0:yes|0:1) ;; 0:*) v=$(tree_version)
+        full_set "$FULL_DIR/$v" "approved=$(date -u +%Y-%m-%dT%H:%M:%SZ) on ${commit:0:8} by ${E2E_APPROVAL_USER:-$(id -un)}: E2E_APPROVAL, see approval.step1 of that commit" &&
+          echo "FULL_LANE approval written on the record of $v ($FULL_DIR/$v)" ;; esac
+      exit "$rc"
+    fi
     bad=""
     for n in $REQUIRED_STEP1; do
       case "$(field "$dir/$n" result)" in PASS) ;; FAIL) bad="$bad, ${n#step1.} red" ;; *) bad="$bad, ${n#step1.} missing" ;; esac
@@ -365,6 +510,10 @@ case "$cmd" in
     ;;
   show)
     [ -n "${1:-}" ] && { RELEASE_COMMIT="$1"; commit=$(commit_of); dir="$RELEASE_STATE_DIR/$commit"; }
+    required_step1
+    v=$(tree_version)
+    if full_valid "$FULL_DIR/$v" "$v"; then echo "the full set of $v runs on $(full_describe "$FULL_DIR/$v")"
+    else echo "the full set of $v: no lane chosen yet (bash $0 full-lane --choose)"; fi
     echo "release record of commit ${commit:0:8} ($dir)"
     printf '%-34s %-6s %-10s %-21s %s\n' VERDICT RESULT VERSION TIME MORE
     found=0
@@ -408,5 +557,5 @@ case "$cmd" in
     version_check "$ch"
     ;;
   *)
-    sed -n '2,77p' "$0"; exit 2 ;;
+    sed -n '2,86p' "$0"; exit 2 ;;
 esac
